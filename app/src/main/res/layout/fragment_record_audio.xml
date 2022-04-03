@@ -35,6 +35,7 @@
     <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
         android:paddingLeft="6dp"
         android:paddingRight="6dp"
         android:layout_weight="0">
@@ -54,9 +55,20 @@
             android:layout_height="match_parent"
             android:layout_gravity="center_vertical"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/record_audio_button_hint"
+            android:contentDescription="@string/play_record_audio_button_hint"
             android:visibility="gone"
             app:srcCompat="@drawable/ic_play"
+            app:tint="?android:textColorPrimary" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/pauseRecording"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/pause_audio_button_hint"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_pause"
             app:tint="?android:textColorPrimary" />
     </FrameLayout>
 

@@ -317,4 +317,7 @@
     <string name="button_hint_start_audio">Start audio recording</string>
     <string name="stop_recording_button_hint">Stop recording</string>
     <string name="delete_recording_hint">Discard recording</string>
+    <string name="audio_recording_failed">Audio recording failed</string>
+    <string name="play_record_audio_button_hint">Play recorded audio</string>
+    <string name="pause_audio_button_hint">Pause playback</string>
 </resources>

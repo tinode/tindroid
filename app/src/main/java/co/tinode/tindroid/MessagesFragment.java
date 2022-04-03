@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.media.EncoderProfiles;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -110,6 +112,9 @@ public class MessagesFragment extends Fragment {
     private Drafty mContentToForward = null;
     private Drafty mForwardSender = null;
 
+    private MediaRecorder mAudioRecorder = null;
+    private File mAudioRecord = null;
+
     private int mVisibleSendPanel = R.id.sendMessagePanel;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -132,6 +137,18 @@ public class MessagesFragment extends Fragment {
                 }
                 // Try to open the image selector again.
                 openImageSelector(getActivity());
+            });
+
+    private final ActivityResultLauncher<String> mAudioRecorderPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    Activity activity = getActivity();
+                    // Disable audio recording button.
+                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                        return;
+                    }
+                    getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
+                }
             });
 
     private final ActivityResultLauncher<String> mFilePickerLauncher =
@@ -283,6 +300,11 @@ public class MessagesFragment extends Fragment {
         MovableActionButton mab = view.findViewById(R.id.audioRecorder);
         // Lock button
         FloatingActionButton lockFab = view.findViewById(R.id.lockAudioRecording);
+        // Play button in locked recording panel.
+        AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
+        // Stop recording button in locked recording panel.
+        AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
+
         mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
             // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
             float dX = Math.min(0, newPos.x - startPos.x);
@@ -302,8 +324,13 @@ public class MessagesFragment extends Fragment {
         mab.setOnActionListener(new MovableActionButton.ActionListener() {
             @Override
             public boolean onUp(float x, float y) {
+                if (mAudioRecorder != null) {
+                    releaseAudioRecorder(true);
+                }
+
                 mab.setVisibility(View.INVISIBLE);
                 lockFab.setVisibility(View.GONE);
+                setSendPanelVisible(activity, R.id.sendMessagePanel);
                 return true;
             }
 
@@ -316,8 +343,15 @@ public class MessagesFragment extends Fragment {
                 mab.setVisibility(View.INVISIBLE);
                 lockFab.setVisibility(View.GONE);
                 if (id == ZONE_CANCEL) {
+                    if (mAudioRecorder != null) {
+                        releaseAudioRecorder(false);
+                    }
+
                     setSendPanelVisible(activity, R.id.sendMessagePanel);
+                    releaseAudioRecorder(false);
                 } else {
+                    playButton.setVisibility(View.GONE);
+                    stopButton.setVisibility(View.VISIBLE);
                     setSendPanelVisible(activity, R.id.recordAudioPanel);
                     activity.findViewById(R.id.audioWave).setBackground(new WaveDrawable(activity.getResources()));
                 }
@@ -328,6 +362,21 @@ public class MessagesFragment extends Fragment {
         AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
         GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public void onLongPress(MotionEvent e) {
+                if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
+                    mAudioRecorderPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO);
+                    return;
+                }
+
+                if (mAudioRecorder == null) {
+                    initAudioRecorder(activity);
+                }
+                try {
+                    mAudioRecorder.start();
+                } catch (RuntimeException ex) {
+                    Log.e(TAG, "Failed to start audio recording", ex);
+                    Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+                }
+
                 mab.setVisibility(View.VISIBLE);
                 lockFab.setAlpha(0.8f);
                 lockFab.setVisibility(View.VISIBLE);
@@ -366,8 +415,25 @@ public class MessagesFragment extends Fragment {
             return gd.onTouchEvent(event);
         });
 
-        view.findViewById(R.id.deleteRecording).setOnClickListener(v ->
-                setSendPanelVisible(activity, R.id.sendMessagePanel));
+        view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
+            releaseAudioRecorder(false);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+        playButton.setOnClickListener(v -> {
+            Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
+        });
+        stopButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            v.setVisibility(View.GONE);
+            releaseAudioRecorder(true);
+        });
+        view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
+            Log.i(TAG, "Send audio!!!");
+            // TODO: actually send audio.
+            releaseAudioRecorder(false);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
@@ -608,7 +674,6 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-
     private void scrollToBottom(boolean smooth) {
         if (smooth) {
             mRecyclerView.smoothScrollToPosition(0);
@@ -620,6 +685,8 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+
+        releaseAudioRecorder(false);
 
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -708,6 +775,43 @@ public class MessagesFragment extends Fragment {
         mRefresher.setRefreshing(active);
     }
 
+    void initAudioRecorder(Activity activity) {
+        if (mAudioRecord != null) {
+            mAudioRecord.delete();
+            mAudioRecord = null;
+        }
+        mAudioRecorder = new MediaRecorder();
+        mAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mAudioRecorder.setMaxDuration(1000*60*10); // 10 minutes.
+        mAudioRecorder.setAudioEncodingBitRate(16);
+        mAudioRecorder.setAudioSamplingRate(16000);
+        mAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        try {
+            mAudioRecord = File.createTempFile("audio", ".m4a", activity.getCacheDir());
+            mAudioRecorder.setOutputFile(mAudioRecord.getAbsolutePath());
+            mAudioRecorder.prepare();
+        } catch (IOException ex) {
+            Log.i(TAG, "Failed to initialize audio recording", ex);
+            Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+            mAudioRecorder.release();
+            mAudioRecorder = null;
+        }
+    }
+
+    void releaseAudioRecorder(boolean keepRecord) {
+        if (!keepRecord && mAudioRecord != null) {
+            mAudioRecord.delete();
+            mAudioRecord = null;
+        }
+
+        if (mAudioRecorder != null) {
+            mAudioRecorder.stop();
+            mAudioRecorder.reset();
+            mAudioRecorder.release();
+            mAudioRecorder = null;
+        }
+    }
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicConfirmationDialog(final Activity activity, boolean del) {
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
