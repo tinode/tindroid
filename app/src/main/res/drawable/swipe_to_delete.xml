@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:width="48dp"
+        android:width="64dp"
         android:height="24dp"
         android:left="12dp"
         android:top="4dp">
         <shape android:shape="rectangle">
-            <solid android:color="@color/colorButtonNormal" />
+            <solid android:color="?android:colorButtonNormal" />
             <size
                 android:width="24dp"
                 android:height="16dp" />
+            <corners android:bottomRightRadius="12dp" android:topRightRadius="12dp"/>
         </shape>
     </item>
     <item android:drawable="@drawable/shadow_disk"
@@ -26,18 +27,6 @@
         android:width="16dp"
         android:height="16dp"
         android:drawable="@drawable/ic_shevron_left"
-        android:left="28dp"
-        android:top="8dp" />
-    <item
-        android:width="16dp"
-        android:height="16dp"
-        android:drawable="@drawable/ic_shevron_left"
         android:left="36dp"
-        android:top="8dp" />
-    <item
-        android:width="16dp"
-        android:height="16dp"
-        android:drawable="@drawable/ic_shevron_left"
-        android:left="44dp"
         android:top="8dp" />
 </layer-list>

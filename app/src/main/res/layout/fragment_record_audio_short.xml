@@ -28,14 +28,11 @@
         android:layout_weight="1"
         tools:src="@drawable/tag_background" />
 
-    <androidx.appcompat.widget.AppCompatImageView
-        android:layout_width="wrap_content"
+    <View
+        android:layout_width="112dp"
         android:layout_height="match_parent"
         android:layout_weight="0"
         android:contentDescription="@string/delete_recording_hint"
-        android:paddingStart="6dp"
-        android:paddingEnd="90dp"
-        app:srcCompat="@drawable/ic_delete_outline"
-        app:tint="?android:textColorSecondary" />
+        android:paddingStart="6dp" />
 
 </LinearLayout>

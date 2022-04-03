@@ -311,9 +311,14 @@ public class MessagesFragment extends Fragment {
         // Audio recorder button.
         MovableActionButton mab = view.findViewById(R.id.audioRecorder);
         // Lock button
-        FloatingActionButton lockFab = view.findViewById(R.id.lockAudioRecording);
+        ImageView lockFab = view.findViewById(R.id.lockAudioRecording);
+        // Lock button
+        ImageView deleteFab = view.findViewById(R.id.deleteAudioRecording);
+
         // Play button in locked recording panel.
         AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
+        // Pause button in locked recording panel when playing back.
+        AppCompatImageButton pauseButton = view.findViewById(R.id.pauseRecording);
         // Stop recording button in locked recording panel.
         AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
         // ImageView with waveform visualization.
@@ -324,6 +329,8 @@ public class MessagesFragment extends Fragment {
         TextView timerView = view.findViewById(R.id.duration);
         TextView timerShortView = view.findViewById(R.id.durationShort);
         waveShort.setBackground(new WaveDrawable(getResources()));
+        // Launch audio recorder.
+        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
         final Runnable visualizer = new Runnable() {
             @Override
             public void run() {
@@ -366,6 +373,8 @@ public class MessagesFragment extends Fragment {
 
                 mab.setVisibility(View.INVISIBLE);
                 lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
                 setSendPanelVisible(activity, R.id.sendMessagePanel);
                 return true;
             }
@@ -378,6 +387,8 @@ public class MessagesFragment extends Fragment {
                 );
                 mab.setVisibility(View.INVISIBLE);
                 lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
                 if (id == ZONE_CANCEL) {
                     if (mAudioRecorder != null) {
                         releaseAudioRecorder(false);
@@ -394,8 +405,6 @@ public class MessagesFragment extends Fragment {
                 return true;
             }
         });
-        // Launch audio recorder.
-        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
         GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
             public void onLongPress(MotionEvent e) {
                 if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
@@ -419,8 +428,9 @@ public class MessagesFragment extends Fragment {
                 }
 
                 mab.setVisibility(View.VISIBLE);
-                lockFab.setAlpha(0.8f);
                 lockFab.setVisibility(View.VISIBLE);
+                deleteFab.setVisibility(View.VISIBLE);
+                audio.setVisibility(View.INVISIBLE);
                 mab.requestFocus();
                 setSendPanelVisible(activity, R.id.recordAudioShortPanel);
                 activity.findViewById(R.id.audioWaveShort).setBackground(new WaveDrawable(activity.getResources()));
@@ -461,7 +471,13 @@ public class MessagesFragment extends Fragment {
             setSendPanelVisible(activity, R.id.sendMessagePanel);
         });
         playButton.setOnClickListener(v -> {
+            pauseButton.setVisibility(View.VISIBLE);
+            playButton.setVisibility(View.GONE);
             Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
+        });
+        pauseButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            pauseButton.setVisibility(View.GONE);
         });
         stopButton.setOnClickListener(v -> {
             playButton.setVisibility(View.VISIBLE);
