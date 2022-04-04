@@ -40,6 +40,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -219,7 +220,6 @@ public class MessagesFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
 
-    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
@@ -308,188 +308,7 @@ public class MessagesFragment extends Fragment {
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        // Audio recorder button.
-        MovableActionButton mab = view.findViewById(R.id.audioRecorder);
-        // Lock button
-        ImageView lockFab = view.findViewById(R.id.lockAudioRecording);
-        // Lock button
-        ImageView deleteFab = view.findViewById(R.id.deleteAudioRecording);
-
-        // Play button in locked recording panel.
-        AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
-        // Pause button in locked recording panel when playing back.
-        AppCompatImageButton pauseButton = view.findViewById(R.id.pauseRecording);
-        // Stop recording button in locked recording panel.
-        AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
-        // ImageView with waveform visualization.
-        ImageView wave = view.findViewById(R.id.audioWave);
-        wave.setBackground(new WaveDrawable(getResources()));
-        ImageView waveShort = view.findViewById(R.id.audioWaveShort);
-        // Recording timer.
-        TextView timerView = view.findViewById(R.id.duration);
-        TextView timerShortView = view.findViewById(R.id.durationShort);
-        waveShort.setBackground(new WaveDrawable(getResources()));
-        // Launch audio recorder.
-        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
-        final Runnable visualizer = new Runnable() {
-            @Override
-            public void run() {
-                if (mAudioRecorder != null) {
-                    int x = mAudioRecorder.getMaxAmplitude();
-                    if (mVisibleSendPanel == R.id.recordAudioPanel) {
-                        ((WaveDrawable) wave.getBackground()).put(x);
-                        timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
-                    } else if (mVisibleSendPanel == R.id.recordAudioShortPanel) {
-                        ((WaveDrawable) waveShort.getBackground()).put(x);
-                        timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
-                    }
-                    mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
-                }
-            }
-        };
-
-        mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
-            // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
-            float dX = Math.min(0, newPos.x - startPos.x);
-            float dY = Math.min(0, newPos.y - startPos.y);
-
-            if (Math.abs(dX) > Math.abs(dY)) {
-                // Horizontal move.
-                newPos.x = Math.max(parentRect.left, newPos.x);
-                newPos.y = startPos.y;
-            } else {
-                // Vertical move.
-                newPos.x = startPos.x;
-                newPos.y = Math.max(parentRect.top, newPos.y);
-            }
-            return newPos;
-        });
-        mab.setOnActionListener(new MovableActionButton.ActionListener() {
-            @Override
-            public boolean onUp(float x, float y) {
-                if (mAudioRecorder != null) {
-                    releaseAudioRecorder(true);
-                }
-
-                mab.setVisibility(View.INVISIBLE);
-                lockFab.setVisibility(View.GONE);
-                deleteFab.setVisibility(View.GONE);
-                audio.setVisibility(View.VISIBLE);
-                setSendPanelVisible(activity, R.id.sendMessagePanel);
-                return true;
-            }
-
-            @Override
-            public boolean onZoneReached(int id) {
-                mab.performHapticFeedback(android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.Q ?
-                        (id == ZONE_CANCEL ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.CONFIRM) :
-                        HapticFeedbackConstants.CONTEXT_CLICK
-                );
-                mab.setVisibility(View.INVISIBLE);
-                lockFab.setVisibility(View.GONE);
-                deleteFab.setVisibility(View.GONE);
-                audio.setVisibility(View.VISIBLE);
-                if (id == ZONE_CANCEL) {
-                    if (mAudioRecorder != null) {
-                        releaseAudioRecorder(false);
-                    }
-
-                    setSendPanelVisible(activity, R.id.sendMessagePanel);
-                    releaseAudioRecorder(false);
-                } else {
-                    playButton.setVisibility(View.GONE);
-                    stopButton.setVisibility(View.VISIBLE);
-                    setSendPanelVisible(activity, R.id.recordAudioPanel);
-                    activity.findViewById(R.id.audioWave).setBackground(new WaveDrawable(activity.getResources()));
-                }
-                return true;
-            }
-        });
-        GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
-            public void onLongPress(MotionEvent e) {
-                if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
-                    mAudioRecorderPermissionLauncher.launch(new String[] {
-                            Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS
-                    });
-                    return;
-                }
-
-                if (mAudioRecorder == null) {
-                    initAudioRecorder(activity);
-                }
-                try {
-                    mAudioRecorder.start();
-                    mRecordingStarted = SystemClock.uptimeMillis();
-                    visualizer.run();
-                } catch (RuntimeException ex) {
-                    Log.e(TAG, "Failed to start audio recording", ex);
-                    Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                mab.setVisibility(View.VISIBLE);
-                lockFab.setVisibility(View.VISIBLE);
-                deleteFab.setVisibility(View.VISIBLE);
-                audio.setVisibility(View.INVISIBLE);
-                mab.requestFocus();
-                setSendPanelVisible(activity, R.id.recordAudioShortPanel);
-                activity.findViewById(R.id.audioWaveShort).setBackground(new WaveDrawable(activity.getResources()));
-                // Cancel zone on the left.
-                int x = mab.getLeft();
-                int y = mab.getTop();
-                int width = mab.getWidth();
-                int height = mab.getHeight();
-                mab.addActionZone(ZONE_CANCEL, new Rect(x - (int) (width * 1.5), y,
-                        x - (int) (width * 0.5), y + height));
-                // Lock zone above.
-                mab.addActionZone(ZONE_LOCK, new Rect(x, y - (int) (height * 1.5),
-                        x + width, y - (int) (height * 0.5)));
-                MotionEvent motionEvent = MotionEvent.obtain(
-                    e.getDownTime(), e.getEventTime(),
-                    MotionEvent.ACTION_DOWN,
-                    e.getRawX(),
-                    e.getRawY(),
-                    0
-                );
-                mab.dispatchTouchEvent(motionEvent);
-            }
-        });
-        // Ignore the warning: click detection is not needed here.
-        audio.setOnTouchListener((v, event) -> {
-            int action = event.getAction();
-            if (mab.getVisibility() == View.VISIBLE) {
-                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
-                    audio.setPressed(false);
-                }
-                return mab.dispatchTouchEvent(event);
-            }
-            return gd.onTouchEvent(event);
-        });
-
-        view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
-            releaseAudioRecorder(false);
-            setSendPanelVisible(activity, R.id.sendMessagePanel);
-        });
-        playButton.setOnClickListener(v -> {
-            pauseButton.setVisibility(View.VISIBLE);
-            playButton.setVisibility(View.GONE);
-            Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
-        });
-        pauseButton.setOnClickListener(v -> {
-            playButton.setVisibility(View.VISIBLE);
-            pauseButton.setVisibility(View.GONE);
-        });
-        stopButton.setOnClickListener(v -> {
-            playButton.setVisibility(View.VISIBLE);
-            v.setVisibility(View.GONE);
-            releaseAudioRecorder(true);
-        });
-        view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
-            Log.i(TAG, "Send audio!!!");
-            // TODO: actually send audio.
-            releaseAudioRecorder(false);
-            setSendPanelVisible(activity, R.id.sendMessagePanel);
-        });
+        AppCompatImageButton audio = setupAudioForms(activity, view);
 
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
@@ -653,6 +472,194 @@ public class MessagesFragment extends Fragment {
         activity.findViewById(id).setVisibility(View.VISIBLE);
         activity.findViewById(mVisibleSendPanel).setVisibility(View.GONE);
         mVisibleSendPanel = id;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private AppCompatImageButton setupAudioForms(Activity activity, View view) {
+        // Audio recorder button.
+        MovableActionButton mab = view.findViewById(R.id.audioRecorder);
+        // Lock button
+        ImageView lockFab = view.findViewById(R.id.lockAudioRecording);
+        // Lock button
+        ImageView deleteFab = view.findViewById(R.id.deleteAudioRecording);
+
+        // Play button in locked recording panel.
+        AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
+        // Pause button in locked recording panel when playing back.
+        AppCompatImageButton pauseButton = view.findViewById(R.id.pauseRecording);
+        // Stop recording button in locked recording panel.
+        AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
+        // ImageView with waveform visualization.
+        ImageView wave = view.findViewById(R.id.audioWave);
+        wave.setBackground(new WaveDrawable(getResources()));
+        ImageView waveShort = view.findViewById(R.id.audioWaveShort);
+        // Recording timer.
+        TextView timerView = view.findViewById(R.id.duration);
+        TextView timerShortView = view.findViewById(R.id.durationShort);
+        waveShort.setBackground(new WaveDrawable(getResources()));
+        // Launch audio recorder.
+        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
+        final Runnable visualizer = new Runnable() {
+            @Override
+            public void run() {
+                if (mAudioRecorder != null) {
+                    int x = mAudioRecorder.getMaxAmplitude();
+                    if (mVisibleSendPanel == R.id.recordAudioPanel) {
+                        ((WaveDrawable) wave.getBackground()).put(x);
+                        timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    } else if (mVisibleSendPanel == R.id.recordAudioShortPanel) {
+                        ((WaveDrawable) waveShort.getBackground()).put(x);
+                        timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    }
+                    mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
+                }
+            }
+        };
+
+        mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
+            // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
+            float dX = Math.min(0, newPos.x - startPos.x);
+            float dY = Math.min(0, newPos.y - startPos.y);
+
+            if (Math.abs(dX) > Math.abs(dY)) {
+                // Horizontal move.
+                newPos.x = Math.max(parentRect.left, newPos.x);
+                newPos.y = startPos.y;
+            } else {
+                // Vertical move.
+                newPos.x = startPos.x;
+                newPos.y = Math.max(parentRect.top, newPos.y);
+            }
+            return newPos;
+        });
+        mab.setOnActionListener(new MovableActionButton.ActionListener() {
+            @Override
+            public boolean onUp(float x, float y) {
+                if (mAudioRecorder != null) {
+                    sendAudio(activity);
+                    releaseAudioRecorder(true);
+                }
+
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
+                setSendPanelVisible(activity, R.id.sendMessagePanel);
+                return true;
+            }
+
+            @Override
+            public boolean onZoneReached(int id) {
+                mab.performHapticFeedback(android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.Q ?
+                        (id == ZONE_CANCEL ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.CONFIRM) :
+                        HapticFeedbackConstants.CONTEXT_CLICK
+                );
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
+                if (id == ZONE_CANCEL) {
+                    if (mAudioRecorder != null) {
+                        releaseAudioRecorder(false);
+                    }
+
+                    setSendPanelVisible(activity, R.id.sendMessagePanel);
+                    releaseAudioRecorder(false);
+                } else {
+                    playButton.setVisibility(View.GONE);
+                    stopButton.setVisibility(View.VISIBLE);
+                    setSendPanelVisible(activity, R.id.recordAudioPanel);
+                    activity.findViewById(R.id.audioWave).setBackground(new WaveDrawable(activity.getResources()));
+                }
+                return true;
+            }
+        });
+        GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            public void onLongPress(MotionEvent e) {
+                if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
+                    mAudioRecorderPermissionLauncher.launch(new String[] {
+                            Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS
+                    });
+                    return;
+                }
+
+                if (mAudioRecorder == null) {
+                    initAudioRecorder(activity);
+                }
+                try {
+                    mAudioRecorder.start();
+                    mRecordingStarted = SystemClock.uptimeMillis();
+                    visualizer.run();
+                } catch (RuntimeException ex) {
+                    Log.e(TAG, "Failed to start audio recording", ex);
+                    Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                mab.setVisibility(View.VISIBLE);
+                lockFab.setVisibility(View.VISIBLE);
+                deleteFab.setVisibility(View.VISIBLE);
+                audio.setVisibility(View.INVISIBLE);
+                mab.requestFocus();
+                setSendPanelVisible(activity, R.id.recordAudioShortPanel);
+                activity.findViewById(R.id.audioWaveShort).setBackground(new WaveDrawable(activity.getResources()));
+                // Cancel zone on the left.
+                int x = mab.getLeft();
+                int y = mab.getTop();
+                int width = mab.getWidth();
+                int height = mab.getHeight();
+                mab.addActionZone(ZONE_CANCEL, new Rect(x - (int) (width * 1.5), y,
+                        x - (int) (width * 0.5), y + height));
+                // Lock zone above.
+                mab.addActionZone(ZONE_LOCK, new Rect(x, y - (int) (height * 1.5),
+                        x + width, y - (int) (height * 0.5)));
+                MotionEvent motionEvent = MotionEvent.obtain(
+                        e.getDownTime(), e.getEventTime(),
+                        MotionEvent.ACTION_DOWN,
+                        e.getRawX(),
+                        e.getRawY(),
+                        0
+                );
+                mab.dispatchTouchEvent(motionEvent);
+            }
+        });
+        // Ignore the warning: click detection is not needed here.
+        audio.setOnTouchListener((v, event) -> {
+            int action = event.getAction();
+            if (mab.getVisibility() == View.VISIBLE) {
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    audio.setPressed(false);
+                }
+                return mab.dispatchTouchEvent(event);
+            }
+            return gd.onTouchEvent(event);
+        });
+
+        view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
+            releaseAudioRecorder(false);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+        playButton.setOnClickListener(v -> {
+            pauseButton.setVisibility(View.VISIBLE);
+            playButton.setVisibility(View.GONE);
+            Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
+        });
+        pauseButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            pauseButton.setVisibility(View.GONE);
+        });
+        stopButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            v.setVisibility(View.GONE);
+            releaseAudioRecorder(true);
+        });
+        view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
+            sendAudio(activity);
+            releaseAudioRecorder(true);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+
+        return audio;
     }
 
     private void updateFormValues(Bundle args) {
@@ -1119,6 +1126,12 @@ public class MessagesFragment extends Fragment {
         }
     }
 
+    private void sendAudio(Activity activity) {
+        Log.i(TAG, "Send audio!!!");
+        mAudioRecord.delete();
+        mAudioRecord = null;
+    }
+
     private void cancelPreview(Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
@@ -1180,5 +1193,65 @@ public class MessagesFragment extends Fragment {
         }
 
         return mMessagesAdapter.findItemPositionById(id, first, last);
+    }
+
+    // Class for generating audio preview from a stream of unknown duration.
+    private static class AudioSampler {
+        private final static int VISUALIZATION_BARS = 128;
+        private final float[] mSamples;
+        private final float[] mScratchBuff;
+        // Number of at least partially filled buckets in the scratch buffer.
+        private int mContains;
+        // Number of samples per bucket in mScratchBuff.
+        private int mAggregate;
+        // Number of samples added the the current bucket.
+        private int mSampleCount;
+
+        AudioSampler() {
+            mSamples = new float[VISUALIZATION_BARS * 2];
+            mScratchBuff = new float[VISUALIZATION_BARS * 2];
+            mContains = 0;
+            mSampleCount = 0;
+            mAggregate = 1;
+        }
+
+        public void put(int val) {
+            // Check if the current bucket is full.
+            if (mSampleCount == mAggregate) {
+                // Normalize the bucket.
+                mScratchBuff[mContains] = (float) mScratchBuff[mContains] / (float) mSampleCount;
+                mContains ++;
+                mSampleCount = 0;
+            }
+            // Check if scratch buffer is full.
+            if (mContains == VISUALIZATION_BARS) {
+                compact();
+            }
+            mScratchBuff[mContains] += val;
+            mSampleCount ++;
+        }
+
+        public float[] obtain(int sampleCount) {
+            return mSamples;
+        }
+
+        // Downscale the amplitudes 2x.
+        private void compact() {
+            for (int i = 0; i < VISUALIZATION_BARS; i ++) {
+                // Donwsample the main buffer: two consecutive samples make one new sample.
+                mSamples[i] = (mSamples[i * 2] + mSamples[i * 2 + 1]) * 0.5f;
+            }
+            for (int i = 0; i < VISUALIZATION_BARS; i ++) {
+                // Donwsample the scratch buffer and copy it to the second half of the main buffer.
+                mSamples[i + VISUALIZATION_BARS] = (mScratchBuff[i * 2] + mScratchBuff[i * 2 + 1]) * 0.5f;
+            }
+            // Clean the scratch buffer
+            Arrays.fill(mScratchBuff, 0f);
+            // Double the number of samples per bucket.
+            mAggregate *= 2;
+            // Reset scratch counters.
+            mContains = 0;
+            mSampleCount = 0;
+        }
     }
 }

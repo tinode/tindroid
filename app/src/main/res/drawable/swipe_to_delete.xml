@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:width="64dp"
+        android:width="56dp"
         android:height="24dp"
         android:left="12dp"
         android:top="4dp">
@@ -27,6 +27,6 @@
         android:width="16dp"
         android:height="16dp"
         android:drawable="@drawable/ic_shevron_left"
-        android:left="36dp"
+        android:left="32dp"
         android:top="8dp" />
 </layer-list>

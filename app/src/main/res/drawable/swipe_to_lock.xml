@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:width="24dp"
-        android:height="64dp"
+        android:height="56dp"
         android:left="4dp"
         android:top="12dp">
         <shape android:shape="rectangle">
@@ -28,5 +28,5 @@
         android:height="16dp"
         android:drawable="@drawable/ic_shevron_up"
         android:left="8dp"
-        android:top="36dp" />
+        android:top="32dp" />
 </layer-list>
