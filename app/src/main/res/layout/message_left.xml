@@ -23,7 +23,7 @@
             android:focusable="false"
             android:orientation="vertical">
 
-            <TextView
+            <co.tinode.tindroid.widgets.DynamicTextView
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

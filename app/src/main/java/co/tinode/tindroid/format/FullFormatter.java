@@ -90,7 +90,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Resources res = container.getResources();
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sDefaultColor = res.getColor(R.color.grey);
+            sDefaultColor = res.getColor(R.color.grey, null);
         }
     }
 
@@ -209,7 +209,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         StateListDrawable play = (StateListDrawable) AppCompatResources.getDrawable(ctx, R.drawable.ic_play_pause);
         //noinspection ConstantConditions
         play.setBounds(0, 0, play.getIntrinsicWidth() * 3 / 2, play.getIntrinsicHeight() * 3 / 2);
-        play.setTint(res.getColor(R.color.colorAccent));
+        play.setTint(res.getColor(R.color.colorAccent, null));
         ImageSpan span = new ImageSpan(play, ImageSpan.ALIGN_BOTTOM);
         final Rect bounds = span.getDrawable().getBounds();
         result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -638,9 +638,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         Resources res = ctx.getResources();
         DisplayMetrics metrics = res.getDisplayMetrics();
-        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble),
+        QuotedSpan style = new QuotedSpan(res.getColor(R.color.colorReplyBubble, null),
                 CORNER_RADIUS_DP * metrics.density,
-                res.getColor(R.color.colorAccent),
+                res.getColor(R.color.colorAccent, null),
                 QUOTE_STRIPE_WIDTH_DP * metrics.density,
                 STRIPE_GAP_DP * metrics.density);
         return outer.append(inner, style, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

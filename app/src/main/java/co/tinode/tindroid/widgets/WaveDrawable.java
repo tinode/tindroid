@@ -8,6 +8,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.util.Log;
 
 import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
@@ -90,12 +91,12 @@ public class WaveDrawable extends Drawable implements Runnable {
         mPastBarPaint.setStrokeWidth(sLineWidth);
         mPastBarPaint.setStrokeCap(Paint.Cap.ROUND);
         mPastBarPaint.setAntiAlias(true);
-        mPastBarPaint.setColor(res.getColor(R.color.waveformPast));
+        mPastBarPaint.setColor(res.getColor(R.color.waveformPast, null));
 
         // Seek thumb.
         mThumbPaint = new Paint();
         mThumbPaint.setAntiAlias(true);
-        mThumbPaint.setColor(res.getColor(R.color.colorAccent));
+        mThumbPaint.setColor(res.getColor(R.color.colorAccent, null));
     }
 
     @Override
