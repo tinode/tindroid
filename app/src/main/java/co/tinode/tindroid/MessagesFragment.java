@@ -6,7 +6,11 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.media.audiofx.AutomaticGainControl;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -121,7 +125,14 @@ public class MessagesFragment extends Fragment {
 
     private MediaRecorder mAudioRecorder = null;
     private File mAudioRecord = null;
+    // Timestamp when the recording was started.
     private long mRecordingStarted = 0;
+    // Duration of audio recording.
+    private int mAudioRecordDuration = 0;
+    // Playback of audio recording.
+    private MediaPlayer mAudioPlayer = null;
+    // Preview or audio amplitudes.
+    private AudioSampler mAudioSampler = null;
 
     private final Handler mAudioSamplingHandler = new Handler(Looper.getMainLooper());
 
@@ -493,10 +504,10 @@ public class MessagesFragment extends Fragment {
         ImageView wave = view.findViewById(R.id.audioWave);
         wave.setBackground(new WaveDrawable(getResources()));
         ImageView waveShort = view.findViewById(R.id.audioWaveShort);
+        waveShort.setBackground(new WaveDrawable(getResources()));
         // Recording timer.
         TextView timerView = view.findViewById(R.id.duration);
         TextView timerShortView = view.findViewById(R.id.durationShort);
-        waveShort.setBackground(new WaveDrawable(getResources()));
         // Launch audio recorder.
         AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
         final Runnable visualizer = new Runnable() {
@@ -504,6 +515,7 @@ public class MessagesFragment extends Fragment {
             public void run() {
                 if (mAudioRecorder != null) {
                     int x = mAudioRecorder.getMaxAmplitude();
+                    mAudioSampler.put(x);
                     if (mVisibleSendPanel == R.id.recordAudioPanel) {
                         ((WaveDrawable) wave.getBackground()).put(x);
                         timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
@@ -537,7 +549,7 @@ public class MessagesFragment extends Fragment {
             public boolean onUp(float x, float y) {
                 if (mAudioRecorder != null) {
                     sendAudio(activity);
-                    releaseAudioRecorder(true);
+                    releaseAudio(true);
                 }
 
                 mab.setVisibility(View.INVISIBLE);
@@ -560,16 +572,14 @@ public class MessagesFragment extends Fragment {
                 audio.setVisibility(View.VISIBLE);
                 if (id == ZONE_CANCEL) {
                     if (mAudioRecorder != null) {
-                        releaseAudioRecorder(false);
+                        releaseAudio(false);
                     }
-
                     setSendPanelVisible(activity, R.id.sendMessagePanel);
-                    releaseAudioRecorder(false);
+                    releaseAudio(false);
                 } else {
                     playButton.setVisibility(View.GONE);
                     stopButton.setVisibility(View.VISIBLE);
                     setSendPanelVisible(activity, R.id.recordAudioPanel);
-                    activity.findViewById(R.id.audioWave).setBackground(new WaveDrawable(activity.getResources()));
                 }
                 return true;
             }
@@ -636,26 +646,40 @@ public class MessagesFragment extends Fragment {
         });
 
         view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
-            releaseAudioRecorder(false);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.stop();
+            releaseAudio(false);
             setSendPanelVisible(activity, R.id.sendMessagePanel);
         });
         playButton.setOnClickListener(v -> {
             pauseButton.setVisibility(View.VISIBLE);
             playButton.setVisibility(View.GONE);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.start();
+            initAudioPlayer(wd, playButton, pauseButton);
+            mAudioPlayer.start();
             Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
         });
         pauseButton.setOnClickListener(v -> {
             playButton.setVisibility(View.VISIBLE);
             pauseButton.setVisibility(View.GONE);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.stop();
+            mAudioPlayer.pause();
         });
         stopButton.setOnClickListener(v -> {
             playButton.setVisibility(View.VISIBLE);
             v.setVisibility(View.GONE);
-            releaseAudioRecorder(true);
+            releaseAudio(true);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.reset();
+            wd.setDuration(mAudioRecordDuration);
+            wd.put(mAudioSampler.obtain(96));
+            wd.seekTo(0f);
         });
         view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
             sendAudio(activity);
-            releaseAudioRecorder(true);
+            releaseAudio(true);
             setSendPanelVisible(activity, R.id.sendMessagePanel);
         });
 
@@ -750,7 +774,7 @@ public class MessagesFragment extends Fragment {
     public void onPause() {
         super.onPause();
 
-        releaseAudioRecorder(false);
+        releaseAudio(false);
 
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -856,18 +880,55 @@ public class MessagesFragment extends Fragment {
             mAudioRecord = File.createTempFile("audio", ".m4a", activity.getCacheDir());
             mAudioRecorder.setOutputFile(mAudioRecord.getAbsolutePath());
             mAudioRecorder.prepare();
+            mAudioSampler = new AudioSampler();
         } catch (IOException ex) {
             Log.i(TAG, "Failed to initialize audio recording", ex);
             Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
             mAudioRecorder.release();
             mAudioRecorder = null;
+            mAudioSampler = null;
         }
     }
 
-    void releaseAudioRecorder(boolean keepRecord) {
+    void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
+        if (mAudioPlayer != null) {
+            return;
+        }
+
+        mAudioPlayer = new MediaPlayer();
+        mAudioPlayer.setOnCompletionListener(mp -> {
+            waveDrawable.reset();
+            pause.setVisibility(View.GONE);
+            play.setVisibility(View.VISIBLE);
+        });
+        mAudioPlayer.setAudioAttributes(
+                new AudioAttributes.Builder().setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
+        try {
+            mAudioPlayer.setDataSource(mAudioRecord.getAbsolutePath());
+            mAudioPlayer.prepare();
+            if (AutomaticGainControl.isAvailable()) {
+                AutomaticGainControl.create(mAudioPlayer.getAudioSessionId()).setEnabled(true);
+            }
+        } catch (IOException | IllegalStateException ex) {
+            Log.e(TAG, "Unable to play recording", ex);
+            Toast.makeText(getActivity(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            mAudioPlayer = null;
+        }
+    }
+
+    void releaseAudio(boolean keepRecord) {
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
             mAudioRecord = null;
+            mRecordingStarted = 0;
+        } else {
+            mAudioRecordDuration = (int) (SystemClock.uptimeMillis() - mRecordingStarted);
+        }
+
+        if (mAudioPlayer != null) {
+            mAudioPlayer.stop();
+            mAudioPlayer.release();
+            mAudioPlayer = null;
         }
 
         if (mAudioRecorder != null) {
@@ -1127,7 +1188,7 @@ public class MessagesFragment extends Fragment {
     }
 
     private void sendAudio(Activity activity) {
-        Log.i(TAG, "Send audio!!!");
+        Log.i(TAG, "Send audio!!! preview=" + Arrays.toString(mAudioSampler.obtain(16)));
         mAudioRecord.delete();
         mAudioRecord = null;
     }
@@ -1200,58 +1261,122 @@ public class MessagesFragment extends Fragment {
         private final static int VISUALIZATION_BARS = 128;
         private final float[] mSamples;
         private final float[] mScratchBuff;
-        // Number of at least partially filled buckets in the scratch buffer.
-        private int mContains;
+        // The index of a bucket being filled.
+        private int mBucketIndex;
         // Number of samples per bucket in mScratchBuff.
         private int mAggregate;
         // Number of samples added the the current bucket.
-        private int mSampleCount;
+        private int mSamplesPerBucket;
 
         AudioSampler() {
             mSamples = new float[VISUALIZATION_BARS * 2];
-            mScratchBuff = new float[VISUALIZATION_BARS * 2];
-            mContains = 0;
-            mSampleCount = 0;
+            mScratchBuff = new float[VISUALIZATION_BARS];
+            mBucketIndex = 0;
+            mSamplesPerBucket = 0;
             mAggregate = 1;
         }
 
         public void put(int val) {
-            // Check if the current bucket is full.
-            if (mSampleCount == mAggregate) {
-                // Normalize the bucket.
-                mScratchBuff[mContains] = (float) mScratchBuff[mContains] / (float) mSampleCount;
-                mContains ++;
-                mSampleCount = 0;
-            }
-            // Check if scratch buffer is full.
-            if (mContains == VISUALIZATION_BARS) {
+            // Fill out the main buffer first.
+            if (mAggregate == 1) {
+                if (mBucketIndex < mSamples.length) {
+                    mSamples[mBucketIndex] = val;
+                    mBucketIndex++;
+                    return;
+                }
                 compact();
             }
-            mScratchBuff[mContains] += val;
-            mSampleCount ++;
+
+            // Check if the current bucket is full.
+            if (mSamplesPerBucket == mAggregate) {
+                // Normalize the bucket.
+                mScratchBuff[mBucketIndex] = (float) mScratchBuff[mBucketIndex] / (float) mSamplesPerBucket;
+                mBucketIndex++;
+                mSamplesPerBucket = 0;
+            }
+            // Check if scratch buffer is full.
+            if (mBucketIndex == mScratchBuff.length) {
+                compact();
+            }
+            mScratchBuff[mBucketIndex] += val;
+            mSamplesPerBucket++;
         }
 
-        public float[] obtain(int sampleCount) {
-            return mSamples;
+        // Get the count of available samples in the main buffer + scratch buffer.
+        private int length() {
+            if (mAggregate == 1) {
+                // Only the main buffer is available.
+                return mBucketIndex;
+            }
+            // Completely filled main buffer + partially filled scratch buffer.
+            return mSamples.length + mBucketIndex + 1;
+        }
+
+        // Get bucket content at the given index from the main + scratch buffer.
+        private float getAt(int index) {
+            // Index into the main buffer.
+            if (index < mSamples.length) {
+                return mSamples[index];
+            }
+            // Index into scratch buffer.
+            index -= mSamples.length;
+            if (index < mBucketIndex) {
+                return mScratchBuff[index];
+            }
+            // Last partially filled bucket in the scratch buffer.
+            return mScratchBuff[index] / mSamplesPerBucket;
+        }
+
+        public byte[] obtain(int dstCount) {
+            // We can only return as many as we have.
+            float[] dst = new float[dstCount];
+            int srcCount = length();
+            // Resampling factor. Couple be lower or higher than 1.
+            float factor = (float) srcCount / dstCount;
+            float max = -1;
+            // src = 100, dst = 200, factor = 0.5
+            // src = 200, dst = 100, factor = 2.0
+            for (int i = 0; i < dstCount; i++) {
+                int lo = (int) (i * factor); // low bound;
+                int hi = (int) ((i + 1) * factor); // high bound;
+                if (hi == lo) {
+                    dst[i] = getAt(lo);
+                } else {
+                    float amp = 0f;
+                    for (int j = lo; j < hi; j++) {
+                        amp += getAt(j);
+                    }
+                    dst[i] = Math.max(0, amp / (hi - lo));
+                }
+                max = Math.max(dst[i], max);
+            }
+
+            byte[] result = new byte[dst.length];
+            if (max > 0) {
+                for (int i = 0; i < dst.length; i++) {
+                    result[i] = (byte) (100f * dst[i] / max);
+                }
+            }
+
+            return result;
         }
 
         // Downscale the amplitudes 2x.
         private void compact() {
-            for (int i = 0; i < VISUALIZATION_BARS; i ++) {
-                // Donwsample the main buffer: two consecutive samples make one new sample.
+            int len = VISUALIZATION_BARS / 2;
+            // Donwsample the main buffer: two consecutive samples make one new sample.
+            for (int i = 0; i < len; i ++) {
                 mSamples[i] = (mSamples[i * 2] + mSamples[i * 2 + 1]) * 0.5f;
             }
-            for (int i = 0; i < VISUALIZATION_BARS; i ++) {
-                // Donwsample the scratch buffer and copy it to the second half of the main buffer.
-                mSamples[i + VISUALIZATION_BARS] = (mScratchBuff[i * 2] + mScratchBuff[i * 2 + 1]) * 0.5f;
-            }
-            // Clean the scratch buffer
+            // Copy scratch buffer to the upper half the the main buffer.
+            System.arraycopy(mScratchBuff, 0, mSamples, len, len);
+            // Clear the scratch buffer.
             Arrays.fill(mScratchBuff, 0f);
             // Double the number of samples per bucket.
             mAggregate *= 2;
             // Reset scratch counters.
-            mContains = 0;
-            mSampleCount = 0;
+            mBucketIndex = 0;
+            mSamplesPerBucket = 0;
         }
     }
 }

@@ -8,7 +8,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
-import android.util.Log;
 
 import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
@@ -39,6 +38,8 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     // Current thumb position as a fraction of the total 0..1
     private float mSeekPosition = -1f;
+
+    private byte[] mOriginal;
 
     // Amplitude values received from the caller and resampled to fit the screen.
     private float[] mBuffer;
@@ -107,6 +108,13 @@ public class WaveDrawable extends Drawable implements Runnable {
 
         // Recalculate frame duration (2 pixels per frame).
         mFrameDuration = Math.max(mDuration / mSize.width() * 2, MIN_FRAME_DURATION);
+
+        if (mOriginal != null) {
+            resampleBars(mOriginal, mBuffer);
+            mIndex = 0;
+            mContains = mBuffer.length;
+            recalcBars();
+        }
         invalidateSelf();
     }
 
@@ -208,7 +216,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     public void setDuration(int millis) {
         mDuration = millis;
-        mFrameDuration = Math.min(mDuration / mSize.width(), MIN_FRAME_DURATION);
+        mFrameDuration = Math.max(mDuration / mSize.width(), MIN_FRAME_DURATION);
     }
 
     public void seekTo(@FloatRange(from = 0f, to = 1f) float fraction) {
@@ -242,6 +250,11 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     // Add entire waveform at once.
     public void put(byte[] amplitudes) {
+        mOriginal = amplitudes;
+        if (mBuffer == null) {
+            return;
+        }
+
         resampleBars(amplitudes, mBuffer);
         mIndex = 0;
         mContains = mBuffer.length;
@@ -302,7 +315,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     // Quick and dirty resampling of the original preview bars into a smaller (or equal) number of bars we can display here.
     private static void resampleBars(byte[] src, float[] dst) {
-        // Resampling factor. Couple be lower or higher than 1.
+        // Resampling factor. Could be lower or higher than 1.
         float factor = (float) src.length / dst.length;
         float max = -1;
         // src = 100, dst = 200, factor = 0.5
