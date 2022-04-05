@@ -341,11 +341,9 @@ public class AttachmentHandler extends Worker {
     }
 
     // Send audio recording.
-    private static Drafty draftyAudio(String mimeType, byte[] bits, byte[] preview, String refUrl,
+    private static Drafty draftyAudio(String mimeType, byte[] preview, byte[] bits, String refUrl,
                                       int duration, String fname, long size) {
-        Drafty content = new Drafty();
-        content.insertAudio(0, mimeType, bits, preview, duration, fname, wrapRefUrl(refUrl), size);
-        return content;
+        return new Drafty().insertAudio(0, mimeType, bits, preview, duration, fname, wrapRefUrl(refUrl), size);
     }
 
     // Send image.
@@ -468,23 +466,29 @@ public class AttachmentHandler extends Worker {
                     byte[] previewBits = null;
                     // Update draft with file or image data.
                     String ref = "mid:uploading-" + msgId;
+                    Drafty msgDraft = null;
                     if (ARG_OPERATION_FILE.equals(operation)) {
-                        store.msgDraftUpdate(topic, msgId, draftyAttachment(uploadDetails.mimeType,
-                                fname, ref, -1));
+                        msgDraft = draftyAttachment(uploadDetails.mimeType, fname, ref, uploadDetails.fileSize);
                     } else if (ARG_OPERATION_IMAGE.equals(operation)) {
                         // Create a tiny preview bitmap.
                         if (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM || bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM) {
                             previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
                                     UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
                         }
-                        store.msgDraftUpdate(topic, msgId,
-                                draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        uploadDetails.mimeType, previewBits, ref, uploadDetails.imageWidth,
-                                        uploadDetails.imageHeight, fname, -1));
+                        msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, previewBits,
+                                ref, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, uploadDetails.fileSize);
                     } else if (ARG_OPERATION_AUDIO.equals(operation)) {
-                        store.msgDraftUpdate(topic, msgId,
-                                draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW), ref,
-                                        uploadDetails.duration, fname, -1));
+                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
+                        uploadDetails.mimeType = uploadDetails.mimeType == null ?
+                                args.getString(ARG_MIME_TYPE) : "audio/aac";
+                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW), null,
+                                ref, uploadDetails.duration, fname, uploadDetails.fileSize);
+                    }
+
+                    if (msgDraft != null) {
+                        store.msgDraftUpdate(topic, msgId, msgDraft);
+                    } else {
+                        throw new IllegalArgumentException("Unknown operation " + operation);
                     }
 
                     setProgressAsync(new Data.Builder()
@@ -507,12 +511,19 @@ public class AttachmentHandler extends Worker {
                     if (success) {
                         String url = msg.ctrl.getStringParam("url", null);
                         result.putString(ARG_REMOTE_URI, url);
-                        if ("file".equals(operation)) {
-                            content = draftyAttachment(uploadDetails.mimeType, fname, url, uploadDetails.fileSize);
-                        } else {
-                            content = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
-                                    previewBits, url, uploadDetails.imageWidth, uploadDetails.imageHeight,
-                                    fname, uploadDetails.fileSize);
+                        switch (operation) {
+                            case ARG_OPERATION_FILE:
+                                content = draftyAttachment(uploadDetails.mimeType, fname, url, uploadDetails.fileSize);
+                                break;
+                            case ARG_OPERATION_IMAGE:
+                                content = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
+                                        previewBits, url, uploadDetails.imageWidth, uploadDetails.imageHeight,
+                                        fname, uploadDetails.fileSize);
+                                break;
+                            case ARG_OPERATION_AUDIO:
+                                content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
+                                        null, ref, uploadDetails.duration, fname, uploadDetails.fileSize);
+                                break;
                         }
                     }
                 } else {
@@ -524,9 +535,10 @@ public class AttachmentHandler extends Worker {
                     }
 
                     byte[] bits = baos.toByteArray();
-                    if ("file".equals(operation)) {
-                        store.msgDraftUpdate(topic, msgId, draftyFile(uploadDetails.mimeType, bits, fname));
-                    } else {
+                    Drafty msgDraft = null;
+                    if (ARG_OPERATION_FILE.equals(operation)) {
+                        msgDraft = draftyFile(uploadDetails.mimeType, bits, fname);
+                    } else if (ARG_OPERATION_IMAGE.equals(operation)) {
                         if (uploadDetails.imageWidth == 0) {
                             BitmapFactory.Options options = new BitmapFactory.Options();
                             options.inJustDecodeBounds = true;
@@ -538,10 +550,21 @@ public class AttachmentHandler extends Worker {
                             uploadDetails.imageWidth = options.outWidth;
                             uploadDetails.imageHeight = options.outHeight;
                         }
-                        store.msgDraftUpdate(topic, msgId,
-                                draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        uploadDetails.mimeType, bits, null, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, len));
+                        msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, bits,
+                                null, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, len);
+                    } else if (ARG_OPERATION_AUDIO.equals(operation)) {
+                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
+                        uploadDetails.mimeType = uploadDetails.mimeType == null ? args.getString(ARG_MIME_TYPE) : "audio/aac";
+                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
+                                bits, null, uploadDetails.duration, fname, bits.length);
                     }
+
+                    if (msgDraft != null) {
+                        store.msgDraftUpdate(topic, msgId, msgDraft);
+                    } else {
+                        throw new IllegalArgumentException("Unknown operation " + operation);
+                    }
+
                     success = true;
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
@@ -557,6 +580,9 @@ public class AttachmentHandler extends Worker {
         } finally {
             if (bmp != null) {
                 bmp.recycle();
+            }
+            if (ARG_OPERATION_AUDIO.equals(operation) && filePath != null) {
+                new File(filePath).delete();
             }
             if (is != null) {
                 try {
@@ -728,5 +754,6 @@ public class AttachmentHandler extends Worker {
         long fileSize;
         int imageWidth;
         int imageHeight;
+        int duration;
     }
 }

@@ -549,8 +549,8 @@ public class MessagesFragment extends Fragment {
             @Override
             public boolean onUp(float x, float y) {
                 if (mAudioRecorder != null) {
-                    sendAudio(activity);
                     releaseAudio(true);
+                    sendAudio(activity);
                 }
 
                 mab.setVisibility(View.INVISIBLE);
@@ -678,8 +678,8 @@ public class MessagesFragment extends Fragment {
             wd.seekTo(0f);
         });
         view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
-            sendAudio(activity);
             releaseAudio(true);
+            sendAudio(activity);
             setSendPanelVisible(activity, R.id.sendMessagePanel);
         });
 
@@ -1199,9 +1199,9 @@ public class MessagesFragment extends Fragment {
 
         byte[] preview = mAudioSampler.obtain(96);
         args.putByteArray(AttachmentHandler.ARG_AUDIO_PREVIEW, preview);
+        args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, Uri.fromFile(mAudioRecord));
         args.putString(AttachmentHandler.ARG_FILE_PATH, mAudioRecord.getAbsolutePath());
         args.putInt(AttachmentHandler.ARG_AUDIO_DURATION, mAudioRecordDuration);
-        args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
         args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_AUDIO);
         args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
         AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_AUDIO, args);

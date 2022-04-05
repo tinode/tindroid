@@ -696,10 +696,10 @@ public class Drafty implements Serializable {
      * @param mime Content-type, such as 'audio/aac'.
      * @param bits Audio content to include inline.
      * @param preview Amplitude bars to show as preview.
-     * @param refurl Reference to audio content sent out of band.
-     * @param size File size hint as reported by the client.
      * @param duration Record duration in milliseconds.
      * @param fname Optional file name to suggest to the receiver.
+     * @param refurl Reference to audio content sent out of band.
+     * @param size File size hint as reported by the client.
      *
      * @return <code>this</code> Drafty document.
      */
