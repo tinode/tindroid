@@ -56,6 +56,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
@@ -486,7 +487,7 @@ public class MessagesFragment extends Fragment {
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private AppCompatImageButton setupAudioForms(Activity activity, View view) {
+    private AppCompatImageButton setupAudioForms(AppCompatActivity activity, View view) {
         // Audio recorder button.
         MovableActionButton mab = view.findViewById(R.id.audioRecorder);
         // Lock button
@@ -658,7 +659,6 @@ public class MessagesFragment extends Fragment {
             wd.start();
             initAudioPlayer(wd, playButton, pauseButton);
             mAudioPlayer.start();
-            Log.i(TAG, "Playback audio from " + mAudioRecord.getAbsolutePath());
         });
         pauseButton.setOnClickListener(v -> {
             playButton.setVisibility(View.VISIBLE);
@@ -1187,10 +1187,24 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void sendAudio(Activity activity) {
-        Log.i(TAG, "Send audio!!! preview=" + Arrays.toString(mAudioSampler.obtain(16)));
-        mAudioRecord.delete();
-        mAudioRecord = null;
+    private void sendAudio(AppCompatActivity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        Bundle args = getArguments();
+        if (args == null) {
+            return;
+        }
+
+        byte[] preview = mAudioSampler.obtain(96);
+        args.putByteArray(AttachmentHandler.ARG_AUDIO_PREVIEW, preview);
+        args.putString(AttachmentHandler.ARG_FILE_PATH, mAudioRecord.getAbsolutePath());
+        args.putInt(AttachmentHandler.ARG_AUDIO_DURATION, mAudioRecordDuration);
+        args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
+        args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_AUDIO);
+        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_AUDIO, args);
     }
 
     private void cancelPreview(Activity activity) {

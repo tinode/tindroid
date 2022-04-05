@@ -65,6 +65,8 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION = "operation";
     final static String ARG_OPERATION_IMAGE = "image";
     final static String ARG_OPERATION_FILE = "file";
+    final static String ARG_OPERATION_AUDIO = "audio";
+
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
     final static String ARG_LOCAL_URI = "local_uri";
@@ -83,6 +85,8 @@ public class AttachmentHandler extends Worker {
     final static String ARG_AVATAR = "square_img";
     final static String ARG_IMAGE_WIDTH = "width";
     final static String ARG_IMAGE_HEIGHT = "height";
+    final static String ARG_AUDIO_DURATION = "duration";
+    final static String ARG_AUDIO_PREVIEW = "preview";
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
@@ -119,10 +123,16 @@ public class AttachmentHandler extends Worker {
 
         try (Cursor cursor = resolver.query(uri, projection, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
-                fname = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
-                fsize = cursor.getLong(cursor.getColumnIndex(OpenableColumns.SIZE));
+                int idx = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) {
+                    fname = cursor.getString(idx);
+                }
+                idx = cursor.getColumnIndex(OpenableColumns.SIZE);
+                if (idx >= 0) {
+                    fsize = cursor.getLong(idx);
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    int idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
+                    idx = cursor.getColumnIndex(MediaStore.MediaColumns.ORIENTATION);
                     if (idx >= 0) {
                         orientation = cursor.getInt(idx);
                     }
@@ -179,8 +189,18 @@ public class AttachmentHandler extends Worker {
                     .putString(ARG_LOCAL_URI, uri.toString())
                     .putLong(ARG_MSG_ID, msg.getDbId())
                     .putString(ARG_TOPIC_NAME, topicName)
+                    .putInt(ARG_AUDIO_DURATION, args.getInt(ARG_AUDIO_DURATION))
+                    .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
+                    .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
+                    .putString(ARG_MIME_TYPE, args.getString(ARG_MIME_TYPE))
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
                     .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
+            if (ARG_OPERATION_AUDIO.equals(operation)) {
+                byte[] preview = args.getByteArray(ARG_AUDIO_PREVIEW);
+                if (preview != null) {
+                    data.putByteArray(ARG_AUDIO_PREVIEW, preview);
+                }
+            }
             Constraints constraints = new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build();
@@ -306,10 +326,7 @@ public class AttachmentHandler extends Worker {
                                 .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fname))));
     }
 
-    // Send image in-band
-    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, String refUrl,
-                                      int width, int height, String fname, long size) {
-        Drafty content = new Drafty();
+    private static @Nullable URI wrapRefUrl(@Nullable String refUrl) {
         URI ref = null;
         if (refUrl != null) {
             try {
@@ -320,7 +337,22 @@ public class AttachmentHandler extends Worker {
             } catch (URISyntaxException | MalformedURLException ignored) {
             }
         }
-        content.insertImage(0, mimeType, bits, width, height, fname, ref, size);
+        return ref;
+    }
+
+    // Send audio recording.
+    private static Drafty draftyAudio(String mimeType, byte[] bits, byte[] preview, String refUrl,
+                                      int duration, String fname, long size) {
+        Drafty content = new Drafty();
+        content.insertAudio(0, mimeType, bits, preview, duration, fname, wrapRefUrl(refUrl), size);
+        return content;
+    }
+
+    // Send image.
+    private static Drafty draftyImage(String caption, String mimeType, byte[] bits, String refUrl,
+                                      int width, int height, String fname, long size) {
+        Drafty content = new Drafty();
+        content.insertImage(0, mimeType, bits, width, height, fname, wrapRefUrl(refUrl), size);
         if (!TextUtils.isEmpty(caption)) {
             content.appendLineBreak()
                     .append(Drafty.fromPlainText(caption));
@@ -359,7 +391,7 @@ public class AttachmentHandler extends Worker {
     private ListenableWorker.Result uploadMessageAttachment(final Context context, final Data args) {
         Storage store = BaseDb.getInstance().getStore();
 
-        // File upload "file" or "image".
+        // File upload "file", "image", "audio".
         final String operation = args.getString(ARG_OPERATION);
         final String topicName = args.getString(ARG_TOPIC_NAME);
         // URI must exist.
@@ -404,7 +436,7 @@ public class AttachmentHandler extends Worker {
             final ContentResolver resolver = context.getContentResolver();
 
             // Image is being attached. Ensure the image has correct orientation and size.
-            if ("image".equals(operation)) {
+            if (ARG_OPERATION_IMAGE.equals(operation)) {
                 // Make sure the image is not too large in byte-size and in linear dimensions.
                 bmp = prepareImage(resolver, uri, uploadDetails);
                 is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
@@ -436,21 +468,23 @@ public class AttachmentHandler extends Worker {
                     byte[] previewBits = null;
                     // Update draft with file or image data.
                     String ref = "mid:uploading-" + msgId;
-                    if ("file".equals(operation)) {
+                    if (ARG_OPERATION_FILE.equals(operation)) {
                         store.msgDraftUpdate(topic, msgId, draftyAttachment(uploadDetails.mimeType,
                                 fname, ref, -1));
-                    } else {
+                    } else if (ARG_OPERATION_IMAGE.equals(operation)) {
                         // Create a tiny preview bitmap.
-                        if (bmp != null &&
-                                (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM ||
-                                        bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM)) {
+                        if (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM || bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM) {
                             previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
                                     UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
                         }
                         store.msgDraftUpdate(topic, msgId,
                                 draftyImage(args.getString(ARG_IMAGE_CAPTION),
-                                        uploadDetails.mimeType, previewBits, ref, uploadDetails.imageWidth, uploadDetails.imageHeight,
-                                        fname, -1));
+                                        uploadDetails.mimeType, previewBits, ref, uploadDetails.imageWidth,
+                                        uploadDetails.imageHeight, fname, -1));
+                    } else if (ARG_OPERATION_AUDIO.equals(operation)) {
+                        store.msgDraftUpdate(topic, msgId,
+                                draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW), ref,
+                                        uploadDetails.duration, fname, -1));
                     }
 
                     setProgressAsync(new Data.Builder()

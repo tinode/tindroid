@@ -690,6 +690,49 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Insert audio recording into Drafty document.
+     *
+     * @param at location to insert at.
+     * @param mime Content-type, such as 'audio/aac'.
+     * @param bits Audio content to include inline.
+     * @param preview Amplitude bars to show as preview.
+     * @param refurl Reference to audio content sent out of band.
+     * @param size File size hint as reported by the client.
+     * @param duration Record duration in milliseconds.
+     * @param fname Optional file name to suggest to the receiver.
+     *
+     * @return <code>this</code> Drafty document.
+     */
+    public Drafty insertAudio(int at,
+                              @NotNull String mime,
+                              byte[] bits,
+                              byte[] preview,
+                              int duration,
+                              @Nullable String fname,
+                              @Nullable URI refurl,
+                              long size) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either audio bits or reference URL must not be null.");
+        }
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("mime", mime);
+        addOrSkip(data, "val", bits);
+        data.put("duration", duration);
+        addOrSkip(data, "preview", preview);
+        addOrSkip(data,"name", fname);
+        if (refurl != null) {
+            addOrSkip(data, "ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
+
+        insert(at, " ", "AU", data);
+        return this;
+    }
+
+    /**
      * Append one Drafty document to another Drafty document
      *
      * @param that Drafty document to append to the current document.
