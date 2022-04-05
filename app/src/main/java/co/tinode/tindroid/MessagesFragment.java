@@ -503,7 +503,16 @@ public class MessagesFragment extends Fragment {
         AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
         // ImageView with waveform visualization.
         ImageView wave = view.findViewById(R.id.audioWave);
-        wave.setBackground(new WaveDrawable(getResources()));
+        wave.setBackground(new WaveDrawable(getResources(), 5));
+        wave.setOnTouchListener((v, event) -> {
+            if (mAudioRecordDuration > 0 && mAudioPlayer != null && event.getAction() == MotionEvent.ACTION_DOWN) {
+                float fraction = event.getX() / v.getWidth();
+                mAudioPlayer.seekTo((int) (fraction * mAudioRecordDuration));
+                ((WaveDrawable) v.getBackground()).seekTo(fraction);
+                return true;
+            }
+            return false;
+        });
         ImageView waveShort = view.findViewById(R.id.audioWaveShort);
         waveShort.setBackground(new WaveDrawable(getResources()));
         // Recording timer.
@@ -613,7 +622,6 @@ public class MessagesFragment extends Fragment {
                 audio.setVisibility(View.INVISIBLE);
                 mab.requestFocus();
                 setSendPanelVisible(activity, R.id.recordAudioShortPanel);
-                activity.findViewById(R.id.audioWaveShort).setBackground(new WaveDrawable(activity.getResources()));
                 // Cancel zone on the left.
                 int x = mab.getLeft();
                 int y = mab.getTop();

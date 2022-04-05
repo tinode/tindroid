@@ -8,7 +8,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
-import android.util.Log;
 
 import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
@@ -64,10 +63,12 @@ public class WaveDrawable extends Drawable implements Runnable {
     private final Paint mThumbPaint;
 
     private Rect mSize = new Rect();
+    // Padding on the left.
+    private int mLeftPadding = 0;
 
     private CompletionListener mCompletionListener = null;
 
-    public WaveDrawable(Resources res) {
+    public WaveDrawable(Resources res, int leftPaddingDP) {
         super();
 
         if (sDensity <= 0) {
@@ -76,6 +77,8 @@ public class WaveDrawable extends Drawable implements Runnable {
             sSpacing = SPACING * sDensity;
             sThumbRadius = sLineWidth * 1.5f;
         }
+
+        mLeftPadding = (int) (leftPaddingDP * sDensity);
 
         // Waveform in the future.
         mBarPaint = new Paint();
@@ -99,16 +102,20 @@ public class WaveDrawable extends Drawable implements Runnable {
         mThumbPaint.setColor(res.getColor(R.color.colorAccent, null));
     }
 
+    public WaveDrawable(Resources res) {
+        this(res, 0);
+    }
+
     @Override
     protected void onBoundsChange(Rect bounds) {
         mSize = new Rect(bounds);
 
-        int maxBars = (int) ((mSize.width() - sSpacing) / (sLineWidth + sSpacing));
+        int maxBars = (int) ((mSize.width() - sSpacing - mLeftPadding) / (sLineWidth + sSpacing));
         mEffectiveWidth = (int) (maxBars * (sLineWidth + sSpacing) + sSpacing);
         mBuffer = new float[maxBars];
 
         // Recalculate frame duration (2 pixels per frame).
-        mFrameDuration = Math.max(mDuration / mSize.width() * 2, MIN_FRAME_DURATION);
+        mFrameDuration = Math.max(mDuration / mEffectiveWidth * 2, MIN_FRAME_DURATION);
 
         if (mOriginal != null) {
             resampleBars(mOriginal, mBuffer);
@@ -217,7 +224,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     public void setDuration(int millis) {
         mDuration = millis;
-        mFrameDuration = Math.max(mDuration / mSize.width(), MIN_FRAME_DURATION);
+        mFrameDuration = Math.max(mDuration / mEffectiveWidth * 2, MIN_FRAME_DURATION);
     }
 
     public void seekTo(@FloatRange(from = 0f, to = 1f) float fraction) {
@@ -294,7 +301,7 @@ public class WaveDrawable extends Drawable implements Runnable {
             }
 
             // startX, endX
-            float x = 1.0f + i * (sLineWidth + sSpacing) + sLineWidth * 0.5f;
+            float x = mLeftPadding + 1.0f + i * (sLineWidth + sSpacing) + sLineWidth * 0.5f;
             // Y length
             float y = amp / max * height * 0.9f;
             // startX
