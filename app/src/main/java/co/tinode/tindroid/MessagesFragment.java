@@ -920,10 +920,11 @@ public class MessagesFragment extends Fragment {
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
             mAudioRecord = null;
-            mRecordingStarted = 0;
-        } else {
+            mAudioRecordDuration = 0;
+        } else if (mRecordingStarted != 0) {
             mAudioRecordDuration = (int) (SystemClock.uptimeMillis() - mRecordingStarted);
         }
+        mRecordingStarted = 0;
 
         if (mAudioPlayer != null) {
             mAudioPlayer.stop();
