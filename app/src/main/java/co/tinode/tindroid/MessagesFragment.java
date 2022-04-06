@@ -871,7 +871,7 @@ public class MessagesFragment extends Fragment {
         mRefresher.setRefreshing(active);
     }
 
-    void initAudioRecorder(Activity activity) {
+    private void initAudioRecorder(Activity activity) {
         if (mAudioRecord != null) {
             mAudioRecord.delete();
             mAudioRecord = null;
@@ -898,7 +898,7 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
+    private void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
         if (mAudioPlayer != null) {
             return;
         }
@@ -924,7 +924,7 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    void releaseAudio(boolean keepRecord) {
+    private void releaseAudio(boolean keepRecord) {
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
             mAudioRecord = null;
@@ -936,6 +936,7 @@ public class MessagesFragment extends Fragment {
 
         if (mAudioPlayer != null) {
             mAudioPlayer.stop();
+            mAudioPlayer.reset();
             mAudioPlayer.release();
             mAudioPlayer = null;
         }
@@ -947,6 +948,7 @@ public class MessagesFragment extends Fragment {
             mAudioRecorder = null;
         }
     }
+
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicConfirmationDialog(final Activity activity, boolean del) {
         final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
