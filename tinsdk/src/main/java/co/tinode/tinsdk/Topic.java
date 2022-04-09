@@ -870,6 +870,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                        if (msg.ctrl == null) {
+                            return null;
+                        }
                         if (msg.ctrl.code >= 300) {
                             // 3XX response: already subscribed.
                             mAttached = true;
