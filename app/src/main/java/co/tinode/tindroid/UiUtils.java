@@ -1154,7 +1154,7 @@ public class UiUtils {
         }
     }
 
-    static class ToastFailureListener extends PromisedReply.FailureListener<ServerMessage> {
+    static class ToastFailureListener implements PromisedReply.FailureListener<ServerMessage> {
         private final Activity mActivity;
 
         ToastFailureListener(Activity activity) {

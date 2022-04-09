@@ -2,6 +2,8 @@ package co.tinode.tinsdk;
 
 import android.util.Log;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -367,7 +369,7 @@ public class PromisedReply<T> {
         }
     }
 
-    public static abstract class SuccessListener<U> {
+    public interface SuccessListener<U> {
         /**
          * Callback to execute when the promise is successfully resolved.
          *
@@ -375,10 +377,11 @@ public class PromisedReply<T> {
          * @return new promise to pass to the next handler in the chain or null to use the same result.
          * @throws Exception thrown if handler want to call the next failure handler in chain.
          */
-        public abstract PromisedReply<U> onSuccess(U result) throws Exception;
+        @Nullable
+        PromisedReply<U> onSuccess(U result) throws Exception;
     }
 
-    public static abstract class FailureListener<U> {
+    public interface FailureListener<U> {
         /**
          * Callback to execute when the promise is rejected.
          *
@@ -386,7 +389,8 @@ public class PromisedReply<T> {
          * @return new promise to pass to the next success handler in the chain.
          * @throws Exception thrown if handler want to call the next failure handler in chain.
          */
-        public abstract <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
+        @Nullable
+        <E extends Exception> PromisedReply<U> onFailure(E err) throws Exception;
     }
 
     public static abstract class FinalListener {
