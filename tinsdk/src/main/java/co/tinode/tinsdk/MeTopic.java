@@ -232,7 +232,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 //noinspection unchecked
                 changed = me.merge(meta.desc);
             }
-            if (changed) {
+            if (changed && mStore != null) {
                 mStore.userUpdate(me);
             }
         }
