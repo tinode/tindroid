@@ -36,7 +36,7 @@
                 android:maxWidth="280dp"
                 android:minWidth="100dp"
                 android:paddingStart="18dp"
-                android:paddingEnd="6dp"
+                android:paddingEnd="4dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />

@@ -23,7 +23,7 @@
             android:backgroundTintMode="multiply"
             android:clickable="false"
             android:focusable="false"
-            android:layout_marginStart="30dp"
+            android:layout_marginStart="29dp"
             android:paddingStart="6dp"
             android:paddingEnd="6dp"
             android:orientation="vertical">
@@ -37,6 +37,7 @@
                 android:maxWidth="270dp"
                 android:minWidth="90dp"
                 android:paddingStart="18dp"
+                android:paddingEnd="4dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
