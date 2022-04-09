@@ -68,7 +68,6 @@
     <color name="colorImagePlaceholder">#CCCCCC</color>
 
     <!-- Background colors for LetterTileDrawables. -->
-    -->
     <array name="letter_tile_colors_light">
         <item>#ef9a9a</item>
         <item>#90caf9</item>

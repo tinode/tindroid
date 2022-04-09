@@ -20,6 +20,7 @@
             android:layout_gravity="end"
             android:background="@drawable/bubble_r_z"
             android:backgroundTint="@color/colorMessageBubbleMine"
+            android:backgroundTintMode="multiply"
             android:layout_marginEnd="4dp"
             android:orientation="vertical">
 
@@ -28,8 +29,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
-                android:minWidth="140dp"
+                android:minWidth="100dp"
                 android:paddingStart="8dp"
+                android:paddingEnd="4dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />

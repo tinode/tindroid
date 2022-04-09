@@ -11,9 +11,7 @@
     <FrameLayout
         android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="6dp"
-        android:paddingRight="6dp">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:id="@+id/messageBubble"
@@ -21,8 +19,12 @@
             android:layout_height="wrap_content"
             android:background="@drawable/bubble_l_z"
             android:backgroundTint="@color/colorMessageBubbleOther"
+            android:backgroundTintMode="multiply"
+            android:layout_marginStart="6dp"
             android:clickable="false"
             android:focusable="false"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
             android:orientation="vertical">
 
             <co.tinode.tindroid.widgets.DynamicTextView
@@ -32,8 +34,9 @@
                 android:clickable="false"
                 android:focusable="false"
                 android:maxWidth="280dp"
-                android:minWidth="140dp"
-                android:paddingStart="8dp"
+                android:minWidth="100dp"
+                android:paddingStart="18dp"
+                android:paddingEnd="6dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />

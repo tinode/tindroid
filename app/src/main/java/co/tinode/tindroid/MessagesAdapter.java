@@ -453,10 +453,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 itemType = packViewType(VIEWTYPE_SIDE_CENTER, false, false, false);
             } else {
                 long nextFrom = -2;
+                Date nextDate = null;
                 if (position > 0) {
                     StoredMessage m2 = getMessage(position - 1);
                     if (m2 != null) {
                         nextFrom = m2.userId;
+                        nextDate = m2.ts;
                     }
                 }
                 Date prevDate = null;
@@ -466,11 +468,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         prevDate = m2.ts;
                     }
                 }
-                boolean sameDate = UiUtils.isSameDate(prevDate, m.ts);
                 itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
-                        m.userId != nextFrom || !sameDate,
+                        m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
                         Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
-                        !sameDate);
+                        !UiUtils.isSameDate(prevDate, m.ts));
             }
         }
 

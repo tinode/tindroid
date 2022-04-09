@@ -14,6 +14,7 @@
     android:textSize="11sp"
     android:background="@drawable/bubble"
     android:backgroundTint="@color/colorChipBackground"
+    android:backgroundTintMode="multiply"
     android:clickable="false"
     android:focusable="false"
     tools:text="03/28/2022" />

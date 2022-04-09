@@ -13,8 +13,6 @@
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="2dp"
-        android:paddingRight="2dp"
         android:paddingBottom="4dp">
 
         <com.google.android.material.imageview.ShapeableImageView
@@ -34,7 +32,8 @@
             android:focusable="false"
             android:orientation="vertical"
             android:paddingStart="0dp"
-            android:paddingEnd="4dp">
+            android:paddingEnd="4dp"
+            android:layout_marginStart="30dp">
 
             <LinearLayout
                 android:id="@+id/messageBubble"
@@ -42,6 +41,7 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/bubble_l"
                 android:backgroundTint="@color/colorMessageBubbleOther"
+                android:backgroundTintMode="multiply"
                 android:orientation="vertical">
 
                 <co.tinode.tindroid.widgets.DynamicTextView
@@ -51,7 +51,7 @@
                     android:clickable="false"
                     android:focusable="false"
                     android:maxWidth="270dp"
-                    android:minWidth="130dp"
+                    android:minWidth="90dp"
                     android:paddingStart="8dp"
                     android:textColor="?android:textColorPrimary"
                     tools:ignore="RtlSymmetry"
