@@ -1,17 +1,20 @@
-<co.tinode.tindroid.widgets.RippleFrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
-    <LinearLayout
+    <include layout="@layout/date_bubble" />
+
+    <FrameLayout
         android:id="@+id/content"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingEnd="6dp"
-        android:paddingStart="32dp">
+        android:paddingStart="32dp"
+        android:paddingEnd="6dp">
 
         <LinearLayout
             android:id="@+id/messageBubble"
@@ -27,50 +30,48 @@
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
                 android:maxWidth="270dp"
                 android:minWidth="130dp"
                 android:paddingStart="8dp"
                 android:textColor="?android:textColorPrimary"
-                android:clickable="false"
-                android:focusable="false"
                 tools:ignore="RtlSymmetry"
-                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."/>
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
 
             <TextView
                 android:id="@+id/messageMeta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
+                android:clickable="false"
+                android:focusable="false"
                 android:paddingLeft="4dp"
                 android:paddingRight="4dp"
                 android:textColor="?android:textColorSecondary"
                 android:textSize="11sp"
-                android:clickable="false"
-                android:focusable="false"
                 tools:ignore="SmallSp"
-                tools:text="Jun 11 22:17"/>
+                tools:text="Jun 11 22:17" />
 
 
         </LinearLayout>
-    </LinearLayout>
 
-    <View
-        android:id="@+id/selected"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/colorMessageSelected"
-        android:clickable="false"
-        android:focusable="false"
-        android:visibility="gone"
-        />
+        <View
+            android:id="@+id/selected"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/colorMessageSelected"
+            android:clickable="false"
+            android:focusable="false" />
 
-    <View
-        android:id="@+id/overlay"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="?android:selectableItemBackground"
-        android:clickable="false"
-        android:focusable="false"
-        />
+        <!-- This is a hack. If this view is removed, the @+id/selected does not show -->
+        <View
+            android:id="@+id/overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?android:selectableItemBackground"
+            android:clickable="false"
+            android:focusable="false" />
+    </FrameLayout>
 
-</co.tinode.tindroid.widgets.RippleFrameLayout>
+</LinearLayout>

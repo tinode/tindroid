@@ -22,6 +22,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
@@ -46,6 +47,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,14 +101,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int REFRESH_SOFT = 1;
     private static final int REFRESH_HARD = 2;
 
-    private static final int VIEWTYPE_FULL_LEFT = 0;
-    private static final int VIEWTYPE_SIMPLE_LEFT = 1;
-    private static final int VIEWTYPE_FULL_AVATAR = 2;
-    private static final int VIEWTYPE_SIMPLE_AVATAR = 3;
-    private static final int VIEWTYPE_FULL_RIGHT = 4;
-    private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
-    private static final int VIEWTYPE_CENTER = 6;
-    private static final int VIEWTYPE_INVALID = 100;
+    // Bits defining message bubble variations
+    // _TIP_ == "single", i.e. has a bubble tip.
+    // _SIMPLE_ == no bubble tip, just a rounded rectangle.
+    // _DATE == the date bubble is visible.
+    private static final int VIEWTYPE_SIDE_CENTER = 0b000001;
+    private static final int VIEWTYPE_SIDE_LEFT   = 0b000010;
+    private static final int VIEWTYPE_SIDE_RIGHT  = 0b000100;
+    private static final int VIEWTYPE_TIP         = 0b001000;
+    private static final int VIEWTYPE_AVATAR      = 0b010000;
+    private static final int VIEWTYPE_DATE        = 0b100000;
+    private static final int VIEWTYPE_INVALID     = 0b000000;
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -423,40 +429,49 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    private static int packViewType(int side, boolean tip, boolean avatar, boolean date) {
+        int type = side;
+        if (tip) {
+            type |= VIEWTYPE_TIP;
+        }
+        if (avatar) {
+            type |= VIEWTYPE_AVATAR;
+        }
+        if (date) {
+            type |= VIEWTYPE_DATE;
+        }
+        return type;
+    }
+
     @Override
     public int getItemViewType(int position) {
-        int itemType;
+        int itemType = VIEWTYPE_INVALID;
         StoredMessage m = getMessage(position);
-        Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
-        boolean isChannel = ComTopic.isChannel(mTopicName);
 
-        if (m == null) {
-            return VIEWTYPE_INVALID;
-        }
-
-        if (m.delId > 0) {
-            return VIEWTYPE_CENTER;
-        }
-        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
-        // Zero item position is on the bottom of the screen.
-        long nextFrom = -2;
-        if (position > 0) {
-            StoredMessage m2 = getMessage(position - 1);
-            if (m2 != null) {
-                nextFrom = m2.userId;
+        if (m != null) {
+            if (m.delId > 0) {
+                itemType = packViewType(VIEWTYPE_SIDE_CENTER, false, false, false);
+            } else {
+                long nextFrom = -2;
+                if (position > 0) {
+                    StoredMessage m2 = getMessage(position - 1);
+                    if (m2 != null) {
+                        nextFrom = m2.userId;
+                    }
+                }
+                Date prevDate = null;
+                if (position < getItemCount() - 1) {
+                    StoredMessage m2 = getMessage(position + 1);
+                    if (m2 != null) {
+                        prevDate = m2.ts;
+                    }
+                }
+                boolean sameDate = UiUtils.isSameDate(prevDate, m.ts);
+                itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
+                        m.userId != nextFrom || !sameDate,
+                        Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
+                        !sameDate);
             }
-        }
-
-        final boolean isMine = m.isMine();
-
-        if (m.userId != nextFrom) {
-            itemType = isMine ? VIEWTYPE_FULL_RIGHT :
-                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_FULL_AVATAR :
-                            VIEWTYPE_FULL_LEFT;
-        } else {
-            itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
-                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_SIMPLE_AVATAR :
-                            VIEWTYPE_SIMPLE_LEFT;
         }
 
         return itemType;
@@ -466,39 +481,34 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Create a new message bubble view.
-        View v;
 
-        switch (viewType) {
-            case VIEWTYPE_CENTER:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
-                        parent, false);
-                break;
-            default:
-                v = null;
+        int layoutId = -1;
+        if ((viewType & VIEWTYPE_SIDE_CENTER) != 0) {
+            layoutId = R.layout.meta_message;
+        } else if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
+            if ((viewType & VIEWTYPE_AVATAR) != 0 && (viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_left_single_avatar;
+            } else if ((viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_left_single;
+            } else if ((viewType & VIEWTYPE_AVATAR) != 0) {
+                layoutId = R.layout.message_left_avatar;
+            } else {
+                layoutId = R.layout.message_left;
+            }
+        } else if ((viewType & VIEWTYPE_SIDE_RIGHT) != 0) {
+            if ((viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_right_single;
+            } else {
+                layoutId = R.layout.message_right;
+            }
+        }
+
+        View v = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
+        if (v != null) {
+            View dateBubble = v.findViewById(R.id.dateDivider);
+            if (dateBubble != null) {
+                dateBubble.setVisibility((viewType & VIEWTYPE_DATE) != 0 ? View.VISIBLE : View.GONE);
+            }
         }
 
         return new ViewHolder(v, viewType);
@@ -634,12 +644,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
 
-        if (holder.mMeta != null) {
-            holder.mMeta.setText(UiUtils.shortDate(m.ts));
+        if (m.ts != null) {
+            Context context = holder.itemView.getContext();
+            if (holder.mDateDivider.getVisibility() == View.VISIBLE && m.ts != null) {
+                CharSequence date = DateUtils.getRelativeTimeSpanString(
+                        m.ts.getTime(),
+                        System.currentTimeMillis(),
+                        DateUtils.DAY_IN_MILLIS,
+                        DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
+                holder.mDateDivider.setText(date);
+            }
+            if (holder.mMeta != null) {
+                holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
+            }
         }
 
         if (holder.mDeliveredIcon != null) {
-            if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
+            if ((holder.mViewType & VIEWTYPE_SIDE_RIGHT) != 0) {
                 UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, m.status.value,
                         topic.msgReadCount(m.seq), topic.msgRecvCount(m.seq));
             }
@@ -727,9 +748,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
         int from = vh.mMessageBubble.getResources().getColor(isMine ?
-                R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther);
+                R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther, null);
         int to = vh.mMessageBubble.getResources().getColor(isMine ?
-                R.color.colorMessageBubbleMineFlashing : R.color.colorMessageBubbleOtherFlashing);
+                R.color.colorMessageBubbleMineFlashing : R.color.colorMessageBubbleOtherFlashing, null);
         ValueAnimator colorAnimation = ValueAnimator.ofArgb(from, to, from);
         colorAnimation.setDuration(600); // milliseconds
         colorAnimation.addUpdateListener(animator ->
@@ -926,6 +947,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final ImageView mAvatar;
         final View mMessageBubble;
         final AppCompatImageView mDeliveredIcon;
+        final TextView mDateDivider;
         final TextView mText;
         final TextView mMeta;
         final TextView mUserName;
@@ -947,6 +969,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
+            mDateDivider = itemView.findViewById(R.id.dateDivider);
             mText = itemView.findViewById(R.id.messageText);
             mMeta = itemView.findViewById(R.id.messageMeta);
             mUserName = itemView.findViewById(R.id.userName);
@@ -966,16 +989,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                         @Override
                         public boolean onSingleTapConfirmed(MotionEvent ev) {
+                            Log.i(TAG, "Ripple!");
                             itemView.performClick();
                             return super.onSingleTapConfirmed(ev);
                         }
 
                         @Override
                         public void onShowPress(MotionEvent ev) {
-                            mRippleOverlay.setPressed(true);
-                            mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
+                            Log.i(TAG, "Ripple!");
+                            if (mRippleOverlay != null) {
+                                mRippleOverlay.setPressed(true);
+                                mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
+                            }
                         }
-
                         @Override
                         public boolean onDown(MotionEvent ev) {
                             // Convert click coordinates in itemView to TexView.

@@ -183,26 +183,6 @@ public class UiUtils {
         });
     }
 
-    // Date format relative to present.
-    @NonNull
-    private static CharSequence relativeDateFormat(Context context, Date then) {
-        if (then == null) {
-            return context.getString(R.string.never);
-        }
-        long thenMillis = then.getTime();
-        if (thenMillis == 0) {
-            return context.getString(R.string.never);
-        }
-        long nowMillis = System.currentTimeMillis();
-        if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
-            return context.getString(R.string.just_now);
-        }
-
-        return DateUtils.getRelativeTimeSpanString(thenMillis, nowMillis,
-                DateUtils.MINUTE_IN_MILLIS,
-                DateUtils.FORMAT_ABBREV_ALL);
-    }
-
     // Constructs LayerDrawable with the following layers:
     // 0. [Avatar or LetterTileDrawable]
     // 1. [Online indicator]
@@ -455,6 +435,7 @@ public class UiUtils {
     }
 
     // Date formatter for messages
+    @NonNull
     static String shortDate(Date date) {
         if (date != null) {
             Calendar now = Calendar.getInstance();
@@ -474,7 +455,37 @@ public class UiUtils {
         return "unknown";
     }
 
+    // Time formatter for messages.
+    @NonNull
+    static String timeOnly(Context context, Date date) {
+        if (date != null) {
+            return DateFormat.getTimeInstance(DateFormat.SHORT).format(date.getTime());
+        }
+        return context.getString(R.string.unknown);
+    }
+
+    // Date format relative to present.
+    @NonNull
+    private static CharSequence relativeDateFormat(Context context, Date then) {
+        if (then == null) {
+            return context.getString(R.string.never);
+        }
+        long thenMillis = then.getTime();
+        if (thenMillis == 0) {
+            return context.getString(R.string.never);
+        }
+        long nowMillis = System.currentTimeMillis();
+        if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
+            return context.getString(R.string.just_now);
+        }
+
+        return DateUtils.getRelativeTimeSpanString(thenMillis, nowMillis,
+                DateUtils.MINUTE_IN_MILLIS,
+                DateUtils.FORMAT_ABBREV_ALL);
+    }
+
     // Convert milliseconds to '00:00' format.
+    @NonNull
     static String millisToTime(int millis) {
         StringBuilder sb = new StringBuilder();
         float duration = millis / 1000f;
@@ -488,6 +499,19 @@ public class UiUtils {
             sb.append("0");
         }
         return sb.append(sec).toString();
+    }
+
+    // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.
+    static boolean isSameDate(@Nullable Date one, @Nullable Date two) {
+        if (one == two) {
+            return true;
+        }
+        if (one == null || two == null) {
+            return false;
+        }
+        return (one.getDate() == two.getDate()) &&
+                (one.getMonth() == two.getMonth()) &&
+                (one.getYear() == two.getYear());
     }
 
     static Intent avatarSelectorIntent(@NonNull final Activity activity,
