@@ -1089,7 +1089,6 @@ public class MessagesFragment extends Fragment {
         // Pick image from gallery.
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
-
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Make sure camera is available.
         if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {

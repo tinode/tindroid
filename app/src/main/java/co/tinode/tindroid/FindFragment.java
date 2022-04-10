@@ -328,12 +328,11 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return query;
         }
 
-        final FndTopic<?> fnd = Cache.getTinode().getFndTopic();
-        fnd.setMeta(new MsgSetMeta<>(
+        mFndTopic.setMeta(new MsgSetMeta<>(
                 new MetaSetDesc<>(query == null ? Tinode.NULL_VALUE : query, null)));
         if (query != null) {
             toggleProgressIndicator(true);
-            fnd.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
+            mFndTopic.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
                 @Override
                 public void onFinally() {
                     toggleProgressIndicator(false);

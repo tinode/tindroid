@@ -327,14 +327,17 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         // Insert duration on the next line as small text.
         result.append("\n");
+
         String strDur = duration != null ? " " + millisToTime(duration, true) : null;
         if (TextUtils.isEmpty(strDur)) {
             strDur = " -:--";
         }
+
         SpannableStringBuilder small = new SpannableStringBuilder()
                 .append(strDur, new RelativeSizeSpan(0.8f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         // Add space on the left to make time appear under the waveform.
         result.append(small, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
         return result;
     }
 

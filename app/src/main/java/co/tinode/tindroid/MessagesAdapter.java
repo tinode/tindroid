@@ -113,6 +113,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int VIEWTYPE_DATE        = 0b100000;
     private static final int VIEWTYPE_INVALID     = 0b000000;
 
+    // Duration of a message bubble animation in ms.
+    private static final int MESSAGE_BUBBLE_ANIMATION_SHORT = 150;
+    private static final int MESSAGE_BUBBLE_ANIMATION_LONG = 600;
+
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private static final String[] PERMISSIONS_STORAGE = {
@@ -687,6 +691,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 notifyItemChanged(pos);
                 updateSelectionMode();
             } else {
+                animateMessageBubble(holder, m.isMine(), true);
                 int replySeq = -1;
                 try {
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
@@ -705,7 +710,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 // Completely visible, animate now.
                                 animateMessageBubble(
                                         (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                        mm.isMine());
+                                        mm.isMine(), false);
                             } else {
                                 // Scroll then animate.
                                 mRecyclerView.clearOnScrollListeners();
@@ -717,7 +722,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                             recyclerView.removeOnScrollListener(this);
                                             animateMessageBubble(
                                                     (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                                    mm.isMine());
+                                                    mm.isMine(), false);
                                         }
                                     }
                                 });
@@ -744,16 +749,18 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    private void animateMessageBubble(final ViewHolder vh, boolean isMine) {
+    private void animateMessageBubble(final ViewHolder vh, boolean isMine, boolean light) {
         if (vh == null) {
             return;
         }
         int from = vh.mMessageBubble.getResources().getColor(isMine ?
                 R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther, null);
         int to = vh.mMessageBubble.getResources().getColor(isMine ?
-                R.color.colorMessageBubbleMineFlashing : R.color.colorMessageBubbleOtherFlashing, null);
+                (light ? R.color.colorMessageBubbleMineFlashingLight : R.color.colorMessageBubbleMineFlashing) :
+                (light ? R.color.colorMessageBubbleOtherFlashingLight: R.color.colorMessageBubbleOtherFlashing),
+                null);
         ValueAnimator colorAnimation = ValueAnimator.ofArgb(from, to, from);
-        colorAnimation.setDuration(600); // milliseconds
+        colorAnimation.setDuration(light ? MESSAGE_BUBBLE_ANIMATION_SHORT : MESSAGE_BUBBLE_ANIMATION_LONG);
         colorAnimation.addUpdateListener(animator ->
                 vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
         );
@@ -990,14 +997,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                         @Override
                         public boolean onSingleTapConfirmed(MotionEvent ev) {
-                            Log.i(TAG, "Ripple!");
                             itemView.performClick();
                             return super.onSingleTapConfirmed(ev);
                         }
 
                         @Override
                         public void onShowPress(MotionEvent ev) {
-                            Log.i(TAG, "Ripple!");
                             if (mRippleOverlay != null) {
                                 mRippleOverlay.setPressed(true);
                                 mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
@@ -1078,36 +1083,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         try {
                             FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                             if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                                Object val;
-                                String url = null;
-                                if ((val = data.get("ref")) instanceof String) {
-                                    url = (String) val;
-                                } else if ((val = data.get("val")) instanceof String) {
-                                    String mime = (String) data.get("mime");
-                                    url = "data:" + mime + ";base64," + val;
-                                }
+                                String url = getPayloadUrl(data);
                                 if (url != null) {
                                     if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
-                                        mPlayingAudioSeq = msg.seq;
-                                        if (mAudioPlayer != null) {
-                                            mAudioPlayer.reset();
-                                            mAudioPlayer.release();
-                                            if (mAudioControlCallback != null) {
-                                                mAudioControlCallback.reset();
-                                            }
-                                        }
-                                        mAudioControlCallback = aca.control;
-                                        mAudioPlayer = new MediaPlayer();
-                                        mAudioPlayer.setOnCompletionListener(mp -> {
-                                            if (mAudioControlCallback != null) {
-                                                mAudioControlCallback.reset();
-                                            }
-                                        });
-                                        mAudioPlayer.setAudioAttributes(
-                                                new AudioAttributes.Builder()
-                                                        .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
-                                        mAudioPlayer.setDataSource(url);
-                                        mAudioPlayer.prepare();
+                                        initAudioPlayer(msg.seq, url, aca.control);
                                     }
                                     mAudioPlayer.start();
                                 }
@@ -1116,6 +1095,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     mAudioPlayer.pause();
                                 }
                             } else if (aca.seekTo != null) {
+                                if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
+                                    String url = getPayloadUrl(data);
+                                    if (url != null) {
+                                        initAudioPlayer(msg.seq, url, aca.control);
+                                    }
+                                }
                                 if (mAudioPlayer != null) {
                                     long duration = mAudioPlayer.getDuration();
                                     if (duration > 0) {
@@ -1276,6 +1261,43 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                     break;
             }
+        }
+
+        private String getPayloadUrl(Map<String, Object> data) {
+            Object val;
+            String url = null;
+            if ((val = data.get("ref")) instanceof String) {
+                url = (String) val;
+            } else if ((val = data.get("val")) instanceof String) {
+                String mime = (String) data.get("mime");
+                url = "data:" + mime + ";base64," + val;
+            }
+
+            return url;
+        }
+
+        private void initAudioPlayer(int seq, String sourceUrl,
+                                     FullFormatter.AudioControlCallback control) throws IOException {
+            mPlayingAudioSeq = seq;
+            if (mAudioPlayer != null) {
+                mAudioPlayer.reset();
+                mAudioPlayer.release();
+                if (mAudioControlCallback != null) {
+                    mAudioControlCallback.reset();
+                }
+            }
+            mAudioControlCallback = control;
+            mAudioPlayer = new MediaPlayer();
+            mAudioPlayer.setOnCompletionListener(mp -> {
+                if (mAudioControlCallback != null) {
+                    mAudioControlCallback.reset();
+                }
+            });
+            mAudioPlayer.setAudioAttributes(
+                    new AudioAttributes.Builder()
+                            .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
+            mAudioPlayer.setDataSource(sourceUrl);
+            mAudioPlayer.prepare();
         }
     }
 }

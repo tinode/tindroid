@@ -97,7 +97,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         rv.setHasFixedSize(true);
         rv.addItemDecoration(new HorizontalListDivider(activity));
         mAdapter = new ChatsAdapter(activity, topicName -> {
-            if (mActionMode != null || mIsBanned) {
+            if (mActionMode != null || mIsBanned || activity.isFinishing() || activity.isDestroyed()) {
                 return;
             }
             Intent intent = new Intent(activity, MessageActivity.class);

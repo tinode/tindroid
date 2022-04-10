@@ -112,22 +112,28 @@ public class MessageActivity extends AppCompatActivity
             query.setFilterById(downloadId);
             Cursor c = dm.query(query);
             if (c.moveToFirst()) {
-                int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+                int idx = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                int status = idx >=0 ? c.getInt(idx) : -1;
                 if (DownloadManager.STATUS_SUCCESSFUL == status) {
-                    URI fileUri = URI.create(c.getString(c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)));
-                    String mimeType = c.getString(c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE));
-                    intent = new Intent();
-                    intent.setAction(android.content.Intent.ACTION_VIEW);
-                    intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
-                            "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    try {
-                        startActivity(intent);
-                    } catch (ActivityNotFoundException ignored) {
-                        startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                    idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
+                    URI fileUri = idx >= 0 ? URI.create(c.getString(idx)) : null;
+                    idx = c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE);
+                    String mimeType = idx >= 0 ? c.getString(idx) : null;
+                    if (fileUri != null) {
+                        intent = new Intent();
+                        intent.setAction(android.content.Intent.ACTION_VIEW);
+                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try {
+                            startActivity(intent);
+                        } catch (ActivityNotFoundException ignored) {
+                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                        }
                     }
                 } else if (DownloadManager.STATUS_FAILED == status) {
-                    int reason = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_REASON));
+                    idx = c.getColumnIndex(DownloadManager.COLUMN_REASON);
+                    int reason = idx >= 0 ? c.getInt(idx) : -1;
                     Log.w(TAG, "Download failed. Reason: " + reason);
                     Toast.makeText(MessageActivity.this,
                             R.string.failed_to_download, Toast.LENGTH_SHORT).show();
@@ -355,7 +361,10 @@ public class MessageActivity extends AppCompatActivity
                         new String[]{Utils.DATA_PID}, null, null, null);
                 if (cursor != null) {
                     if (cursor.moveToFirst()) {
-                        name = cursor.getString(cursor.getColumnIndex(Utils.DATA_PID));
+                        int idx = cursor.getColumnIndex(Utils.DATA_PID);
+                        if (idx >= 0) {
+                            name = cursor.getString(idx);
+                        }
                     }
                     cursor.close();
                 }

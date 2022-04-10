@@ -86,7 +86,7 @@ public class WaveDrawable extends Drawable implements Runnable {
         mBarPaint.setStrokeWidth(sLineWidth);
         mBarPaint.setStrokeCap(Paint.Cap.ROUND);
         mBarPaint.setAntiAlias(true);
-        mBarPaint.setColor(res.getColor(R.color.waveform));
+        mBarPaint.setColor(res.getColor(R.color.waveform, null));
 
         // Waveform in the past.
         mPastBarPaint = new Paint();
@@ -107,7 +107,7 @@ public class WaveDrawable extends Drawable implements Runnable {
     }
 
     @Override
-    protected void onBoundsChange(Rect bounds) {
+    protected void onBoundsChange(@NonNull Rect bounds) {
         mSize = new Rect(bounds);
 
         int maxBars = (int) ((mSize.width() - sSpacing - mLeftPadding) / (sLineWidth + sSpacing));
