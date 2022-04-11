@@ -292,6 +292,9 @@ public class WaveDrawable extends Drawable implements Runnable {
                 max = amp;
             }
         }
+        if (max <= 0) {
+            return;
+        }
 
         mBars = new float[mContains * 4];
         for (int i = 0; i < mContains; i++) {
