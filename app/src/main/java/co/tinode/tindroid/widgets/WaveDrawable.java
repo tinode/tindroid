@@ -298,7 +298,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
         mBars = new float[mContains * 4];
         for (int i = 0; i < mContains; i++) {
-            float amp = (float) mBuffer[(mIndex + i)  % mContains];
+            float amp = mBuffer[(mIndex + i)  % mContains];
             if (amp < 0) {
                 amp = 0f;
             }

@@ -474,7 +474,9 @@ public class MessagesFragment extends Fragment {
     }
 
     void runMessagesLoader(String topicName) {
-        mMessagesAdapter.resetContent(topicName);
+        if (mMessagesAdapter != null) {
+            mMessagesAdapter.resetContent(topicName);
+        }
     }
 
     private void setSendPanelVisible(Activity activity, int id) {
