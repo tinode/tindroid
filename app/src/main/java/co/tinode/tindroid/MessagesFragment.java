@@ -102,6 +102,10 @@ public class MessagesFragment extends Fragment {
 
     // Number of milliseconds between audio samples for recording visualization.
     static final int AUDIO_SAMPLING = 100;
+    // Minimum duration of an audio recording in milliseconds.
+    static final int MIN_DURATION = 2000;
+    // Maximum duration of an audio recording in milliseconds.
+    static final int MAX_DURATION = 600_000;
 
     private ComTopic<VxCard> mTopic;
 
@@ -882,7 +886,7 @@ public class MessagesFragment extends Fragment {
         mAudioRecorder = new MediaRecorder();
         mAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-        mAudioRecorder.setMaxDuration(1000*60*10); // 10 minutes.
+        mAudioRecorder.setMaxDuration(MAX_DURATION); // 10 minutes.
         mAudioRecorder.setAudioEncodingBitRate(16);
         mAudioRecorder.setAudioSamplingRate(16000);
         mAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
@@ -1206,6 +1210,10 @@ public class MessagesFragment extends Fragment {
 
         Bundle args = getArguments();
         if (args == null) {
+            return;
+        }
+
+        if (mAudioRecordDuration < MIN_DURATION) {
             return;
         }
 
