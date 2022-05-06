@@ -1282,7 +1282,7 @@ public class MessagesFragment extends Fragment {
         return mMessagesAdapter.findItemPositionById(id, first, last);
     }
 
-    // Class for generating audio preview from a stream of unknown duration.
+    // Class for generating audio preview from a stream of amplitudes of unknown length.
     private static class AudioSampler {
         private final static int VISUALIZATION_BARS = 128;
         private final float[] mSamples;

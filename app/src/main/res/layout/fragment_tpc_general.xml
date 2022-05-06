@@ -163,7 +163,7 @@
                 android:drawablePadding="4sp"
                 android:text="@string/manage"
                 android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit_black"
+                app:drawableStartCompat="@drawable/ic_edit"
                 app:drawableTint="?android:textColorPrimary" />
 
             <View
