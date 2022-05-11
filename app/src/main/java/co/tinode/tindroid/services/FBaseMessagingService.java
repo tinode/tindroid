@@ -158,7 +158,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         //   Icon: <group avatar> || (*)
         //   Body: <group name> || 'Unknown'
         //
-        // Message read by the current user at another device (read):
+        // Message read by the current user from another device (read):
         //   Always invisible.
 
         String topicName;
