@@ -43,8 +43,10 @@
     <!-- Background of message bubbles-->
     <color name="colorMessageBubbleMine">#FFFAFAFA</color>
     <color name="colorMessageBubbleMineFlashing">#FCCC</color>
+    <color name="colorMessageBubbleMineFlashingLight">#FEEE</color>
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleOtherFlashing">#FF85A165</color>
+    <color name="colorMessageBubbleOtherFlashingLight">#FFA5C185</color>
     <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
 
     <color name="colorReplyBubble">#10333333</color>
@@ -53,6 +55,10 @@
     <color name="colorQuoteStripe">#039be5</color>
 
     <color name="colorImageMetaPanel">#80FFFFFF</color>
+
+    <!-- Audio waveform color -->
+    <color name="waveform">#60333333</color>
+    <color name="waveformPast">#80000000</color>
 
     <!-- Indicator of user's online/offline status -->
     <color name="online">#FF40C040</color>
@@ -64,7 +70,6 @@
     <color name="colorImagePlaceholder">#CCCCCC</color>
 
     <!-- Background colors for LetterTileDrawables. -->
-    -->
     <array name="letter_tile_colors_light">
         <item>#ef9a9a</item>
         <item>#90caf9</item>

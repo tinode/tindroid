@@ -12,16 +12,18 @@ import co.tinode.tindroid.R;
 // Drafty formatter for creating message previews in push notifications.
 // Push notifications don't support ImageSpan or TypefaceSpan, consequently, using Unicode chars instead of icons.
 public class FontFormatter extends PreviewFormatter {
-    // Emoji characters from the stock font: Camera 📷 (image), Paperclip 📎 (attachment),
+    // Emoji characters from the stock font: Microphone 🎤 (audio), Camera 📷 (image), Paperclip 📎 (attachment),
     // Memo 📝 (form), Question-Mark ❓ (unknown).
     // These characters are present in Android 5 and up.
-    private static final String[] UNICODE_STRINGS = new String[]{"\uD83D\uDCF7", "\uD83D\uDCCE", "\uD83D\uDCDD", "\u2753"};
+    private static final String[] UNICODE_STRINGS = new String[]{"\uD83C\uDFA4", "\uD83D\uDCF7",
+            "\uD83D\uDCCE", "\uD83D\uDCDD", "\u2753"};
 
     // Index into character sets.
-    private static final int IMAGE = 0;
-    private static final int ATTACHMENT = 1;
-    private static final int FORM = 2;
-    private static final int UNKNOWN = 3;
+    private static final int AUDIO = 0;
+    private static final int IMAGE = 1;
+    private static final int ATTACHMENT = 2;
+    private static final int FORM = 3;
+    private static final int UNKNOWN = 4;
 
     public FontFormatter(final Context context, float fontSize) {
         super(context, fontSize);
@@ -30,6 +32,12 @@ public class FontFormatter extends PreviewFormatter {
     protected SpannableStringBuilder annotatedIcon(Context ctx, int charIndex, @StringRes int stringId) {
         SpannableStringBuilder node = new SpannableStringBuilder(UNICODE_STRINGS[charIndex]);
         return node.append(" ").append(ctx.getResources().getString(stringId));
+    }
+
+    @Override
+    protected SpannableStringBuilder handleAudio(Context ctx, List<SpannableStringBuilder> content,
+                                                 Map<String, Object> data) {
+        return annotatedIcon(ctx, AUDIO, R.string.audio);
     }
 
     @Override

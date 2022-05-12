@@ -100,6 +100,22 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     }
 
     @Override
+    protected SpannableStringBuilder handleAudio(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_mic_ol, -1);
+        node.append(" ");
+        Number duration = null;
+        try {
+            duration = (Number) data.get("duration");
+        } catch (NullPointerException | ClassCastException ignored) {}
+        if (duration != null) {
+            node.append(millisToTime(duration, false));
+        } else {
+            node.append(ctx.getResources().getString(R.string.audio));
+        }
+        return node;
+    }
+
+    @Override
     protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
     }

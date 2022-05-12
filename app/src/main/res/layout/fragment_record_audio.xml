@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/recordAudioPanel"
+    android:layout_width="match_parent"
+    android:layout_height="57dp"
+    android:orientation="horizontal"
+    android:padding="6dp"
+    android:visibility="gone"
+    tools:ignore="RtlSymmetry">
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/deleteRecording"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_weight="0"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/delete_recording_hint"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        app:srcCompat="@drawable/ic_delete_outline"
+        app:tint="?android:textColorPrimary" />
+
+    <TextView
+        android:id="@+id/duration"
+        style="@style/textPrimary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:layout_gravity="center_horizontal|center_vertical"
+        android:text="00:00"
+        tools:ignore="HardcodedText" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:layout_weight="0">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/stopRecording"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/stop_recording_button_hint"
+            app:srcCompat="@drawable/ic_stop_circle"
+            app:tint="@color/colorDanger" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/playRecording"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/play_record_audio_button_hint"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_play"
+            app:tint="?android:textColorPrimary" />
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/pauseRecording"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center_vertical"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/pause_audio_button_hint"
+            android:visibility="gone"
+            app:srcCompat="@drawable/ic_pause"
+            app:tint="?android:textColorPrimary" />
+    </FrameLayout>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/audioWave"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:clickable="true"
+        tools:src="@drawable/tag_background"
+        tools:ignore="KeyboardInaccessibleWidget" />
+
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/chatSendAudio"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_vertical"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/send_message_button_hint"
+        android:paddingStart="4dp"
+        android:paddingEnd="6dp"
+        android:visibility="visible"
+        app:srcCompat="@drawable/ic_send"
+        app:tint="?attr/colorAccent" />
+</LinearLayout>

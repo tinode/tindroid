@@ -10,14 +10,19 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
@@ -37,10 +42,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,14 +101,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int REFRESH_SOFT = 1;
     private static final int REFRESH_HARD = 2;
 
-    private static final int VIEWTYPE_FULL_LEFT = 0;
-    private static final int VIEWTYPE_SIMPLE_LEFT = 1;
-    private static final int VIEWTYPE_FULL_AVATAR = 2;
-    private static final int VIEWTYPE_SIMPLE_AVATAR = 3;
-    private static final int VIEWTYPE_FULL_RIGHT = 4;
-    private static final int VIEWTYPE_SIMPLE_RIGHT = 5;
-    private static final int VIEWTYPE_CENTER = 6;
-    private static final int VIEWTYPE_INVALID = 100;
+    // Bits defining message bubble variations
+    // _TIP_ == "single", i.e. has a bubble tip.
+    // _SIMPLE_ == no bubble tip, just a rounded rectangle.
+    // _DATE == the date bubble is visible.
+    private static final int VIEWTYPE_SIDE_CENTER = 0b000001;
+    private static final int VIEWTYPE_SIDE_LEFT   = 0b000010;
+    private static final int VIEWTYPE_SIDE_RIGHT  = 0b000100;
+    private static final int VIEWTYPE_TIP         = 0b001000;
+    private static final int VIEWTYPE_AVATAR      = 0b010000;
+    private static final int VIEWTYPE_DATE        = 0b100000;
+    private static final int VIEWTYPE_INVALID     = 0b000000;
+
+    // Duration of a message bubble animation in ms.
+    private static final int MESSAGE_BUBBLE_ANIMATION_SHORT = 150;
+    private static final int MESSAGE_BUBBLE_ANIMATION_LONG = 600;
 
     // Storage Permissions
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
@@ -110,16 +125,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     };
 
     private final MessageActivity mActivity;
-    private ActionMode mSelectionMode;
     private final ActionMode.Callback mSelectionModeCallback;
     private final SwipeRefreshLayout mRefresher;
     private final MessageLoaderCallbacks mMessageLoaderCallback;
     private final SpanClicker mSpanFormatterClicker;
+    private ActionMode mSelectionMode;
     private RecyclerView mRecyclerView;
     private Cursor mCursor;
     private String mTopicName = null;
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
+
+    private MediaPlayer mAudioPlayer = null;
+    private int mPlayingAudioSeq = -1;
+    private FullFormatter.AudioControlCallback mAudioControlCallback = null;
 
     MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
         super();
@@ -215,6 +234,36 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return span;
+    }
+
+    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
+        if (cur.moveToPosition(position)) {
+            return StoredMessage.readMessage(cur, previewLength);
+        }
+        return null;
+    }
+
+    private static int findInCursor(Cursor cur, int seq) {
+        int low = 0;
+        int high = cur.getCount() - 1;
+
+        while (low <= high) {
+            int mid = (low + high) >>> 1;
+            StoredMessage m = getMessage(cur, mid, 0); // previewLength == 0 means no content is needed.
+            if (m == null) {
+                return -mid;
+            }
+
+            // Messages are sorted in descending order by seq.
+            int cmp = -m.seq + seq;
+            if (cmp < 0)
+                low = mid + 1;
+            else if (cmp > 0)
+                high = mid - 1;
+            else
+                return mid; // key found
+        }
+        return -(low + 1);  // key not found
     }
 
     @Override
@@ -325,8 +374,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private String messageFrom(StoredMessage msg) {
-        @SuppressWarnings("unchecked")
-        final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+        @SuppressWarnings("unchecked") final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
         String uname = null;
         if (topic != null) {
             if (!topic.isChannel()) {
@@ -385,40 +433,50 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    private static int packViewType(int side, boolean tip, boolean avatar, boolean date) {
+        int type = side;
+        if (tip) {
+            type |= VIEWTYPE_TIP;
+        }
+        if (avatar) {
+            type |= VIEWTYPE_AVATAR;
+        }
+        if (date) {
+            type |= VIEWTYPE_DATE;
+        }
+        return type;
+    }
+
     @Override
     public int getItemViewType(int position) {
-        int itemType;
+        int itemType = VIEWTYPE_INVALID;
         StoredMessage m = getMessage(position);
-        Topic.TopicType tp = Topic.getTopicTypeByName(mTopicName);
-        boolean isChannel = ComTopic.isChannel(mTopicName);
 
-        if (m == null) {
-            return VIEWTYPE_INVALID;
-        }
-
-        if (m.delId > 0) {
-            return VIEWTYPE_CENTER;
-        }
-        // Logic for less vertical spacing between subsequent messages from the same sender vs different senders.
-        // Zero item position is on the bottom of the screen.
-        long nextFrom = -2;
-        if (position > 0) {
-            StoredMessage m2 = getMessage(position - 1);
-            if (m2 != null) {
-                nextFrom = m2.userId;
+        if (m != null) {
+            if (m.delId > 0) {
+                itemType = packViewType(VIEWTYPE_SIDE_CENTER, false, false, false);
+            } else {
+                long nextFrom = -2;
+                Date nextDate = null;
+                if (position > 0) {
+                    StoredMessage m2 = getMessage(position - 1);
+                    if (m2 != null) {
+                        nextFrom = m2.userId;
+                        nextDate = m2.ts;
+                    }
+                }
+                Date prevDate = null;
+                if (position < getItemCount() - 1) {
+                    StoredMessage m2 = getMessage(position + 1);
+                    if (m2 != null) {
+                        prevDate = m2.ts;
+                    }
+                }
+                itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
+                        m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
+                        Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
+                        !UiUtils.isSameDate(prevDate, m.ts));
             }
-        }
-
-        final boolean isMine = m.isMine();
-
-        if (m.userId != nextFrom) {
-            itemType = isMine ? VIEWTYPE_FULL_RIGHT :
-                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_FULL_AVATAR :
-                            VIEWTYPE_FULL_LEFT;
-        } else {
-            itemType = isMine ? VIEWTYPE_SIMPLE_RIGHT :
-                    (tp == Topic.TopicType.GRP) && !isChannel ? VIEWTYPE_SIMPLE_AVATAR :
-                            VIEWTYPE_SIMPLE_LEFT;
         }
 
         return itemType;
@@ -428,39 +486,34 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Create a new message bubble view.
-        View v;
 
-        switch (viewType) {
-            case VIEWTYPE_CENTER:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.meta_message,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_single_avatar,
-                        parent, false);
-                break;
-            case VIEWTYPE_FULL_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right_single,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_LEFT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_AVATAR:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_left_avatar,
-                        parent, false);
-                break;
-            case VIEWTYPE_SIMPLE_RIGHT:
-                v = LayoutInflater.from(parent.getContext()).inflate(R.layout.message_right,
-                        parent, false);
-                break;
-            default:
-                v = null;
+        int layoutId = -1;
+        if ((viewType & VIEWTYPE_SIDE_CENTER) != 0) {
+            layoutId = R.layout.meta_message;
+        } else if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
+            if ((viewType & VIEWTYPE_AVATAR) != 0 && (viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_left_single_avatar;
+            } else if ((viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_left_single;
+            } else if ((viewType & VIEWTYPE_AVATAR) != 0) {
+                layoutId = R.layout.message_left_avatar;
+            } else {
+                layoutId = R.layout.message_left;
+            }
+        } else if ((viewType & VIEWTYPE_SIDE_RIGHT) != 0) {
+            if ((viewType & VIEWTYPE_TIP) != 0) {
+                layoutId = R.layout.message_right_single;
+            } else {
+                layoutId = R.layout.message_right;
+            }
+        }
+
+        View v = LayoutInflater.from(parent.getContext()).inflate(layoutId, parent, false);
+        if (v != null) {
+            View dateBubble = v.findViewById(R.id.dateDivider);
+            if (dateBubble != null) {
+                dateBubble.setVisibility((viewType & VIEWTYPE_DATE) != 0 ? View.VISIBLE : View.GONE);
+            }
         }
 
         return new ViewHolder(v, viewType);
@@ -488,6 +541,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (topic == null || m == null) {
             return;
         }
+
+        holder.seqId = m.seq;
 
         if (holder.mIcon != null) {
             // Meta bubble in the center of the screen
@@ -518,7 +573,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.mText.setText(text);
-        if (m.content != null && m.content.hasEntities(Arrays.asList("BN", "LN", "MN", "HT", "IM", "EX"))) {
+        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -594,12 +649,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
 
-        if (holder.mMeta != null) {
-            holder.mMeta.setText(UiUtils.shortDate(m.ts));
+        if (m.ts != null) {
+            Context context = holder.itemView.getContext();
+            if (holder.mDateDivider.getVisibility() == View.VISIBLE && m.ts != null) {
+                CharSequence date = DateUtils.getRelativeTimeSpanString(
+                        m.ts.getTime(),
+                        System.currentTimeMillis(),
+                        DateUtils.DAY_IN_MILLIS,
+                        DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
+                holder.mDateDivider.setText(date);
+            }
+            if (holder.mMeta != null) {
+                holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
+            }
         }
 
         if (holder.mDeliveredIcon != null) {
-            if (holder.mViewType == VIEWTYPE_FULL_RIGHT || holder.mViewType == VIEWTYPE_SIMPLE_RIGHT) {
+            if ((holder.mViewType & VIEWTYPE_SIDE_RIGHT) != 0) {
                 UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, m.status.value,
                         topic.msgReadCount(m.seq), topic.msgRecvCount(m.seq));
             }
@@ -625,10 +691,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 notifyItemChanged(pos);
                 updateSelectionMode();
             } else {
+                animateMessageBubble(holder, m.isMine(), true);
                 int replySeq = -1;
                 try {
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException ignored) {
+                }
                 if (replySeq != -1) {
                     // A reply message was clicked. Scroll original into view and animate.
                     final int pos = findInCursor(mCursor, replySeq);
@@ -642,7 +710,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 // Completely visible, animate now.
                                 animateMessageBubble(
                                         (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                        mm.isMine());
+                                        mm.isMine(), false);
                             } else {
                                 // Scroll then animate.
                                 mRecyclerView.clearOnScrollListeners();
@@ -654,7 +722,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                             recyclerView.removeOnScrollListener(this);
                                             animateMessageBubble(
                                                     (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                                    mm.isMine());
+                                                    mm.isMine(), false);
                                         }
                                     }
                                 });
@@ -667,18 +735,34 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
     }
 
-    private void animateMessageBubble(final ViewHolder vh, boolean isMine) {
+    @Override
+    public void onViewRecycled(final @NonNull ViewHolder vh) {
+        // Stop playing audio and release mAudioPlayer.
+        if (vh.seqId > 0) {
+            if (mAudioPlayer != null) {
+                mAudioPlayer.stop();
+                mAudioPlayer.release();
+                mAudioPlayer = null;
+                mPlayingAudioSeq = -1;
+                vh.seqId = -1;
+            }
+        }
+    }
+
+    private void animateMessageBubble(final ViewHolder vh, boolean isMine, boolean light) {
         if (vh == null) {
             return;
         }
         int from = vh.mMessageBubble.getResources().getColor(isMine ?
-                R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther);
+                R.color.colorMessageBubbleMine : R.color.colorMessageBubbleOther, null);
         int to = vh.mMessageBubble.getResources().getColor(isMine ?
-                R.color.colorMessageBubbleMineFlashing : R.color.colorMessageBubbleOtherFlashing);
+                (light ? R.color.colorMessageBubbleMineFlashingLight : R.color.colorMessageBubbleMineFlashing) :
+                (light ? R.color.colorMessageBubbleOtherFlashingLight: R.color.colorMessageBubbleOtherFlashing),
+                null);
         ValueAnimator colorAnimation = ValueAnimator.ofArgb(from, to, from);
-        colorAnimation.setDuration(600); // milliseconds
+        colorAnimation.setDuration(light ? MESSAGE_BUBBLE_ANIMATION_SHORT : MESSAGE_BUBBLE_ANIMATION_LONG);
         colorAnimation.addUpdateListener(animator ->
-            vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
+                vh.mMessageBubble.setBackgroundTintList(ColorStateList.valueOf((int) animator.getAnimatedValue()))
         );
         colorAnimation.start();
     }
@@ -687,13 +771,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private StoredMessage getMessage(int position) {
         if (mCursor != null && !mCursor.isClosed()) {
             return getMessage(mCursor, position, -1);
-        }
-        return null;
-    }
-
-    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
-        if (cur.moveToPosition(position)) {
-            return StoredMessage.readMessage(cur, previewLength);
         }
         return null;
     }
@@ -872,35 +949,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    private static int findInCursor(Cursor cur, int seq) {
-        int low = 0;
-        int high = cur.getCount() - 1;
-
-        while (low <= high) {
-            int mid = (low + high) >>> 1;
-            StoredMessage m = getMessage(cur, mid, 0); // previewLength == 0 means no content is needed.
-            if (m == null) {
-                return -mid;
-            }
-
-            // Messages are sorted in descending order by seq.
-            int cmp = - m.seq + seq;
-            if (cmp < 0)
-                low = mid + 1;
-            else if (cmp > 0)
-                high = mid - 1;
-            else
-                return mid; // key found
-        }
-        return -(low + 1);  // key not found
-    }
-
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mIcon;
         final ImageView mAvatar;
         final View mMessageBubble;
         final AppCompatImageView mDeliveredIcon;
+        final TextView mDateDivider;
         final TextView mText;
         final TextView mMeta;
         final TextView mUserName;
@@ -912,6 +967,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final View mProgress;
         final View mProgressResult;
         final GestureDetector mGestureDetector;
+        int seqId = 0;
 
         ViewHolder(View itemView, int viewType) {
             super(itemView);
@@ -921,6 +977,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
+            mDateDivider = itemView.findViewById(R.id.dateDivider);
             mText = itemView.findViewById(R.id.messageText);
             mMeta = itemView.findViewById(R.id.messageMeta);
             mUserName = itemView.findViewById(R.id.userName);
@@ -946,8 +1003,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                         @Override
                         public void onShowPress(MotionEvent ev) {
-                            mRippleOverlay.setPressed(true);
-                            mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
+                            if (mRippleOverlay != null) {
+                                mRippleOverlay.setPressed(true);
+                                mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
+                            }
+                        }
+                        @Override
+                        public boolean onDown(MotionEvent ev) {
+                            // Convert click coordinates in itemView to TexView.
+                            int[] item = new int[2];
+                            int[] text = new int[2];
+                            itemView.getLocationOnScreen(item);
+                            mText.getLocationOnScreen(text);
+
+                            int x = (int) ev.getX();
+                            int y = (int) ev.getY();
+
+                            // Make click position available to spannable.
+                            mText.setTag(R.id.click_coordinates, new Point(x, y));
+                            return super.onDown(ev);
                         }
                     });
         }
@@ -993,12 +1067,55 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         @Override
-        public void onClick(String type, Map<String, Object> data) {
+        public void onClick(String type, Map<String, Object> data, Object params) {
             if (mSelectedItems != null) {
                 return;
             }
 
             switch (type) {
+                case "AU":
+                    // Audio play/pause.
+                    if (data != null) {
+                        StoredMessage msg = getMessage(mPosition);
+                        if (msg == null) {
+                            break;
+                        }
+                        try {
+                            FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
+                            if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
+                                String url = getPayloadUrl(data);
+                                if (url != null) {
+                                    if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
+                                        initAudioPlayer(msg.seq, url, aca.control);
+                                    }
+                                    mAudioPlayer.start();
+                                }
+                            } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
+                                if (mAudioPlayer != null) {
+                                    mAudioPlayer.pause();
+                                }
+                            } else if (aca.seekTo != null) {
+                                if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
+                                    String url = getPayloadUrl(data);
+                                    if (url != null) {
+                                        initAudioPlayer(msg.seq, url, aca.control);
+                                    }
+                                }
+                                if (mAudioPlayer != null) {
+                                    long duration = mAudioPlayer.getDuration();
+                                    if (duration > 0) {
+                                        mAudioPlayer.seekTo((int) (aca.seekTo * duration));
+                                    } else {
+                                        Log.i(TAG, "Audio has no duration");
+                                    }
+                                }
+                            }
+                        } catch (IOException | ClassCastException ignored) {
+                            Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    break;
+
                 case "LN":
                     // Click on an URL
                     try {
@@ -1144,6 +1261,43 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                     break;
             }
+        }
+
+        private String getPayloadUrl(Map<String, Object> data) {
+            Object val;
+            String url = null;
+            if ((val = data.get("ref")) instanceof String) {
+                url = (String) val;
+            } else if ((val = data.get("val")) instanceof String) {
+                String mime = (String) data.get("mime");
+                url = "data:" + mime + ";base64," + val;
+            }
+
+            return url;
+        }
+
+        private void initAudioPlayer(int seq, String sourceUrl,
+                                     FullFormatter.AudioControlCallback control) throws IOException {
+            mPlayingAudioSeq = seq;
+            if (mAudioPlayer != null) {
+                mAudioPlayer.reset();
+                mAudioPlayer.release();
+                if (mAudioControlCallback != null) {
+                    mAudioControlCallback.reset();
+                }
+            }
+            mAudioControlCallback = control;
+            mAudioPlayer = new MediaPlayer();
+            mAudioPlayer.setOnCompletionListener(mp -> {
+                if (mAudioControlCallback != null) {
+                    mAudioControlCallback.reset();
+                }
+            });
+            mAudioPlayer.setAudioAttributes(
+                    new AudioAttributes.Builder()
+                            .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
+            mAudioPlayer.setDataSource(sourceUrl);
+            mAudioPlayer.prepare();
         }
     }
 }

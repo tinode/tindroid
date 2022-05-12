@@ -180,6 +180,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Check if the type of the given topic name is Group.
+     * @param name name of the topic to check.
+     * @return <code>true</code> if the given name is Group, <code>false</code> otherwise.
+     */
+    public static boolean isGrpType(final String name) {
+        return getTopicTypeByName(name) == TopicType.GRP;
+    }
+
+    /**
      * Checks if given topic name is a new (unsynchronized) topic.
      * @param name name to check
      * @return true if the name is a name of a new topic, false otherwise.

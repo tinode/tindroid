@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:width="24dp"
+        android:height="56dp"
+        android:left="4dp"
+        android:top="12dp">
+        <shape android:shape="rectangle">
+            <solid android:color="?android:colorButtonNormal" />
+            <size
+                android:width="16dp"
+                android:height="24dp" />
+            <corners android:bottomLeftRadius="12dp" android:bottomRightRadius="12dp"/>
+        </shape>
+    </item>
+    <item android:drawable="@drawable/shadow_disk"
+        android:width="36dp"
+        android:height="36dp">
+    </item>
+    <item
+        android:width="16dp"
+        android:height="16dp"
+        android:drawable="@drawable/ic_open_lock_outline"
+        android:left="8dp"
+        android:top="8dp" />
+    <item
+        android:width="16dp"
+        android:height="16dp"
+        android:drawable="@drawable/ic_shevron_up"
+        android:left="8dp"
+        android:top="32dp" />
+</layer-list>

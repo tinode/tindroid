@@ -17,11 +17,6 @@ package co.tinode.tindroid.widgets;
  */
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RadialGradient;
-import android.graphics.Shader;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.util.AttributeSet;
@@ -47,11 +42,7 @@ public class CircleProgressView extends AppCompatImageView {
     // If stop is called earlier than this, the spinner is not shown at all.
     private static final int MIN_SHOW_TIME = 300; // ms
     private static final int MIN_DELAY = 500; // ms
-    private static final int KEY_SHADOW_COLOR = 0x1E000000;
-    private static final int FILL_SHADOW_COLOR = 0x3D000000;
     // PX
-    private static final float X_OFFSET = 0f;
-    private static final float Y_OFFSET = 1.75f;
     private static final float SHADOW_RADIUS = 3.5f;
     private static final int SHADOW_ELEVATION = 4;
     private static final int SCALE_DOWN_DURATION = 150;
@@ -106,26 +97,13 @@ public class CircleProgressView extends AppCompatImageView {
 
     private void init(Context context) {
         final float density = getContext().getResources().getDisplayMetrics().density;
-        final int shadowYOffset = (int) (density * Y_OFFSET);
-        final int shadowXOffset = (int) (density * X_OFFSET);
         final int bgColor = ContextCompat.getColor(context, R.color.circularProgressBg);
         final int fgColor = ContextCompat.getColor(context, R.color.circularProgressFg);
 
         mShadowRadius = (int) (density * SHADOW_RADIUS);
 
-        ShapeDrawable circle;
-        if (elevationSupported()) {
-            circle = new ShapeDrawable(new OvalShape());
-            ViewCompat.setElevation(this, SHADOW_ELEVATION * density);
-        } else {
-            circle = new ShapeDrawable(new OvalShadow(this, mShadowRadius));
-            setLayerType(View.LAYER_TYPE_SOFTWARE, circle.getPaint());
-            circle.getPaint().setShadowLayer(mShadowRadius, shadowXOffset, shadowYOffset,
-                    KEY_SHADOW_COLOR);
-            final int padding = mShadowRadius;
-            // set padding so the inner image sits correctly within the shadow.
-            setPadding(padding, padding, padding, padding);
-        }
+        ShapeDrawable circle = new ShapeDrawable(new OvalShape());
+        ViewCompat.setElevation(this, SHADOW_ELEVATION * density);
         circle.getPaint().setColor(bgColor);
         ViewCompat.setBackground(this, circle);
 
@@ -211,19 +189,6 @@ public class CircleProgressView extends AppCompatImageView {
         startAnimation(down);
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        if (!elevationSupported()) {
-            setMeasuredDimension(getMeasuredWidth() + mShadowRadius * 2, getMeasuredHeight()
-                    + mShadowRadius * 2);
-        }
-    }
-
-    private boolean elevationSupported() {
-        return android.os.Build.VERSION.SDK_INT >= 21;
-    }
-
     public void setAnimationListener(Animation.AnimationListener listener) {
         mListener = listener;
     }
@@ -261,44 +226,6 @@ public class CircleProgressView extends AppCompatImageView {
         super.onDetachedFromWindow();
         removeCallbacks(mDelayedHide);
         removeCallbacks(mDelayedShow);
-    }
-
-    private static class OvalShadow extends OvalShape {
-        private final Paint mShadowPaint;
-        private final int mShadowRadius;
-        private final CircleProgressView mCircleProgressView;
-
-        OvalShadow(CircleProgressView circleProgressView, int shadowRadius) {
-            super();
-            mCircleProgressView = circleProgressView;
-            mShadowPaint = new Paint();
-            mShadowRadius = shadowRadius;
-            updateRadialGradient((int) rect().width());
-        }
-
-        @Override
-        protected void onResize(float width, float height) {
-            super.onResize(width, height);
-            updateRadialGradient((int) width);
-        }
-
-        @Override
-        public void draw(Canvas canvas, Paint paint) {
-            final int width = mCircleProgressView.getWidth() / 2;
-            final int height = mCircleProgressView.getHeight() / 2;
-            canvas.drawCircle(width, height, width, mShadowPaint);
-            canvas.drawCircle(width, height, width - mShadowRadius, paint);
-        }
-
-        private void updateRadialGradient(int diameter) {
-            mShadowPaint.setShader(new RadialGradient(
-                    diameter * .5f,
-                    diameter * .5f,
-                    mShadowRadius,
-                    new int[]{FILL_SHADOW_COLOR, Color.TRANSPARENT},
-                    null,
-                    Shader.TileMode.CLAMP));
-        }
     }
 
     // Boilerplate hidden.

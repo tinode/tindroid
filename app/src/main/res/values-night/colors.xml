@@ -2,12 +2,18 @@
 <resources>
     <color name="colorMessageBubbleMine">#FF202020</color>
     <color name="colorMessageBubbleMineFlashing">#F666</color>
+    <color name="colorMessageBubbleMineFlashingLight">#F444</color>
     <color name="colorMessageBubbleOther">#FF003308</color>
     <color name="colorMessageBubbleOtherFlashing">#FF558870</color>
+    <color name="colorMessageBubbleOtherFlashingLight">#FF305530</color>
     <color name="colorMessageBubbleMeta">#FF001633</color>
 
     <color name="colorReplyBubble">#10CCCCCC</color>
     <color name="colorReplyText">#CCCCCC</color>
+
+    <!-- Audio waveform color -->
+    <color name="waveform">#60CCCCCC</color>
+    <color name="waveformPast">#80FFFFFF</color>
 
     <color name="colorChipBackground">#263238</color>
     <color name="colorChipBorder">#546E7A</color>

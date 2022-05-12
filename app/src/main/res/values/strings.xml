@@ -311,4 +311,14 @@
     <string name="report_channel">Report channel</string>
     <string name="hint_contact_name">Contact name</string>
     <string name="cannot_reply">Unable to reply to this message</string>
+    <string name="record_audio_button_hint">Hold to record a voice message</string>
+    <string name="audio">Audio</string>
+    <string name="unable_to_play_audio">Unable to play this audio message</string>
+    <string name="button_hint_start_audio">Start audio recording</string>
+    <string name="stop_recording_button_hint">Stop recording</string>
+    <string name="delete_recording_hint">Discard recording</string>
+    <string name="audio_recording_failed">Audio recording failed</string>
+    <string name="play_record_audio_button_hint">Play recorded audio</string>
+    <string name="pause_audio_button_hint">Pause playback</string>
+    <string name="lock_recording_for_long_messages">Lock recording for long messages</string>
 </resources>

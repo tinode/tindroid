@@ -15,7 +15,10 @@ import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
+import com.squareup.picasso.Picasso;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
@@ -48,23 +51,40 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     // Width and height of the large icon (avatar).
     private static final int AVATAR_SIZE = 128;
     // Max length of the message.
-    private static final int MAX_MESAGE_LENGTH = 80;
+    private static final int MAX_MESSAGE_LENGTH = 80;
 
-    private static Bitmap makeLargeIcon(Context context, Bitmap bmp, Topic.TopicType tp, String name, String id) {
-        Resources res = context.getResources();
-        Bitmap scaled;
-        if (bmp != null) {
-            scaled = Bitmap.createScaledBitmap(bmp, AVATAR_SIZE, AVATAR_SIZE, false);
+    private static Bitmap makeLargeIcon(Context context, VxCard pub, Topic.TopicType tp, String id) {
+        Bitmap bitmap = null;
+        String fullName = null;
+        if (pub != null) {
+            fullName = pub.fn;
+            URL ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
+            if (ref != null) {
+                try {
+                    bitmap = Picasso.get()
+                            .load(ref.toString())
+                            .resize(AVATAR_SIZE, AVATAR_SIZE).get();
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to load avatar", ex);
+                }
+            } else {
+                bitmap = pub.getBitmap();
+            }
+        }
 
+        if (bitmap != null) {
+            bitmap = Bitmap.createScaledBitmap(bitmap, AVATAR_SIZE, AVATAR_SIZE, false);
         } else {
-            scaled = new LetterTileDrawable(context)
+            bitmap = new LetterTileDrawable(context)
                     .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
                             LetterTileDrawable.ContactType.GROUP :
                             LetterTileDrawable.ContactType.PERSON)
-                    .setLetterAndColor(name, id)
+                    .setLetterAndColor(fullName, id)
                     .getBitmap(AVATAR_SIZE, AVATAR_SIZE);
         }
-        return new RoundImageDrawable(res, scaled).getRoundedBitmap();
+
+        Resources res = context.getResources();
+        return new RoundImageDrawable(res, bitmap).getRoundedBitmap();
     }
 
     private static int unwrapInteger(Integer value, int defaultValue) {
@@ -137,6 +157,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         //   Title: 'New chat' ('by ' <sender name> || None)
         //   Icon: <group avatar> || (*)
         //   Body: <group name> || 'Unknown'
+        //
+        // Message read by the current user from another device (read):
+        //   Always invisible.
 
         String topicName;
 
@@ -158,7 +181,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             String visibleTopic = UiUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
-                // No need to display a notification if we are in the topic already.
+                // No need to do anything if we are in the topic already.
                 Log.d(TAG, "Topic is visible, no need to show a notification");
                 return;
             }
@@ -166,6 +189,20 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
             if (tp != Topic.TopicType.P2P && tp != Topic.TopicType.GRP) {
                 Log.w(TAG, "Unexpected topic type=" + tp);
+                return;
+            }
+
+            // Check notification type: message, subscription.
+            String what = data.get("what");
+            // Check and maybe download new messages right away *before* showing the notification.
+            String seqStr = data.get("seq");
+            Integer seq = null;
+            if (seqStr != null) {
+                seq = Integer.parseInt(seqStr);
+            }
+
+            if ("read".equals(what) && seq != null) {
+                Utils.backgroundUpdateRead(this, topicName, seq);
                 return;
             }
 
@@ -187,7 +224,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 VxCard pub = sender == null ? null : sender.pub;
                 if (pub != null) {
                     senderName = pub.fn;
-                    senderIcon = makeLargeIcon(this, pub.getBitmap(), Topic.TopicType.P2P, senderName, senderId);
+                    senderIcon = makeLargeIcon(this, pub, Topic.TopicType.P2P, senderId);
                 }
             }
 
@@ -195,11 +232,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 senderName = getResources().getString(R.string.sender_unknown);
             }
             if (senderIcon == null) {
-                senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, null, senderId);
+                senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, senderId);
             }
 
-            // Check notification type: message, subscription.
-            String what = data.get("what");
             String title = null;
             CharSequence body = null;
             Bitmap avatar = null;
@@ -207,10 +242,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Message notification.
 
                 // Check and maybe download new messages right away *before* showing the notification.
-                String seqStr = data.get("seq");
-                if (seqStr != null) {
+                if (seq != null) {
                     // If there was no data to fetch, the notification does not need to be shown.
-                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, Integer.parseInt(seqStr))) {
+                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, seq)) {
                         Log.d(TAG, "No new data. Skipping notification.");
                         return;
                     }
@@ -228,7 +262,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
                             float fontSize = ta.getDimension(0, 14f);
                             ta.recycle();
-                            body = draftyBody.shorten(MAX_MESAGE_LENGTH, true)
+                            body = draftyBody.shorten(MAX_MESSAGE_LENGTH, true)
                                     .format(new FontFormatter(this, fontSize));
                         } else {
                             // The content is plain text.
@@ -298,10 +332,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     VxCard pub = topic.getPub();
                     if (pub == null) {
                         body = getResources().getString(R.string.sender_unknown);
-                        avatar = makeLargeIcon(this, null, tp, null, topicName);
+                        avatar = makeLargeIcon(this, null, tp, topicName);
                     } else {
                         body = pub.fn;
-                        avatar = makeLargeIcon(this, pub.getBitmap(), tp, pub.fn, topicName);
+                        avatar = makeLargeIcon(this, pub, tp, topicName);
                     }
                 }
             }

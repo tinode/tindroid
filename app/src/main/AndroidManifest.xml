@@ -29,7 +29,10 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
     <!-- Enable sync if it's disabled -->
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-
+    <!-- Record audio messages -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Needed for audio visualization -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <queries>
         <intent>
             <action android:name="android.intent.action.INSERT" />
@@ -184,7 +187,7 @@
              no need for explicit permissions despite exported="true".
              Using tools:ignore="ExportedService" to disable the warning -->
         <service android:name=".services.FBaseMessagingService"
-            tools:ignore="ExportedService,IntentFilterExportedReceiver">
+            android:exported="true" tools:ignore="ExportedService">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>

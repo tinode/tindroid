@@ -5,31 +5,46 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.Intent;
+import android.graphics.Rect;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
+import android.media.audiofx.AutomaticGainControl;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
+import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -41,6 +56,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -49,11 +66,14 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.Data;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.MovableActionButton;
+import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -77,12 +97,24 @@ public class MessagesFragment extends Fragment {
     static final String MESSAGE_REPLY = "reply";
     static final String MESSAGE_REPLY_ID = "replyID";
 
+    static final int ZONE_CANCEL = 0;
+    static final int ZONE_LOCK = 1;
+
+    // Number of milliseconds between audio samples for recording visualization.
+    static final int AUDIO_SAMPLING = 100;
+    // Minimum duration of an audio recording in milliseconds.
+    static final int MIN_DURATION = 2000;
+    // Maximum duration of an audio recording in milliseconds.
+    static final int MAX_DURATION = 600_000;
+
     private ComTopic<VxCard> mTopic;
 
     private LinearLayoutManager mMessageViewLayoutManager;
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+
+    private FloatingActionButton mGoToLatest;
 
     private String mTopicName = null;
     private String mMessageToSend = null;
@@ -95,6 +127,21 @@ public class MessagesFragment extends Fragment {
     private Drafty mReply = null;
     private Drafty mContentToForward = null;
     private Drafty mForwardSender = null;
+
+    private MediaRecorder mAudioRecorder = null;
+    private File mAudioRecord = null;
+    // Timestamp when the recording was started.
+    private long mRecordingStarted = 0;
+    // Duration of audio recording.
+    private int mAudioRecordDuration = 0;
+    // Playback of audio recording.
+    private MediaPlayer mAudioPlayer = null;
+    // Preview or audio amplitudes.
+    private AudioSampler mAudioSampler = null;
+
+    private final Handler mAudioSamplingHandler = new Handler(Looper.getMainLooper());
+
+    private int mVisibleSendPanel = R.id.sendMessagePanel;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
 
@@ -116,6 +163,21 @@ public class MessagesFragment extends Fragment {
                 }
                 // Try to open the image selector again.
                 openImageSelector(getActivity());
+            });
+
+    private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    if (!e.getValue()) {
+                        // Some permission is missing. Disable audio recording button.
+                        Activity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+                        getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
+                        return;
+                    }
+                }
             });
 
     private final ActivityResultLauncher<String> mFilePickerLauncher =
@@ -182,6 +244,9 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        mGoToLatest = activity.findViewById(R.id.goToLatest);
+        mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
+
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
             public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
@@ -212,6 +277,16 @@ public class MessagesFragment extends Fragment {
                 int pos = mMessageViewLayoutManager.findLastVisibleItemPosition();
                 if (itemCount - pos < 4) {
                     ((MessagesAdapter) adapter).loadNextPage();
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                int pos = mMessageViewLayoutManager.findFirstVisibleItemPosition();
+                if (dy > 5 && pos > 2) {
+                    mGoToLatest.show();
+                } else if (dy < -5 || pos == 0) {
+                    mGoToLatest.hide();
                 }
             }
         });
@@ -249,8 +324,10 @@ public class MessagesFragment extends Fragment {
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
-        // Send message on button click
-        view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendText(activity));
+        AppCompatImageButton audio = setupAudioForms(activity, view);
+
+        AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
+        send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
 
         // Send image button
@@ -274,6 +351,15 @@ public class MessagesFragment extends Fragment {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (count > 0 || before > 0) {
                     activity.sendKeyPress();
+                }
+
+                // Show either [send] or [record audio] button.
+                if (charSequence.length() > 0) {
+                    audio.setVisibility(View.INVISIBLE);
+                    send.setVisibility(View.VISIBLE);
+                } else {
+                    audio.setVisibility(View.VISIBLE);
+                    send.setVisibility(View.INVISIBLE);
                 }
             }
 
@@ -397,6 +483,223 @@ public class MessagesFragment extends Fragment {
         }
     }
 
+    private void setSendPanelVisible(Activity activity, int id) {
+        if (mVisibleSendPanel == id) {
+            return;
+        }
+        activity.findViewById(id).setVisibility(View.VISIBLE);
+        activity.findViewById(mVisibleSendPanel).setVisibility(View.GONE);
+        mVisibleSendPanel = id;
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private AppCompatImageButton setupAudioForms(AppCompatActivity activity, View view) {
+        // Audio recorder button.
+        MovableActionButton mab = view.findViewById(R.id.audioRecorder);
+        // Lock button
+        ImageView lockFab = view.findViewById(R.id.lockAudioRecording);
+        // Lock button
+        ImageView deleteFab = view.findViewById(R.id.deleteAudioRecording);
+
+        // Play button in locked recording panel.
+        AppCompatImageButton playButton = view.findViewById(R.id.playRecording);
+        // Pause button in locked recording panel when playing back.
+        AppCompatImageButton pauseButton = view.findViewById(R.id.pauseRecording);
+        // Stop recording button in locked recording panel.
+        AppCompatImageButton stopButton = view.findViewById(R.id.stopRecording);
+        // ImageView with waveform visualization.
+        ImageView wave = view.findViewById(R.id.audioWave);
+        wave.setBackground(new WaveDrawable(getResources(), 5));
+        wave.setOnTouchListener((v, event) -> {
+            if (mAudioRecordDuration > 0 && mAudioPlayer != null && event.getAction() == MotionEvent.ACTION_DOWN) {
+                float fraction = event.getX() / v.getWidth();
+                mAudioPlayer.seekTo((int) (fraction * mAudioRecordDuration));
+                ((WaveDrawable) v.getBackground()).seekTo(fraction);
+                return true;
+            }
+            return false;
+        });
+        ImageView waveShort = view.findViewById(R.id.audioWaveShort);
+        waveShort.setBackground(new WaveDrawable(getResources()));
+        // Recording timer.
+        TextView timerView = view.findViewById(R.id.duration);
+        TextView timerShortView = view.findViewById(R.id.durationShort);
+        // Launch audio recorder.
+        AppCompatImageButton audio = view.findViewById(R.id.chatAudioButton);
+        final Runnable visualizer = new Runnable() {
+            @Override
+            public void run() {
+                if (mAudioRecorder != null) {
+                    int x = mAudioRecorder.getMaxAmplitude();
+                    mAudioSampler.put(x);
+                    if (mVisibleSendPanel == R.id.recordAudioPanel) {
+                        ((WaveDrawable) wave.getBackground()).put(x);
+                        timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    } else if (mVisibleSendPanel == R.id.recordAudioShortPanel) {
+                        ((WaveDrawable) waveShort.getBackground()).put(x);
+                        timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                    }
+                    mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
+                }
+            }
+        };
+
+        mab.setConstraintChecker((newPos, startPos, buttonRect, parentRect) -> {
+            // Constrain button moves to strictly vertical UP or horizontal LEFT (no diagonal).
+            float dX = Math.min(0, newPos.x - startPos.x);
+            float dY = Math.min(0, newPos.y - startPos.y);
+
+            if (Math.abs(dX) > Math.abs(dY)) {
+                // Horizontal move.
+                newPos.x = Math.max(parentRect.left, newPos.x);
+                newPos.y = startPos.y;
+            } else {
+                // Vertical move.
+                newPos.x = startPos.x;
+                newPos.y = Math.max(parentRect.top, newPos.y);
+            }
+            return newPos;
+        });
+        mab.setOnActionListener(new MovableActionButton.ActionListener() {
+            @Override
+            public boolean onUp(float x, float y) {
+                if (mAudioRecorder != null) {
+                    releaseAudio(true);
+                    sendAudio(activity);
+                }
+
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
+                setSendPanelVisible(activity, R.id.sendMessagePanel);
+                return true;
+            }
+
+            @Override
+            public boolean onZoneReached(int id) {
+                mab.performHapticFeedback(android.os.Build.VERSION.SDK_INT > Build.VERSION_CODES.Q ?
+                        (id == ZONE_CANCEL ? HapticFeedbackConstants.REJECT : HapticFeedbackConstants.CONFIRM) :
+                        HapticFeedbackConstants.CONTEXT_CLICK
+                );
+                mab.setVisibility(View.INVISIBLE);
+                lockFab.setVisibility(View.GONE);
+                deleteFab.setVisibility(View.GONE);
+                audio.setVisibility(View.VISIBLE);
+                if (id == ZONE_CANCEL) {
+                    if (mAudioRecorder != null) {
+                        releaseAudio(false);
+                    }
+                    setSendPanelVisible(activity, R.id.sendMessagePanel);
+                    releaseAudio(false);
+                } else {
+                    playButton.setVisibility(View.GONE);
+                    stopButton.setVisibility(View.VISIBLE);
+                    setSendPanelVisible(activity, R.id.recordAudioPanel);
+                }
+                return true;
+            }
+        });
+        GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
+            public void onLongPress(MotionEvent e) {
+                if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
+                    mAudioRecorderPermissionLauncher.launch(new String[] {
+                            Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS
+                    });
+                    return;
+                }
+
+                if (mAudioRecorder == null) {
+                    initAudioRecorder(activity);
+                }
+                try {
+                    mAudioRecorder.start();
+                    mRecordingStarted = SystemClock.uptimeMillis();
+                    visualizer.run();
+                } catch (RuntimeException ex) {
+                    Log.e(TAG, "Failed to start audio recording", ex);
+                    Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                mab.setVisibility(View.VISIBLE);
+                lockFab.setVisibility(View.VISIBLE);
+                deleteFab.setVisibility(View.VISIBLE);
+                audio.setVisibility(View.INVISIBLE);
+                mab.requestFocus();
+                setSendPanelVisible(activity, R.id.recordAudioShortPanel);
+                // Cancel zone on the left.
+                int x = mab.getLeft();
+                int y = mab.getTop();
+                int width = mab.getWidth();
+                int height = mab.getHeight();
+                mab.addActionZone(ZONE_CANCEL, new Rect(x - (int) (width * 1.5), y,
+                        x - (int) (width * 0.5), y + height));
+                // Lock zone above.
+                mab.addActionZone(ZONE_LOCK, new Rect(x, y - (int) (height * 1.5),
+                        x + width, y - (int) (height * 0.5)));
+                MotionEvent motionEvent = MotionEvent.obtain(
+                        e.getDownTime(), e.getEventTime(),
+                        MotionEvent.ACTION_DOWN,
+                        e.getRawX(),
+                        e.getRawY(),
+                        0
+                );
+                mab.dispatchTouchEvent(motionEvent);
+            }
+        });
+        // Ignore the warning: click detection is not needed here.
+        audio.setOnTouchListener((v, event) -> {
+            int action = event.getAction();
+            if (mab.getVisibility() == View.VISIBLE) {
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    audio.setPressed(false);
+                }
+                return mab.dispatchTouchEvent(event);
+            }
+            return gd.onTouchEvent(event);
+        });
+
+        view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.stop();
+            releaseAudio(false);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+        playButton.setOnClickListener(v -> {
+            pauseButton.setVisibility(View.VISIBLE);
+            playButton.setVisibility(View.GONE);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.start();
+            initAudioPlayer(wd, playButton, pauseButton);
+            mAudioPlayer.start();
+        });
+        pauseButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            pauseButton.setVisibility(View.GONE);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.stop();
+            mAudioPlayer.pause();
+        });
+        stopButton.setOnClickListener(v -> {
+            playButton.setVisibility(View.VISIBLE);
+            v.setVisibility(View.GONE);
+            releaseAudio(true);
+            WaveDrawable wd = (WaveDrawable) wave.getBackground();
+            wd.reset();
+            wd.setDuration(mAudioRecordDuration);
+            wd.put(mAudioSampler.obtain(96));
+            wd.seekTo(0f);
+        });
+        view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
+            releaseAudio(true);
+            sendAudio(activity);
+            setSendPanelVisible(activity, R.id.sendMessagePanel);
+        });
+
+        return audio;
+    }
+
     private void updateFormValues(Bundle args) {
         if (!isAdded()) {
             return;
@@ -407,16 +710,11 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
-        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
-
         if (mTopic == null) {
             // Default view when the topic is not available.
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            setSendPanelVisible(activity, R.id.sendMessageDisabled);
             UiUtils.setupToolbar(activity, null, mTopicName, false, null);
             return;
         }
@@ -428,6 +726,7 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
         if (mTopic.isReader()) {
             activity.findViewById(R.id.notReadable).setVisibility(View.GONE);
         } else {
@@ -453,28 +752,23 @@ public class MessagesFragment extends Fragment {
         if (mContentToForward != null) {
             showContentToForward(activity, mForwardSender, mContentToForward);
         } else if (mTopic.isWriter() && !mTopic.isBlocked()) {
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
+            // activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
 
             Subscription peer = mTopic.getPeer();
             boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
             AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
             if (isJoiner && (missing.isReader() || missing.isWriter())) {
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
+                setSendPanelVisible(activity, R.id.peersMessagingDisabled);
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
                     input.setText(mMessageToSend);
                     mMessageToSend = null;
                 }
-
-                activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-                activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+                setSendPanelVisible(activity, R.id.sendMessagePanel);
             }
         } else {
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.peersMessagingDisabled).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.VISIBLE);
+            setSendPanelVisible(activity, R.id.sendMessageDisabled);
         }
 
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
@@ -482,14 +776,19 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-
-    private void scrollToBottom() {
-        mRecyclerView.scrollToPosition(0);
+    private void scrollToBottom(boolean smooth) {
+        if (smooth) {
+            mRecyclerView.smoothScrollToPosition(0);
+        } else {
+            mRecyclerView.scrollToPosition(0);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
+
+        releaseAudio(false);
 
         final MessageActivity activity = (MessageActivity) getActivity();
         if (activity == null) {
@@ -576,6 +875,84 @@ public class MessagesFragment extends Fragment {
             return;
         }
         mRefresher.setRefreshing(active);
+    }
+
+    private void initAudioRecorder(Activity activity) {
+        if (mAudioRecord != null) {
+            mAudioRecord.delete();
+            mAudioRecord = null;
+        }
+
+        mAudioRecorder = new MediaRecorder();
+        mAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+        mAudioRecorder.setMaxDuration(MAX_DURATION); // 10 minutes.
+        mAudioRecorder.setAudioEncodingBitRate(16);
+        mAudioRecorder.setAudioSamplingRate(16000);
+        mAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+        try {
+            mAudioRecord = File.createTempFile("audio", ".m4a", activity.getCacheDir());
+            mAudioRecorder.setOutputFile(mAudioRecord.getAbsolutePath());
+            mAudioRecorder.prepare();
+            mAudioSampler = new AudioSampler();
+        } catch (IOException ex) {
+            Log.i(TAG, "Failed to initialize audio recording", ex);
+            Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
+            mAudioRecorder.release();
+            mAudioRecorder = null;
+            mAudioSampler = null;
+        }
+    }
+
+    private void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
+        if (mAudioPlayer != null) {
+            return;
+        }
+
+        mAudioPlayer = new MediaPlayer();
+        mAudioPlayer.setOnCompletionListener(mp -> {
+            waveDrawable.reset();
+            pause.setVisibility(View.GONE);
+            play.setVisibility(View.VISIBLE);
+        });
+        mAudioPlayer.setAudioAttributes(
+                new AudioAttributes.Builder().setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
+        try {
+            mAudioPlayer.setDataSource(mAudioRecord.getAbsolutePath());
+            mAudioPlayer.prepare();
+            if (AutomaticGainControl.isAvailable()) {
+                AutomaticGainControl.create(mAudioPlayer.getAudioSessionId()).setEnabled(true);
+            }
+        } catch (IOException | IllegalStateException ex) {
+            Log.e(TAG, "Unable to play recording", ex);
+            Toast.makeText(getActivity(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            mAudioPlayer = null;
+        }
+    }
+
+    private void releaseAudio(boolean keepRecord) {
+        if (!keepRecord && mAudioRecord != null) {
+            mAudioRecord.delete();
+            mAudioRecord = null;
+            mAudioRecordDuration = 0;
+        } else if (mRecordingStarted != 0) {
+            mAudioRecordDuration = (int) (SystemClock.uptimeMillis() - mRecordingStarted);
+        }
+        mRecordingStarted = 0;
+
+        if (mAudioPlayer != null) {
+            mAudioPlayer.stop();
+            mAudioPlayer.reset();
+            mAudioPlayer.release();
+            mAudioPlayer = null;
+        }
+
+        if (mAudioRecorder != null) {
+            mAudioRecorder.stop();
+            mAudioRecorder.reset();
+            mAudioRecorder.release();
+            mAudioRecorder = null;
+        }
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -718,7 +1095,6 @@ public class MessagesFragment extends Fragment {
         // Pick image from gallery.
         Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
-
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Make sure camera is available.
         if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
@@ -737,10 +1113,8 @@ public class MessagesFragment extends Fragment {
 
                 cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
                 // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
-                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.LOLLIPOP) {
-                    cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
-                    cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                }
+                cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
+                cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
                 mCurrentPhotoFile = photoFile.getAbsolutePath();
                 mCurrentPhotoUri = photoUri;
@@ -785,7 +1159,7 @@ public class MessagesFragment extends Fragment {
         if (activity != null) {
             boolean done = activity.sendMessage(content, replyTo);
             if (done) {
-                scrollToBottom();
+                scrollToBottom(false);
             }
             return done;
         }
@@ -827,6 +1201,30 @@ public class MessagesFragment extends Fragment {
                 }
             }
         }
+    }
+
+    private void sendAudio(AppCompatActivity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        Bundle args = getArguments();
+        if (args == null) {
+            return;
+        }
+
+        if (mAudioRecordDuration < MIN_DURATION) {
+            return;
+        }
+
+        byte[] preview = mAudioSampler.obtain(96);
+        args.putByteArray(AttachmentHandler.ARG_AUDIO_PREVIEW, preview);
+        args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, Uri.fromFile(mAudioRecord));
+        args.putString(AttachmentHandler.ARG_FILE_PATH, mAudioRecord.getAbsolutePath());
+        args.putInt(AttachmentHandler.ARG_AUDIO_DURATION, mAudioRecordDuration);
+        args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_AUDIO);
+        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_AUDIO, args);
     }
 
     private void cancelPreview(Activity activity) {
@@ -890,5 +1288,129 @@ public class MessagesFragment extends Fragment {
         }
 
         return mMessagesAdapter.findItemPositionById(id, first, last);
+    }
+
+    // Class for generating audio preview from a stream of amplitudes of unknown length.
+    private static class AudioSampler {
+        private final static int VISUALIZATION_BARS = 128;
+        private final float[] mSamples;
+        private final float[] mScratchBuff;
+        // The index of a bucket being filled.
+        private int mBucketIndex;
+        // Number of samples per bucket in mScratchBuff.
+        private int mAggregate;
+        // Number of samples added the the current bucket.
+        private int mSamplesPerBucket;
+
+        AudioSampler() {
+            mSamples = new float[VISUALIZATION_BARS * 2];
+            mScratchBuff = new float[VISUALIZATION_BARS];
+            mBucketIndex = 0;
+            mSamplesPerBucket = 0;
+            mAggregate = 1;
+        }
+
+        public void put(int val) {
+            // Fill out the main buffer first.
+            if (mAggregate == 1) {
+                if (mBucketIndex < mSamples.length) {
+                    mSamples[mBucketIndex] = val;
+                    mBucketIndex++;
+                    return;
+                }
+                compact();
+            }
+
+            // Check if the current bucket is full.
+            if (mSamplesPerBucket == mAggregate) {
+                // Normalize the bucket.
+                mScratchBuff[mBucketIndex] = (float) mScratchBuff[mBucketIndex] / (float) mSamplesPerBucket;
+                mBucketIndex++;
+                mSamplesPerBucket = 0;
+            }
+            // Check if scratch buffer is full.
+            if (mBucketIndex == mScratchBuff.length) {
+                compact();
+            }
+            mScratchBuff[mBucketIndex] += val;
+            mSamplesPerBucket++;
+        }
+
+        // Get the count of available samples in the main buffer + scratch buffer.
+        private int length() {
+            if (mAggregate == 1) {
+                // Only the main buffer is available.
+                return mBucketIndex;
+            }
+            // Completely filled main buffer + partially filled scratch buffer.
+            return mSamples.length + mBucketIndex + 1;
+        }
+
+        // Get bucket content at the given index from the main + scratch buffer.
+        private float getAt(int index) {
+            // Index into the main buffer.
+            if (index < mSamples.length) {
+                return mSamples[index];
+            }
+            // Index into scratch buffer.
+            index -= mSamples.length;
+            if (index < mBucketIndex) {
+                return mScratchBuff[index];
+            }
+            // Last partially filled bucket in the scratch buffer.
+            return mScratchBuff[index] / mSamplesPerBucket;
+        }
+
+        public byte[] obtain(int dstCount) {
+            // We can only return as many as we have.
+            float[] dst = new float[dstCount];
+            int srcCount = length();
+            // Resampling factor. Couple be lower or higher than 1.
+            float factor = (float) srcCount / dstCount;
+            float max = -1;
+            // src = 100, dst = 200, factor = 0.5
+            // src = 200, dst = 100, factor = 2.0
+            for (int i = 0; i < dstCount; i++) {
+                int lo = (int) (i * factor); // low bound;
+                int hi = (int) ((i + 1) * factor); // high bound;
+                if (hi == lo) {
+                    dst[i] = getAt(lo);
+                } else {
+                    float amp = 0f;
+                    for (int j = lo; j < hi; j++) {
+                        amp += getAt(j);
+                    }
+                    dst[i] = Math.max(0, amp / (hi - lo));
+                }
+                max = Math.max(dst[i], max);
+            }
+
+            byte[] result = new byte[dst.length];
+            if (max > 0) {
+                for (int i = 0; i < dst.length; i++) {
+                    result[i] = (byte) (100f * dst[i] / max);
+                }
+            }
+
+            return result;
+        }
+
+        // Downscale the amplitudes 2x.
+        private void compact() {
+            int len = VISUALIZATION_BARS / 2;
+            // Donwsample the main buffer: two consecutive samples make one new sample.
+            for (int i = 0; i < len; i ++) {
+                mSamples[i] = (mSamples[i * 2] + mSamples[i * 2 + 1]) * 0.5f;
+            }
+            // Copy scratch buffer to the upper half the the main buffer.
+            System.arraycopy(mScratchBuff, 0, mSamples, len, len);
+            // Clear the scratch buffer.
+            Arrays.fill(mScratchBuff, 0f);
+            // Double the number of samples per bucket.
+            mAggregate *= 2;
+            // Reset scratch counters.
+            mBucketIndex = 0;
+            mSamplesPerBucket = 0;
+        }
     }
 }
