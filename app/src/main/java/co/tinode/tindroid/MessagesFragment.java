@@ -1324,7 +1324,7 @@ public class MessagesFragment extends Fragment {
             // Check if the current bucket is full.
             if (mSamplesPerBucket == mAggregate) {
                 // Normalize the bucket.
-                mScratchBuff[mBucketIndex] = (float) mScratchBuff[mBucketIndex] / (float) mSamplesPerBucket;
+                mScratchBuff[mBucketIndex] = mScratchBuff[mBucketIndex] / (float) mSamplesPerBucket;
                 mBucketIndex++;
                 mSamplesPerBucket = 0;
             }
