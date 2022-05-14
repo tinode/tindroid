@@ -1266,7 +1266,7 @@ public class MessagesFragment extends Fragment {
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
 
-    void topicSubscribed(String topicName, boolean reset) {
+    void topicChanged(String topicName, boolean reset) {
         mTopicName = topicName;
         if (mTopicName != null) {
             //noinspection unchecked

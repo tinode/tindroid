@@ -78,8 +78,10 @@ import co.tinode.tindroid.format.QuoteFormatter;
 import co.tinode.tindroid.format.ThumbnailTransformer;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgRange;
@@ -374,15 +376,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private String messageFrom(StoredMessage msg) {
-        @SuppressWarnings("unchecked") final ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
+        Tinode tinode =  Cache.getTinode();
         String uname = null;
-        if (topic != null) {
-            if (!topic.isChannel()) {
-                final Subscription<VxCard, ?> sub = topic.getSubscription(msg.from);
-                uname = (sub != null && sub.pub != null) ? sub.pub.fn : null;
-            } else {
-                VxCard pub = topic.getPub();
+        if (tinode.isMe(msg.from)) {
+            MeTopic<VxCard> me = tinode.getMeTopic();
+            if (me != null) {
+                VxCard pub = me.getPub();
                 uname = pub != null ? pub.fn : null;
+            }
+        } else {
+            @SuppressWarnings("unchecked") final ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
+            if (topic != null) {
+                if (topic.isChannel() || topic.isP2PType()) {
+                    VxCard pub = topic.getPub();
+                    uname = pub != null ? pub.fn : null;
+                } else {
+                    final Subscription<VxCard, ?> sub = topic.getSubscription(msg.from);
+                    uname = (sub != null && sub.pub != null) ? sub.pub.fn : null;
+                }
             }
         }
         if (TextUtils.isEmpty(uname)) {

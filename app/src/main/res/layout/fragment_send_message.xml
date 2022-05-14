@@ -34,7 +34,7 @@
             android:layout_gravity="start"
             android:maxWidth="280dp"
             android:minWidth="140dp"
-            android:padding="6dp"
+            android:padding="4dp"
             android:paddingStart="8dp"
             android:textColor="?android:textColorPrimary"
             tools:ignore="RtlSymmetry"

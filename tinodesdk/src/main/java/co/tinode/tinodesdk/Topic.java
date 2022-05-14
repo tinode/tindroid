@@ -988,8 +988,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     mStore.setRead(this, seq);
 
                     // Update cached message.
-                    Storage.Message msg = mStore.getMessagePreviewById(id);
-                    mTinode.setLastMessage(getName(), msg);
+                    mTinode.setLastMessage(getName(), mStore.getMessagePreviewById(id));
                 }
             }
         }
@@ -1020,6 +1019,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                         if (mStore != null) {
                             mStore.msgSyncing(Topic.this, msgId, false);
+
+                            // Update cached message.
+                            mTinode.setLastMessage(getName(), mStore.getMessagePreviewById(msgId));
                         }
                         // Rethrow exception to trigger the next possible failure listener.
                         throw err;

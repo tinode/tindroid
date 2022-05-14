@@ -278,8 +278,10 @@ public class MessageActivity extends AppCompatActivity
         }
 
         mTopic = topic;
+        boolean changed = false;
         if (mTopicName == null || !mTopicName.equals(topicName)) {
             mTopicName = topicName;
+            changed = true;
 
             if (mTopic == null) {
                 UiUtils.setupToolbar(this, null, mTopicName, false, null);
@@ -325,12 +327,11 @@ public class MessageActivity extends AppCompatActivity
         if (!mTopic.isAttached()) {
             // Try immediate reconnect.
             topicAttach(true);
-        } else {
-            MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager()
-                    .findFragmentByTag(FRAGMENT_MESSAGES);
-            if (fragmsg != null) {
-                fragmsg.topicSubscribed(topicName, forceReset);
-            }
+        }
+
+        MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
+        if (fragmsg != null) {
+            fragmsg.topicChanged(topicName, forceReset || changed);
         }
 
         return true;
@@ -428,7 +429,7 @@ public class MessageActivity extends AppCompatActivity
                             } else {
                                 MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
                                 if (fragmsg != null) {
-                                    fragmsg.topicSubscribed(mTopicName, true);
+                                    fragmsg.topicChanged(mTopicName, true);
                                 }
                             }
                         });

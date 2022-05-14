@@ -2,15 +2,15 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:width="56dp"
-        android:height="24dp"
+        android:height="26dp"
         android:left="12dp"
-        android:top="4dp">
+        android:top="3dp">
         <shape android:shape="rectangle">
             <solid android:color="?android:colorButtonNormal" />
             <size
-                android:width="24dp"
+                android:width="26dp"
                 android:height="16dp" />
-            <corners android:bottomRightRadius="12dp" android:topRightRadius="12dp"/>
+            <corners android:bottomRightRadius="13dp" android:topRightRadius="13dp"/>
         </shape>
     </item>
     <item android:drawable="@drawable/shadow_disk"
