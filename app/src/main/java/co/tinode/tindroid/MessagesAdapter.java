@@ -130,7 +130,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private final ActionMode.Callback mSelectionModeCallback;
     private final SwipeRefreshLayout mRefresher;
     private final MessageLoaderCallbacks mMessageLoaderCallback;
-    private final SpanClicker mSpanFormatterClicker;
     private ActionMode mSelectionMode;
     private RecyclerView mRecyclerView;
     private Cursor mCursor;
@@ -217,8 +216,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return false;
             }
         };
-
-        mSpanFormatterClicker = new SpanClicker();
 
         verifyStoragePermissions();
     }
@@ -568,9 +565,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         boolean uploadingAttachment = hasAttachment && m.isPending();
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
-        mSpanFormatterClicker.setPosition(position);
         // Disable clicker while message is processed.
-        FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : mSpanFormatterClicker);
+        FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
         formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
         Spanned text = m.content.format(formatter);
         if (text == null || text.length() == 0) {
@@ -1071,10 +1067,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     class SpanClicker implements FullFormatter.ClickListener {
-        private int mPosition = -1;
+        private final int mSeqId;
 
-        void setPosition(int pos) {
-            mPosition = pos;
+        SpanClicker(int seq) {
+            mSeqId = seq;
         }
 
         @Override
@@ -1087,17 +1083,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 case "AU":
                     // Audio play/pause.
                     if (data != null) {
-                        StoredMessage msg = getMessage(mPosition);
-                        if (msg == null) {
-                            break;
-                        }
                         try {
                             FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                             if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
                                 String url = getPayloadUrl(data);
                                 if (url != null) {
-                                    if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
-                                        initAudioPlayer(msg.seq, url, aca.control);
+                                    Log.i(TAG, "Play seq=" + mSeqId + "; old seq=" + mPlayingAudioSeq +
+                                            "; url=" + (url.length() > 30 ? url.substring(0, 30) + "..." : url));
+                                    if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
+                                        Log.i(TAG, "Play " + mSeqId + "; old seq=" + mPlayingAudioSeq);
+                                        initAudioPlayer(mSeqId, url, aca.control);
                                     }
                                     mAudioPlayer.start();
                                 }
@@ -1106,10 +1101,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     mAudioPlayer.pause();
                                 }
                             } else if (aca.seekTo != null) {
-                                if (mAudioPlayer == null || mPlayingAudioSeq != msg.seq) {
+                                if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
                                     String url = getPayloadUrl(data);
                                     if (url != null) {
-                                        initAudioPlayer(msg.seq, url, aca.control);
+                                        initAudioPlayer(mSeqId, url, aca.control);
                                     }
                                 }
                                 if (mAudioPlayer != null) {
@@ -1229,7 +1224,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             String actionType = (String) data.get("act");
                             String actionValue = (String) data.get("val");
                             String name = (String) data.get("name");
-                            StoredMessage msg = getMessage(mPosition);
+                            // StoredMessage msg = getMessage(mPosition);
                             if ("pub".equals(actionType)) {
                                 Drafty newMsg = new Drafty((String) data.get("title"));
                                 Map<String, Object> json = new HashMap<>();
@@ -1240,12 +1235,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                                     json.put("resp", resp);
                                 }
-                                if (msg != null) {
-                                    json.put("seq", "" + msg.seq);
-                                }
-                                if (!json.isEmpty()) {
-                                    newMsg.attachJSON(json);
-                                }
+
+                                json.put("seq", "" + mSeqId);
+                                newMsg.attachJSON(json);
                                 mActivity.sendMessage(newMsg, -1);
 
                             } else if ("url".equals(actionType)) {
@@ -1261,10 +1253,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     builder = builder.appendQueryParameter(name,
                                             TextUtils.isEmpty(actionValue) ? "1" : actionValue);
                                 }
-                                if (msg != null) {
-                                    builder = builder.appendQueryParameter("seq", "" + msg.seq);
-                                }
-                                builder = builder.appendQueryParameter("uid", Cache.getTinode().getMyId());
+                                builder = builder
+                                        .appendQueryParameter("seq", "" + mSeqId)
+                                        .appendQueryParameter("uid", Cache.getTinode().getMyId());
                                 mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
                             }
                         } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
