@@ -1088,10 +1088,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                             if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
                                 String url = getPayloadUrl(data);
                                 if (url != null) {
-                                    Log.i(TAG, "Play seq=" + mSeqId + "; old seq=" + mPlayingAudioSeq +
-                                            "; url=" + (url.length() > 30 ? url.substring(0, 30) + "..." : url));
                                     if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                                        Log.i(TAG, "Play " + mSeqId + "; old seq=" + mPlayingAudioSeq);
                                         initAudioPlayer(mSeqId, url, aca.control);
                                     }
                                     mAudioPlayer.start();
