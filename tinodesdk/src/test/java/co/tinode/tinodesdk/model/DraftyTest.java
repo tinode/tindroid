@@ -295,8 +295,8 @@ public class DraftyTest {
 
         // Emoji 2. It's a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
         src = Drafty.fromPlainText("😀 b1👩🏽‍✈️b2 smile");
-        actual = src.shorten(8, false);
-        expected = Drafty.fromPlainText("😀 b1👩🏽‍✈️b…");
+        actual = src.shorten(6, false);
+        expected = Drafty.fromPlainText("😀 b1👩🏽‍✈️…");
         expected.fmt = new Drafty.Style[]{
                 new Drafty.Style("ST", 2, 5),
                 new Drafty.Style("EM", 0, 6)
