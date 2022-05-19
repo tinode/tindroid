@@ -378,7 +378,7 @@ public class Drafty implements Serializable {
                 spans = toSpanTree(spans);
 
                 // Parse the entire string into spans, styled or unstyled.
-                spans = chunkify(line, 0, line.codePointCount(0, line.length()), spans);
+                spans = chunkify(line, 0, line.length(), spans);
 
                 // Convert line into a block.
                 b = draftify(spans, 0);
@@ -413,11 +413,13 @@ public class Drafty implements Serializable {
                 text.append(b.txt);
             }
             if (b.fmt != null) {
-                fmt.addAll(b.fmt);
+                for (Style s : b.fmt) {
+                    fmt.add(s.convertToCodePoints(text));
+                }
             }
 
             for (int i = 1; i<blks.size(); i++) {
-                int offset = text.length() + 1;
+                int offset = text.codePointCount(0, text.length()) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -1516,6 +1518,13 @@ public class Drafty implements Serializable {
             }
             return false;
         }
+
+        // Convert 'at' and 'len' values from char indexes to codepoints.
+        Style convertToCodePoints(StringBuilder text) {
+            len = text.codePointCount(at, at + len);
+            at = text.codePointCount(0, at);
+            return this;
+        }
     }
 
     public static class Entity implements Serializable {
@@ -1898,6 +1907,13 @@ public class Drafty implements Serializable {
             }
             fmt.add(s);
         }
+
+        @NotNull
+        @Override
+        public String toString() {
+            return "{'" + txt + "', " +
+                    "fmt: [" + fmt + "]}";
+        }
     }
 
     private static class Span implements Comparable<Span> {
@@ -1950,13 +1966,16 @@ public class Drafty implements Serializable {
             return start - s.start;
         }
 
-        @SuppressWarnings("NullableProblems")
+        @NotNull
         @Override
         public String toString() {
-            return "{" + "start=" + start + "," +
+            return "{" +
+                    "text='" + text + "'," +
+                    "start=" + start + "," +
                     "end=" + end + "," +
                     "type=" + type + "," +
-                    "data=" + (data != null ? data.toString() : "null") +
+                    "data=" + (data != null ? data.toString() : "null") + "," +
+                    "\n  children=[" + children + "]" +
                     "}";
         }
     }
