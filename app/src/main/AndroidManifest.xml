@@ -6,7 +6,6 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-
     <!-- Needed for adding an avatar pic when registering new accounts and reading attachments -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -14,6 +13,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
     <!-- Store tinode IM id as a record in the address book -->
     <uses-permission android:name="android.permission.WRITE_CONTACTS"/>
@@ -33,6 +33,8 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Needed for audio visualization -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <!-- Needed for incoming call notifications -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
     <queries>
         <intent>
             <action android:name="android.intent.action.INSERT" />
@@ -76,7 +78,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        
         <activity
             android:name=".LoginActivity"
             android:launchMode="singleTask"
@@ -94,7 +95,6 @@
                 <data android:host="web.tinode.co" android:scheme="https"/>
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ChatsActivity"
             android:theme="@style/AppTheme"
@@ -106,50 +106,46 @@
                 android:resource="@xml/searchable_contacts"/
             -->
         </activity>
-
         <activity
             android:name=".MessageActivity"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
-
             <intent-filter android:icon="@mipmap/ic_launcher" tools:ignore="AppLinkUrlError">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data
                     android:mimeType="vnd.android.cursor.item/vnd.co.tinode.im" />
             </intent-filter>
-
             <intent-filter>
                 <!-- this is used when a AndroidNotification is provided in an FCM push message -->
                 <action android:name=".MessageActivity" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".StartChatActivity"
             android:label="@string/action_new_chat"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize" />
-
         <activity
             android:name=".SendToActivity"
             android:label="@string/send_to"
             android:theme="@style/AppTheme"
             android:exported="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
-
+        <activity
+            android:name=".IncomingCallActivity"
+            android:exported="false"
+            android:showOnLockScreen="true" />
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:theme="@style/LicensesTheme" />
-
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
             android:theme="@style/LicensesTheme" />
@@ -167,7 +163,6 @@
                 android:name="android.accounts.AccountAuthenticator"
                 android:resource="@xml/authenticator"/>
         </service>
-
         <service
             android:name=".services.ContactsSyncService"
             android:exported="false">
@@ -182,7 +177,6 @@
                 android:name="android.provider.CONTACTS_STRUCTURE"
                 android:resource="@xml/contacts_source"/>
         </service>
-
         <!-- FirebaseMessagingService performs security checks at runtime,
              no need for explicit permissions despite exported="true".
              Using tools:ignore="ExportedService" to disable the warning -->
@@ -192,6 +186,10 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <service
+            android:name=".services.CallService"
+            android:enabled="true"
+            android:exported="true"></service>
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -202,7 +200,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/provider_paths"/>
         </provider>
-
     </application>
 
 </manifest>

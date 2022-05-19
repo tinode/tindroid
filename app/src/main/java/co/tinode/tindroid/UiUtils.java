@@ -5,6 +5,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -14,22 +15,30 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -79,6 +88,7 @@ import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.services.CallService;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -128,6 +138,9 @@ public class UiUtils {
     public static final int MAX_AVATAR_SIZE = 384;
     // Maximum byte size of avatar sent in-band.
     public static final int MAX_INBAND_AVATAR_SIZE = 4096;
+
+    // Mime type of the Video call messages.
+    public static final String VIDEO_CALL_MIME = "application/x-tinode-webrtc";
 
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
@@ -499,6 +512,43 @@ public class UiUtils {
             sb.append("0");
         }
         return sb.append(sec).toString();
+    }
+
+    // Builds and returns a video call message text given call direction, state and duration.
+    @NonNull
+    static Spanned videoCallMsg(boolean isOutgoing, String callState, int millis) {
+        String dir = isOutgoing ? "↗" : "↙";
+        Spannable cont = new SpannableString(dir);
+        cont.setSpan(new ForegroundColorSpan(
+                        "disconnected".equals(callState) ? Color.RED : Color.GREEN),
+                0, dir.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        cont.setSpan(new StyleSpan(Typeface.BOLD), 0, dir.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(isOutgoing ? "Outgoing Call" : "Incoming Call");
+        if (millis > 0) {
+            sb.append(" (" + millisToTime(millis) + ")");
+        }
+        return (Spanned) TextUtils.concat(cont, sb.toString());
+    }
+
+    // Returns true if the specified mime type is a video call.
+    public static boolean isVideoCallMime(String mime) {
+        return VIDEO_CALL_MIME.equals(mime);
+    }
+
+    // Triggers an incoming video call notification/banner.
+    public static void startIncomingVideoCall(Context context, String topic, int seq) {
+        // CallService will actually build and display the notification.
+        Intent intent = new Intent(context, CallService.class);
+        intent.setAction("call");
+        intent.putExtra("topic", topic);
+        intent.putExtra("seq", seq);
+        if (context instanceof Service && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
     }
 
     // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.

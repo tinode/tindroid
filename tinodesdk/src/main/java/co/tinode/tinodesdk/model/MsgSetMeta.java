@@ -36,5 +36,4 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
     public MsgSetMeta(Credential cred) {
         this(null, null, null, cred);
     }
-
 }

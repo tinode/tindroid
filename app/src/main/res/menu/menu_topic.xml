@@ -70,4 +70,9 @@
         android:title="@string/action_delete_group"
         android:icon="@drawable/ic_delete"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/action_call"
+        android:orderInCategory="108"
+        android:title="Video Call"
+        app:showAsAction="never" />
 </menu>

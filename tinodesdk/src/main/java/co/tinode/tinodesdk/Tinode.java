@@ -43,7 +43,6 @@ import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgClientAcc;
 import co.tinode.tinodesdk.model.MsgClientDel;
@@ -1562,6 +1561,21 @@ public class Tinode {
     @SuppressWarnings("WeakerAccess")
     public void noteRecv(String topicName, int seq) {
         note(topicName, NOTE_RECV, seq);
+    }
+
+    /**
+     * Send a video call notification to server.
+     * @param topicName specifies the call topic.
+     * @param seq call message ID.
+     * @param event is a video call event to notify the other call party about (e.g. "accept" or "hang-up").
+     * @param payload is a JSON payload associated with the event.
+     */
+    public void videoCall(String topicName, int seq, String event, Object payload) {
+        try {
+            send(new ClientMessage(new MsgClientNote(topicName, "call", seq, event, payload)));
+        } catch (JsonProcessingException | NotConnectedException ignored) {
+
+        }
     }
 
     /**

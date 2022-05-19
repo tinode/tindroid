@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 
 import java.util.List;
@@ -25,6 +24,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -340,6 +340,15 @@ public class ChatsActivity extends AppCompatActivity
 
             // Update online status of contacts.
             datasetChanged();
+        }
+
+        @Override
+        public void onDataMessage(MsgServerData data) {
+            // Check if it's a video call.
+            if (UiUtils.isVideoCallMime(data.getStringHeader("mime")) &&
+                data.getStringHeader("replace") == null) {
+                UiUtils.startIncomingVideoCall(ChatsActivity.this, data.topic, data.seq);
+            }
         }
     }
 }

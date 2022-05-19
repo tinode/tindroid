@@ -96,6 +96,7 @@ dependencies {
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
     implementation 'com.squareup.picasso:picasso:2.8'
+    implementation(name: 'google-webrtc-1.0.32006', ext: 'aar')
 
     annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.4.1'
 }
