@@ -241,6 +241,8 @@ public class MessageActivity extends AppCompatActivity
         }
         String action = intent.getAction();
         if ("incoming_call".equals(action)) {
+            // We are executing the requested action only once.
+            intent.setAction(null);
             Bundle args = new Bundle();
             args.putString("call_direction", "incoming");
             args.putInt("call_seq", intent.getIntExtra("seq", 0));
@@ -866,12 +868,6 @@ public class MessageActivity extends AppCompatActivity
             mTypingAnimationTimer =
                     UiUtils.toolbarTypingIndicator(MessageActivity.this, mTypingAnimationTimer, -1);
             runMessagesLoader();
-
-            // Check if it's a video call.
-            if (UiUtils.isVideoCallMime(data.getStringHeader("mime")) &&
-                    data.getStringHeader("replace") == null) {
-                UiUtils.startIncomingVideoCall(MessageActivity.this, data.topic, data.seq);
-            }
         }
 
         @Override
@@ -1008,6 +1004,11 @@ public class MessageActivity extends AppCompatActivity
 
             UiUtils.attachMeTopic(MessageActivity.this, null);
             topicAttach(false);
+        }
+
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            UiUtils.maybeHandleVideoCall(MessageActivity.this, info);
         }
     }
 }

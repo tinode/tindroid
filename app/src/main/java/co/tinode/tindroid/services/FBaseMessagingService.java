@@ -250,9 +250,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     }
 
                     // If it's a video call, start it.
-                    if (UiUtils.isVideoCallMime(data.get("mime"))) {
+                    if (UiUtils.isVideoCallMime(data.get("mime")) && !tinode.isMe(senderId)) {
                         if (data.get("replace") == null) {
-                            UiUtils.startIncomingVideoCall(this, topicName, seq);
+                            UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
                         }
                         return;
                     }

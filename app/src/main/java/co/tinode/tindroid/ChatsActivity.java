@@ -24,7 +24,6 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.Description;
-import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -343,12 +342,9 @@ public class ChatsActivity extends AppCompatActivity
         }
 
         @Override
-        public void onDataMessage(MsgServerData data) {
+        public void onInfoMessage(MsgServerInfo info) {
             // Check if it's a video call.
-            if (UiUtils.isVideoCallMime(data.getStringHeader("mime")) &&
-                data.getStringHeader("replace") == null) {
-                UiUtils.startIncomingVideoCall(ChatsActivity.this, data.topic, data.seq);
-            }
+            UiUtils.maybeHandleVideoCall(ChatsActivity.this, info);
         }
     }
 }

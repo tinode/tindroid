@@ -58,107 +58,40 @@ import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-class CustomSdpObserver implements SdpObserver {
-    private String tag;
-
-    CustomSdpObserver(String logTag) {
-        tag = this.getClass().getCanonicalName();
-        this.tag = this.tag + " " + logTag;
-    }
-
-
-    @Override
-    public void onCreateSuccess(SessionDescription sessionDescription) {
-        Log.d(tag, "onCreateSuccess() called with: sessionDescription = [" + sessionDescription + "]");
-    }
-
-    @Override
-    public void onSetSuccess() {
-        Log.d(tag, "onSetSuccess() called");
-    }
-
-    @Override
-    public void onCreateFailure(String s) {
-        Log.d(tag, "onCreateFailure() called with: s = [" + s + "]");
-    }
-
-    @Override
-    public void onSetFailure(String s) {
-        Log.d(tag, "onSetFailure() called with: s = [" + s + "]");
-    }
-
-}
-
-class CustomPeerConnectionObserver implements PeerConnection.Observer {
-
-    public String logTag;
-
-    CustomPeerConnectionObserver(String logTag) {
-        this.logTag = this.getClass().getCanonicalName();
-        this.logTag = this.logTag+" "+logTag;
-    }
-
-    @Override
-    public void onSignalingChange(PeerConnection.SignalingState signalingState) {
-        Log.d(logTag, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
-    }
-
-    @Override
-    public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-        Log.d(logTag, "onIceConnectionChange() called with: iceConnectionState = [" + iceConnectionState + "]");
-    }
-
-    @Override
-    public void onIceConnectionReceivingChange(boolean b) {
-        Log.d(logTag, "onIceConnectionReceivingChange() called with: b = [" + b + "]");
-    }
-
-    @Override
-    public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
-        Log.d(logTag, "onIceGatheringChange() called with: iceGatheringState = [" + iceGatheringState + "]");
-    }
-
-    @Override
-    public void onIceCandidate(IceCandidate iceCandidate) {
-        Log.d(logTag, "onIceCandidate() called with: iceCandidate = [" + iceCandidate + "]");
-    }
-
-    @Override
-    public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
-        Log.d(logTag, "onIceCandidatesRemoved() called with: iceCandidates = [" + iceCandidates + "]");
-    }
-
-    @Override
-    public void onAddStream(MediaStream mediaStream) {
-        Log.d(logTag, "onAddStream() called with: mediaStream = [" + mediaStream + "]");
-    }
-
-    @Override
-    public void onRemoveStream(MediaStream mediaStream) {
-        Log.d(logTag, "onRemoveStream() called with: mediaStream = [" + mediaStream + "]");
-    }
-
-    @Override
-    public void onDataChannel(DataChannel dataChannel) {
-        Log.d(logTag, "onDataChannel() called with: dataChannel = [" + dataChannel + "]");
-    }
-
-    @Override
-    public void onRenegotiationNeeded() {
-        Log.d(logTag, "onRenegotiationNeeded() called");
-    }
-
-    @Override
-    public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-        Log.d(logTag, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver + "], mediaStreams = [" + mediaStreams + "]");
-    }
-}
-
 /**
  * Video call UI: local & remote video views.
  */
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
+
+    private class CustomSdpObserver implements SdpObserver {
+        private String tag;
+
+        CustomSdpObserver(String logTag) {
+            tag = this.getClass().getCanonicalName();
+            this.tag = this.tag + " " + logTag;
+        }
+
+        @Override
+        public void onCreateSuccess(SessionDescription sessionDescription) {
+            Log.d(tag, "onCreateSuccess() called with: sessionDescription = [" + sessionDescription + "]");
+        }
+
+        @Override
+        public void onSetSuccess() {
+            Log.d(tag, "onSetSuccess() called");
+        }
+
+        @Override
+        public void onCreateFailure(String s) {
+            Log.d(tag, "onCreateFailure() called with: s = [" + s + "]");
+        }
+
+        @Override
+        public void onSetFailure(String s) {
+            Log.d(tag, "onSetFailure() called with: s = [" + s + "]");
+        }
+    }
 
     PeerConnectionFactory mPeerConnectionFactory;
     MediaConstraints mAudioConstraints;
@@ -170,14 +103,13 @@ public class CallFragment extends Fragment {
     AudioSource mAudioSource;
     AudioTrack mLocalAudioTrack;
     SurfaceTextureHelper mSurfaceTextureHelper;
-
-    SurfaceViewRenderer mLocalVideoView;
-    SurfaceViewRenderer mRemoteVideoView;
-
-
     PeerConnection mLocalPeer;
     List<PeerConnection.IceServer> mIceServers;
     EglBase mRootEglBase;
+
+    // Video (camera views).
+    SurfaceViewRenderer mLocalVideoView;
+    SurfaceViewRenderer mRemoteVideoView;
 
     public enum CallDirection {
         OUTGOING,
@@ -192,11 +124,12 @@ public class CallFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
+                        Log.d(TAG, "The user has disallowed " + e.toString());
                         handleCallClose();
                         return;
                     }
                 }
-                //
+                // All permissions granted.
                 this.start();
             });
 
@@ -302,6 +235,7 @@ public class CallFragment extends Fragment {
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
         if (!missing.isEmpty()) {
+            Log.d(TAG,"Requesting missing permissions:" + missing);
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
@@ -461,6 +395,7 @@ public class CallFragment extends Fragment {
     }
 
     private void initIceServers() {
+        // TODO: ICE/WebRTC config should be obtained from the server.
         mIceServers = new ArrayList<>();
         mIceServers.add(PeerConnection.IceServer.builder("stun:bn-turn1.xirsys.com").createIceServer());
 
@@ -598,10 +533,10 @@ public class CallFragment extends Fragment {
         rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
-        mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new CustomPeerConnectionObserver("localPeerCreation") {
+        mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer()/*CustomPeerConnectionObserver("localPeerCreation")*/ {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
-                super.onIceCandidate(iceCandidate);
+                //super.onIceCandidate(iceCandidate);
                 //onIceCandidateReceived(iceCandidate);
                 // Send ICE candidate to the peer.
 
@@ -612,7 +547,7 @@ public class CallFragment extends Fragment {
             @Override
             public void onAddStream(MediaStream mediaStream) {
                 Log.d(TAG, "Received Remote stream.");
-                super.onAddStream(mediaStream);
+                //super.onAddStream(mediaStream);
 
                 // Add remote media stream to the renderer.
                 final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
@@ -628,7 +563,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onSignalingChange(PeerConnection.SignalingState signalingState) {
-                Log.d(logTag, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
+                Log.d(TAG, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
                 if (signalingState == PeerConnection.SignalingState.CLOSED) {
                     handleCallClose();
                 }
@@ -636,7 +571,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-                Log.d(logTag, "onIceConnectionChange() called with: iceConnectionState = [" + iceConnectionState + "]");
+                Log.d(TAG, "onIceConnectionChange() called with: iceConnectionState = [" + iceConnectionState + "]");
                 switch (iceConnectionState) {
                     case CLOSED:
                     case FAILED:
@@ -647,32 +582,32 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onIceConnectionReceivingChange(boolean b) {
-                Log.d(logTag, "onIceConnectionReceivingChange() called with: b = [" + b + "]");
+                Log.d(TAG, "onIceConnectionReceivingChange() called with: b = [" + b + "]");
             }
 
             @Override
             public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
-                Log.d(logTag, "onIceGatheringChange() called with: iceGatheringState = [" + iceGatheringState + "]");
+                Log.d(TAG, "onIceGatheringChange() called with: iceGatheringState = [" + iceGatheringState + "]");
             }
 
             @Override
             public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
-                Log.d(logTag, "onIceCandidatesRemoved() called with: iceCandidates = [" + iceCandidates + "]");
+                Log.d(TAG, "onIceCandidatesRemoved() called with: iceCandidates = [" + iceCandidates + "]");
             }
 
             @Override
             public void onRemoveStream(MediaStream mediaStream) {
-                Log.d(logTag, "onRemoveStream() called with: mediaStream = [" + mediaStream + "]");
+                Log.d(TAG, "onRemoveStream() called with: mediaStream = [" + mediaStream + "]");
             }
 
             @Override
             public void onDataChannel(DataChannel dataChannel) {
-                Log.d(logTag, "onDataChannel() called with: dataChannel = [" + dataChannel + "]");
+                Log.d(TAG, "onDataChannel() called with: dataChannel = [" + dataChannel + "]");
             }
 
             @Override
             public void onRenegotiationNeeded() {
-                Log.d("customPCObserver", "onRenegotiationNeeded() called");
+                Log.d(TAG, "onRenegotiationNeeded() called");
 
                 mSdpConstraints = new MediaConstraints();
                 mSdpConstraints.mandatory.add(
@@ -692,7 +627,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-                Log.d(logTag, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver + "], mediaStreams = [" + mediaStreams + "]");
+                Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver + "], mediaStreams = [" + mediaStreams + "]");
             }
         });
 

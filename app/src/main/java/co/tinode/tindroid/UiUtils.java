@@ -103,6 +103,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -537,13 +538,36 @@ public class UiUtils {
         return VIDEO_CALL_MIME.equals(mime);
     }
 
+    // If an incoming info is a video call related,
+    public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
+        if ("call".equals(info.what)) {
+            final Tinode tinode = Cache.getTinode();
+            switch (info.event) {
+                case "invite":
+                    if (!tinode.isMe(info.from)) {
+                        // Call invite from the peer.
+                        UiUtils.handleIncomingVideoCall(ctx, "invite", info.src, info.from, info.seq);
+                    }
+                    break;
+                case "accept":
+                    if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
+                        // Another client has accepted the call. Dismiss call notification.
+                        UiUtils.handleIncomingVideoCall(ctx, "dismiss", info.src, info.from, info.seq);
+                    }
+                    break;
+            }
+        }
+    }
+
     // Triggers an incoming video call notification/banner.
-    public static void startIncomingVideoCall(Context context, String topic, int seq) {
+    public static void handleIncomingVideoCall(Context context, String action, String topic,
+                                               String from, int seq) {
         // CallService will actually build and display the notification.
         Intent intent = new Intent(context, CallService.class);
-        intent.setAction("call");
+        intent.setAction(action);
         intent.putExtra("topic", topic);
         intent.putExtra("seq", seq);
+        intent.putExtra("from", from);
         if (context instanceof Service && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
@@ -783,7 +807,7 @@ public class UiUtils {
 
     // Construct avatar drawable: use bitmap if it is not null,
     // otherwise use name & address to create a LetterTileDrawable.
-    static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
+    public static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
         if (bmp != null) {
             return new RoundImageDrawable(context.getResources(), bmp);
         } else {
