@@ -304,7 +304,8 @@ public class DraftyTest {
         expected = Drafty.fromPlainText("a😀c😀…");
         assertEquals("Shorten Emoji 1 has failed", expected, actual);
 
-        // Emoji 2. It's a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
+        // Emoji 2. 👩🏽‍✈️ is a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
+        // 👩 female 🏽 fitzpatrick skin tone ‍ ZWJ ✈ airplane.
         // This test is expected to fail until composed emoji is supported.
         src = Drafty.fromPlainText("😀 b1👩🏽‍✈️b2 smile");
         actual = src.shorten(6, false);

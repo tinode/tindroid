@@ -10,6 +10,7 @@
     <dimen name="fab_mini_margin">12dp</dimen>
     <dimen name="fab_large">72dp</dimen>
     <dimen name="fab_large_icon">36dp</dimen>
+    <dimen name="fab_mini_icon">20dp</dimen>
     <dimen name="fab_micro">32dp</dimen>
     <dimen name="fab_micro_icon">16dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
