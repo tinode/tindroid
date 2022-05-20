@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URL;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -175,7 +175,7 @@ public class Drafty implements Serializable {
     @JsonCreator
     public static Drafty fromPlainText(String plainText) {
         Drafty that = new Drafty();
-        that.txt = plainText;
+        that.txt = Normalizer.normalize(plainText, Normalizer.Form.NFC);
         return that;
     }
 
@@ -348,6 +348,8 @@ public class Drafty implements Serializable {
         if (content == null) {
             return Drafty.fromPlainText("");
         }
+        // Normalize possible Unicode 32 codepoints.
+        content = Normalizer.normalize(content, Normalizer.Form.NFC);
 
         // Break input into individual lines. Markdown cannot span multiple lines.
         String[] lines = content.split("\\r?\\n");
@@ -410,11 +412,13 @@ public class Drafty implements Serializable {
                 text.append(b.txt);
             }
             if (b.fmt != null) {
-                fmt.addAll(b.fmt);
+                for (Style s : b.fmt) {
+                    fmt.add(s.convertToCodePoints(text));
+                }
             }
 
             for (int i = 1; i<blks.size(); i++) {
-                int offset = text.length() + 1;
+                int offset = text.codePointCount(0, text.length()) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -1220,12 +1224,16 @@ public class Drafty implements Serializable {
                     return node;
                 }
                 if (limit == 0) {
-                    node.text = tail;
+                    node.text = tail != null ? new StringBuilder(tail) : null;
                     limit = -1;
                 } else if (node.text != null) {
-                    int len = node.text.length();
+                    int len = node.text.codePointCount(0, node.text.length());
                     if (len > limit) {
-                        node.text = node.text.subSequence(0, limit) + tail;
+                        int clipAt = node.text.offsetByCodePoints(0, limit);
+                        node.text.setLength(clipAt);
+                        if (tail != null) {
+                            node.text.append(tail);
+                        }
                         limit = -1;
                     } else {
                         limit -= len;
@@ -1243,7 +1251,7 @@ public class Drafty implements Serializable {
         }
 
         if (tree.attachment) {
-            tree.text = " ";
+            tree.text = new StringBuilder(" ");
             tree.attachment = false;
             tree.children = null;
         } else if (tree.children != null) {
@@ -1263,7 +1271,7 @@ public class Drafty implements Serializable {
 
                     c.attachment = false;
                     c.children = null;
-                    c.text = " ";
+                    c.text = new StringBuilder(" ");
                     attachments.add(c);
                 } else {
                     children.add(c);
@@ -1341,14 +1349,14 @@ public class Drafty implements Serializable {
                             node.text.length() > 0 &&
                             node.text.charAt(0) == '➦' &&
                             (node.parent == null || node.parent.isUnstyled())) {
-                        node.text = "➦";
+                        node.text = new StringBuilder("➦");
                         node.children = null;
                     }
                 } else if (node.isStyle("QQ")) {
-                    node.text = " ";
+                    node.text = new StringBuilder(" ");
                     node.children = null;
                 } else if (node.isStyle("BR")) {
-                    node.text = " ";
+                    node.text = new StringBuilder(" ");
                     node.children = null;
                     node.tp = null;
                 }
@@ -1417,12 +1425,12 @@ public class Drafty implements Serializable {
                 } else if (node.isStyle("MN")) {
                     if (node.text != null && node.text.charAt(0) == '➦' &&
                             (node.parent == null || node.parent.isUnstyled())) {
-                        node.text = "➦";
+                        node.text = new StringBuilder("➦");
                         node.children = null;
                         node.data = null;
                     }
                 } else if (node.isStyle("BR")) {
-                    node.text = " ";
+                    node.text = new StringBuilder(" ");
                     node.tp = null;
                     node.children = null;
                 }
@@ -1508,6 +1516,13 @@ public class Drafty implements Serializable {
                         equalsNullable(this.tp, that.tp);
             }
             return false;
+        }
+
+        // Convert 'at' and 'len' values from char indexes to codepoints.
+        Style convertToCodePoints(StringBuilder text) {
+            len = text.codePointCount(at, at + len);
+            at = text.codePointCount(0, at);
+            return this;
         }
     }
 
@@ -1643,7 +1658,7 @@ public class Drafty implements Serializable {
         String tp;
         Integer key;
         Map<String,Object> data;
-        CharSequence text;
+        StringBuilder text;
         List<Node> children;
         boolean attachment;
 
@@ -1660,7 +1675,7 @@ public class Drafty implements Serializable {
             parent = null;
             tp = null;
             data = null;
-            text = content;
+            text = new StringBuilder(content);
             children = null;
             attachment = false;
         }
@@ -1685,7 +1700,7 @@ public class Drafty implements Serializable {
             this.tp = tp;
             this.key = key;
             this.data = data;
-            text = content;
+            text = new StringBuilder(content);
             children = null;
             attachment = false;
         }
@@ -1748,7 +1763,7 @@ public class Drafty implements Serializable {
         }
 
         public void setText(CharSequence text) {
-            this.text = text;
+            this.text = new StringBuilder(text);
         }
 
         public Object getData(String key) {
@@ -1775,7 +1790,7 @@ public class Drafty implements Serializable {
 
         public int length() {
             if (text != null) {
-                return text.length();
+                return text.codePointCount(0, text.length());
             }
             if (children == null) {
                 return 0;
@@ -1847,8 +1862,8 @@ public class Drafty implements Serializable {
         }
 
         @NotNull
-        private static CharSequence ltrim(@NotNull CharSequence str) {
-            int len = str.length();
+        private static StringBuilder ltrim(@NotNull StringBuilder str) {
+            int len = str.codePointCount(0, str.length());
             if (len == 0) {
                 return str;
             }
@@ -1857,7 +1872,10 @@ public class Drafty implements Serializable {
             while (Character.isWhitespace(str.charAt(start)) && start < end) {
                 start++;
             }
-            return str.subSequence(start, end + 1);
+            if (start > 0) {
+                return str.delete(0, start);
+            }
+            return str;
         }
 
         @NotNull
@@ -1887,6 +1905,13 @@ public class Drafty implements Serializable {
                 fmt = new ArrayList<>();
             }
             fmt.add(s);
+        }
+
+        @NotNull
+        @Override
+        public String toString() {
+            return "{'" + txt + "', " +
+                    "fmt: [" + fmt + "]}";
         }
     }
 
@@ -1940,13 +1965,16 @@ public class Drafty implements Serializable {
             return start - s.start;
         }
 
-        @SuppressWarnings("NullableProblems")
+        @NotNull
         @Override
         public String toString() {
-            return "{" + "start=" + start + "," +
+            return "{" +
+                    "text='" + text + "'," +
+                    "start=" + start + "," +
                     "end=" + end + "," +
                     "type=" + type + "," +
-                    "data=" + (data != null ? data.toString() : "null") +
+                    "data=" + (data != null ? data.toString() : "null") + "," +
+                    "\n  children=[" + children + "]" +
                     "}";
         }
     }
@@ -2004,7 +2032,7 @@ public class Drafty implements Serializable {
         }
 
         int length() {
-            return txt != null ? txt.length() : 0;
+            return txt != null ? txt.codePointCount(0, txt.length()) : 0;
         }
 
         void append(CharSequence text) {
