@@ -1,51 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout android:id="@+id/main_content"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    android:orientation="vertical">
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-    <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/localView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/localView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
-    <org.webrtc.SurfaceViewRenderer
-        android:id="@+id/remoteView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        <org.webrtc.SurfaceViewRenderer
+            android:id="@+id/remoteView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center">
+        android:layout_margin="@dimen/fab_margin"
+        android:layout_gravity="bottom|center">
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/toggleCameraBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center|bottom"
             android:backgroundTint="@android:color/darker_gray"
             android:src="@drawable/ic_outline_videocam_24"
-            android:layout_margin="16dp" />
+            android:layout_margin="@dimen/fab_margin" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/toggleMicBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center|bottom"
             android:backgroundTint="@android:color/darker_gray"
             android:src="@drawable/ic_outline_mic_24"
-            android:layout_margin="16dp" />
+            android:layout_margin="@dimen/fab_margin" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/hangupBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center|bottom"
             android:backgroundTint="@android:color/holo_red_dark"
             android:src="@drawable/ic_baseline_call_end_24"
-            android:layout_margin="16dp" />
+            android:layout_margin="@dimen/fab_margin" />
     </LinearLayout>
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

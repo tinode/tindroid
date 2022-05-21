@@ -27,10 +27,13 @@ public class IncomingCallActivity extends AppCompatActivity {
         Intent intent = new Intent(IncomingCallActivity.this, CallService.class);
         intent.setAction(action);
         Intent originalIntent = getIntent();
-        intent.putExtra("topic", originalIntent.getStringExtra("topic"));
-        intent.putExtra("seq", originalIntent.getIntExtra("seq", -1));
-
-        startService(intent);
+        if (originalIntent != null) {
+            intent.putExtra("topic", originalIntent.getStringExtra("topic"));
+            intent.putExtra("seq", originalIntent.getIntExtra("seq", -1));
+            startService(intent);
+        } else {
+            Log.e(TAG, "No original intent used to start the activity. Closing.");
+        }
         finish();
     }
 

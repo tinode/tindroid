@@ -21,7 +21,6 @@ import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
-import android.text.SpannedString;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.method.LinkMovementMethod;
@@ -48,7 +47,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -137,7 +135,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         public Cursor getCursor() { return mCursor; }
 
-        public void clear() {
+        public void cleanUp() {
             if (mCursor != null) {
                 mCursor.close();
             }
@@ -668,7 +666,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     prev = v;
                 }
             }
-            text = UiUtils.videoCallMsg(m.isMine(), display.content.toString(), (int)duration);
+            text = UiUtils.videoCallMsg(holder.itemView.getContext(), m.isMine(), display.content.toString(), (int)duration);
         }
 
         if (text == null || text.length() == 0) {
@@ -806,7 +804,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
                 } catch (NumberFormatException ignored) {
                 }
-                if (replySeq != -1) {
+                if (replySeq != -1 && mCursor.getCursor() != null) {
                     // A reply message was clicked. Scroll original into view and animate.
                     final int pos = findInCursor(mCursor.getCursor(), replySeq);
                     if (pos >= 0) {
@@ -969,7 +967,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         CachedCursor oldCursor = mCursor;
         mCursor = new CachedCursor(cursor);
         if (oldCursor != null) {
-            oldCursor.clear();
+            oldCursor.cleanUp();
         }
 
         if (refresh != REFRESH_NONE) {

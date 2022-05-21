@@ -73,6 +73,6 @@
     <item
         android:id="@+id/action_call"
         android:orderInCategory="108"
-        android:title="Video Call"
+        android:title="@string/action_video_call"
         app:showAsAction="never" />
 </menu>

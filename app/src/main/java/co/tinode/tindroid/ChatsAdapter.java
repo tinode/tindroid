@@ -283,7 +283,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                     priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH)
                             .format(new PreviewFormatter(priv.getContext(), priv.getTextSize())));
                 } else {
-                    priv.setText(UiUtils.videoCallMsg(msg.isMine(), msg.getContent().toString(), -1));
+                    priv.setText(UiUtils.videoCallMsg(priv.getContext(), msg.isMine(), msg.getContent().toString(), -1));
                 }
             } else {
                 messageStatus.setVisibility(View.GONE);

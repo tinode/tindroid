@@ -20,7 +20,7 @@
             android:layout_marginEnd="5dp"
             android:layout_weight="0.5"
             android:backgroundTint="@color/red"
-            android:text="Decline"
+            android:text="@string/action_decline_call"
             android:textColor="@color/white" />
 
         <Button
@@ -30,7 +30,7 @@
             android:layout_marginStart="5dp"
             android:layout_weight="0.5"
             android:backgroundTint="@color/green"
-            android:text="Answer"
+            android:text="@string/action_accept_call"
             android:textColor="@color/white" />
 
     </LinearLayout>

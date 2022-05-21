@@ -22,11 +22,7 @@ public class MsgClientNote implements Serializable {
     public final Object payload; // Arbitrary json payload (set only when what="call")
 
     public MsgClientNote(String topic, String what, int seq) {
-        this.topic = topic;
-        this.what = what;
-        this.seq = seq > 0 ? seq : null;
-        this.event = null;
-        this.payload = null;
+        this(topic, what, seq, null, null);
     }
 
     public MsgClientNote(String topic, String what, int seq, String event, Object payload) {

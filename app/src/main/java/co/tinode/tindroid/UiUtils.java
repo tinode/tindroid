@@ -516,8 +516,9 @@ public class UiUtils {
     }
 
     // Builds and returns a video call message text given call direction, state and duration.
+    // TODO: this should become a part of the Formatter interface.
     @NonNull
-    static Spanned videoCallMsg(boolean isOutgoing, String callState, int millis) {
+    static Spanned videoCallMsg(Context context, boolean isOutgoing, String callState, int millis) {
         String dir = isOutgoing ? "↗" : "↙";
         Spannable cont = new SpannableString(dir);
         cont.setSpan(new ForegroundColorSpan(
@@ -526,7 +527,7 @@ public class UiUtils {
         cont.setSpan(new StyleSpan(Typeface.BOLD), 0, dir.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(isOutgoing ? "Outgoing Call" : "Incoming Call");
+        sb.append(context.getString(isOutgoing ? R.string.outgoing_call : R.string.incoming_call));
         if (millis > 0) {
             sb.append(" (" + millisToTime(millis) + ")");
         }

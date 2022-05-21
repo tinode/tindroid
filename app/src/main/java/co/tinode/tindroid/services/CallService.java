@@ -46,7 +46,7 @@ public class CallService extends Service {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             Log.d(TAG, "Remote hangup: " + info.toString());
-            if (info.what.equals("call") && info.event.equals("hang-up")) {
+            if ("call".equals(info.what) && "hang-up".equals(info.event)) {
                 Log.d(TAG, "Remote hangup");
                 stopForeground(true);
             }

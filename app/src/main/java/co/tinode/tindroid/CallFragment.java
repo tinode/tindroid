@@ -8,6 +8,7 @@ import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
@@ -130,7 +131,7 @@ public class CallFragment extends Fragment {
                     }
                 }
                 // All permissions granted.
-                this.start();
+                this.startMediaAndSignal();
             });
 
     // Listens for incoming call-related info messages.
@@ -149,7 +150,7 @@ public class CallFragment extends Fragment {
 
         @Override
         public void onInfoMessage(MsgServerInfo info) {
-            if (!info.what.equals("call")) {
+            if (!"call".equals(info.what)) {
                 // We are only interested in "call" info messages.
                 return;
             }
@@ -181,24 +182,8 @@ public class CallFragment extends Fragment {
     public CallFragment() {}
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        final Bundle args = getArguments();
-        String name = args.getString("topic");
-        this.mTopic = (ComTopic<VxCard>)Cache.getTinode().getTopic(name);
-        String callStateStr = args.getString("call_direction");
-        mCallSeqID = args.getInt("call_seq");
-        mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
-    }
-
-    @Override
     public void onResume() {
-        final Bundle args = getArguments();
-
         Tinode tinode = Cache.getTinode();
-        String name = args.getString("topic");
-        this.mTopic = (ComTopic<VxCard>)tinode.getTopic(name);
-
         mTinodeListener = new InfoListener(this.getActivity(), tinode.isConnected());
         mTinodeListener.setParent(this);
         tinode.addListener(mTinodeListener);
@@ -208,28 +193,40 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onPause() {
-        this.stop();
+        this.stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
         super.onPause();
     }
 
     // Mute/unmute media (video if toggleCamera, audio otherwise).
-    private void toggleMedia(FloatingActionButton b, boolean toggleCamera, int enabledIcon, int disabledIcon) {
-        if (mLocalPeer != null) {
-            for (RtpSender transceiver : mLocalPeer.getSenders()) {
-                MediaStreamTrack track = transceiver.track();
-                if ((toggleCamera && track instanceof VideoTrack) ||
-                        (!toggleCamera && track instanceof AudioTrack)) {
-                    boolean enabled = !track.enabled();
-                    track.setEnabled(enabled);
-                    b.setImageResource(enabled ? enabledIcon : disabledIcon);
-                }
+    private void toggleMedia(FloatingActionButton b, boolean toggleCamera, @DrawableRes int enabledIcon, int disabledIcon) {
+        if (mLocalPeer == null) {
+            return;
+        }
+        for (RtpSender transceiver : mLocalPeer.getSenders()) {
+            MediaStreamTrack track = transceiver.track();
+            if ((toggleCamera && track instanceof VideoTrack) ||
+                    (!toggleCamera && track instanceof AudioTrack)) {
+                boolean enabled = !track.enabled();
+                track.setEnabled(enabled);
+                b.setImageResource(enabled ? enabledIcon : disabledIcon);
             }
         }
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+        final Bundle args = getArguments();
+        if (args == null) {
+            // Reject the call.
+            handleCallClose();
+            return;
+        }
+        String name = args.getString("topic");
+        mTopic = (ComTopic<VxCard>)Cache.getTinode().getTopic(name);
+        String callStateStr = args.getString("call_direction");
+        mCallSeqID = args.getInt("call_seq");
+        mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
         // Check permissions.
         final MessageActivity activity = (MessageActivity) getActivity();
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
@@ -240,7 +237,7 @@ public class CallFragment extends Fragment {
             return;
         }
         // Got all necessary permissions.
-        this.start();
+        this.startMediaAndSignal();
     }
 
     @Override
@@ -283,13 +280,20 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        this.stop();
+        this.stopMediaAndSignal();
         super.onDestroyView();
     }
 
-    public void start() {
+    // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
+    // and "accept" for incoming call).
+    private void startMediaAndSignal() {
         // Keep screen on.
-        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        final Activity activity = getActivity();
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            // We are done anyway. Just quite.
+            return;
+        }
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         initVideos();
         initIceServers();
@@ -343,7 +347,8 @@ public class CallFragment extends Fragment {
         this.handleCallInvite();
     }
 
-    private void stop() {
+    // Stops media and concludes the call (sends "hang-up" to the peer).
+    private void stopMediaAndSignal() {
         // Clean up.
         if (this.mLocalPeer != null) {
             this.mLocalPeer.close();
@@ -420,7 +425,10 @@ public class CallFragment extends Fragment {
             this.mTopic.videoCall("hang-up", mCallSeqID, null);
         }
         mCallSeqID = -1;
-        getActivity().getSupportFragmentManager().popBackStack();
+        final Activity activity = getActivity();
+        if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+            getActivity().getSupportFragmentManager().popBackStack();
+        }
     }
 
     private class FailureHandler extends UiUtils.ToastFailureListener {
@@ -437,12 +445,12 @@ public class CallFragment extends Fragment {
 
     // Call initiation.
     private void handleCallInvite() {
-        switch (this.mCallDirection) {
+        switch (mCallDirection) {
             case OUTGOING:
                 // Send out a call invitation to the peer.
                 Map<String, Object> head = new HashMap<>();
                 head.put("mime", UiUtils.VIDEO_CALL_MIME);
-                this.mTopic.publish(new Drafty("started"), head).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                mTopic.publish(new Drafty("started"), head).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (result.ctrl != null && result.ctrl.code < 300) {
@@ -644,10 +652,15 @@ public class CallFragment extends Fragment {
 
     // Handles remote SDP offer received from the peer,
     // creates a local peer connection and sends an answer to the peer.
-    private void handleVideoOfferMsg(MsgServerInfo info) {
+    private void handleVideoOfferMsg(@NonNull MsgServerInfo info) {
         // Incoming call.
-        createPeerConnection();
+        if (info.payload == null) {
+            Log.e(TAG, "Received RTC offer with an empty payload. Quitting");
+            handleCallClose();
+            return;
+        }
 
+        createPeerConnection();
         Map<String, Object> m = (Map<String, Object>)info.payload;
         String type = (String) m.getOrDefault("type", "");
         String sdp = (String)m.getOrDefault("sdp", "");
@@ -670,7 +683,12 @@ public class CallFragment extends Fragment {
     }
 
     // Passes remote SDP received from the peer to the peer connection.
-    private void handleVideoAnswerMsg(MsgServerInfo info) {
+    private void handleVideoAnswerMsg(@NonNull MsgServerInfo info) {
+        if (info.payload == null) {
+            Log.e(TAG, "Received RTC answer with an empty payload. Quitting. ");
+            handleCallClose();
+            return;
+        }
         Map<String, Object> m = (Map<String, Object>)info.payload;
         String type = (String) m.getOrDefault("type", "");
         String sdp = (String)m.getOrDefault("sdp", "");
@@ -683,7 +701,12 @@ public class CallFragment extends Fragment {
     }
 
     // Adds remote ICE candidate data received from the peer to the peer connection.
-    private void handleNewICECandidateMsg(MsgServerInfo info) {
+    private void handleNewICECandidateMsg(@NonNull MsgServerInfo info) {
+        if (info.payload == null) {
+            // Skip.
+            Log.e(TAG, "Received ICE candidate message an empty payload. Skipping.");
+            return;
+        }
         Map<String, Object> m = (Map<String, Object>)info.payload;
         String sdpMid = (String)m.getOrDefault("sdpMid", "");
         int sdpMLineIndex = (int)m.getOrDefault("sdpMLineIndex", 0);
@@ -709,7 +732,7 @@ public class CallFragment extends Fragment {
 
     // Sends a local ICE candidate to the other party.
     private void handleIceCandidateEvent(IceCandidate candidate) {
-        this.mTopic.videoCall(
+        mTopic.videoCall(
                 "ice-candidate", mCallSeqID,
                 new IceCandidateAux("candidate", candidate.sdpMLineIndex, candidate.sdpMid, candidate.sdp));
     }

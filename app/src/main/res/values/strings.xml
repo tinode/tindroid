@@ -61,6 +61,7 @@
     <string name="action_offline">Working offline</string>
     <string name="action_delete_group">Delete conversation…</string>
     <string name="action_leave_topic">Leave conversation…</string>
+    <string name="action_video_call">Video call</string>
 
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select image</string>
@@ -246,6 +247,8 @@
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
     <string name="full_name_required">Full name required</string>
+    <string name="outgoing_call">Outgoing Call</string>
+    <string name="incoming_call">Incoming Call</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
     <string name="permission_missing">Required permission is missing</string>
@@ -321,4 +324,7 @@
     <string name="play_record_audio_button_hint">Play recorded audio</string>
     <string name="pause_audio_button_hint">Pause playback</string>
     <string name="lock_recording_for_long_messages">Lock recording for long messages</string>
+    <string name="caller_name">Caller Name</string>
+    <string name="action_accept_call">Accept</string>
+    <string name="action_decline_call">Decline</string>
 </resources>
