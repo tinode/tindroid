@@ -88,7 +88,7 @@
         android:clickable="true"
         android:contentDescription="@string/button_hint_start_new_chat"
         android:focusable="true"
-        android:visibility="visible"
+        android:visibility="gone"
         android:tint="?android:colorPrimaryDark"
         app:backgroundTint="?android:colorBackgroundFloating"
         app:borderWidth="0dp"
