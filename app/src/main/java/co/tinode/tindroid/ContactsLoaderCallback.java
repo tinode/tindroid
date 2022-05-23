@@ -81,7 +81,6 @@ class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
         // The selection clause for the CursorLoader query. The search criteria defined here
         // restrict results to contacts that have a display name and are linked to visible groups.
         String SELECTION = ContactsContract.Data.DISPLAY_NAME_PRIMARY + "<>'' AND " +
-                ContactsContract.Data.IN_VISIBLE_GROUP + "=1 AND " +
                 ContactsContract.Data.MIMETYPE + "='" + Utils.MIME_TINODE_PROFILE + "'";
 
         // Search by keystrokes.
