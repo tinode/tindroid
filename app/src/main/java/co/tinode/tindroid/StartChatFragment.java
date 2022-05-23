@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,8 +51,6 @@ public class StartChatFragment extends Fragment {
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
-
-        Log.w("StartChatFragment", "onSaveInstanceState");
 
         final FragmentActivity activity = getActivity();
         if (activity == null) {
