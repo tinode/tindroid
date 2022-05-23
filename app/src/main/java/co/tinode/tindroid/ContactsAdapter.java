@@ -287,7 +287,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                             .fit().into(icon);
                 } else {
                     icon.setImageDrawable(
-                            UiUtils.avatarDrawable(icon.getContext(), null, displayName, unique));
+                            UiUtils.avatarDrawable(icon.getContext(), null, displayName, unique, false));
                 }
 
                 TypedArray typedArray = itemView.getContext().obtainStyledAttributes(
@@ -312,7 +312,8 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                             .into((ImageView) switcher.getNextView());
                     } else {
                         switcher.setImageDrawable(
-                                UiUtils.avatarDrawable(switcher.getContext(), null, displayName, unique));
+                                UiUtils.avatarDrawable(switcher.getContext(), null, displayName, unique,
+                                        false));
                     }
                 });
             }

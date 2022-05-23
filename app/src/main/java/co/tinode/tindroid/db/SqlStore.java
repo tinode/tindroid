@@ -109,7 +109,7 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public boolean topicDelete(Topic topic) {
+    public boolean topicDelete(Topic topic, boolean hard) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         boolean success = false;
         if (st != null) {
@@ -118,9 +118,13 @@ public class SqlStore implements Storage {
             try {
                 db.beginTransaction();
 
-                MessageDb.deleteAll(db, st.id);
-                SubscriberDb.deleteForTopic(db, st.id);
-                TopicDb.delete(db, st.id);
+                if (hard) {
+                    MessageDb.deleteAll(db, st.id);
+                    SubscriberDb.deleteForTopic(db, st.id);
+                    TopicDb.delete(db, st.id);
+                } else {
+                    TopicDb.markDeleted(db, st.id);
+                }
 
                 db.setTransactionSuccessful();
                 success = true;

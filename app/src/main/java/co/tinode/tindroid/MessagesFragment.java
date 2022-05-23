@@ -715,11 +715,12 @@ public class MessagesFragment extends Fragment {
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
             setSendPanelVisible(activity, R.id.sendMessageDisabled);
-            UiUtils.setupToolbar(activity, null, mTopicName, false, null);
+            UiUtils.setupToolbar(activity, null, mTopicName, false, null, false);
             return;
         }
 
-        UiUtils.setupToolbar(activity, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
+        UiUtils.setupToolbar(activity, mTopic.getPub(), mTopicName,
+                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
 
         Acs acs = mTopic.getAccessMode();
         if (acs == null || !acs.isModeDefined()) {
@@ -749,11 +750,11 @@ public class MessagesFragment extends Fragment {
             args.remove(ForwardToFragment.FORWARDING_FROM_USER);
         }
 
-        if (mContentToForward != null) {
+        if (!mTopic.isWriter() || mTopic.isBlocked() || mTopic.isDeleted()) {
+            setSendPanelVisible(activity, R.id.sendMessageDisabled);
+        } else if (mContentToForward != null) {
             showContentToForward(activity, mForwardSender, mContentToForward);
-        } else if (mTopic.isWriter() && !mTopic.isBlocked()) {
-            // activity.findViewById(R.id.sendMessageDisabled).setVisibility(View.GONE);
-
+        } else {
             Subscription peer = mTopic.getPeer();
             boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
             AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
@@ -767,8 +768,6 @@ public class MessagesFragment extends Fragment {
                 }
                 setSendPanelVisible(activity, R.id.sendMessagePanel);
             }
-        } else {
-            setSendPanelVisible(activity, R.id.sendMessageDisabled);
         }
 
         if (acs.isJoiner(Acs.Side.GIVEN) && acs.getExcessive().toString().contains("RW")) {
@@ -827,14 +826,22 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onPrepareOptionsMenu(@NonNull final Menu menu) {
         if (mTopic != null) {
-            menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
-            menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
+            if (mTopic.isDeleted()) {
+                final Activity activity = getActivity();
+                if (activity != null) {
+                    menu.clear();
+                    activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
+                }
+            } else {
+                menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
+                menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
 
-            menu.findItem(R.id.action_delete).setVisible(mTopic.isOwner());
-            menu.findItem(R.id.action_leave).setVisible(!mTopic.isOwner());
+                menu.findItem(R.id.action_delete).setVisible(mTopic.isOwner());
+                menu.findItem(R.id.action_leave).setVisible(!mTopic.isOwner());
 
-            menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
-            menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
+                menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
+                menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
+            }
         }
     }
 
@@ -860,7 +867,15 @@ public class MessagesFragment extends Fragment {
             activity.invalidateOptionsMenu();
             return true;
         } else if (id == R.id.action_leave || id == R.id.action_delete) {
-            showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
+            if (mTopic.isDeleted()) {
+                mTopic.delete(true);
+                Intent intent = new Intent(activity, ChatsActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+                startActivity(intent);
+                activity.finish();
+            } else {
+                showDeleteTopicConfirmationDialog(activity, id == R.id.action_delete);
+            }
             return true;
         } else if (id == R.id.action_offline) {
             Cache.getTinode().reconnectNow(true, false, false);
@@ -954,6 +969,7 @@ public class MessagesFragment extends Fragment {
             mAudioRecorder = null;
         }
     }
+
 
     // Confirmation dialog "Do you really want to do X?"
     private void showDeleteTopicConfirmationDialog(final Activity activity, boolean del) {

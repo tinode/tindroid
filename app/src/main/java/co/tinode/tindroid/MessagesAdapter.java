@@ -637,7 +637,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Subscription<VxCard, ?> sub = topic.getSubscription(m.from);
             if (sub != null) {
                 if (holder.mAvatar != null) {
-                    UiUtils.setAvatar(holder.mAvatar, sub.pub, sub.user);
+                    UiUtils.setAvatar(holder.mAvatar, sub.pub, sub.user, false);
                 }
 
                 if (holder.mUserName != null && sub.pub != null) {

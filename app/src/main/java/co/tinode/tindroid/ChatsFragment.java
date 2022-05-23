@@ -188,7 +188,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        // super.onCreateOptionsMenu(menu, inflater);
         menu.clear();
 
         inflater.inflate(R.menu.menu_chats, menu);
@@ -230,9 +229,26 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-        boolean single = mSelectionTracker.getSelection().size() <= 1;
+        boolean single = mSelectionTracker.getSelection().size() == 1;
 
-        if (!mIsBanned) {
+        if (mIsBanned) {
+            menu.setGroupVisible(R.id.single_selection, false);
+            menu.findItem(R.id.action_unblock).setVisible(single);
+            return true;
+        }
+
+        boolean deleted = false;
+        if (single) {
+            final Selection<String> selection = mSelectionTracker.getSelection();
+            //noinspection unchecked
+            ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+            deleted = topic != null && topic.isDeleted();
+        }
+
+        if (deleted) {
+            menu.setGroupVisible(R.id.single_selection, false);
+            menu.findItem(R.id.action_unblock).setVisible(false);
+        } else {
             menu.setGroupVisible(R.id.single_selection, single);
 
             if (single) {
@@ -242,10 +258,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 menu.findItem(R.id.action_archive).setVisible(!mIsArchive);
                 menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
             }
-        } else {
-            menu.setGroupVisible(R.id.single_selection, false);
-            menu.findItem(R.id.action_unblock).setVisible(single);
         }
+
         return true;
     }
 

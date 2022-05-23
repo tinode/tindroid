@@ -204,7 +204,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             }
         }
 
-        UiUtils.setAvatar(avatar, pub, mTopic.getName());
+        UiUtils.setAvatar(avatar, pub, mTopic.getName(), false);
 
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {

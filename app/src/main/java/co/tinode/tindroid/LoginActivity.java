@@ -98,7 +98,7 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     @Override
     public void onResume() {
         super.onResume();
-        UiUtils.setupToolbar(this, null, null, false, null);
+        UiUtils.setupToolbar(this, null, null, false, null, false);
     }
 
     @Override

@@ -90,7 +90,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                 fn = pub.fn;
                 note = pub.note;
             }
-            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, myID);
+            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, myID, false);
 
             activity.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);

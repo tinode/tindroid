@@ -372,7 +372,8 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                         .fit()
                         .into(avatar);
             } else {
-                avatar.setImageDrawable(UiUtils.avatarDrawable(itemView.getContext(), null, displayName, unique));
+                avatar.setImageDrawable(
+                        UiUtils.avatarDrawable(itemView.getContext(), null, displayName, unique, false));
             }
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
@@ -381,7 +382,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         private void bind(final FoundMember member) {
             final String userId = member.id;
 
-            UiUtils.setAvatar(avatar, member.pub, userId);
+            UiUtils.setAvatar(avatar, member.pub, userId, false);
             if (member.pub != null) {
                 name.setText(member.pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
