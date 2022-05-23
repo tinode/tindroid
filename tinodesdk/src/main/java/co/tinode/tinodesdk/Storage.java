@@ -46,7 +46,7 @@ public interface Storage {
     boolean topicUpdate(Topic topic);
     /** Delete topic */
     @SuppressWarnings("UnusedReturnValue")
-    boolean topicDelete(Topic topic);
+    boolean topicDelete(Topic topic, boolean hard);
 
     /** Add subscription in a generic topic. The subscription is received from the server. */
     @SuppressWarnings("UnusedReturnValue")

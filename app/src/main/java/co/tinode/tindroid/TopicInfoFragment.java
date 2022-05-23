@@ -381,7 +381,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
         activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
-        UiUtils.setAvatar(avatar, pub, mTopic.getName());
+        UiUtils.setAvatar(avatar, pub, mTopic.getName(), mTopic.isDeleted());
 
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
@@ -526,7 +526,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 holder.status[i].setVisibility(View.GONE);
             }
 
-            UiUtils.setAvatar(holder.avatar, sub.pub, sub.user);
+            UiUtils.setAvatar(holder.avatar, sub.pub, sub.user, false);
 
             final View.OnClickListener action = v -> {
                 int pos = holder.getBindingAdapterPosition();

@@ -212,6 +212,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         ImageView messageStatus;
         AppCompatImageView avatarView;
         ImageView online;
+        ImageView deleted;
         ImageView channel;
         ImageView verified;
         ImageView staff;
@@ -234,6 +235,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 messageStatus = item.findViewById(R.id.messageStatus);
                 avatarView = item.findViewById(R.id.avatar);
                 online = item.findViewById(R.id.online);
+                deleted = item.findViewById(R.id.deleted);
                 channel = item.findViewById(R.id.icon_channel);
                 verified = item.findViewById(R.id.icon_verified);
                 staff = item.findViewById(R.id.icon_staff);
@@ -292,16 +294,29 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 unreadCount.setVisibility(View.GONE);
             }
 
-            UiUtils.setAvatar(avatarView, pub, topicName);
+            UiUtils.setAvatar(avatarView, pub, topicName, topic.isDeleted());
 
             if (topic.isChannel()) {
                 online.setVisibility(View.INVISIBLE);
                 channel.setVisibility(View.VISIBLE);
             } else {
-                online.setVisibility(View.VISIBLE);
-                online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
                 channel.setVisibility(View.GONE);
+                if (topic.isDeleted()) {
+                    online.setVisibility(View.GONE);
+                } else {
+                    online.setVisibility(View.VISIBLE);
+                    online.setColorFilter(topic.getOnline() ? sColorOnline : sColorOffline);
+                }
             }
+
+            if (topic.isDeleted()) {
+                itemView.setAlpha(0.8f);
+                deleted.setVisibility(View.VISIBLE);
+            } else {
+                deleted.setVisibility(View.GONE);
+                itemView.setAlpha(1.0f);
+            }
+
             verified.setVisibility(topic.isTrustedVerified() ? View.VISIBLE : View.GONE);
             staff.setVisibility(topic.isTrustedStaff() ? View.VISIBLE : View.GONE);
             danger.setVisibility(topic.isTrustedDanger() ? View.VISIBLE : View.GONE);

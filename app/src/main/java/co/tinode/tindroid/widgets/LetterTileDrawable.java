@@ -35,7 +35,8 @@ public class LetterTileDrawable extends Drawable {
      */
     private static TypedArray sColorsLight;
     private static TypedArray sColorsDark;
-    private static int sDefaultColor;
+    private static int sDefaultColorLight;
+    private static int sDefaultColorDark;
     private static int sTileFontColorLight;
     private static int sTileFontColorDark;
     private static float sLetterToTileRatio;
@@ -55,7 +56,8 @@ public class LetterTileDrawable extends Drawable {
         if (sColorsLight == null) {
             sColorsLight = res.obtainTypedArray(R.array.letter_tile_colors_light);
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sDefaultColor = res.getColor(R.color.grey);
+            sDefaultColorLight = res.getColor(R.color.letter_tile_bg_color_light);
+            sDefaultColorDark = res.getColor(R.color.letter_tile_bg_color_dark);
             sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light);
             sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark);
             sLetterToTileRatio = 0.75f;
@@ -67,7 +69,7 @@ public class LetterTileDrawable extends Drawable {
         mPaint = new Paint();
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
-        mColor = sDefaultColor;
+        mColor = res.getColor(R.color.grey);
     }
 
     /**
@@ -189,7 +191,8 @@ public class LetterTileDrawable extends Drawable {
         return this;
     }
 
-    public LetterTileDrawable setLetterAndColor(final String displayName, final String identifier) {
+    public LetterTileDrawable setLetterAndColor(final String displayName, final String identifier,
+                                                final boolean disabled) {
         if (displayName != null && displayName.length() > 0) {
             mLetter = Character.toUpperCase(displayName.charAt(0));
         } else {
@@ -197,7 +200,7 @@ public class LetterTileDrawable extends Drawable {
         }
         mHashCode = TextUtils.isEmpty(identifier) ? 0 : Math.abs(identifier.hashCode());
 
-        mColor = pickColor();
+        mColor = pickColor(mContactType, disabled ? 0 : mHashCode);
         return this;
     }
 
@@ -207,9 +210,9 @@ public class LetterTileDrawable extends Drawable {
      * @param ct type of icon to use when the tile has no letter.
      * @return this
      */
-    public LetterTileDrawable setContactTypeAndColor(ContactType ct) {
+    public LetterTileDrawable setContactTypeAndColor(ContactType ct, boolean disabled) {
         mContactType = ct;
-        mColor = pickColor();
+        mColor = pickColor(ct, disabled ? 0 : mHashCode);
         return this;
     }
 
@@ -287,13 +290,14 @@ public class LetterTileDrawable extends Drawable {
     /**
      * Returns a deterministic color based on the provided contact identifier string.
      */
-    private int pickColor() {
-        if (mHashCode == 0) {
-            return sDefaultColor;
+    private static int pickColor(ContactType ct, int hashCode) {
+        int color = ct == ContactType.PERSON ? sDefaultColorDark : sDefaultColorLight;
+        if (hashCode == 0) {
+            return color;
         }
 
-        TypedArray colors = mContactType == ContactType.PERSON ? sColorsDark : sColorsLight;
-        return colors.getColor(mHashCode % colors.length(), sDefaultColor);
+        TypedArray colors = ct == ContactType.PERSON ? sColorsDark : sColorsLight;
+        return colors.getColor(hashCode % colors.length(), color);
     }
 
     /**

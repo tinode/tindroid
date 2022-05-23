@@ -37,6 +37,7 @@ public class StoredTopic implements LocalData.Payload {
         st.nextUnsentId = c.getInt(TopicDb.COLUMN_IDX_NEXT_UNSENT_SEQ);
 
         topic.setUpdated(new Date(c.getLong(TopicDb.COLUMN_IDX_UPDATED)));
+        topic.setDeleted(st.status == BaseDb.Status.DELETED_HARD || st.status == BaseDb.Status.DELETED_SOFT);
         topic.setTouched(st.lastUsed);
         if (topic instanceof ComTopic) {
             ((ComTopic) topic).setHasChannelAccess(c.getInt(TopicDb.COLUMN_IDX_CHANNEL_ACCESS) != 0);

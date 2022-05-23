@@ -260,8 +260,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             // This is an existing topic.
             if (sub.deleted != null) {
                 // Expunge deleted topic
-                mTinode.stopTrackingTopic(sub.topic);
-                topic.persist(false);
+                if (topic.isDeleted()) {
+                    mTinode.stopTrackingTopic(sub.topic);
+                    topic.expunge(true);
+                } else {
+                    topic.expunge(false);
+                }
                 topic = null;
             } else {
                 // Update its record in memory and in the database.
@@ -273,7 +277,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         } else if (sub.deleted == null) {
             // This is a new topic. Register it and write to DB.
             topic = mTinode.newTopic(sub);
-            topic.persist(true);
+            topic.persist();
         } else {
             Log.i(TAG, "Request to delete an unknown topic: " + sub.topic);
         }
@@ -454,8 +458,12 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
                     case GONE:
                         // If topic is unknown (==null), then we don't care to unregister it.
-                        mTinode.stopTrackingTopic(pres.src);
-                        topic.persist(false);
+                        if (topic.isDeleted()) {
+                            mTinode.stopTrackingTopic(pres.src);
+                            topic.expunge( true);
+                        } else {
+                            topic.expunge(false);
+                        }
                         break;
                 }
             } else {

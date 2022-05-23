@@ -284,7 +284,7 @@ public class MessageActivity extends AppCompatActivity
             changed = true;
 
             if (mTopic == null) {
-                UiUtils.setupToolbar(this, null, mTopicName, false, null);
+                UiUtils.setupToolbar(this, null, mTopicName, false, null, false);
                 try {
                     //noinspection unchecked
                     mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
@@ -295,7 +295,8 @@ public class MessageActivity extends AppCompatActivity
                 showFragment(FRAGMENT_INVALID, null, false);
 
             } else {
-                UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
+                UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
+                        mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
                 // Check if another fragment is already visible. If so, don't change it.
                 if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                     // Reset requested or no fragment is visible. Show default and clear back stack.
@@ -387,6 +388,21 @@ public class MessageActivity extends AppCompatActivity
         mNoteReadHandler.removeMessages(0);
     }
 
+    private void showMessagesFragmentOnAttach() {
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment visible = UiUtils.getVisibleFragment(fm);
+        if (visible instanceof InvalidTopicFragment) {
+            // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
+            fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+            showFragment(FRAGMENT_MESSAGES, null, false);
+        } else {
+            MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
+            if (fragmsg != null) {
+                fragmsg.topicChanged(mTopicName, true);
+            }
+        }
+    }
+
     private void topicAttach(boolean interactive) {
         setRefreshing(true);
 
@@ -408,6 +424,13 @@ public class MessageActivity extends AppCompatActivity
             builder = builder.withTags();
         }
 
+        if (mTopic.isDeleted()) {
+            setRefreshing(false);
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, false, null, true);
+            showMessagesFragmentOnAttach();
+            return;
+        }
+
         mTopic.subscribe(null, builder.build())
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -418,20 +441,9 @@ public class MessageActivity extends AppCompatActivity
                             return null;
                         }
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopicName, mTopic.getOnline(), mTopic.getLastSeen());
+                                mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
                         runOnUiThread(() -> {
-                            FragmentManager fm = getSupportFragmentManager();
-                            Fragment visible = UiUtils.getVisibleFragment(fm);
-                            if (visible instanceof InvalidTopicFragment) {
-                                // Replace InvalidTopicFragment with default FRAGMENT_MESSAGES.
-                                fm.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                                showFragment(FRAGMENT_MESSAGES, null, false);
-                            } else {
-                                MessagesFragment fragmsg = (MessagesFragment) fm.findFragmentByTag(FRAGMENT_MESSAGES);
-                                if (fragmsg != null) {
-                                    fragmsg.topicChanged(mTopicName, true);
-                                }
-                            }
+                            showMessagesFragmentOnAttach();
                         });
                         // Resume message sender and submit pending messages for processing:
                         // publish queued, delete marked for deletion.
@@ -439,21 +451,23 @@ public class MessageActivity extends AppCompatActivity
                         syncAllMessages(true);
                         return null;
                     }
-                }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-            @Override
-            public PromisedReply<ServerMessage> onFailure(Exception err) {
-                if (!(err instanceof NotConnectedException)) {
-                    Log.w(TAG, "Subscribe failed", err);
-                    if (err instanceof ServerResponseException) {
-                        int code = ((ServerResponseException) err).getCode();
-                        if (code == 404) {
-                            showFragment(FRAGMENT_INVALID, null, false);
-                        }
+                })
+                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                            if (!(err instanceof NotConnectedException)) {
+                                Log.w(TAG, "Subscribe failed", err);
+                                if (err instanceof ServerResponseException) {
+                                    int code = ((ServerResponseException) err).getCode();
+                                    if (code == 404) {
+                                        showFragment(FRAGMENT_INVALID, null, false);
+                                    }
+                                }
+                            }
+                            return null;
                     }
-                }
-                return null;
-            }
-        }).thenFinally(new PromisedReply.FinalListener() {
+                })
+                .thenFinally(new PromisedReply.FinalListener() {
             @Override
             public void onFinally() {
                 setRefreshing(false);
@@ -934,7 +948,7 @@ public class MessageActivity extends AppCompatActivity
         public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
             runOnUiThread(() -> {
                 UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                        mTopic.getOnline(), mTopic.getLastSeen());
+                        mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment != null) {
                     if (fragment instanceof DataSetChangeListener) {

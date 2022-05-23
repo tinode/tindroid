@@ -30,6 +30,18 @@
             android:contentDescription="@string/avatar"
             app:srcCompat="@drawable/ic_circle" />
 
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/deleted"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:visibility="gone"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentBottom="true"
+            android:contentDescription="@string/content_deleted"
+            android:background="@color/design_default_color_background"
+            app:shapeAppearanceOverlay="@style/roundImageView"
+            app:srcCompat="@drawable/ic_cancel_grey" />
+
     </RelativeLayout>
 
     <LinearLayout

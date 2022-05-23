@@ -167,7 +167,7 @@ public class AccPersonalFragment extends Fragment
             credList.requestLayout();
 
             VxCard pub = me.getPub();
-            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId());
+            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId(), false);
             if (pub != null) {
                 fn = pub.fn;
                 description = pub.note;

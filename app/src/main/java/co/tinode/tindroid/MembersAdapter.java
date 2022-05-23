@@ -226,7 +226,8 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
                         .into(avatar);
             } else {
                 avatar.setImageDrawable(
-                        UiUtils.avatarDrawable(avatar.getContext(), null, user.displayName, user.unique));
+                        UiUtils.avatarDrawable(avatar.getContext(), null,
+                                user.displayName, user.unique, false));
             }
 
             displayName.setText(user.displayName);
