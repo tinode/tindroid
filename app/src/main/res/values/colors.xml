@@ -80,7 +80,7 @@
         <item>#b39ddb</item>
         <item>#ffab91</item>
         <item>#a5d6a7</item>
-        <item>#dddddd</item>
+        <item>#ddddef</item>
         <item>#e6ee9c</item>
         <item>#c5e1a5</item>
         <item>#fff59d</item>
@@ -92,6 +92,7 @@
         <item>#ce93d8</item>
     </array>
     <color name="letter_tile_text_color_light">#ffffff</color>
+    <color name="letter_tile_bg_color_light">#bbb</color>
 
     <!-- Darker versions of letter_tile_colors, two shades darker. -->
     <array name="letter_tile_colors_dark">
@@ -113,5 +114,6 @@
         <item>#D84315</item>
     </array>
     <color name="letter_tile_text_color_dark">#dedede</color>
+    <color name="letter_tile_bg_color_dark">#777</color>
 
 </resources>

@@ -1,5 +1,6 @@
 package co.tinode.tindroid.services;
 
+import android.annotation.SuppressLint;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -22,6 +23,7 @@ import java.net.URL;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StyleableRes;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -78,8 +80,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             bitmap = new LetterTileDrawable(context)
                     .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
                             LetterTileDrawable.ContactType.GROUP :
-                            LetterTileDrawable.ContactType.PERSON)
-                    .setLetterAndColor(fullName, id)
+                            LetterTileDrawable.ContactType.PERSON, false)
+                    .setLetterAndColor(fullName, id, false)
                     .getBitmap(AVATAR_SIZE, AVATAR_SIZE);
         }
 
@@ -266,7 +268,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     try {
                         Drafty draftyBody = Tinode.jsonDeserialize(richContent, Drafty.class.getCanonicalName());
                         if (draftyBody != null) {
-                            int[] attrs = {android.R.attr.textSize};
+                            @SuppressLint("ResourceType") @StyleableRes int[] attrs = {android.R.attr.textSize};
                             TypedArray ta = obtainStyledAttributes(androidx.appcompat.R.style.TextAppearance_Compat_Notification, attrs);
                             float fontSize = ta.getDimension(0, 14f);
                             ta.recycle();

@@ -16,8 +16,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
@@ -161,7 +162,7 @@ public class UiUtils {
     private static String sVisibleTopic = null;
 
     static void setupToolbar(final Activity activity, final VxCard pub,
-                             final String topicName, final boolean online, final Date lastSeen) {
+                             final String topicName, final boolean online, final Date lastSeen, boolean deleted) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -180,6 +181,9 @@ public class UiUtils {
                 if (ComTopic.isChannel(topicName)) {
                     showOnline = null;
                     toolbar.setSubtitle(R.string.channel);
+                } else if (deleted) {
+                    showOnline = null;
+                    toolbar.setSubtitle(R.string.deleted);
                 } else if (online) {
                     toolbar.setSubtitle(activity.getString(R.string.online_now));
                 } else if (lastSeen != null) {
@@ -187,7 +191,7 @@ public class UiUtils {
                 } else {
                     toolbar.setSubtitle(null);
                 }
-                constructToolbarLogo(activity, pub, topicName, showOnline);
+                constructToolbarLogo(activity, pub, topicName, showOnline, deleted);
             } else {
                 toolbar.setTitle(R.string.app_name);
                 toolbar.setSubtitle(null);
@@ -201,7 +205,8 @@ public class UiUtils {
     // 0. [Avatar or LetterTileDrawable]
     // 1. [Online indicator]
     // 2. [Typing indicator]
-    private static void constructToolbarLogo(final Activity activity, final VxCard pub, String uid, Boolean online) {
+    private static void constructToolbarLogo(final Activity activity, final VxCard pub,
+                                             String uid, Boolean online, boolean deleted) {
         final Toolbar toolbar = activity.findViewById(R.id.toolbar);
         if (toolbar == null) {
             return;
@@ -220,7 +225,7 @@ public class UiUtils {
         }
         if (ref == null) {
             // Local resource.
-            drawables.add(avatarDrawable(activity, bmp, title, uid));
+            drawables.add(avatarDrawable(activity, bmp, title, uid, deleted));
         } else {
             // Remote resource. Create a transparent placeholder layer.
             drawables.add(new ColorDrawable(0x00000000));
@@ -782,7 +787,7 @@ public class UiUtils {
     }
 
     // Construct avatar from VxCard and set it to the provided ImageView.
-    static void setAvatar(ImageView avatarView, VxCard pub, String address) {
+    static void setAvatar(ImageView avatarView, VxCard pub, String address, boolean disabled) {
         Bitmap avatar = null;
         URL ref = null;
         String fullName = null;
@@ -792,7 +797,7 @@ public class UiUtils {
             ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
         }
 
-        Drawable local = UiUtils.avatarDrawable(avatarView.getContext(), avatar, fullName, address);
+        Drawable local = avatarDrawable(avatarView.getContext(), avatar, fullName, address, disabled);
         if (ref != null) {
             Picasso
                     .get()
@@ -804,20 +809,36 @@ public class UiUtils {
         } else {
             avatarView.setImageDrawable(local);
         }
+
+        if (disabled) {
+            // Make avatar grayscale
+            ColorMatrix matrix = new ColorMatrix();
+            matrix.setSaturation(0);
+            avatarView.setColorFilter(new ColorMatrixColorFilter(matrix));
+        } else {
+            avatarView.setColorFilter(null);
+        }
     }
 
     // Construct avatar drawable: use bitmap if it is not null,
     // otherwise use name & address to create a LetterTileDrawable.
-    public static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address) {
+    public static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address, boolean disabled) {
         if (bmp != null) {
-            return new RoundImageDrawable(context.getResources(), bmp);
+            Drawable drawable = new RoundImageDrawable(context.getResources(), bmp);
+            if (disabled) {
+                // Make avatar grayscale
+                ColorMatrix matrix = new ColorMatrix();
+                matrix.setSaturation(0);
+                drawable.setColorFilter(new ColorMatrixColorFilter(matrix));
+            }
+            return drawable;
         } else {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
                     Topic.isP2PType(address) ?
                             LetterTileDrawable.ContactType.PERSON :
-                            LetterTileDrawable.ContactType.GROUP)
-                    .setLetterAndColor(name, address)
+                            LetterTileDrawable.ContactType.GROUP, disabled)
+                    .setLetterAndColor(name, address, disabled)
                     .setIsCircular(true);
             return drawable;
         }
@@ -1403,16 +1424,6 @@ public class UiUtils {
             return b.length() == 0;
         }
         return a.length() == 0;
-    }
-
-    // Convert point from fromView coordinates to toView coordinates.
-    static PointF convertPoint(float x, float y, View fromView, View toView) {
-        int[] src = new int[2];
-        int[] dst = new int[2];
-        fromView.getLocationOnScreen(src);
-        toView.getLocationOnScreen(dst);
-
-        return new PointF(src[0] - dst[0] + x, src[1] - dst[1] + y);
     }
 
     interface ProgressIndicator {

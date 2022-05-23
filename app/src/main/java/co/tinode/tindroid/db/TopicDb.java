@@ -48,7 +48,7 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_UPDATED = "updated";
     /**
-     * When the topic was last updated
+     * When the topic was last changed: either updated or received a message.
      */
     public static final String COLUMN_NAME_CHANNEL_ACCESS = "channel_access";
     /**
@@ -64,15 +64,15 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_SEQ = "seq";
     /**
-     * Highest known ID of a delete transaction
+     * Highest known ID of a message deletion transaction.
      */
     public static final String COLUMN_NAME_CLEAR = "clear";
     /**
-     * ID of the last applied delete transaction
+     * ID of the last applied message deletion transaction.
      */
     public static final String COLUMN_NAME_MAX_DEL = "max_del";
     /**
-     * Access mode, string
+     * Access mode, string.
      */
     public static final String COLUMN_NAME_ACCESSMODE = "mode";
     /**
@@ -123,6 +123,7 @@ public class TopicDb implements BaseColumns {
      * Private topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
+
     static final int COLUMN_IDX_ID = 0;
     // static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
@@ -490,7 +491,7 @@ public class TopicDb implements BaseColumns {
     }
 
     /**
-     * Delete topic by name
+     * Delete topic by database id.
      *
      * @param db writable database
      * @param id of the topic to delete
@@ -498,6 +499,19 @@ public class TopicDb implements BaseColumns {
      */
     public static boolean delete(SQLiteDatabase db, long id) {
         return db.delete(TABLE_NAME, _ID + "=" + id, null) > 0;
+    }
+
+    /**
+     * Mark topic as deleted without removing it from the database.
+     *
+     * @param db writable database
+     * @param id of the topic to delete
+     * @return true if table was actually deleted, false if table was not found
+     */
+    public static boolean markDeleted(SQLiteDatabase db, long id) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_STATUS, BaseDb.Status.DELETED_HARD.value);
+        return db.update(TABLE_NAME, values, _ID + "=" + id, null) > 0;
     }
 
     /**

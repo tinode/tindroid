@@ -88,7 +88,7 @@ public class ChatsActivity extends AppCompatActivity
         mTinodeListener = new ContactsEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
 
-        UiUtils.setupToolbar(this, null, null, false, null);
+        UiUtils.setupToolbar(this, null, null, false, null, false);
 
         if (!mMeTopic.isAttached()) {
             toggleProgressIndicator(true);

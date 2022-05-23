@@ -70,6 +70,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected boolean mOnline = false;
     // ID of the last applied delete transaction. Different from 'clear' which is the highest known.
     protected int mMaxDel = 0;
+    // Topic status: true if topic is deleted by remote, false otherwise.
+    protected boolean mDeleted = false;
     /**
      * The mStore is set by Tinode when the topic calls {@link Tinode#startTrackingTopic(Topic)}
      */
@@ -593,7 +595,23 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return false;
     }
 
+    /**
+     * Checks if the topic is deleted by remote.
+     *
+     * @return true if the topic is deleted by remote, false otherwise.
+     */
+    public boolean isDeleted() {
+        return mDeleted;
+    }
 
+    /**
+     * Mark topic as deleted.
+     *
+     * @param status true to mark topic as deleted, false to restore.
+     */
+    public void setDeleted(boolean status) {
+        mDeleted = status;
+    }
     public MsgRange getCachedMessagesRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }
@@ -775,18 +793,22 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Store topic to DB or delete it.
-     * @param on true to start persisting the topic, false to stop (delete).
+     * Store topic to DB.
      */
-    protected void persist(boolean on) {
+    protected void persist() {
         if (mStore != null) {
-            if (on) {
-                if (!isPersisted()) {
-                    mStore.topicAdd(this);
-                }
-            } else {
-                mStore.topicDelete(this);
+            if (!isPersisted()) {
+                mStore.topicAdd(this);
             }
+        }
+    }
+    /**
+     * Remove topic from DB or mark it as deleted.
+     */
+    protected void expunge(boolean hard) {
+        mDeleted = true;
+        if (mStore != null) {
+            mStore.topicDelete(this, hard);
         }
     }
 
@@ -872,7 +894,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         final String topicName = getName();
         if (!isPersisted()) {
-            persist(true);
+            persist();
         }
 
         return mTinode.subscribe(topicName, set, get).thenApply(
@@ -917,7 +939,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             if (sre.getCode() >= ServerMessage.STATUS_BAD_REQUEST &&
                                     sre.getCode() < ServerMessage.STATUS_INTERNAL_SERVER_ERROR) {
                                 mTinode.stopTrackingTopic(topicName);
-                                persist(false);
+                                expunge(true);
                             }
                         }
 
@@ -945,7 +967,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             topicLeft(unsub, result.ctrl.code, result.ctrl.text);
                             if (unsub) {
                                 mTinode.stopTrackingTopic(getName());
-                                persist(false);
+                                expunge(true);
                             }
                             return null;
                         }
@@ -1470,6 +1492,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param hard hard-delete topic.
      */
     public PromisedReply<ServerMessage> delete(boolean hard) {
+        if (isDeleted()) {
+            // Already deleted.
+            topicLeft(true, 200, "OK");
+            mTinode.stopTrackingTopic(getName());
+            expunge(true);
+            return new PromisedReply<>(null);
+        }
+
         // Delete works even if the topic is not attached.
         return mTinode.delTopic(getName(), hard).thenApply(
                 new PromisedReply.SuccessListener<ServerMessage>() {
@@ -1477,7 +1507,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         topicLeft(true, result.ctrl.code, result.ctrl.text);
                         mTinode.stopTrackingTopic(getName());
-                        persist(false);
+                        expunge(true);
                         return null;
                     }
                 });

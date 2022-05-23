@@ -327,4 +327,5 @@
     <string name="caller_name">Caller Name</string>
     <string name="action_accept_call">Accept</string>
     <string name="action_decline_call">Decline</string>
+    <string name="deleted">deleted</string>
 </resources>

@@ -89,7 +89,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.5.0'
     implementation 'com.google.firebase:firebase-core:20.1.2'
-    implementation 'com.google.firebase:firebase-crashlytics:18.2.9'
+    implementation 'com.google.firebase:firebase-crashlytics:18.2.10'
     implementation 'com.google.firebase:firebase-messaging:23.0.2'
 
 
