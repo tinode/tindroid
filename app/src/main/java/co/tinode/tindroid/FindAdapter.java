@@ -56,7 +56,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         Collection<Subscription<Object,String[]>> subs = Cache.getTinode().getFndTopic().getSubscriptions();
         if (subs != null) {
             for (Subscription<Object,String[]> s: subs) {
-                mFound.add(new FoundMember(s.user, (VxCard) s.pub, s.priv));
+                mFound.add(new FoundMember(s.user == null ? s.topic : s.user, (VxCard) s.pub, s.priv));
             }
         }
 
