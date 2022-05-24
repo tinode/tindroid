@@ -165,7 +165,7 @@ public class CallService extends Service {
         User<VxCard> sender = mTinode.getUser(from);
         if (sender != null && sender.pub != null) {
             customView.setTextViewText(R.id.name, sender.pub.fn);
-            Drawable local = UiUtils.avatarDrawable(this, sender.pub.getBitmap(), sender.pub.fn, from);
+            Drawable local = UiUtils.avatarDrawable(this, sender.pub.getBitmap(), sender.pub.fn, from, false);
             customView.setImageViewBitmap(R.id.photo, ((BitmapDrawable)local).getBitmap());
         } else {
             customView.setTextViewText(R.id.name, BuildConfig.APPLICATION_ID);

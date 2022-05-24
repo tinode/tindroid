@@ -141,9 +141,6 @@ public class UiUtils {
     // Maximum byte size of avatar sent in-band.
     public static final int MAX_INBAND_AVATAR_SIZE = 4096;
 
-    // Mime type of the Video call messages.
-    public static final String VIDEO_CALL_MIME = "application/x-tinode-webrtc";
-
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
     private static final int DEFAULT_MAX_TAG_LENGTH = 96;
@@ -541,7 +538,7 @@ public class UiUtils {
 
     // Returns true if the specified mime type is a video call.
     public static boolean isVideoCallMime(String mime) {
-        return VIDEO_CALL_MIME.equals(mime);
+        return Tinode.VIDEO_CALL_MIME.equals(mime);
     }
 
     // If an incoming info is a video call related,

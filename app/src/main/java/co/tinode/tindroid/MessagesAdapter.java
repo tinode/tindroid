@@ -633,6 +633,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
+        if (mCursor == null) {
+            return;
+        }
+
         StoredMessage replacement = mCursor.getLatestVersion(m);
         boolean shouldReplace = m.getSeqId() != replacement.getSeqId();
         StoredMessage display = shouldReplace ? replacement : m;
@@ -876,7 +880,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        Cursor cursor = mCursor.getCursor();
+        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
         if (cursor != null && !cursor.isClosed()) {
             return position < mCursor.mMessages.size() ?
                     mCursor.mMessages.get(position) :
@@ -888,7 +892,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        Cursor cursor = mCursor.getCursor();
+        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
         if (cursor != null && !cursor.isClosed() && cursor.moveToPosition(position)) {
             return MessageDb.getLocalId(cursor);
         }
@@ -896,7 +900,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     int findItemPositionById(long itemId, int first, int last) {
-        Cursor cursor = mCursor.getCursor();
+        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
         if (cursor == null || cursor.isClosed()) {
             return -1;
         }
