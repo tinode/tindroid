@@ -296,4 +296,15 @@
     <string name="hint_contact_name">聯繫人姓名</string>
     <string name="report_channel">廣播投訴</string>
     <string name="cannot_reply">無法回复此消息</string>
+    <string name="audio">聲音的</string>
+    <string name="deleted">已刪除</string>
+    <string name="record_audio_button_hint">按住可錄製語音留言</string>
+    <string name="unable_to_play_audio">無法播放此音頻消息</string>
+    <string name="button_hint_start_audio">開始錄製音頻</string>
+    <string name="stop_recording_button_hint">停止錄製</string>
+    <string name="delete_recording_hint">放棄錄音</string>
+    <string name="audio_recording_failed">錄音失敗</string>
+    <string name="play_record_audio_button_hint">播放錄製的音頻</string>
+    <string name="pause_audio_button_hint">暫停播放</string>
+    <string name="lock_recording_for_long_messages">鎖定用於錄製長音頻消息</string>
 </resources>
