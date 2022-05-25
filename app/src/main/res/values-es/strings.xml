@@ -296,4 +296,15 @@
     <string name="hint_contact_name">Nombre de contacto</string>
     <string name="report_channel">Quejarse del canal</string>
     <string name="cannot_reply">No se puede responder a este mensaje</string>
+    <string name="record_audio_button_hint">Mantenga presionado para grabar un mensaje de voz</string>
+    <string name="audio">Audio</string>
+    <string name="unable_to_play_audio">No se puede reproducir este mensaje de audio</string>
+    <string name="button_hint_start_audio">Iniciar grabación de audio</string>
+    <string name="stop_recording_button_hint">Para de grabar</string>
+    <string name="delete_recording_hint">Descartar grabación</string>
+    <string name="audio_recording_failed">Grabación de audio fallida</string>
+    <string name="play_record_audio_button_hint">Reproducir audio grabado</string>
+    <string name="pause_audio_button_hint">Pausar reproducción</string>
+    <string name="lock_recording_for_long_messages">Bloquear la grabación de mensajes largos</string>
+    <string name="deleted">eliminado</string>
 </resources>

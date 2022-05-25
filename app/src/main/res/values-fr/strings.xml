@@ -296,4 +296,15 @@
     <string name="account_security_explained">Mot de passe, autorisations, suppression de compte</string>
     <string name="hint_topic_title">Nom du groupe</string>
     <string name="cannot_reply">Impossible de répondre à ce message</string>
+    <string name="record_audio_button_hint">Appui long pour enregistrer un message vocal</string>
+    <string name="audio">L\'audio</string>
+    <string name="unable_to_play_audio">Impossible de lire ce message audio</string>
+    <string name="button_hint_start_audio">Démarrer l\'enregistrement audio</string>
+    <string name="stop_recording_button_hint">Arrête d\'enregistrer</string>
+    <string name="delete_recording_hint">Supprimer l\'enregistrement audio</string>
+    <string name="audio_recording_failed">L\'enregistrement audio a échoué</string>
+    <string name="play_record_audio_button_hint">Lire l\'audio enregistré</string>
+    <string name="pause_audio_button_hint">Interrompre la lecture</string>
+    <string name="lock_recording_for_long_messages">Verrouiller l\'enregistrement pour les longs messages</string>
+    <string name="deleted">supprimé</string>
 </resources>

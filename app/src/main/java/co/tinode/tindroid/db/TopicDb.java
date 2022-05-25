@@ -508,6 +508,7 @@ public class TopicDb implements BaseColumns {
      * @param id of the topic to delete
      * @return true if table was actually deleted, false if table was not found
      */
+    @SuppressWarnings("UnusedReturnValue")
     public static boolean markDeleted(SQLiteDatabase db, long id) {
         ContentValues values = new ContentValues();
         values.put(COLUMN_NAME_STATUS, BaseDb.Status.DELETED_HARD.value);

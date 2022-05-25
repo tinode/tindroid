@@ -276,4 +276,15 @@
     <string name="badge_verified">Верифицированный</string>
     <string name="badge_danger">Подозрительный</string>
     <string name="cannot_reply">Невозможно ответить на это сообщение</string>
+    <string name="record_audio_button_hint">Удерживайте для записи голосового сообщения</string>
+    <string name="audio">Аудио</string>
+    <string name="button_hint_start_audio">Начать запись аудио</string>
+    <string name="stop_recording_button_hint">Закончить запись</string>
+    <string name="unable_to_play_audio">Невозможно проиграть аудио сообщение</string>
+    <string name="delete_recording_hint">Удалить запись</string>
+    <string name="audio_recording_failed">Ошибка записи аудио</string>
+    <string name="play_record_audio_button_hint">Исполнить записанное аудио</string>
+    <string name="pause_audio_button_hint">Приостановить аудио</string>
+    <string name="deleted">удалено</string>
+    <string name="lock_recording_for_long_messages">Зафиксировать для записи длинного сообщения</string>
 </resources>

@@ -295,4 +295,15 @@
     <string name="hint_contact_name">담당자 이름</string>
     <string name="report_channel">채널에 대한 불만</string>
     <string name="cannot_reply">이 메시지에 회신할 수 없습니다</string>
+    <string name="audio">오디오</string>
+    <string name="record_audio_button_hint">길게 눌러 음성 메시지 녹음</string>
+    <string name="unable_to_play_audio">이 음성 메시지를 재생할 수 없습니다</string>
+    <string name="button_hint_start_audio">오디오 녹음 시작</string>
+    <string name="deleted">삭제됨</string>
+    <string name="pause_audio_button_hint">재생 일시 중지</string>
+    <string name="stop_recording_button_hint">녹음 중지</string>
+    <string name="delete_recording_hint">녹음 삭제</string>
+    <string name="audio_recording_failed">오디오 녹음 실패</string>
+    <string name="play_record_audio_button_hint">녹음된 오디오 재생</string>
+    <string name="lock_recording_for_long_messages">긴 메시지에 대한 녹음 잠금</string>
 </resources>

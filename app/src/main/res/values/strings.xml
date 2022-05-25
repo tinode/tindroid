@@ -205,6 +205,7 @@
     <string name="new_chat">New chat</string>
     <string name="messages_not_readable">No access to new messages</string>
     <string name="content_deleted">content deleted</string>
+    <string name="deleted">deleted</string>
     <string name="peers_messaging_disabled">Peer\'s messaging is disabled</string>
     <string name="action_enable">Enable</string>
     <string name="find">Find</string>
@@ -314,6 +315,7 @@
     <string name="report_channel">Report channel</string>
     <string name="hint_contact_name">Contact name</string>
     <string name="cannot_reply">Unable to reply to this message</string>
+
     <string name="record_audio_button_hint">Hold to record a voice message</string>
     <string name="audio">Audio</string>
     <string name="unable_to_play_audio">Unable to play this audio message</string>
@@ -327,5 +329,4 @@
     <string name="caller_name">Caller Name</string>
     <string name="action_accept_call">Accept</string>
     <string name="action_decline_call">Decline</string>
-    <string name="deleted">deleted</string>
 </resources>

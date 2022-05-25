@@ -297,4 +297,15 @@
     <string name="hint_contact_name">Name des Kontakts</string>
     <string name="report_channel">Beschweren Sie sich über den Sender</string>
     <string name="cannot_reply">Diese Nachricht kann nicht beantwortet werden</string>
+    <string name="lock_recording_for_long_messages">Aufnahme für lange Nachrichten sperren</string>
+    <string name="deleted">gelöscht</string>
+    <string name="pause_audio_button_hint">Wiedergabe pausieren</string>
+    <string name="play_record_audio_button_hint">Aufgenommenes Audio abspielen</string>
+    <string name="audio_recording_failed">Audioaufnahme fehlgeschlagen</string>
+    <string name="delete_recording_hint">Aufnahme verwerfen</string>
+    <string name="stop_recording_button_hint">Höre auf, aufzunehmen</string>
+    <string name="button_hint_start_audio">Audioaufnahme starten</string>
+    <string name="unable_to_play_audio">Diese Audio Nachricht kann nicht abgespielt werden</string>
+    <string name="audio">Audio</string>
+    <string name="record_audio_button_hint">Lange drücken, um eine Sprachnachricht aufnehmen</string>
 </resources>

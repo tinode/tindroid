@@ -186,8 +186,9 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
 
             final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
 
+            boolean isChannel = ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked();
             String[] members = mSelectedAdapter.getAdded();
-            if (members.length == 0) {
+            if (members.length == 0 && !isChannel) {
                 Toast.makeText(activity, R.string.add_one_member, Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -200,9 +201,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 // If image is not loaded, the drawable is a vector. Ignore it.
             }
 
-            createTopic(activity, topicTitle, bmp, subtitle,
-                    ((SwitchCompat) activity.findViewById(R.id.isChannel)).isChecked(),
-                    UiUtils.parseTags(tags), members);
+            createTopic(activity, topicTitle, bmp, subtitle, isChannel, UiUtils.parseTags(tags), members);
         });
     }
 
