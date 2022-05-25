@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -279,8 +280,13 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 } else {
                     messageStatus.setVisibility(View.GONE);
                 }
-                priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH)
-                        .format(new PreviewFormatter(priv.getContext(), priv.getTextSize())));
+                Map<String, Object> head = msg.getHead();
+                if (head == null || !UiUtils.isVideoCallMime((String)head.get("mime"))) {
+                    priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH)
+                            .format(new PreviewFormatter(priv.getContext(), priv.getTextSize())));
+                } else {
+                    priv.setText(UiUtils.videoCallMsg(priv.getContext(), msg.isMine(), msg.getContent().toString(), -1));
+                }
             } else {
                 messageStatus.setVisibility(View.GONE);
                 priv.setText(topic.getComment());

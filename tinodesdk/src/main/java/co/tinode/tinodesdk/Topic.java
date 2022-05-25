@@ -1024,8 +1024,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
             head.put("mime", Drafty.MIME_TYPE);
             attachments = content.getEntReferences();
-        } else if (head != null) {
-            // Plain text content should not have "mime" header. Clear it.
+        } else if (head != null && !Tinode.VIDEO_CALL_MIME.equals(head.get("mime"))) {
+            // Otherwise, plain text content should not have "mime" header
+            // (except video call messages). Clear it.
             head.remove("mime");
         }
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head, attachments).thenApply(
@@ -1607,6 +1608,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             } catch (NotConnectedException ignored) {
             }
         }
+    }
+
+    /**
+     * Send a video call notification to server.
+     * @param event is a video call event to notify the other call party about (e.g. "accept" or "hang-up").
+     * @param seq call message ID.
+     * @param payload is a JSON payload associated with the event.
+     */
+    public void videoCall(String event, int seq, Object payload) {
+        mTinode.videoCall(getName(), seq, event, payload);
     }
 
     public String getName() {

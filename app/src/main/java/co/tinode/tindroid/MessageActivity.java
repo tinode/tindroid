@@ -84,6 +84,7 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_FORWARD_TO = "forward_to";
+    static final String FRAGMENT_CALL = "call";
 
     static final String TOPIC_NAME = "topicName";
 
@@ -237,6 +238,15 @@ public class MessageActivity extends AppCompatActivity
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
+        }
+        String action = intent.getAction();
+        if ("incoming_call".equals(action)) {
+            // We are executing the requested action only once.
+            intent.setAction(null);
+            Bundle args = new Bundle();
+            args.putString("call_direction", "incoming");
+            args.putInt("call_seq", intent.getIntExtra("seq", 0));
+            showFragment(FRAGMENT_CALL, args, true);
         }
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -530,6 +540,9 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
             }
             return true;
+        } else if (id == R.id.action_call) {
+            showFragment(FRAGMENT_CALL, null, true);
+            return true;
         }
 
         return false;
@@ -621,6 +634,9 @@ public class MessageActivity extends AppCompatActivity
                     break;
                 case FRAGMENT_FORWARD_TO:
                     fragment = new ForwardToFragment();
+                    break;
+                case FRAGMENT_CALL:
+                    fragment = new CallFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);
@@ -1002,6 +1018,11 @@ public class MessageActivity extends AppCompatActivity
 
             UiUtils.attachMeTopic(MessageActivity.this, null);
             topicAttach(false);
+        }
+
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            UiUtils.maybeHandleVideoCall(MessageActivity.this, info);
         }
     }
 }

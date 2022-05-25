@@ -5,6 +5,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.Service;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -14,23 +15,31 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -80,6 +89,7 @@ import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.services.CallService;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -94,6 +104,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -506,6 +517,67 @@ public class UiUtils {
         return sb.append(sec).toString();
     }
 
+    // Builds and returns a video call message text given call direction, state and duration.
+    // TODO: this should become a part of the Formatter interface.
+    @NonNull
+    static Spanned videoCallMsg(Context context, boolean isOutgoing, String callState, int millis) {
+        String dir = isOutgoing ? "↗" : "↙";
+        Spannable cont = new SpannableString(dir);
+        cont.setSpan(new ForegroundColorSpan(
+                        "disconnected".equals(callState) ? Color.RED : Color.GREEN),
+                0, dir.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        cont.setSpan(new StyleSpan(Typeface.BOLD), 0, dir.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(context.getString(isOutgoing ? R.string.outgoing_call : R.string.incoming_call));
+        if (millis > 0) {
+            sb.append(" (" + millisToTime(millis) + ")");
+        }
+        return (Spanned) TextUtils.concat(cont, sb.toString());
+    }
+
+    // Returns true if the specified mime type is a video call.
+    public static boolean isVideoCallMime(String mime) {
+        return Tinode.VIDEO_CALL_MIME.equals(mime);
+    }
+
+    // If an incoming info is a video call related,
+    public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
+        if ("call".equals(info.what)) {
+            final Tinode tinode = Cache.getTinode();
+            switch (info.event) {
+                case "invite":
+                    if (!tinode.isMe(info.from)) {
+                        // Call invite from the peer.
+                        UiUtils.handleIncomingVideoCall(ctx, "invite", info.src, info.from, info.seq);
+                    }
+                    break;
+                case "accept":
+                    if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
+                        // Another client has accepted the call. Dismiss call notification.
+                        UiUtils.handleIncomingVideoCall(ctx, "dismiss", info.src, info.from, info.seq);
+                    }
+                    break;
+            }
+        }
+    }
+
+    // Triggers an incoming video call notification/banner.
+    public static void handleIncomingVideoCall(Context context, String action, String topic,
+                                               String from, int seq) {
+        // CallService will actually build and display the notification.
+        Intent intent = new Intent(context, CallService.class);
+        intent.setAction(action);
+        intent.putExtra("topic", topic);
+        intent.putExtra("seq", seq);
+        intent.putExtra("from", from);
+        if (context instanceof Service && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
+
     // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.
     static boolean isSameDate(@Nullable Date one, @Nullable Date two) {
         if (one == two) {
@@ -747,7 +819,7 @@ public class UiUtils {
 
     // Construct avatar drawable: use bitmap if it is not null,
     // otherwise use name & address to create a LetterTileDrawable.
-    static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address, boolean disabled) {
+    public static Drawable avatarDrawable(Context context, Bitmap bmp, String name, String address, boolean disabled) {
         if (bmp != null) {
             Drawable drawable = new RoundImageDrawable(context.getResources(), bmp);
             if (disabled) {

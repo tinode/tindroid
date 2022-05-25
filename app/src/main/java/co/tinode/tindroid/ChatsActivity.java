@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.Menu;
 
 import java.util.List;
@@ -340,6 +339,12 @@ public class ChatsActivity extends AppCompatActivity
 
             // Update online status of contacts.
             datasetChanged();
+        }
+
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            // Check if it's a video call.
+            UiUtils.maybeHandleVideoCall(ChatsActivity.this, info);
         }
     }
 }

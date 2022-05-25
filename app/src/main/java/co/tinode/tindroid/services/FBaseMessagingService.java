@@ -250,6 +250,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         Log.d(TAG, "No new data. Skipping notification.");
                         return;
                     }
+
+                    // If it's a video call, start it.
+                    if (UiUtils.isVideoCallMime(data.get("mime")) && !tinode.isMe(senderId)) {
+                        if (data.get("replace") == null) {
+                            UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
+                        }
+                        return;
+                    }
                 }
 
                 avatar = senderIcon;
@@ -304,7 +312,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         body = senderName + ": " + body;
                     }
                 }
-
             } else if ("sub".equals(what)) {
                 // Subscription notification.
 
@@ -398,7 +405,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param avatar sender's avatar.
      */
     private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
-        // Log.d(TAG, "Notification title=" + title + ", body=" + body + ", topic=" + topic);
         @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
                         new NotificationCompat.Builder(this, "new_message") :
