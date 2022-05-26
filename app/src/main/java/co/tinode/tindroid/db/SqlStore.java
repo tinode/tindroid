@@ -41,18 +41,24 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public void setMyUid(String uid) {
-        mDbh.setUid(uid, null);
+    public void setMyUid(String uid, String hostURI) {
+        mDbh.setUid(uid, hostURI);
+        mDbh.updateCredentials(null);
     }
 
     @Override
-    public void setMyUid(String uid, String[] credMethods) {
-        mDbh.setUid(uid, credMethods);
+    public void updateCredentials(String[] credMethods) {
+        mDbh.updateCredentials(credMethods);
     }
 
     @Override
     public void deleteAccount(String uid) {
         mDbh.deleteUid(uid);
+    }
+
+    @Override
+    public String getServerURI() {
+        return mDbh.getHostURI();
     }
 
     @Override

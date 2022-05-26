@@ -24,7 +24,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 14;
+    private static final int DATABASE_VERSION = 15;
 
     /**
      * Filename for SQLite file.
@@ -193,12 +193,20 @@ public class BaseDb extends SQLiteOpenHelper {
         return mAcc != null ? mAcc.uid : null;
     }
 
-    void setUid(String uid, String[] credMethods) {
+    void setUid(String uid, String hostURI) {
         if (uid == null) {
             mAcc = null;
             AccountDb.deactivateAll(sInstance.getWritableDatabase());
         } else {
-            mAcc = AccountDb.addOrActivateAccount(sInstance.getWritableDatabase(), uid, credMethods);
+            mAcc = AccountDb.addOrActivateAccount(sInstance.getWritableDatabase(), uid, hostURI);
+        }
+    }
+
+    void updateCredentials(String[] credMethods) {
+        if (mAcc != null) {
+            if (AccountDb.updateCredentials(sInstance.getWritableDatabase(), credMethods)) {
+                mAcc.credMethods = credMethods;
+            }
         }
     }
 
@@ -215,6 +223,10 @@ public class BaseDb extends SQLiteOpenHelper {
         if (acc != null) {
             AccountDb.delete(db, acc);
         }
+    }
+
+    String getHostURI() {
+        return mAcc != null ? mAcc.hostURI : null;
     }
 
     public boolean isReady() {

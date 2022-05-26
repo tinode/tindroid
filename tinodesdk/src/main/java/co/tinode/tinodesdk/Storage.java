@@ -17,12 +17,14 @@ import co.tinode.tinodesdk.model.Subscription;
 public interface Storage {
     String getMyUid();
     // Update UID and clear unvalidated credentials.
-    void setMyUid(String uid);
-    // Server requested credential validation.
-    void setMyUid(String uid, String[] credRequired);
+    void setMyUid(String uid, String hostURI);
+    // Server-requested validation credentials for the currently active account.
+    void updateCredentials(String[] credRequired);
 
     // Delete given account.
     void deleteAccount(String uid);
+
+    String getServerURI();
 
     String getDeviceToken();
     void saveDeviceToken(String token);
