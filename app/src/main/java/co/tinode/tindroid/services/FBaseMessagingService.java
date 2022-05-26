@@ -150,7 +150,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         //   Icon: <sender avatar> || (*)
         //   Body: <sender name>: <message content> || 'New message'
         //
-        // New subscription notification (sub):
+        // Subscription notification (sub):
+        // New subscription:
         // - P2P
         //   Title: 'New chat'
         //   Icon: <sender avatar> || (*)
@@ -159,21 +160,30 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         //   Title: 'New chat' ('by ' <sender name> || None)
         //   Icon: <group avatar> || (*)
         //   Body: <group name> || 'Unknown'
+        // Deleted subscription:
+        //   Always silent.
         //
         // Message read by the current user from another device (read):
-        //   Always invisible.
+        //   Always silent.
+        //
 
         String topicName;
 
         final Tinode tinode = Cache.getTinode();
-        boolean silent = false;
-
         NotificationCompat.Builder builder;
 
         // Check if message contains a data payload.
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
-            Log.d(TAG, "FCM data payload: " + data);
+
+            // Update data state, maybe fetch missing data.
+            String token = Utils.getLoginToken(getApplicationContext());
+            tinode.oobNotification(data, token);
+
+            if (Boolean.parseBoolean(data.get("silent"))) {
+                // Silent notification: nothing to show.
+                return;
+            }
 
             topicName = data.get("topic");
             if (topicName == null) {
@@ -196,19 +206,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             // Check notification type: message, subscription.
             String what = data.get("what");
-            // Check and maybe download new messages right away *before* showing the notification.
-            String seqStr = data.get("seq");
-            Integer seq = null;
-            if (seqStr != null) {
-                seq = Integer.parseInt(seqStr);
-            }
-
-            if ("read".equals(what) && seq != null) {
-                Utils.backgroundUpdateRead(this, topicName, seq);
-                return;
-            }
-
-            silent = Boolean.parseBoolean(data.get("silent"));
 
             // Try to resolve sender using locally stored contacts.
             String senderId = data.get("xfrom");
@@ -216,17 +213,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Bitmap senderIcon = null;
             if (senderId != null) {
                 User<VxCard> sender = tinode.getUser(senderId);
-                if (sender == null) {
-                    // If sender is not found, try to fetch description from the server.
-                    Utils.backgroundMetaFetch(this, senderId);
-                    sender = tinode.getUser(senderId);
-                }
-
                 // Assign sender's name and avatar.
-                VxCard pub = sender == null ? null : sender.pub;
-                if (pub != null) {
-                    senderName = pub.fn;
-                    senderIcon = makeLargeIcon(this, pub, Topic.TopicType.P2P, senderId);
+                if (sender != null && sender.pub != null) {
+                    senderName = sender.pub.fn;
+                    senderIcon = makeLargeIcon(this, sender.pub, Topic.TopicType.P2P, senderId);
                 }
             }
 
@@ -243,21 +233,18 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             if (TextUtils.isEmpty(what) || "msg".equals(what)) {
                 // Message notification.
 
-                // Check and maybe download new messages right away *before* showing the notification.
-                if (seq != null) {
-                    // If there was no data to fetch, the notification does not need to be shown.
-                    if (!Utils.backgroundDataFetch(getApplicationContext(), topicName, seq)) {
-                        Log.d(TAG, "No new data. Skipping notification.");
-                        return;
-                    }
-
-                    // If it's a video call, start it.
-                    if (UiUtils.isVideoCallMime(data.get("mime")) && !tinode.isMe(senderId)) {
+                String seqStr = data.get("seq");
+                try {
+                    int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
+                    if (UiUtils.isVideoCallMime(data.get("mime")) && !tinode.isMe(senderId) && seq > 0) {
+                        // If it's a video call, start it.
                         if (data.get("replace") == null) {
                             UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
                         }
                         return;
                     }
+                } catch (NumberFormatException ignored) {
+                    Log.w(TAG, "Invalid seq value '" + seqStr + "'");
                 }
 
                 avatar = senderIcon;
@@ -300,7 +287,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     if (topic == null) {
                         // We already tried to attach to topic and get its description. If it's not available
                         // just give up.
-                        Log.w(TAG, "Unknown topic: " + topicName);
+                        Log.w(TAG, "Message received for an unknown topic: " + topicName);
                         return;
                     }
 
@@ -313,7 +300,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     }
                 }
             } else if ("sub".equals(what)) {
-                // Subscription notification.
+                // New subscription notification.
 
                 // Check if this is a known topic.
                 ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
@@ -323,7 +310,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 }
 
                 // Legitimate subscription to a new topic.
-                Utils.backgroundMetaFetch(getApplicationContext(), topicName);
                 title = getResources().getString(R.string.new_chat);
                 if (tp == Topic.TopicType.P2P) {
                     // P2P message
@@ -362,9 +348,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             return;
         }
 
-        if (!silent) {
-            showNotification(builder, topicName);
-        }
+        showNotification(builder, topicName);
     }
 
     private void showNotification(NotificationCompat.Builder builder, String topicName) {

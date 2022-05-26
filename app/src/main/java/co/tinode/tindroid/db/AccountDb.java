@@ -22,8 +22,10 @@ public class AccountDb implements BaseColumns {
             "DROP TABLE IF EXISTS " + TABLE_NAME;
     private static final String COLUMN_NAME_UID = "uid";
     private static final String COLUMN_NAME_ACTIVE = "last_active";
+    private static final String COLUMN_NAME_HOST_URI = "host_uri";
     private static final String COLUMN_NAME_CRED_METHODS = "cred_methods";
     private static final String COLUMN_NAME_DEVICE_ID = "device_id";
+
     /**
      * Statement to create account table - mapping of account UID to long id
      */
@@ -32,6 +34,7 @@ public class AccountDb implements BaseColumns {
                     _ID + " INTEGER PRIMARY KEY," +
                     COLUMN_NAME_UID + " TEXT," +
                     COLUMN_NAME_ACTIVE + " INTEGER," +
+                    COLUMN_NAME_HOST_URI + " TEXT," +
                     COLUMN_NAME_CRED_METHODS + " TEXT," +
                     COLUMN_NAME_DEVICE_ID + " TEXT)";
     private static final String INDEX_UID = "accounts_uid";
@@ -55,7 +58,7 @@ public class AccountDb implements BaseColumns {
     static final String DROP_INDEX_2 =
             "DROP INDEX IF EXISTS " + INDEX_ACTIVE;
 
-    static StoredAccount addOrActivateAccount(SQLiteDatabase db, String uid, String[] credMethods) {
+    static StoredAccount addOrActivateAccount(SQLiteDatabase db, String uid, String hostURI) {
         StoredAccount acc;
         db.beginTransaction();
         try {
@@ -64,7 +67,7 @@ public class AccountDb implements BaseColumns {
             acc = getByUid(db, uid);
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_ACTIVE, 1);
-            values.put(COLUMN_NAME_CRED_METHODS, BaseDb.serializeStringArray(credMethods));
+            // Host name and TLS should not change.
             if (acc != null) {
                 // Account exists, updating active status and list of un-validated methods.
                 db.update(TABLE_NAME, values, _ID + "=" + acc.id, null);
@@ -72,14 +75,14 @@ public class AccountDb implements BaseColumns {
                 // Creating new record.
                 acc = new StoredAccount();
                 acc.uid = uid;
+                acc.hostURI = hostURI;
                 values.put(COLUMN_NAME_UID, uid);
+                values.put(COLUMN_NAME_HOST_URI, hostURI);
                 // Insert new account as active
                 acc.id = db.insert(TABLE_NAME, null, values);
             }
             if (acc.id < 0) {
                 acc = null;
-            } else {
-                acc.credMethods = credMethods;
             }
             db.setTransactionSuccessful();
         } catch (SQLException ignored) {
@@ -95,14 +98,15 @@ public class AccountDb implements BaseColumns {
         StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
-                new String[]{_ID, COLUMN_NAME_UID, COLUMN_NAME_CRED_METHODS},
+                new String[]{_ID, COLUMN_NAME_UID, COLUMN_NAME_HOST_URI, COLUMN_NAME_CRED_METHODS},
                 COLUMN_NAME_ACTIVE + "=1",
                 null, null, null, null);
         if (c.moveToFirst()) {
             acc = new StoredAccount();
             acc.id = c.getLong(0);
             acc.uid = c.getString(1);
-            acc.credMethods = BaseDb.deserializeStringArray(c.getString(2));
+            acc.hostURI = c.getString(2);
+            acc.credMethods = BaseDb.deserializeStringArray(c.getString(3));
         }
         c.close();
         return acc;
@@ -123,7 +127,7 @@ public class AccountDb implements BaseColumns {
         StoredAccount acc = null;
         Cursor c = db.query(
                 TABLE_NAME,
-                new String[]{_ID, COLUMN_NAME_CRED_METHODS},
+                new String[]{_ID, COLUMN_NAME_HOST_URI, COLUMN_NAME_CRED_METHODS},
                 COLUMN_NAME_UID + "=?",
                 new String[]{uid},
                 null, null, null);
@@ -132,7 +136,8 @@ public class AccountDb implements BaseColumns {
                 acc = new StoredAccount();
                 acc.id = c.getLong(0);
                 acc.uid = uid;
-                acc.credMethods = BaseDb.deserializeStringArray(c.getString(1));
+                acc.hostURI = c.getString(1);
+                acc.credMethods = BaseDb.deserializeStringArray(c.getString(2));
             }
             c.close();
         }
@@ -141,6 +146,12 @@ public class AccountDb implements BaseColumns {
 
     static void deactivateAll(SQLiteDatabase db) {
         db.execSQL("UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME_ACTIVE + "=0");
+    }
+
+    static boolean updateCredentials(SQLiteDatabase db, String[] credMethods) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_CRED_METHODS, BaseDb.serializeStringArray(credMethods));
+        return db.update(TABLE_NAME, values, COLUMN_NAME_ACTIVE + "=1", null) > 0;
     }
 
     @SuppressWarnings("UnusedReturnValue")

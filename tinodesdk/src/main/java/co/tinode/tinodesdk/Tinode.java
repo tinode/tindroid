@@ -14,6 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InvalidObjectException;
@@ -39,6 +42,7 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
@@ -141,8 +145,7 @@ public class Tinode {
     private final ConcurrentHashMap<String, Pair<Topic, Storage.Message>> mTopics;
     private final ConcurrentHashMap<String, User> mUsers;
     private JavaType mDefaultTypeOfMetaPacket = null;
-    private String mServerHost = null;
-    private boolean mUseTLS;
+    private URI mServerURI = null;
     private String mServerVersion = null;
     private String mServerBuild = null;
     private String mDeviceToken = null;
@@ -408,23 +411,13 @@ public class Tinode {
     /**
      * Open a websocket connection to the server, process handshake exchange then optionally login.
      *
-     * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
-     * @param tls      use transport layer security (wss); ignored if hostName is null.
+     * @param serverURI     address of the server to connect to.
+     * @param background    this is a background connection: the server will delay user's online announcement for 5 sec.
      * @return PromisedReply to be resolved or rejected when the connection is completed.
      */
-    public PromisedReply<ServerMessage> connect(String hostName, boolean tls, boolean background) {
+    protected PromisedReply<ServerMessage> connect(@NotNull URI serverURI, boolean background) {
         synchronized (mConnLock) {
-            boolean newHost = false;
-            if (hostName != null) {
-                // Convert to lowercase to ensure correct comparison.
-                hostName = hostName.toLowerCase();
-                // Check if host address has changed.
-                newHost = !hostName.equals(mServerHost) || tls != mUseTLS;
-                // Save updated host name & TLS setting.
-                mServerHost = hostName;
-                mUseTLS = tls;
-            }
-
+            boolean newHost = serverURI.equals(mServerURI);
             // Connection already exists and connected.
             if (mConnection != null && mConnection.isConnected()) {
                 // If the connection is live and the server address has not changed, return a resolved promise.
@@ -440,13 +433,7 @@ public class Tinode {
             }
 
             mMsgId = 0xFFFF + (int) (Math.random() * 0xFFFF);
-
-            URI connectTo;
-            try {
-                connectTo = new URI((mUseTLS ? "wss://" : "ws://") + mServerHost + "/v" + PROTOVERSION + "/");
-            } catch (URISyntaxException ex) {
-                return new PromisedReply<>(ex);
-            }
+            mServerURI = serverURI;
 
             PromisedReply<ServerMessage> completion = new PromisedReply<>();
 
@@ -456,12 +443,32 @@ public class Tinode {
             mConnectionListener.addPromise(completion);
 
             if (mConnection == null) {
-                mConnection = new Connection(connectTo, mApiKey, mConnectionListener);
+                mConnection = new Connection(mServerURI, mApiKey, mConnectionListener);
             }
             mConnection.connect(true, background);
 
             return completion;
         }
+    }
+
+    /**
+     * Open a websocket connection to the server, process handshake exchange then optionally login.
+     *
+     * @param hostName address of the server to connect to; if hostName is null a saved address will be used.
+     * @param tls      use transport layer security (wss); ignored if hostName is null.
+     * @return PromisedReply to be resolved or rejected when the connection is completed.
+     */
+    public PromisedReply<ServerMessage> connect(@Nullable String hostName, boolean tls, boolean background) {
+        URI connectTo = mServerURI;
+        if (hostName != null) {
+            try {
+                connectTo = createWebsocketURI(hostName, tls);
+            } catch (URISyntaxException ex) {
+                return new PromisedReply<>(ex);
+            }
+        }
+
+        return connect(connectTo, background);
     }
 
     /**
@@ -533,13 +540,31 @@ public class Tinode {
     }
 
     /**
-     * Get configured server address as an URL.
+     * Get configured server address as an HTTP(S) URL.
      *
      * @return Server URL.
      * @throws MalformedURLException thrown if server address is not yet configured.
      */
     public URL getBaseUrl() throws MalformedURLException {
-        return new URL((mUseTLS ? "https://" : "http://") + mServerHost + "/v" + PROTOVERSION + "/");
+        return new URL(getHttpOrigin() + "/v" + PROTOVERSION + "/");
+    }
+
+    /**
+     * Get server address suitable for use as an Origin: header for CORS compliance.
+     *
+     * @return server internet address
+     */
+    public String getHttpOrigin() {
+        boolean tls = mServerURI.getScheme().equals("wss");
+        try {
+            return new URL(tls ? "https" : "http", mServerURI.getHost(), mServerURI.getPort(), "").toString();
+        } catch (MalformedURLException ignored) {
+            return null;
+        }
+    }
+
+    private static URI createWebsocketURI(@NotNull String hostName, boolean tls) throws URISyntaxException {
+        return new URI((tls ? "wss://" : "ws://") + hostName + "/v" + PROTOVERSION + "/");
     }
 
     private void handleDisconnect(boolean byServer, int code, String reason) {
@@ -687,30 +712,143 @@ public class Tinode {
     }
 
     /**
+     * Out of band notification handling. Called externally by the FCM push service.
+     * Must not be called on the UI thread.
+     *
+     * @param data FCM payload.
+     * @param authToken authentication token to use in case login is needed.
+     */
+    public void oobNotification(Map<String, String> data, String authToken) {
+        Log.d(TAG, "oob: " + data);
+
+        String what = data.get("what");
+        String topicName = data.get("topic");
+        if (what == null || topicName == null) {
+            // Invalid payload.
+            return;
+        }
+
+        String seqStr = data.get("seq");
+        Integer seq = null;
+        if (seqStr != null) {
+            seq = Integer.parseInt(seqStr);
+        }
+
+        Topic topic = getTopic(topicName);
+        switch (what) {
+            case "msg":
+                // Check and maybe download new messages right away.
+                if (seq == null) {
+                    break;
+                }
+
+                if (topic != null && topic.isAttached()) {
+                    // No need to fetch: topic is already subscribed and got data through normal channel.
+                    // Assuming that data was available.
+                    break;
+                }
+
+                Topic.MetaGetBuilder builder;
+                if (topic == null) {
+                    // New topic. Create it.
+                    topic = newTopic(topicName, null);
+                    builder = topic.getMetaGetBuilder().withDesc().withSub();
+                } else {
+                    // Existing topic.
+                    builder = topic.getMetaGetBuilder();
+                }
+
+                if (topic.getSeq() < seq) {
+                    boolean disconnect = syncLogin(authToken);
+
+                    String senderId = data.get("xfrom");
+                    if (senderId != null && getUser(senderId) == null) {
+                        // If sender is not found, try to fetch description from the server.
+                        getMeta(senderId, MsgGetMeta.desc());
+                    }
+
+                    PromisedReply result = null;
+                    // Check again if topic has attached while we tried to connect. It does not guarantee that there
+                    // is no race condition to subscribe.
+                    if (!topic.isAttached()) {
+                        // Fully asynchronous. We don't need to do anything with the result.
+                        // The new data will be automatically saved.
+                        // noinspection unchecked
+                        topic.subscribe(null, builder.build());
+                        topic.getMeta(builder.reset().withLaterData(24).build());
+                        result = topic.getMeta(builder.reset().withLaterDel(24).build());
+                        topic.leave();
+                    }
+
+                    if (result != null) {
+                        try {
+                            // Wait for result before disconnecting.
+                            result.getResult();
+                        } catch (Exception ignored) {}
+                    }
+
+                    if (disconnect) {
+                        disconnect(true);
+                    }
+                }
+                break;
+            case "read":
+                if (seq == null || topic == null) {
+                    // Ignore 'read' notifications for an unknown topic or with invalid seq.
+                    break;
+                }
+                if (topic.getRead() < seq) {
+                    topic.setRead(seq);
+                    if (mStore != null) {
+                        mStore.setRead(topic, seq);
+                    }
+                }
+                break;
+            case "sub":
+                if (topic == null) {
+                    boolean disconnect = syncLogin(authToken);
+                    // New topic subscription, fetch topic description.
+                    try {
+                        getMeta(topicName, MsgGetMeta.desc()).getResult();
+                    } catch (Exception ignored) {}
+
+                    if (disconnect) {
+                        disconnect(true);
+                    }
+                } else if (new Acs(data.get("modeGiven"), data.get("modeWant")).isNone()) {
+                    // Topic deleted.
+                    topic.expunge(false);
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    // Synchronous (blocking) token login using stored parameters.
+    // Returns true if a new connection was established, false if already connected or failed to connect.
+    private boolean syncLogin(String authToken) {
+        boolean connected = false;
+        if (!isAuthenticated() && mStore != null) {
+            try {
+                URI connectTo = new URI(mStore.getServerURI());
+                if (!isConnected()) {
+                    connect(connectTo, true).getResult();
+                    connected = true;
+                }
+                loginToken(authToken).getResult();
+            } catch (Exception ignored) {}
+        }
+        return connected;
+    }
+
+    /**
      * Get API key that was used for configuring this Tinode instance.
      *
      * @return API key
      */
     public String getApiKey() {
         return mApiKey;
-    }
-
-    /**
-     * Get internet address of the server that this Tinode instance was configured with.
-     *
-     * @return server internet address
-     */
-    public String getServerHost() {
-        return mServerHost;
-    }
-
-    /**
-     * Get server address suitable for use as an Origin: header for CORS compliance.
-     *
-     * @return server internet address
-     */
-    public String getHttpOrigin() {
-        return (mUseTLS ? "https://" : "http://") + mServerHost;
     }
 
     /**
@@ -780,9 +918,10 @@ public class Tinode {
     /**
      * Set server address and TLS status to be used in subsequent connections.
      */
-    public void setServer(String host, boolean tls) {
-        mServerHost = host != null ? host.toLowerCase() : null;
-        mUseTLS = tls;
+    public void setServer(@NotNull String host, boolean tls) {
+        try {
+            mServerURI = createWebsocketURI(host, tls);
+        } catch (URISyntaxException ignored) {}
     }
 
     /**
@@ -1185,8 +1324,7 @@ public class Tinode {
         mMyUid = newUid;
 
         if (mStore != null) {
-            // FIXME: pass expiration time too.
-            mStore.setMyUid(mMyUid);
+            mStore.setMyUid(mMyUid, mServerURI.toString());
         }
 
         // If topics were not loaded earlier, load them now.
@@ -1215,8 +1353,8 @@ public class Tinode {
                 }
 
                 if (mStore != null) {
-                    // FIXME: pass expiration time too.
-                    mStore.setMyUid(mMyUid, mCredToValidate.toArray(new String[]{}));
+                    mStore.setMyUid(mMyUid, mServerURI.toString());
+                    mStore.updateCredentials(mCredToValidate.toArray(new String[]{}));
                 }
             }
         }
@@ -1864,7 +2002,7 @@ public class Tinode {
      * @return {@link User} object or {@code null} if no such user is found in local cache.
      */
     @SuppressWarnings("unchecked")
-    public <SP> User<SP> getUser(String uid) {
+    public <SP> User<SP> getUser(@NotNull String uid) {
         User<SP> user = mUsers.get(uid);
         if (user == null && mStore != null) {
             user = mStore.userGet(uid);
@@ -2010,10 +2148,12 @@ public class Tinode {
         if (host != null) {
             int port = url.getPort();
             host += port > 0 ? ":" + port : "";
+        } else {
+            return false;
         }
 
         return ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
-                && mServerHost.equals(host));
+                && host.equals(mServerURI.getHost()));
     }
 
     /**
@@ -2030,7 +2170,7 @@ public class Tinode {
             headers.put("X-Tinode-Auth", "Token " + mAuthToken);
         }
         headers.put("User-Agent", makeUserAgent());
-        return headers.isEmpty() ? null : headers;
+        return headers;
     }
 
     /**

@@ -80,6 +80,9 @@ public class AcsHelper implements Serializable {
         return a == decode(s);
     }
 
+    public boolean isNone() {
+        return a == MODE_NONE;
+    }
     public boolean isReader() {
         return (a & MODE_READ) != 0;
     }

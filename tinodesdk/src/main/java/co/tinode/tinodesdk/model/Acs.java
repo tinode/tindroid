@@ -32,6 +32,10 @@ public class Acs implements Serializable {
         assign(null, null, null);
     }
 
+    public Acs(String g, String w) {
+        assign(g, w, null);
+    }
+
     public Acs(String g, String w, String m) {
         assign(g, w, m);
     }
@@ -40,7 +44,7 @@ public class Acs implements Serializable {
         if (am != null) {
             given = am.given != null ? new AcsHelper(am.given) : null;
             want = am.want != null ? new AcsHelper(am.want) : null;
-            mode = am.mode != null ? new AcsHelper(am.mode) : null;
+            mode = am.mode != null ? new AcsHelper(am.mode) : AcsHelper.and(want, given);
         }
     }
 
@@ -52,22 +56,22 @@ public class Acs implements Serializable {
 
     public Acs(AccessChange ac) {
         if (ac != null) {
-            int change = 0;
+            boolean change = false;
             if (ac.given != null) {
                 if (given == null) {
                     given = new AcsHelper();
                 }
-                change += given.update(ac.given) ? 1 : 0;
+                change = given.update(ac.given);
             }
 
             if (ac.want != null) {
                 if (want == null) {
                     want = new AcsHelper();
                 }
-                change += want.update(ac.want) ? 1 : 0;
+                change = change || want.update(ac.want);
             }
 
-            if (change > 0) {
+            if (change) {
                 mode = AcsHelper.and(want, given);
             }
         }
@@ -76,7 +80,7 @@ public class Acs implements Serializable {
     private void assign(String g, String w, String m) {
         this.given = g != null ? new AcsHelper(g) : null;
         this.want = w != null ? new AcsHelper(w) : null;
-        this.mode = m != null ? new AcsHelper(m) : null;
+        this.mode = m != null ? new AcsHelper(m) : AcsHelper.and(want, given);
     }
 
     public void setMode(String m) {
@@ -204,6 +208,14 @@ public class Acs implements Serializable {
                 ((mode == null && am.mode == null) || (mode != null && mode.equals(am.mode))) &&
                 ((want == null && am.want == null) || (want != null && want.equals(am.want))) &&
                 ((given == null && am.given == null) || (given != null && given.equals(am.given)));
+    }
+
+    /**
+     * Check if mode is NONE: no flags are set.
+     * @return true if no flags are set.
+     */
+    public boolean isNone() {
+        return mode != null && mode.isNone();
     }
 
     /**
