@@ -41,8 +41,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
-import co.tinode.tinodesdk.model.AccessChange;
-import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Drafty;
 
 /**
