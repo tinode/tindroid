@@ -24,6 +24,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Pair;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -59,6 +60,9 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.FileProvider;
+import androidx.core.view.ContentInfoCompat;
+import androidx.core.view.OnReceiveContentListener;
+import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -92,6 +96,8 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MessagesFragment extends Fragment {
     private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
+
+    private static final String[] SUPPORTED_MIME_TYPES = new String[]{"image/*"};
 
     static final String MESSAGE_TO_SEND = "messageText";
     static final String MESSAGE_REPLY = "reply";
@@ -341,6 +347,8 @@ public class MessagesFragment extends Fragment {
         view.findViewById(R.id.cancelForwardingPreview).setOnClickListener(v -> cancelPreview(activity));
 
         EditText editor = view.findViewById(R.id.editMessage);
+        ViewCompat.setOnReceiveContentListener(editor, SUPPORTED_MIME_TYPES, new StickerReceiver());
+
         // Send notification on key presses
         editor.addTextChangedListener(new TextWatcher() {
             @Override
@@ -1304,6 +1312,26 @@ public class MessagesFragment extends Fragment {
         }
 
         return mMessagesAdapter.findItemPositionById(id, first, last);
+    }
+
+    private static class StickerReceiver implements OnReceiveContentListener {
+        @Nullable
+        @Override
+        public ContentInfoCompat onReceiveContent(@NonNull View view, @NonNull ContentInfoCompat payload) {
+            Pair<ContentInfoCompat, ContentInfoCompat> split = payload.partition(item -> item.getUri() != null);
+
+            if (split.first != null) {
+                // Handle posted URIs.
+                ClipData data = split.first.getClip();
+                if (data.getItemCount() > 0) {
+                    Uri uri = data.getItemAt(0).getUri();
+                    Log.i(TAG, "Uri from IME: " + uri.toString() + "; total=" + data.getItemCount());
+                }
+            }
+
+            // Return content we did not handle.
+            return split.second;
+        }
     }
 
     // Class for generating audio preview from a stream of amplitudes of unknown length.
