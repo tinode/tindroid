@@ -175,21 +175,21 @@ public class CallService extends Service {
         notificationIntent.putExtra("topic", topic);
         notificationIntent.putExtra("seq", seq);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent acceptIntent = new Intent(this, CallService.class);
         acceptIntent.setAction("accept");
         acceptIntent.putExtra("topic", topic);
         acceptIntent.putExtra("seq", seq);
         PendingIntent acceptPI = PendingIntent.getService(
-                this, 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                this, 0, acceptIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent declineIntent = new Intent(this, CallService.class);
         declineIntent.setAction("decline");
         declineIntent.putExtra("topic", topic);
         declineIntent.putExtra("seq", seq);
         PendingIntent declinePI = PendingIntent.getService(
-                this, 0, declineIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+                this, 0, declineIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         customView.setOnClickPendingIntent(R.id.btnAccept, acceptPI);
         customView.setOnClickPendingIntent(R.id.btnDecline, declinePI);
@@ -206,6 +206,10 @@ public class CallService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent.getAction();
+        if (action == null) {
+            return START_NOT_STICKY;
+        }
+
         switch (action) {
             case "decline":
                 return declineCall(intent);
