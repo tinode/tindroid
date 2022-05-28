@@ -870,17 +870,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                        if (msg.ctrl == null) {
-                            return null;
-                        }
-                        if (msg.ctrl.code >= 300) {
+                        if (msg.ctrl != null && msg.ctrl.code >= 300) {
                             // 3XX response: already subscribed.
                             mAttached = true;
                             return null;
                         }
                         if (!mAttached) {
                             mAttached = true;
-                            if (msg.ctrl.params != null) {
+                            if (msg.ctrl != null && msg.ctrl.params != null) {
                                 mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
                                 if (isNew()) {
                                     setUpdated(msg.ctrl.ts);
@@ -896,7 +893,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                                 }
                             }
 
-                            if (mListener != null) {
+                            if (msg.ctrl != null && mListener != null) {
                                 mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
                             }
 
