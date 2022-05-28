@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="tinui_spacing_medium">16dp</dimen>
+    <dimen name="tinui_spacing_small">8dp</dimen>
+    <dimen name="tinui_spacing_tiny">4dp</dimen>
+
+    <dimen name="tinui_text_small">12sp</dimen>
+    <dimen name="tinui_text_medium">14sp</dimen>
+    <dimen name="tinui_text_large">16sp</dimen>
+
+    <dimen name="tinui_divider_height">1dp</dimen>
+
+    <dimen name="tinui_elevation_big">8dp</dimen>
+    <dimen name="tinui_elevation_small">3dp</dimen>
+
+    <!--Message Preview Items-->
+    <dimen name="tinui_message_preview_item_height">64dp</dimen>
+
+    <!--AvatarView-->
+    <dimen name="tinui_avatar_size_extra_tiny">18dp</dimen>
+    <dimen name="tinui_avatar_size_tiny">24dp</dimen>
+    <dimen name="tinui_avatar_size_small">32dp</dimen>
+    <dimen name="tinui_avatar_size_medium">40dp</dimen>
+    <dimen name="tinui_avatar_size_large">64dp</dimen>
+    <dimen name="tinui_avatar_size_extra_large">72dp</dimen>
+    <dimen name="tinui_avatar_text_size_tiny">12sp</dimen>
+    <dimen name="tinui_avatar_text_size_small">14sp</dimen>
+    <dimen name="tinui_avatar_text_size_medium">16sp</dimen>
+    <dimen name="tinui_avatar_text_size_large">24sp</dimen>
+    <dimen name="tinui_avatar_text_size_extra_large">28sp</dimen>
+    <dimen name="tinui_avatar_initials">14sp</dimen>
+    <dimen name="tinui_avatar_border_width">3dp</dimen>
+
+    <!--ScrollButtonView-->
+    <dimen name="tinui_scroll_button_size">40dp</dimen>
+    <dimen name="tinui_scroll_button_unread_badge_size">20dp</dimen>
+    <dimen name="tinui_scroll_button_unread_badge_padding_horizontal">4dp</dimen>
+    <dimen name="tinui_scroll_button_unread_badge_text_size">11sp</dimen>
+
+    <!--Mention Suggestions-->
+    <dimen name="tinui_mention_item_height">56dp</dimen>
+    <dimen name="tinui_mention_icon_size">20dp</dimen>
+
+    <!-- headers -->
+    <dimen name="tinui_default_header_height">56dp</dimen>
+
+    <!--Channel List Items-->
+    <dimen name="tinui_channel_list_item_height">64dp</dimen>
+    <dimen name="tinui_channel_list_item_option_icon_width">50dp</dimen>
+    <dimen name="tinui_channel_item_progress_bar_size">16dp</dimen>
+    <dimen name="tinui_channel_list_item_loading_height">90dp</dimen>
+
+    <dimen name="tinui_channel_item_title">15sp</dimen>
+    <dimen name="tinui_channel_item_message">13sp</dimen>
+    <dimen name="tinui_channel_item_message_date">13sp</dimen>
+
+    <!-- Message ViewHolders -->
+    <dimen name="tinui_message_viewholder_avatar_missing_margin">40dp</dimen>
+    <dimen name="tinui_message_corner_radius_negative">-16dp</dimen>
+    <dimen name="tinui_message_footnote_spacing">6dp</dimen>
+    <dimen name="tinui_message_thread_reply_footnote_translation">18dp</dimen>
+    <dimen name="tinui_message_thread_reply_avatar_size">18dp</dimen>
+    <dimen name="tinui_message_thread_reply_avatar_half_size">9dp</dimen>
+    <dimen name="tinui_message_media_attachment_more_count_text_size">26sp</dimen>
+    <dimen name="tinui_message_pin_indicator_icon_size">12dp</dimen>
+
+    <!-- Search Input -->
+    <dimen name="tinui_search_input_height">36dp</dimen>
+</resources>

@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Typography -->
+    <style name="tinui_TextAppearance" parent="TextAppearance.AppCompat.Body2" />
+
+    <style name="tinui_TextAppearance.CaptionBold">
+        <item name="fontFamily">@font/roboto_bold</item>
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">10sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.Footnote">
+        <item name="fontFamily">@font/roboto_regular</item>
+        <item name="android:fontFamily">@font/roboto_regular</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/tinui_text_color_secondary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.FootnoteBold">
+        <item name="fontFamily">@font/roboto_medium</item>
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.Caption1Bold">
+        <item name="fontFamily">@font/roboto_bold</item>
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.Body">
+        <item name="fontFamily">@font/roboto_medium</item>
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.BodyBold">
+        <item name="fontFamily">@font/roboto_bold</item>
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.Headline">
+        <item name="fontFamily">@font/roboto_medium</item>
+        <item name="android:fontFamily">@font/roboto_medium</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.HeadlineBold">
+        <item name="fontFamily">@font/roboto_bold</item>
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_TextAppearance.Title">
+        <item name="fontFamily">@font/roboto_bold</item>
+        <item name="android:fontFamily">@font/roboto_bold</item>
+        <item name="android:textStyle">normal</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textSize">22sp</item>
+        <item name="android:textColor">@color/tinui_text_color_primary</item>
+        <item name="android:textDirection">locale</item>
+    </style>
+
+    <style name="tinui_Theme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="tinui_ValidTheme">true</item>
+        <item name="tinui_ChannelListItemAvatarStyle">@style/tinui.ChannelList.Item.Avatar</item>
+        <item name="tinui_ChannelListHeaderAvatarStyle">@style/tinui.ChannelListHeader.Avatar</item>
+        <item name="tinui_GlobalAvatarBorderColor">@color/tinui_black</item>
+        <item name="tinui_GlobalAvatarOnlineIndicatorColor">@color/tinui_accent_green</item>
+        <item name="tinui_GlobalAvatarTextColor">@color/tinui_white</item>
+        <item name="tinui_MentionPreviewItemAvatarStyle">@style/tinui.MentionPreview.Item.Avatar</item>
+        <item name="tinui_SearchResultAvatarStyle">@style/tinui.SearchResult.Avatar</item>
+        <item name="tinui_MessageListItemAvatarStyle">@style/tinui.MessageList.Item.Avatar</item>
+    </style>
+
+    <style name="tinui">
+        <!--Common styles properties-->
+    </style>
+
+    <style name="tinui.BaseAvatar">
+        <!--Common styles properties for BaseAvatar-->
+        <item name="tinui_AvatarBorderColor">?attr/tinui_GlobalAvatarBorderColor</item>
+        <item name="tinui_AvatarTextColor">?attr/tinui_GlobalAvatarTextColor</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">true</item>
+        <item name="tinui_AvatarOnlineIndicatorPosition">topRight</item>
+        <item name="tinui_AvatarBorderWidth">0dp</item>
+        <item name="tinui_AvatarOnlineIndicatorColor">?attr/tinui_GlobalAvatarOnlineIndicatorColor</item>
+        <item name="tinui_AvatarOnlineIndicatorBorderColor">@color/tinui_white</item>
+        <item name="tinui_AvatarShape">circle</item>
+    </style>
+
+    <style name="tinui.MessageList" parent="tinui">
+        <!-- Scroll button-->
+        <item name="tinui_ScrollButtonEnabled">true</item>
+        <item name="tinui_ScrollButtonUnreadEnabled">true</item>
+        <item name="tinui_ScrollButtonColor">@color/tinui_white</item>
+        <item name="tinui_ScrollButtonRippleColor">@color/tinui_white_smoke</item>
+        <item name="tinui_ScrollButtonBadgeColor">@color/tinui_accent_blue</item>
+        <item name="tinui_ScrollButtonIcon">@drawable/tinui_ic_down</item>
+        <item name="tinui_ScrollButtonElevation">3dp</item>
+        <item name="tinui_ScrollButtonBadgeTextSize">@dimen/tinui_scroll_button_unread_badge_text_size</item>
+        <item name="tinui_ScrollButtonBadgeTextColor">@color/tinui_literal_white</item>
+        <item name="tinui_ScrollButtonBadgeTextStyle">normal</item>
+
+        <item name="tinui_LoadMoreThreshold">10</item>
+        <item name="tinui_NewMessagesBehaviour">count_new_messages</item>
+        <item name="tinui_RetryOptionIcon">@drawable/tinui_ic_send</item>
+
+        <item name="tinui_BackgroundColor">@color/tinui_white_snow</item>
+
+        <!-- Message background color -->
+        <item name="tinui_MessageBackgroundColorMine">@color/tinui_grey_gainsboro</item>
+        <item name="tinui_MessageBackgroundColorTheirs">@color/tinui_white</item>
+
+        <!-- Message link -->
+        <item name="tinui_MessageLinkColorMine">@color/tinui_accent_blue</item>
+        <item name="tinui_MessageLinkColorTheirs">@color/tinui_accent_blue</item>
+        <item name="tinui_LinkDescriptionMaxLines">5</item>
+        <item name="tinui_ReactionsEnabled">true</item>
+        <item name="tinui_MessageLinkBackgroundColorMine">@color/tinui_blue_alice</item>
+        <item name="tinui_MessageLinkBackgroundColorTheirs">@color/tinui_blue_alice</item>
+
+        <!-- Message text style link title -->
+        <item name="tinui_MessageTextSizeLinkTitle">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageTextColorLinkTitle">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageTextStyleLinkTitle">normal</item>
+        <item name="tinui_MessageTextSizeLinkDescription">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorLinkDescription">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleLinkDescription">normal</item>
+        <item name="tinui_MessageTextSizeLinkLabel">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorLinkLabel">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleLinkLabel">normal</item>
+
+        <!-- Message text style mine -->
+        <item name="tinui_MessageTextSizeMine">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageTextColorMine">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageTextStyleMine">normal</item>
+
+        <!-- Message text style theirs -->
+        <item name="tinui_MessageTextSizeTheirs">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageTextColorTheirs">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageTextStyleTheirs">normal</item>
+
+        <!-- Message text style user name in footer -->
+        <item name="tinui_MessageTextSizeUserName">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorUserName">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleUserName">normal</item>
+
+        <!-- Message text style date in footer -->
+        <item name="tinui_MessageTextSizeDate">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorDate">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleDate">normal</item>
+
+        <!-- Message text style thread counter in footer -->
+        <item name="tinui_MessageTextSizeThreadCounter">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorThreadCounter">@color/tinui_accent_blue</item>
+        <item name="tinui_MessageTextStyleThreadCounter">normal</item>
+
+        <!-- Message text style thread separator -->
+        <item name="tinui_MessageTextSizeThreadSeparator">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorThreadSeparator">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleThreadSeparator">normal</item>
+
+        <!-- Message Reply background color -->
+        <item name="tinui_MessageReplyBackgroundColorMine">@color/tinui_bars_background</item>
+        <item name="tinui_MessageReplyBackgroundColorTheirs">@color/tinui_bars_background</item>
+
+        <!-- Message Reply text style mine -->
+        <item name="tinui_MessageReplyTextSizeMine">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageReplyTextColorMine">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageReplyTextStyleMine">normal</item>
+
+        <!-- Message Reply text style theirs -->
+        <item name="tinui_MessageReplyTextSizeTheirs">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageReplyTextColorTheirs">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageReplyTextStyleTheirs">normal</item>
+
+        <!-- Message Reply link -->
+        <item name="tinui_MessageReplyLinkColorMine">@color/tinui_accent_blue</item>
+        <item name="tinui_MessageReplyLinkColorTheirs">@color/tinui_accent_blue</item>
+        <item name="tinui_MessageReplyLinkBackgroundColorMine">@color/tinui_blue_alice</item>
+        <item name="tinui_MessageReplyLinkBackgroundColorTheirs">@color/tinui_blue_alice</item>
+
+        <!-- Message Reply stroke -->
+        <item name="tinui_MessageReplyStrokeColorMine">@color/tinui_literal_transparent</item>
+        <item name="tinui_MessageReplyStrokeWidthMine">0dp</item>
+        <item name="tinui_MessageReplyStrokeColorTheirs">@color/tinui_grey_whisper</item>
+        <item name="tinui_MessageReplyStrokeWidthTheirs">1dp</item>
+
+        <!-- Date separator -->
+        <item name="tinui_DateSeparatorBackgroundColor">@color/tinui_overlay_dark</item>
+
+        <item name="tinui_MessageTextSizeDateSeparator">@dimen/tinui_text_small</item>
+        <item name="tinui_MessageTextColorDateSeparator">@color/tinui_white</item>
+        <item name="tinui_MessageTextStyleDateSeparator">normal</item>
+
+        <!-- Message reactions view style -->
+        <item name="tinui_MessageReactionsBubbleColorMine">@color/tinui_grey_whisper</item>
+        <item name="tinui_MessageReactionsBubbleColorTheirs">@color/tinui_grey_gainsboro</item>
+        <item name="tinui_MessageReactionsBubbleBorderColorMine">@color/tinui_grey_whisper</item>
+
+        <!-- Message edit reactions view style -->
+        <item name="tinui_EditReactionsBubbleColorMine">@color/tinui_white</item>
+        <item name="tinui_EditReactionsBubbleColorTheirs">@color/tinui_white</item>
+        <item name="tinui_EditReactionsColumns">5</item>
+
+        <!-- Indicator icons -->
+        <item name="tinui_ShowMessageDeliveryStatusIndicator">true</item>
+        <item name="tinui_IconIndicatorSent">@drawable/tinui_ic_check_single</item>
+        <item name="tinui_IconIndicatorRead">@drawable/tinui_ic_check_double</item>
+        <item name="tinui_IconIndicatorPendingSync">@drawable/tinui_ic_clock</item>
+        <item name="tinui_IconOnlyVisibleToYou">@drawable/tinui_ic_icon_eye_off</item>
+
+        <!-- Message deleted style -->
+        <item name="tinui_DeletedMessageBackgroundColor">@color/tinui_grey_whisper</item>
+        <item name="tinui_MessageTextSizeMessageDeleted">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageTextColorMessageDeleted">@color/tinui_text_color_secondary</item>
+        <item name="tinui_MessageTextStyleMessageDeleted">italic</item>
+
+        <!-- System message text style -->
+        <item name="tinui_SystemMessageTextSize">@dimen/tinui_text_small</item>
+        <item name="tinui_SystemMessageTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_SystemMessageTextStyle">bold</item>
+
+        <!-- Error message text style -->
+        <item name="tinui_ErrorMessageTextSize">@dimen/tinui_text_small</item>
+        <item name="tinui_ErrorMessageTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_ErrorMessageTextStyle">bold</item>
+
+        <item name="tinui_MessageStrokeColorMine">@color/tinui_literal_transparent</item>
+        <item name="tinui_MessageStrokeWidthMine">0dp</item>
+        <item name="tinui_MessageStrokeColorTheirs">@color/tinui_grey_whisper</item>
+        <item name="tinui_MessageStrokeWidthTheirs">1dp</item>
+
+        <!-- Message options -->
+        <item name="tinui_ReplyOptionIcon">@drawable/tinui_ic_arrow_curve_left_grey</item>
+        <item name="tinui_ReplyEnabled">true</item>
+        <item name="tinui_CopyMessageActionEnabled">true</item>
+        <item name="tinui_RetryMessageEnabled">true</item>
+        <item name="tinui_CopyOptionIcon">@drawable/tinui_ic_copy</item>
+        <item name="tinui_EditOptionIcon">@drawable/tinui_ic_edit</item>
+        <item name="tinui_EditMessageEnabled">true</item>
+        <item name="tinui_FlagOptionIcon">@drawable/tinui_ic_flag</item>
+        <item name="tinui_FlagMessageEnabled">true</item>
+        <item name="tinui_FlagMessageConfirmationEnabled">false</item>
+        <item name="tinui_PinOptionIcon">@drawable/tinui_ic_pin</item>
+        <item name="tinui_UnpinOptionIcon">@drawable/tinui_ic_unpin</item>
+        <item name="tinui_PinMessageEnabled">false</item>
+        <item name="tinui_MuteOptionIcon">@drawable/tinui_ic_mute</item>
+        <item name="tinui_UnmuteOptionIcon">@drawable/tinui_ic_umnute</item>
+        <item name="tinui_MuteUserEnabled">true</item>
+        <item name="tinui_BlockOptionIcon">@drawable/tinui_ic_user_block</item>
+        <item name="tinui_BlockUserEnabled">true</item>
+        <item name="tinui_DeleteOptionIcon">@drawable/tinui_ic_delete</item>
+        <item name="tinui_DeleteConfirmationEnabled">true</item>
+        <item name="tinui_DeleteMessageEnabled">true</item>
+<!--        <item name="tinui_ThreadsEnabled">true</item>-->
+<!--        <item name="tinui_ThreadReplyOptionIcon">@drawable/tinui_ic_thread_reply</item>-->
+        <item name="tinui_MessageOptionBackgroundColor">@color/tinui_white</item>
+        <item name="tinui_MessageOptionsTextSize">@dimen/tinui_text_medium</item>
+        <item name="tinui_MessageOptionsTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_MessageOptionsTextStyle">normal</item>
+        <item name="tinui_WarningMessageOptionsTextSize">@dimen/tinui_text_medium</item>
+        <item name="tinui_WarningMessageOptionsTextColor">@color/tinui_accent_red</item>
+        <item name="tinui_WarningMessageOptionsTextStyle">normal</item>
+
+        <!-- User reactions card -->
+<!--        <item name="tinui_UserReactionsBackgroundColor">@color/tinui_white</item>-->
+<!--        <item name="tinui_UserReactionsTitleTextSize">@dimen/tinui_text_large</item>-->
+<!--        <item name="tinui_UserReactionsTitleTextColor">@color/tinui_text_color_primary</item>-->
+<!--        <item name="tinui_UserReactionsTitleTextStyle">bold</item>-->
+
+        <!-- Options overly dialog -->
+        <item name="tinui_OptionsOverlayDimColor">@color/tinui_literal_transparent</item>
+
+        <!-- Giphy view holder -->
+<!--        <item name="tinui_GiphyCardBackgroundColor">@color/tinui_white</item>-->
+<!--        <item name="tinui_GiphyCardElevation">@dimen/tinui_elevation_small</item>-->
+<!--        <item name="tinui_GiphyCardButtonDividerColor">@color/tinui_border</item>-->
+<!--        <item name="tinui_GiphyIcon">@drawable/tinui_ic_giphy</item>-->
+
+<!--        <item name="tinui_GiphyLabelTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_GiphyLabelTextColor">@color/tinui_text_color_primary</item>-->
+<!--        <item name="tinui_GiphyLabelTextStyle">normal</item>-->
+
+<!--        <item name="tinui_GiphyQueryTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_GiphyQueryTextColor">@color/tinui_text_color_primary</item>-->
+<!--        <item name="tinui_GiphyQueryTextStyle">normal</item>-->
+
+<!--        <item name="tinui_GiphyCancelButtonTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_GiphyCancelButtonTextColor">@color/tinui_text_color_secondary</item>-->
+<!--        <item name="tinui_GiphyCancelButtonTextStyle">normal</item>-->
+
+<!--        <item name="tinui_GiphyShuffleButtonTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_GiphyShuffleButtonTextColor">@color/tinui_text_color_secondary</item>-->
+<!--        <item name="tinui_GiphyShuffleButtonTextStyle">normal</item>-->
+
+<!--        <item name="tinui_GiphySendButtonTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_GiphySendButtonTextColor">@color/tinui_accent_blue</item>-->
+<!--        <item name="tinui_GiphySendButtonTextStyle">normal</item>-->
+
+        <item name="tinui_MessageListLoadingView">@layout/tinui_default_loading_view</item>
+        <item name="tinui_EmptyStateTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_EmptyStateTextSize">@dimen/tinui_text_medium</item>
+        <item name="tinui_EmptyStateTextStyle">normal</item>
+
+        <item name="tinui_MessagesStart">bottom</item>
+        <item name="tinui_ThreadMessagesStart">bottom</item>
+
+        <!-- Pinned message -->
+        <item name="tinui_PinnedMessageIndicatorTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_PinnedMessageIndicatorTextSize">@dimen/tinui_text_small</item>
+        <item name="tinui_PinnedMessageIndicatorTextStyle">normal</item>
+        <item name="tinui_PinnedMessageIndicatorIcon">@drawable/tinui_ic_pin</item>
+        <item name="tinui_PinnedMessageBackgroundColor">@color/tinui_highlight</item>
+
+        <!-- Margin for messages -->
+        <item name="tinui_MessageStartMargin">@dimen/tinui_message_viewholder_avatar_missing_margin</item>
+        <item name="tinui_MessageEndMargin">0dp</item>
+
+        <!-- Message max possible factors -->
+        <item name="tinui_MessageMaxWidthFactorMine">75%</item>
+        <item name="tinui_MessageMaxWidthFactorTheirs">75%</item>
+    </style>
+
+    <style name="tinui.MessageList.Item.Avatar" parent="tinui.BaseAvatar">
+        <!--Style properties for Avatar inside of MessageList Item-->
+        <item name="android:layout_width">@dimen/tinui_avatar_size_small</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_small</item>
+        <item name="android:layout_marginTop">8dp</item>
+        <item name="android:layout_marginEnd">0dp</item>
+        <item name="android:layout_marginStart">0dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_initials</item>
+    </style>
+
+    <style name="tinui.MessageList.Header.Avatar" parent="tinui.BaseAvatar">
+        <item name="android:layout_width">@dimen/tinui_avatar_size_medium</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_medium</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_text_size_medium</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">true</item>
+    </style>
+
+    <style name="tinui.ChannelListHeader" parent="tinui">
+        <item name="tinui_OnlineTitleTextSize">@dimen/tinui_text_large</item>
+        <item name="tinui_OnlineTitleTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_OnlineTitleTextStyle">bold</item>
+        <item name="tinui_OfflineTitleTextSize">@dimen/tinui_text_large</item>
+        <item name="tinui_OfflineTitleTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_OfflineTitleTextStyle">bold</item>
+        <item name="tinui_ShowOfflineProgressBar">true</item>
+        <item name="tinui_OfflineProgressBarTint">@color/tinui_accent_blue</item>
+        <item name="tinui_ShowActionButton">true</item>
+        <item name="tinui_ActionButtonIcon">@drawable/tinui_ic_pen</item>
+        <item name="tinui_ActionBackgroundTint">@color/tinui_icon_button_background_selector</item>
+    </style>
+
+    <style name="tinui.ChannelListHeader.Avatar" parent="tinui.BaseAvatar">
+        <!--Style properties for Avatar inside of ChanneListHeaderView Item-->
+        <item name="android:layout_width">@dimen/tinui_avatar_size_medium</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_medium</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_text_size_medium</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">false</item>
+    </style>
+
+    <style name="tinui.ChannelList.Item.Avatar" parent="tinui.BaseAvatar">
+        <!--Style properties for Avatar inside of MessageList Item-->
+        <item name="android:layout_width">@dimen/tinui_avatar_size_medium</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_medium</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_text_size_medium</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">true</item>
+        <item name="android:layout_marginStart">8dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:layout_marginBottom">12dp</item>
+    </style>
+
+    <style name="tinui.MentionPreview.Item.Avatar" parent="tinui.BaseAvatar">
+        <item name="android:layout_width">@dimen/tinui_avatar_size_medium</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_medium</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_text_size_medium</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">true</item>
+    </style>
+
+    <style name="tinui.SearchResult.Avatar" parent="tinui.BaseAvatar">
+        <item name="android:layout_width">@dimen/tinui_avatar_size_medium</item>
+        <item name="android:layout_height">@dimen/tinui_avatar_size_medium</item>
+        <item name="tinui_AvatarTextSize">@dimen/tinui_avatar_text_size_medium</item>
+        <item name="tinui_AvatarOnlineIndicatorEnabled">true</item>
+    </style>
+
+    <style name="tinui.ChannelList.ActionsDialog" parent="tinui">
+        <!-- Channel actions dialog title with member names -->
+<!--        <item name="tinui_ChannelActionsMemberNamesTextSize">@dimen/tinui_text_large</item>-->
+<!--        <item name="tinui_ChannelActionsMemberNamesTextColor">@color/tinui_text_color_primary</item>-->
+<!--        <item name="tinui_ChannelActionsMemberNamesTextStyle">bold</item>-->
+
+<!--        &lt;!&ndash; Channel actions dialog subtitle with member info &ndash;&gt;-->
+<!--        <item name="tinui_ChannelActionsMemberInfoTextSize">@dimen/tinui_text_small</item>-->
+<!--        <item name="tinui_ChannelActionsMemberInfoTextColor">@color/tinui_text_color_secondary</item>-->
+<!--        <item name="tinui_ChannelActionsMemberInfoTextStyle">normal</item>-->
+
+<!--        &lt;!&ndash; Channel action item text style &ndash;&gt;-->
+<!--        <item name="tinui_ChannelActionsItemTextSize">@dimen/tinui_text_medium</item>-->
+<!--        <item name="tinui_ChannelActionsItemTextColor">@color/tinui_text_color_primary</item>-->
+<!--        <item name="tinui_ChannelActionsItemTextStyle">bold</item>-->
+
+<!--        <item name="tinui_ChannelActionsViewInfoIcon">@drawable/tinui_ic_single_user</item>-->
+<!--        <item name="tinui_ChannelActionsViewInfoEnabled">false</item>-->
+<!--        <item name="tinui_ChannelActionsLeaveGroupIcon">@drawable/tinui_ic_leave_group</item>-->
+<!--        <item name="tinui_ChannelActionsLeaveGroupEnabled">true</item>-->
+<!--        <item name="tinui_ChannelActionsDeleteConversationIcon">@drawable/tinui_ic_delete</item>-->
+<!--        <item name="tinui_ChannelActionsDeleteConversationEnabled">true</item>-->
+<!--        <item name="tinui_ChannelActionsCancelIcon">@drawable/tinui_ic_clear</item>-->
+<!--        <item name="tinui_ChannelActionsCancelEnabled">true</item>-->
+    </style>
+
+    <style name="tinui.ChannelListView" parent="tinui">
+        <item name="tinui_ChannelsItemSeparatorDrawable">@drawable/tinui_divider</item>
+
+        <!--Background layout-->
+        <item name="tinui_ChannelOptionsIcon">@drawable/tinui_ic_more</item>
+        <item name="tinui_ChannelDeleteIcon">@drawable/tinui_ic_delete</item>
+        <item name="tinui_ChannelOptionsEnabled">false</item>
+        <item name="tinui_ChannelDeleteEnabled">true</item>
+        <item name="tinui_SwipeEnabled">true</item>
+        <item name="tinui_BackgroundLayoutColor">@color/tinui_white_smoke</item>
+
+        <!--Foreground layout-->
+        <item name="tinui_ChannelTitleTextSize">@dimen/tinui_channel_item_title</item>
+        <item name="tinui_ChannelTitleTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_ChannelTitleTextStyle">bold</item>
+
+        <item name="tinui_LastMessageTextSize">@dimen/tinui_channel_item_message</item>
+        <item name="tinui_LastMessageTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_LastMessageTextStyle">normal</item>
+
+        <item name="tinui_LastMessageDateTextSize">@dimen/tinui_channel_item_message_date</item>
+        <item name="tinui_LastMessageDateTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_LastMessageDateTextStyle">normal</item>
+
+        <item name="tinui_ShowChannelDeliveryStatusIndicator">true</item>
+        <item name="tinui_IndicatorSentIcon">@drawable/tinui_ic_check_single</item>
+        <item name="tinui_IndicatorReadIcon">@drawable/tinui_ic_check_double</item>
+        <item name="tinui_IndicatorPendingSyncIcon">@drawable/tinui_ic_clock</item>
+        <item name="tinui_ForegroundLayoutColor">@color/tinui_white_snow</item>
+
+        <item name="tinui_UnreadMessageCounterTextSize">@dimen/tinui_text_small</item>
+        <item name="tinui_UnreadMessageCounterTextColor">@color/tinui_literal_white</item>
+        <item name="tinui_UnreadMessageCounterTextStyle">normal</item>
+
+        <item name="tinui_UnreadMessageCounterBackgroundColor">@color/tinui_accent_red</item>
+
+        <item name="tinui_MutedChannelIcon">@drawable/tinui_ic_mute_black</item>
+        <item name="tinui_VerifiedChannelIcon">@drawable/tinui_ic_verified</item>
+        <item name="tinui_StaffChannelIcon">@drawable/tinui_ic_verified_user</item>
+        <item name="tinui_DangerChannelIcon">@drawable/tinui_ic_danger</item>
+
+        <item name="tinui_LoadingView">@layout/tinui_default_loading_view</item>
+        <item name="tinui_LoadingMoreView">@layout/tinui_channel_list_loading_more_view</item>
+        <item name="tinui_EmptyStateView">@layout/tinui_channel_list_empty_state_view</item>
+    </style>
+
+    <style name="tinui.SearchInputView" parent="tinui">
+        <item name="tinui_SearchInputViewHintText">@string/tinui_search_input_hint</item>
+        <item name="tinui_SearchInputViewSearchIcon">@drawable/tinui_ic_search</item>
+        <item name="tinui_SearchInputViewClearInputIcon">@drawable/tinui_ic_clear</item>
+        <item name="tinui_SearchInputViewBackground">@drawable/tinui_shape_search_view_background</item>
+        <item name="tinui_SearchInputViewTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_SearchInputViewHintColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_SearchInputViewTextSize">@dimen/tinui_text_medium</item>
+        <item name="tinui_SearchInputViewHeight">@dimen/tinui_search_input_height</item>
+    </style>
+
+    <style name="tinui.SearchResultListView" parent="tinui">
+        <item name="tinui_SearchResultListSearchInfoBarBackground">@drawable/tinui_bg_gradient</item>
+        <item name="tinui_SearchResultListSearchInfoBarTextSize">@dimen/tinui_text_small</item>
+        <item name="tinui_SearchResultListSearchInfoBarTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_SearchResultListSearchInfoBarTextStyle">normal</item>
+
+        <item name="tinui_SearchResultListEmptyStateIcon">@drawable/tinui_ic_search_empty</item>
+        <item name="tinui_SearchResultListEmptyStateTextSize">@dimen/tinui_text_medium</item>
+        <item name="tinui_SearchResultListEmptyStateTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_SearchResultListEmptyStateTextStyle">normal</item>
+
+        <item name="tinui_SearchResultListProgressBarIcon">@drawable/tinui_rotating_indeterminate_progress_gradient</item>
+
+        <item name="tinui_SearchResultListSenderNameTextColor">@color/tinui_text_color_primary</item>
+        <item name="tinui_SearchResultListSenderNameTextSize">@dimen/tinui_channel_item_title</item>
+        <item name="tinui_SearchResultListSenderNameTextStyle">normal</item>
+
+        <item name="tinui_SearchResultListMessageTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_SearchResultListMessageTextSize">@dimen/tinui_channel_item_message</item>
+        <item name="tinui_SearchResultListMessageTextStyle">normal</item>
+
+        <item name="tinui_SearchResultListMessageTimeTextColor">@color/tinui_text_color_secondary</item>
+        <item name="tinui_SearchResultListMessageTimeTextSize">@dimen/tinui_channel_item_message</item>
+        <item name="tinui_SearchResultListMessageTimeTextStyle">normal</item>
+    </style>
+
+    <style name="tinuiTheme.ChannelListScreen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="tinui_ChannelActionsDialogStyle">@style/tinui.ChannelListScreen.ActionsDialog</item>
+        <item name="tinui_ChannelListHeaderStyle">@style/tinui.ChannelListScreen.ChannelListHeader</item>
+        <item name="tinui_Theme">@style/tinui_Theme</item>
+    </style>
+
+
+    <style name="tinui.ChannelListScreen.ActionsDialog" parent="tinui.ChannelList.ActionsDialog">
+<!--        <item name="tinui_ChannelActionsViewInfoEnabled">false</item>-->
+    </style>
+
+    <style name="tinui.ChannelListScreen.ChannelListHeader" parent="tinui.ChannelListHeader">
+        <item name="tinui_ShowActionButton">false</item>
+    </style>
+
+</resources>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--ChannelsHeaderView-->
+    <declare-styleable name="ChannelListHeaderView">
+        <!-- Sets the visibility of user avatar -->
+        <attr name="tinui_ShowUserAvatar" format="boolean" />
+
+        <!-- Text size of the ChannelHeader's online state title -->
+        <attr name="tinui_OnlineTitleTextSize" format="dimension|reference" />
+        <!-- A color of the ChannelHeader's online state title -->
+        <attr name="tinui_OnlineTitleTextColor" format="color|reference" />
+        <!-- Font name of the ChannelHeader's online state title -->
+        <attr name="tinui_OnlineTitleTextFont" format="reference" />
+        <!-- Font assets reference for the ChannelHeader's online state title -->
+        <attr name="tinui_OnlineTitleFontAssets" format="string" />
+        <!-- Text style of the ChannelHeader's online state title: "normal", "bold", and "italic". -->
+        <attr name="tinui_OnlineTitleTextStyle" >
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Text size of the ChannelHeader's offline state title -->
+        <attr name="tinui_OfflineTitleTextSize" format="dimension|reference" />
+        <!-- A color of the ChannelHeader's offline state title -->
+        <attr name="tinui_OfflineTitleTextColor" format="color|reference" />
+        <!-- Font name of the ChannelHeader's offline state title -->
+        <attr name="tinui_OfflineTitleTextFont" format="reference" />
+        <!-- Font assets reference for the ChannelHeader's offline state title -->
+        <attr name="tinui_OfflineTitleFontAssets" format="string" />
+        <!-- Text style of the ChannelHeader's offline state title: "normal", "bold", and "italic". -->
+        <attr name="tinui_OfflineTitleTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Sets the visibility of the offline state progressbar -->
+        <attr name="tinui_ShowOfflineProgressBar" format="boolean" />
+        <!-- A color of the offline state progressbar -->
+        <attr name="tinui_OfflineProgressBarTint" format="color|reference" />
+        <!-- Sets the visibility of the action button -->
+        <attr name="tinui_ShowActionButton" format="boolean" />
+        <!-- Action button icon drawable -->
+        <attr name="tinui_ActionButtonIcon" format="reference" />
+        <!-- Action button background tint -->
+        <attr name="tinui_ActionBackgroundTint" format="color|reference" />
+    </declare-styleable>
+
+</resources>

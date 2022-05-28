@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="@dimen/tinui_spacing_small"
+    android:paddingEnd="@dimen/tinui_spacing_small"
+    >
+
+    <com.example.testapp.components.message.list.adapter.view.internal.GapView
+        android:id="@+id/gapView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/pinIndicatorTextView"
+        style="@style/tinui_TextAppearance.Footnote"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="44dp"
+        android:drawablePadding="@dimen/tinui_spacing_tiny"
+        android:paddingHorizontal="@dimen/tinui_spacing_tiny"
+        android:paddingTop="@dimen/tinui_spacing_tiny"
+        android:paddingBottom="@dimen/tinui_spacing_small"
+        android:textDirection="locale"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/gapView"
+        tools:visibility="visible"
+        />
+
+    <com.example.testapp.components.avatar.AvatarView
+        android:id="@+id/avatarView"
+        style="?attr/tinui_MessageListItemAvatarStyle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/marginStart"
+        tools:src="@tools:sample/avatars"
+        tools:layout_width="50dp"
+        />
+
+    <Space
+        android:id="@+id/reactionsSpace"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/tinui_spacing_medium"
+        android:layout_marginStart="@dimen/tinui_spacing_medium"
+        android:layout_marginEnd="@dimen/tinui_spacing_medium"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="@+id/messageContainer"
+        app:layout_constraintStart_toStartOf="@id/messageContainer"
+        app:layout_constraintTop_toBottomOf="@id/pinIndicatorTextView"
+        />
+
+    <LinearLayout
+        android:id="@+id/messageContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/tinui_spacing_small"
+        android:layout_marginEnd="@dimen/tinui_spacing_small"
+        android:orientation="vertical"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintEnd_toEndOf="@id/marginEnd"
+        app:layout_constraintStart_toStartOf="@id/marginStart"
+        app:layout_constraintTop_toBottomOf="@id/reactionsSpace"
+        >
+
+<!--        <io.getstream.chat.android.ui.message.list.adapter.view.internal.MessageReplyView-->
+<!--            android:id="@+id/replyView"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_marginTop="8dp"-->
+<!--            android:visibility="gone"-->
+<!--            />-->
+
+        <TextView
+            android:id="@+id/messageText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hyphenationFrequency="normal"
+            android:paddingLeft="@dimen/tinui_spacing_medium"
+            android:paddingTop="@dimen/tinui_spacing_small"
+            android:paddingRight="@dimen/tinui_spacing_medium"
+            android:paddingBottom="@dimen/tinui_spacing_small"
+            android:textAppearance="@style/tinui_TextAppearance.Body"
+            android:textColorLink="@color/tinui_accent_blue"
+            android:textDirection="locale"
+            app:lineHeight="16sp"
+            tools:text="@tools:sample/lorem"
+            />
+
+    </LinearLayout>
+
+<!--    <io.getstream.chat.android.ui.message.list.reactions.view.internal.ViewReactionsView-->
+<!--        android:id="@+id/reactionsView"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:visibility="gone"-->
+<!--        app:layout_constraintStart_toEndOf="@id/reactionsSpace"-->
+<!--        app:layout_constraintTop_toTopOf="@id/reactionsSpace"-->
+<!--        />-->
+
+    <Space
+        android:id="@+id/threadGuideline"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="@dimen/tinui_message_thread_reply_footnote_translation"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="@id/messageContainer"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <com.example.testapp.components.message.list.adapter.view.internal.FootnoteView
+        android:id="@+id/footnote"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/tinui_spacing_small"
+        app:layout_constraintEnd_toEndOf="@id/marginEnd"
+        app:layout_constraintStart_toStartOf="@id/marginStart"
+        app:layout_constraintTop_toBottomOf="@id/messageContainer"
+        />
+
+    <ImageView
+        android:id="@+id/deliveryFailedIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/footnote"
+        app:layout_constraintEnd_toStartOf="@id/avatarMineView"
+        tools:ignore="ContentDescription"
+        tools:src="@drawable/tinui_ic_warning"
+        tools:visibility="visible"
+        />
+
+    <com.example.testapp.components.avatar.AvatarView
+        android:id="@+id/avatarMineView"
+        style="?attr/tinui_MessageListItemAvatarStyle"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:src="@tools:sample/avatars"
+        />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/marginStart"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:layout_constraintGuide_begin="20dp"
+        />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/marginEnd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        tools:layout_constraintGuide_end="20dp"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

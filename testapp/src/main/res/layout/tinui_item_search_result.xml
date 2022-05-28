@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/tinui_mention_item_height"
+    android:background="?attr/selectableItemBackground"
+    android:paddingStart="@dimen/tinui_spacing_medium"
+    android:paddingTop="@dimen/tinui_spacing_small"
+    android:paddingEnd="@dimen/tinui_spacing_medium"
+    android:paddingBottom="@dimen/tinui_spacing_small"
+    >
+
+    <com.example.testapp.components.avatar.AvatarView
+        android:id="@+id/avatarView"
+        style="?attr/tinui_SearchResultAvatarStyle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        />
+
+    <TextView
+        android:id="@+id/usernameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/tinui_spacing_small"
+        android:textAppearance="@style/tinui_TextAppearance.BodyBold"
+        android:textDirection="locale"
+        app:layout_constraintBottom_toTopOf="@id/mentionNameTextView"
+        app:layout_constraintStart_toEndOf="@id/avatarView"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Rebel Titan"
+        />
+
+    <TextView
+        android:id="@+id/mentionNameTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/tinui_spacing_small"
+        android:textAppearance="@style/tinui_TextAppearance.Footnote"
+        android:textDirection="locale"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/avatarView"
+        app:layout_constraintTop_toBottomOf="@id/usernameTextView"
+        tools:text="\@rebel"
+        />
+
+    <ImageView
+        android:layout_width="@dimen/tinui_mention_icon_size"
+        android:layout_height="@dimen/tinui_mention_icon_size"
+        android:src="@drawable/tinui_ic_mention"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription"
+        />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

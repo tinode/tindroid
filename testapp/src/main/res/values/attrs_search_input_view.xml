@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SearchInputView">
+        <!-- SearchInputView configuration -->
+        <attr name="tinui_SearchInputViewHintText" format="string" />
+        <attr name="tinui_SearchInputViewSearchIcon" format="reference" />
+        <attr name="tinui_SearchInputViewClearInputIcon" format="reference" />
+        <attr name="tinui_SearchInputViewBackground" format="reference" />
+        <attr name="tinui_SearchInputViewContainerBackground" format="reference" />
+        <attr name="tinui_SearchInputViewTextColor" format="color|reference" />
+        <attr name="tinui_SearchInputViewHintColor" format="color|reference" />
+        <attr name="tinui_SearchInputViewTextSize" format="dimension|reference" />
+        <attr name="tinui_SearchInputViewHeight" format="dimension|reference" />
+    </declare-styleable>
+</resources>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:parentTag="android.widget.ViewFlipper"
+    >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        >
+
+        <TextView
+            android:id="@+id/searchInfoBar"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:background="@drawable/tinui_bg_gradient"
+            android:gravity="start|center_vertical"
+            android:paddingStart="@dimen/tinui_spacing_small"
+            android:paddingEnd="@dimen/tinui_spacing_small"
+            android:textColor="@color/tinui_text_color_primary"
+            android:textSize="@dimen/tinui_text_medium"
+            android:textDirection="locale"
+            tools:text="5 results"
+            />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/searchListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            tools:itemCount="15"
+            tools:listitem="@layout/tinui_item_search_result"
+            />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/emptyContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        >
+
+        <ImageView
+            android:id="@+id/emptyImage"
+            android:layout_width="112dp"
+            android:layout_height="112dp"
+            android:src="@drawable/tinui_ic_search_empty"
+            tools:ignore="ContentDescription"
+            />
+
+        <TextView
+            android:id="@+id/emptyLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="24dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:textAppearance="@style/tinui_TextAppearance.Body"
+            android:textColor="@color/tinui_text_color_secondary"
+            android:textDirection="locale"
+            tools:text="No result for 'query'"
+            />
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        />
+
+</merge>

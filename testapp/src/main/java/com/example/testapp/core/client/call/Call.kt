@@ -1,0 +1,141 @@
+package com.example.testapp.core.client.call
+
+import androidx.annotation.WorkerThread
+import com.example.testapp.core.client.errors.ChatError
+import com.example.testapp.core.internal.InternalTinUiApi
+import com.example.testapp.core.client.utils.Result
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+
+/**
+ * A pending operation waiting to be ran.
+ *
+ * There are several ways to run a [Call]:
+ * - [execute]: synchronous, blocking
+ * - [enqueue]: async, callback based
+ * - [await]: async, suspending call
+ *
+ * Running a [Call] more than once results in undefined behaviour.
+ */
+public interface Call<T : Any> {
+    /**
+     * Executes the call synchronously, in a blocking way. Only call this from a background thread.
+     */
+    @WorkerThread
+    public fun execute(): Result<T>
+
+    /**
+     * Executes the call asynchronously, on a background thread. Safe to call from the main
+     * thread. The [callback] will always be invoked on the main thread.
+     */
+    public fun enqueue(callback: Callback<T>)
+
+    /**
+     * Executes the call asynchronously, on a background thread. Safe to call from the main
+     * thread.
+     *
+     * To get notified of the result and handle errors, use enqueue(callback) instead.
+     */
+    public fun enqueue(): Unit = enqueue {}
+
+    /**
+     * Cancels the execution of the call, if cancellation is supported for the operation.
+     *
+     * Note that calls can not be cancelled when running them with [execute].
+     */
+    public fun cancel()
+
+    public fun interface Callback<T : Any> {
+        public fun onResult(result: Result<T>)
+    }
+}
+
+/**
+ * Awaits the result of [this] Call in a suspending way, asynchronously.
+ * Safe to call from any CoroutineContext.
+ *
+ * Does not throw exceptions. Any errors will be wrapped in the [Result] that's returned.
+ */
+public suspend fun <T : Any> Call<T>.await(): Result<T> {
+    if (this is CoroutineCall<T>) {
+        return this.awaitImpl()
+    }
+    return suspendCancellableCoroutine { continuation ->
+        this.enqueue { result ->
+            continuation.resume(result)
+        }
+
+        continuation.invokeOnCancellation {
+            this.cancel()
+        }
+    }
+}
+
+/**
+ * Runs a call using coroutines scope
+ */
+@InternalTinUiApi
+public fun <T : Any> Call<T>.launch(scope: CoroutineScope) {
+    scope.launch {
+        this@launch.await()
+    }
+}
+
+@InternalTinUiApi
+public fun <T : Any, K : Any> Call<T>.map(mapper: (T) -> K): Call<K> {
+    return MapCall(this, mapper)
+}
+
+@InternalTinUiApi
+public fun <T : Any, K : Any> Call<T>.zipWith(call: Call<K>): Call<Pair<T, K>> {
+    return ZipCall(this, call)
+}
+
+@InternalTinUiApi
+public fun <T : Any> Call<T>.doOnStart(scope: CoroutineScope, function: suspend () -> Unit): Call<T> =
+    DoOnStartCall(this, scope, function)
+
+@InternalTinUiApi
+public fun <T : Any> Call<T>.doOnResult(scope: CoroutineScope, function: suspend (Result<T>) -> Unit): Call<T> =
+    DoOnResultCall(this, scope, function)
+
+@InternalTinUiApi
+public fun <T : Any> Call<T>.withPrecondition(
+    scope: CoroutineScope,
+    precondition: suspend () -> Result<Unit>,
+): Call<T> =
+    WithPreconditionCall(this, scope, precondition)
+
+/**
+ * Wraps this [Call] into [ReturnOnErrorCall] to return an item specified by side effect function when it encounters an error.
+ *
+ * @param scope Scope of coroutine in which to execute side effect function.
+ * @param onError Function that returns data in the case of error.
+ */
+@InternalTinUiApi
+public fun <T : Any> Call<T>.onErrorReturn(
+    scope: CoroutineScope,
+    function: suspend (originalError: ChatError) -> Result<T>,
+): ReturnOnErrorCall<T> = ReturnOnErrorCall(this, scope, function)
+
+@InternalTinUiApi
+public fun Call<*>.toUnitCall(): Call<Unit> = map {}
+
+private val onSuccessStub: (Any) -> Unit = {}
+private val onErrorStub: (ChatError) -> Unit = {}
+
+@InternalTinUiApi
+public fun <T : Any> Call<T>.enqueue(
+    onSuccess: (T) -> Unit = onSuccessStub,
+    onError: (ChatError) -> Unit = onErrorStub,
+) {
+    enqueue {
+        if (it.isSuccess) {
+            onSuccess(it.data())
+        } else {
+            onError(it.error())
+        }
+    }
+}

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="app_color_primary">#2F7DEB</color>
+    <color name="app_color_primary_dark">#1565C0</color>
+    <color name="app_color_accent">#03DAC5</color>
+
+
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+
+    <!-- Text -->
+    <color name="tinui_text_color_primary">@color/tinui_black</color>
+    <color name="tinui_text_color_secondary">@color/tinui_grey</color>
+    <color name="tinui_text_color_hint">@color/tinui_grey</color>
+
+    <!-- Accents -->
+    <color name="tinui_accent_blue">#005FFF</color>
+    <color name="tinui_accent_red">#FF3742</color>
+    <color name="tinui_accent_green">#20E070</color>
+
+    <!-- Greys -->
+    <color name="tinui_black">#000000</color>
+    <color name="tinui_black_50">#80000000</color>
+    <color name="tinui_grey">#7A7A7A</color>
+    <color name="tinui_grey_gainsboro">#DBDBDB</color>
+    <color name="tinui_grey_whisper">#ECEBEB</color>
+    <color name="tinui_white_smoke">#F2F2F2</color>
+    <color name="tinui_white_snow">#FCFCFC</color>
+    <color name="tinui_white">#FFFFFF</color>
+    <color name="tinui_blue_alice">#E9F2FF</color>
+
+    <!-- Specials -->
+    <color name="tinui_overlay">#33000000</color>
+    <color name="tinui_overlay_dark">#99000000</color>
+    <color name="tinui_background_gradient_start">#F7F7F7</color>
+    <color name="tinui_background_gradient_end">#FCFCFC</color>
+
+    <!-- Other -->
+    <color name="tinui_icon_button_background">#FFFFFF</color>
+    <color name="tinui_button_background_color">#005AFF</color>
+    <color name="tinui_button_text_color">#FFFFFF</color>
+    <color name="tinui_border">#E8E8E8</color>
+    <color name="tinui_highlight">#FBF4DD</color>
+
+    <!-- Avatar gradient colors -->
+    <color name="tinui_avatar_gradient_orange">#FF8A65</color>
+    <color name="tinui_avatar_gradient_green">#81C784</color>
+    <color name="tinui_avatar_gradient_blue">#4FC3F7</color>
+    <color name="tinui_avatar_gradient_brown">#A1887F</color>
+    <color name="tinui_avatar_gradient_yellow">#FFF176</color>
+    <color name="tinui_avatar_gradient_red">#E57373</color>
+    <array name="tinui_avatar_gradient_colors">
+        <item>@color/tinui_avatar_gradient_orange</item>
+        <item>@color/tinui_avatar_gradient_green</item>
+        <item>@color/tinui_avatar_gradient_blue</item>
+        <item>@color/tinui_avatar_gradient_brown</item>
+        <item>@color/tinui_avatar_gradient_yellow</item>
+        <item>@color/tinui_avatar_gradient_red</item>
+    </array>
+    
+    <!-- Literals -->
+    <!-- Fixed values that do not change in dark mode -->
+    <color name="tinui_literal_transparent">#00000000</color>
+    <color name="tinui_literal_white">#FFFFFF</color>
+    <color name="tinui_literal_black">#000000</color>
+
+    <!-- Message replies -->
+    <color name="tinui_bars_background">#FFFFFF</color>
+</resources>

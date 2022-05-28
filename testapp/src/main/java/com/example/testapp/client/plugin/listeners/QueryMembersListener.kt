@@ -1,0 +1,33 @@
+package com.example.testapp.client.plugin.listeners
+
+import com.example.testapp.client.models.Member
+
+
+/**
+ * Listener of [ChatClient.queryMembers] requests.
+ */
+public interface QueryMembersListener {
+
+    /**
+     * Runs this function on the [Result] of this request.
+     *
+     * @param result Result of this request.
+     * @param channelType The type of channel.
+     * @param channelId The id of the channel.
+     * @param offset Offset limit.
+     * @param limit Number of members to fetch.
+     * @param filter [FilterObject] to filter members of certain type.
+     * @param sort Sort the list of members.
+     * @param members List of members.
+     */
+    public suspend fun onQueryMembersResult(
+        result: Result<List<Member>>,
+        channelType: String,
+        channelId: String,
+        offset: Int,
+        limit: Int,
+//        filter: FilterObject,
+//        sort: QuerySort<Member>,
+        members: List<Member>,
+    )
+}

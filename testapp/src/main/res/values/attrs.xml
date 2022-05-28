@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <attr name="tinui_ValidTheme" format="boolean" />
+
+    <declare-styleable name="tinui_Styleable">
+        <attr name="tinui_Theme" format="reference" />
+        <attr name="tinui_MessageListStyle" format="reference" />
+<!--        <attr name="tinui_MessageListMediaAttachmentStyle" format="reference" />-->
+<!--        <attr name="tinui_MessageListFileAttachmentStyle" format="reference" />-->
+        <attr name="tinui_MessageListItemAvatarStyle" format="reference" />
+<!--        <attr name="tinui_MessageListHeaderAvatarStyle" format="reference" />-->
+        <attr name="tinui_ChannelListItemAvatarStyle" format="reference" />
+<!--        <attr name="tinui_MentionListStyle" format="reference" />-->
+        <attr name="tinui_MentionPreviewItemAvatarStyle" format="reference" />
+        <attr name="tinui_ChannelListHeaderStyle" format="reference" />
+        <attr name="tinui_ChannelListHeaderAvatarStyle" format="reference" />
+        <attr name="tinui_ChannelListViewStyle" format="reference" />
+<!--        <attr name="tinui_ChannelActionsDialogAvatarStyle" format="reference" />-->
+        <attr name="tinui_GlobalAvatarBorderColor" format="reference|color" />
+        <attr name="tinui_GlobalAvatarTextColor" format="reference|color" />
+        <attr name="tinui_GlobalAvatarOnlineIndicatorColor" format="reference|color" />
+        <attr name="tinui_ChannelActionsDialogStyle" format="reference" />
+<!--        <attr name="tinui_AttachmentGalleryAvatarStyle" format="reference" />-->
+        <attr name="tinui_SearchResultAvatarStyle" format="reference" />
+<!--        <attr name="tinui_MessageOptionsAvatarStyle" format="reference" />-->
+<!--        <attr name="tinui_ReplyAvatarStyle" format="reference" />-->
+<!--        <attr name="tinui_ThreadAvatarStyle" format="reference" />-->
+<!--        <attr name="tinui_MessageListHeaderStyle" format="reference" />-->
+        <attr name="tinui_SearchInputViewStyle" format="reference" />
+        <attr name="tinui_SearchResultListViewStyle" format="reference" />
+<!--        <attr name="tinui_SuggestionListViewStyle" format="reference" />-->
+<!--        <attr name="tinui_SuggestionListViewMentionAvatarStyle" format="reference" />-->
+<!--        <attr name="tinui_TypingIndicatorView" format="reference" />-->
+<!--        <attr name="tinui_MessageInputViewStyle" format="reference" />-->
+<!--        <attr name="tinui_PinnedMessageListStyle" format="reference" />-->
+    </declare-styleable>
+</resources>

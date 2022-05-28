@@ -1,1 +1,2 @@
 include ':app', ':tinsdk', ':tinui'
+include ':testapp'

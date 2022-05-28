@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--ChannelListView-->
+    <declare-styleable name="ChannelListView">
+        <!-- Channel list items separator drawable -->
+        <attr name="tinui_ChannelsItemSeparatorDrawable" format="reference" />
+
+        <!--Background layout-->
+        <!-- Channel list items separator drawable -->
+        <attr name="tinui_ChannelOptionsIcon" format="reference" />
+        <!-- Delete icon drawable -->
+        <attr name="tinui_ChannelDeleteIcon" format="reference" />
+        <!-- Delete icon drawable -->
+        <attr name="tinui_ChannelOptionsEnabled" format="boolean" />
+        <!-- Shows or hides channel delete option -->
+        <attr name="tinui_ChannelDeleteEnabled" format="boolean" />
+        <!-- Enables or disables channel item swiping -->
+        <attr name="tinui_SwipeEnabled" format="boolean" />
+        <attr name="tinui_ChannelListBackgroundColor" format="color|reference" />
+        <!-- Background color of channel item layout -->
+        <attr name="tinui_BackgroundLayoutColor" format="color|reference" />
+
+        <!--Foreground layout-->
+        <!-- Text size of the channel title text -->
+        <attr name="tinui_ChannelTitleTextSize" format="dimension|reference" />
+        <!-- A color of the channel title text -->
+        <attr name="tinui_ChannelTitleTextColor" format="color|reference" />
+        <!-- Font name of the channel title text -->
+        <attr name="tinui_ChannelTitleTextFont" format="reference" />
+        <!-- Font assets reference for the channel title text -->
+        <attr name="tinui_ChannelTitleFontAssets" format="string" />
+        <!-- Text style of the channel title text: "normal", "bold", and "italic". -->
+        <attr name="tinui_ChannelTitleTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Text size of the last message text -->
+        <attr name="tinui_LastMessageTextSize" format="dimension|reference" />
+        <!-- A color of the last message text -->
+        <attr name="tinui_LastMessageTextColor" format="color|reference" />
+        <!-- Font name of the last message text -->
+        <attr name="tinui_LastMessageTextFont" format="reference" />
+        <!-- Font assets reference for the last message text -->
+        <attr name="tinui_LastMessageFontAssets" format="string" />
+        <!-- Text style of the last message text: "normal", "bold", and "italic". -->
+        <attr name="tinui_LastMessageTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Text size of the date text -->
+        <attr name="tinui_LastMessageDateTextSize" format="dimension|reference" />
+        <!-- A color of the date text -->
+        <attr name="tinui_LastMessageDateTextColor" format="color|reference" />
+        <!-- Font name of the date text -->
+        <attr name="tinui_LastMessageDateTextFont" format="reference" />
+        <!-- Font assets reference for the date text -->
+        <attr name="tinui_LastMessageDateFontAssets" format="string" />
+        <!-- Text style of the date text: "normal", "bold", and "italic". -->
+        <attr name="tinui_LastMessageDateTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Drawable of the message sent state indicator -->
+        <attr name="tinui_ShowChannelDeliveryStatusIndicator" format="boolean" />
+        <attr name="tinui_IndicatorSentIcon" format="reference" />
+        <!-- Drawable of the message read state indicator -->
+        <attr name="tinui_IndicatorReadIcon" format="reference" />
+        <!-- Drawable of the message pending sync indicator  -->
+        <attr name="tinui_IndicatorPendingSyncIcon" format="reference" />
+        <!-- Foreground color of channel list item  -->
+        <attr name="tinui_ForegroundLayoutColor" format="color|reference" />
+
+        <!-- Text size of the unread message count text -->
+        <attr name="tinui_UnreadMessageCounterTextSize" format="dimension|reference" />
+        <!-- A color of the unread message count text -->
+        <attr name="tinui_UnreadMessageCounterTextColor" format="color|reference" />
+        <!-- Font name of the unread message count text -->
+        <attr name="tinui_UnreadMessageCounterTextFont" format="reference" />
+        <!-- Font assets reference for the unread message count text -->
+        <attr name="tinui_UnreadMessageCounterFontAssets" format="string" />
+        <!-- Text style of the unread message count text: "normal", "bold", and "italic". -->
+        <attr name="tinui_UnreadMessageCounterTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+        <!-- Background color of the unread message counter -->
+        <attr name="tinui_UnreadMessageCounterBackgroundColor" format="color|reference" />
+
+        <!-- Drawable of the muted channel icon -->
+        <attr name="tinui_MutedChannelIcon" format="reference" />
+
+        <!-- Drawable of the verified channel icon -->
+        <attr name="tinui_VerifiedChannelIcon" format="reference" />
+
+        <!-- Drawable of the staff channel icon -->
+        <attr name="tinui_StaffChannelIcon" format="reference" />
+
+        <!-- Drawable of the danger channel icon -->
+        <attr name="tinui_DangerChannelIcon" format="reference" />
+
+        <!-- Reference to layout resource of the channel list "loading" view -->
+        <attr name="tinui_LoadingView" format="reference" />
+        <!-- Reference to layout resource of the channel list empty state view -->
+        <attr name="tinui_EmptyStateView" format="reference" />
+        <!-- Reference to layout resource of the channel list "loading more" view -->
+        <attr name="tinui_LoadingMoreView" format="reference" />
+        <!-- A color of the "edge overscroll" effect -->
+        <attr name="tinui_EdgeEffectColor" format="color|reference" />
+
+        <attr name="tinui_ChannelActionsDialogStyle" />
+    </declare-styleable>
+</resources>

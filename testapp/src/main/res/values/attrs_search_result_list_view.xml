@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SearchResultListView">
+        <!-- Search info header configuration -->
+        <attr name="tinui_SearchResultListBackground" format="reference" />
+        <!-- Modifies the background of search results list (drawable reference). -->
+        <attr name="tinui_SearchResultListSearchInfoBarBackground" format="reference" />
+        <!-- Modifies the text color of search results list -->
+        <attr name="tinui_SearchResultListSearchInfoBarTextColor" format="color|reference"/>
+        <!-- Modifies the text size of search results list items -->
+        <attr name="tinui_SearchResultListSearchInfoBarTextSize" format="dimension"/>
+        <!-- Font assets reference for the search list items -->
+        <attr name="tinui_SearchResultListSearchInfoBarTextFontAssets" format="string"/>
+        <!-- Font name of the search list items -->
+        <attr name="tinui_SearchResultListSearchInfoBarTextFont" format="reference"/>
+        <!-- Text style of the search list items: "normal", "bold", and "italic". -->
+        <attr name="tinui_SearchResultListSearchInfoBarTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Search results empty state -->
+        <!-- Empty state icon -->
+        <attr name="tinui_SearchResultListEmptyStateIcon" format="reference" />
+        <!-- Empty state text color -->
+        <attr name="tinui_SearchResultListEmptyStateTextColor" format="color|reference"/>
+        <!-- Empty state text size -->
+        <attr name="tinui_SearchResultListEmptyStateTextSize" format="dimension"/>
+        <!-- Font assets for empty state text -->
+        <attr name="tinui_SearchResultListEmptyStateTextFontAssets" format="string"/>
+        <!-- Font name of empty state text -->
+        <attr name="tinui_SearchResultListEmptyStateTextFont" format="reference"/>
+        <!-- Text style of empty state text -->
+        <attr name="tinui_SearchResultListEmptyStateTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Progress Bar -->
+        <!-- Drawable of the progressbar displayed when loading the search results -->
+        <attr name="tinui_SearchResultListProgressBarIcon" format="reference" />
+
+        <!-- Search result item - message preview -->
+        <!-- A color of search results sender name text -->
+        <attr name="tinui_SearchResultListSenderNameTextColor" format="color|reference"/>
+        <!-- Text size of search results sender name text -->
+        <attr name="tinui_SearchResultListSenderNameTextSize" format="dimension"/>
+        <!-- Font assets reference for the search results sender name text -->
+        <attr name="tinui_SearchResultListSenderNameTextFontAssets" format="string"/>
+        <!-- Font name of the search results sender name text -->
+        <attr name="tinui_SearchResultListSenderNameTextFont" format="reference"/>
+        <!-- Text style of the search results sender name text: "normal", "bold", and "italic" -->
+        <attr name="tinui_SearchResultListSenderNameTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+        <!-- A color of search results message text -->
+        <attr name="tinui_SearchResultListMessageTextColor" format="color|reference"/>
+        <!-- Text size of search results message text -->
+        <attr name="tinui_SearchResultListMessageTextSize" format="dimension"/>
+        <!-- Font assets reference for the search results message text -->
+        <attr name="tinui_SearchResultListMessageTextFontAssets" format="string"/>
+        <!-- Font name of the search results message text -->
+        <attr name="tinui_SearchResultListMessageTextFont" format="reference"/>
+        <!-- Text style of the search results message text: "normal", "bold", and "italic" -->
+        <attr name="tinui_SearchResultListMessageTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+        <!-- A color of search results message time -->
+        <attr name="tinui_SearchResultListMessageTimeTextColor" format="color|reference"/>
+        <!-- Text size of search results message time -->
+        <attr name="tinui_SearchResultListMessageTimeTextSize" format="dimension"/>
+        <!-- Font assets reference for the search results message time -->
+        <attr name="tinui_SearchResultListMessageTimeTextFontAssets" format="string"/>
+        <!-- Font name of the search results message time -->
+        <attr name="tinui_SearchResultListMessageTimeTextFont" format="reference"/>
+        <!-- Text style of the search results message time: "normal", "bold", and "italic" -->
+        <attr name="tinui_SearchResultListMessageTimeTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+    </declare-styleable>
+</resources>

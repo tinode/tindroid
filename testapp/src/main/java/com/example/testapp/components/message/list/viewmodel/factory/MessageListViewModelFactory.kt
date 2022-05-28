@@ -1,0 +1,35 @@
+package com.example.testapp.components.message.list.viewmodel.factory
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import com.example.testapp.components.message.list.viewmodel.MessageListViewModel
+
+/**
+ * A ViewModel factory for MessageListViewModel, MessageListHeaderViewModel and MessageInputViewModel.
+ *
+ * @param cid The channel id in the format messaging:123.
+ * @param messageId The id of the target message to displayed.
+ *
+ * @see MessageListViewModel
+ * @see MessageListHeaderViewModel
+ * @see MessageInputViewModel
+ */
+public class MessageListViewModelFactory @JvmOverloads constructor(
+    private val cid: String,
+    private val messageId: String? = null,
+) : ViewModelProvider.Factory {
+
+    private val factories: Map<Class<*>, () -> ViewModel> = mapOf(
+//        MessageListHeaderViewModel::class.java to { MessageListHeaderViewModel(cid) },
+//        MessageInputViewModel::class.java to { MessageInputViewModel(cid) },
+        MessageListViewModel::class.java to { MessageListViewModel(cid, messageId) },
+    )
+
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        val viewModel: ViewModel = factories[modelClass]?.invoke()
+            ?: throw IllegalArgumentException("MessageListViewModelFactory can only create instances of the following classes: ${factories.keys.joinToString { it.simpleName }}")
+
+        @Suppress("UNCHECKED_CAST")
+        return viewModel as T
+    }
+}

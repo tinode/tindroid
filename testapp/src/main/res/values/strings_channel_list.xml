@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tinui_channel_list_empty">No chats available</string>
+
+    <!-- Errors -->
+    <string name="tinui_channel_list_error_hide_chat">Failed to hide chat</string>
+    <string name="tinui_channel_list_error_delete_chat">Failed to delete chat</string>
+    <string name="tinui_channel_list_error_leave_chat">Failed to leave chat</string>
+</resources>

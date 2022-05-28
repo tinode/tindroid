@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MessageListView">
+        <!-- Scroll button-->
+        <attr name="tinui_ScrollButtonEnabled" format="boolean" />
+        <attr name="tinui_ScrollButtonUnreadEnabled" format="boolean" />
+        <attr name="tinui_ScrollButtonColor" format="color|reference" />
+        <attr name="tinui_ScrollButtonRippleColor" format="color|reference" />
+        <attr name="tinui_ScrollButtonBadgeColor" format="color|reference" />
+        <attr name="tinui_ScrollButtonIcon" format="reference" />
+        <attr name="tinui_ScrollButtonElevation" format="dimension|reference" />
+        <attr name="tinui_ScrollButtonBadgeTextSize" format="dimension|reference" />
+        <attr name="tinui_ScrollButtonBadgeTextColor" format="color|reference" />
+        <attr name="tinui_ScrollButtonBadgeTextFont" format="reference" />
+        <attr name="tinui_ScrollButtonBadgeFontAssets" format="string" />
+        <attr name="tinui_ScrollButtonBadgeTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_LoadMoreThreshold" format="integer" />
+        <attr name="tinui_NewMessagesBehaviour" format="enum">
+            <enum name="scroll_to_bottom" value="0" />
+            <enum name="count_new_messages" value="1" />
+        </attr>
+        <attr name="tinui_RetryOptionIcon" format="reference" />
+
+        <!-- Message background color -->
+        <attr name="tinui_MessageBackgroundColorMine" format="color" />
+        <attr name="tinui_MessageBackgroundColorTheirs" format="color" />
+
+        <!-- Message link -->
+        <attr name="tinui_MessageLinkColorMine" format="color" />
+        <attr name="tinui_MessageLinkColorTheirs" format="color" />
+        <attr name="tinui_LinkDescriptionMaxLines" format="integer" />
+
+        <attr name="tinui_ReactionsEnabled" format="boolean" />
+
+        <attr name="tinui_BackgroundColor" format="color" />
+
+        <attr name="tinui_MessageLinkBackgroundColorMine" format="color" />
+        <attr name="tinui_MessageLinkBackgroundColorTheirs" format="color" />
+
+        <!-- Message text style mine -->
+        <attr name="tinui_MessageTextSizeMine" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorMine" format="color" />
+        <attr name="tinui_MessageTextFontMine" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsMine" format="string" />
+        <attr name="tinui_MessageTextStyleMine">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style theirs -->
+        <attr name="tinui_MessageTextSizeTheirs" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorTheirs" format="color" />
+        <attr name="tinui_MessageTextFontTheirs" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsTheirs" format="string" />
+        <attr name="tinui_MessageTextStyleTheirs">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style user name in footer -->
+        <attr name="tinui_MessageTextSizeUserName" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorUserName" format="color" />
+        <attr name="tinui_MessageTextFontUserName" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsUserName" format="string" />
+        <attr name="tinui_MessageTextStyleUserName">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style date in footer -->
+        <attr name="tinui_MessageTextSizeDate" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorDate" format="color" />
+        <attr name="tinui_MessageTextFontDate" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsDate" format="string" />
+        <attr name="tinui_MessageTextStyleDate">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style thread counter in footer -->
+        <attr name="tinui_MessageTextSizeThreadCounter" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorThreadCounter" format="color" />
+        <attr name="tinui_MessageTextFontThreadCounter" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsThreadCounter" format="string" />
+        <attr name="tinui_MessageTextStyleThreadCounter">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style thread separator -->
+        <attr name="tinui_MessageTextSizeThreadSeparator" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorThreadSeparator" format="color" />
+        <attr name="tinui_MessageTextFontThreadSeparator" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsThreadSeparator" format="string" />
+        <attr name="tinui_MessageTextStyleThreadSeparator">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message text style link title -->
+        <attr name="tinui_MessageTextSizeLinkTitle" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorLinkTitle" format="color" />
+        <attr name="tinui_MessageTextFontLinkTitle" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsLinkTitle" format="string" />
+        <attr name="tinui_MessageTextStyleLinkTitle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_MessageTextSizeLinkDescription" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorLinkDescription" format="color" />
+        <attr name="tinui_MessageTextFontLinkDescription" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsLinkDescription" format="string" />
+        <attr name="tinui_MessageTextStyleLinkDescription">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_MessageTextSizeLinkLabel" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorLinkLabel" format="color" />
+        <attr name="tinui_MessageTextFontLinkLabel" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsLinkLabel" format="string" />
+        <attr name="tinui_MessageTextStyleLinkLabel">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message Reply background color -->
+        <attr name="tinui_MessageReplyBackgroundColorMine" format="color" />
+        <attr name="tinui_MessageReplyBackgroundColorTheirs" format="color" />
+        <!-- Message Reply text style mine -->
+        <attr name="tinui_MessageReplyTextSizeMine" format="dimension|reference" />
+        <attr name="tinui_MessageReplyTextColorMine" format="color" />
+        <attr name="tinui_MessageReplyTextFontMine" format="reference" />
+        <attr name="tinui_MessageReplyTextFontAssetsMine" format="string" />
+        <attr name="tinui_MessageReplyTextStyleMine">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message Reply text style theirs -->
+        <attr name="tinui_MessageReplyTextSizeTheirs" format="dimension|reference" />
+        <attr name="tinui_MessageReplyTextColorTheirs" format="color" />
+        <attr name="tinui_MessageReplyTextFontTheirs" format="reference" />
+        <attr name="tinui_MessageReplyTextFontAssetsTheirs" format="string" />
+        <attr name="tinui_MessageReplyTextStyleTheirs">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message Reply link -->
+        <attr name="tinui_MessageReplyLinkColorMine" format="color" />
+        <attr name="tinui_MessageReplyLinkColorTheirs" format="color" />
+        <attr name="tinui_MessageReplyLinkBackgroundColorMine" format="color" />
+        <attr name="tinui_MessageReplyLinkBackgroundColorTheirs" format="color" />
+
+        <!-- Message Reply stroke -->
+        <attr name="tinui_MessageReplyStrokeColorMine" format="color" />
+        <attr name="tinui_MessageReplyStrokeWidthMine" format="dimension|reference" />
+        <attr name="tinui_MessageReplyStrokeColorTheirs" format="color" />
+        <attr name="tinui_MessageReplyStrokeWidthTheirs" format="dimension|reference" />
+
+        <!-- Date separator -->
+        <attr name="tinui_DateSeparatorBackgroundColor" format="color" />
+
+        <attr name="tinui_MessageTextSizeDateSeparator" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorDateSeparator" format="color" />
+        <attr name="tinui_MessageTextFontDateSeparator" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsDateSeparator" format="string" />
+        <attr name="tinui_MessageTextStyleDateSeparator">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Message reactions view style -->
+        <attr name="tinui_MessageReactionsBubbleColorMine" format="color" />
+        <attr name="tinui_MessageReactionsBubbleColorTheirs" format="color" />
+        <attr name="tinui_MessageReactionsBubbleBorderColorMine" format="color|reference" />
+        <attr name="tinui_MessageReactionsBubbleBorderColorTheirs" format="color|reference" />
+        <attr name="tinui_MessageReactionsBubbleBorderWidthMine" format="dimension|reference" />
+        <attr name="tinui_MessageReactionsBubbleBorderWidthTheirs" format="dimension|reference" />
+
+        <!-- Message edit reactions view style -->
+        <attr name="tinui_EditReactionsBubbleColorMine" format="color" />
+        <attr name="tinui_EditReactionsBubbleColorTheirs" format="color" />
+        <attr name="tinui_EditReactionsColumns" format="integer" />
+
+        <!-- Indicator icons -->
+        <attr name="tinui_ShowMessageDeliveryStatusIndicator" format="boolean" />
+        <attr name="tinui_IconIndicatorSent" format="reference" />
+        <attr name="tinui_IconIndicatorRead" format="reference" />
+        <attr name="tinui_IconIndicatorPendingSync" format="reference" />
+        <attr name="tinui_IconOnlyVisibleToYou" format="reference" />
+        <attr name="tinui_IconFailedIndicator" format="reference" />
+        <attr name="tinui_IconBannedIndicator" format="reference" />
+
+        <!-- Message deleted style -->
+        <attr name="tinui_DeletedMessageBackgroundColor" format="color" />
+        <attr name="tinui_MessageTextSizeMessageDeleted" format="dimension|reference" />
+        <attr name="tinui_MessageTextColorMessageDeleted" format="color" />
+        <attr name="tinui_MessageTextFontMessageDeleted" format="reference" />
+        <attr name="tinui_MessageTextFontAssetsMessageDeleted" format="string" />
+        <attr name="tinui_MessageTextStyleMessageDeleted">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- System message text style -->
+        <attr name="tinui_SystemMessageTextSize" format="dimension|reference" />
+        <attr name="tinui_SystemMessageTextColor" format="color" />
+        <attr name="tinui_SystemMessageTextFont" format="reference" />
+        <attr name="tinui_SystemMessageTextFontAssets" format="string" />
+        <attr name="tinui_SystemMessageTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Error message text style -->
+        <attr name="tinui_ErrorMessageTextSize" format="dimension|reference" />
+        <attr name="tinui_ErrorMessageTextColor" format="color" />
+        <attr name="tinui_ErrorMessageTextFont" format="reference" />
+        <attr name="tinui_ErrorMessageTextFontAssets" format="string" />
+        <attr name="tinui_ErrorMessageTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_MessageStrokeColorMine" format="color" />
+        <attr name="tinui_MessageStrokeWidthMine" format="dimension|reference" />
+        <attr name="tinui_MessageStrokeColorTheirs" format="color" />
+        <attr name="tinui_MessageStrokeWidthTheirs" format="dimension|reference" />
+
+        <!-- Message options -->
+        <attr name="tinui_ReplyOptionIcon" format="reference" />
+        <attr name="tinui_ReplyEnabled" format="boolean" />
+        <attr name="tinui_CopyMessageActionEnabled" format="boolean" />
+        <attr name="tinui_RetryMessageEnabled" format="boolean" />
+        <attr name="tinui_CopyOptionIcon" format="reference" />
+        <attr name="tinui_EditOptionIcon" format="reference" />
+        <attr name="tinui_EditMessageEnabled" format="boolean" />
+        <attr name="tinui_FlagOptionIcon" format="reference" />
+        <attr name="tinui_FlagMessageEnabled" format="boolean" />
+        <attr name="tinui_FlagMessageConfirmationEnabled" format="boolean" />
+        <attr name="tinui_PinOptionIcon" format="reference" />
+        <attr name="tinui_UnpinOptionIcon" format="reference" />
+        <attr name="tinui_PinMessageEnabled" format="boolean" />
+        <attr name="tinui_MuteOptionIcon" format="reference" />
+        <attr name="tinui_UnmuteOptionIcon" format="reference" />
+        <attr name="tinui_MuteUserEnabled" format="boolean" />
+        <attr name="tinui_BlockOptionIcon" format="reference" />
+        <attr name="tinui_BlockUserEnabled" format="boolean" />
+        <attr name="tinui_DeleteOptionIcon" format="reference" />
+        <attr name="tinui_DeleteConfirmationEnabled" format="boolean" />
+        <attr name="tinui_DeleteMessageEnabled" format="boolean" />
+        <attr name="tinui_ThreadsEnabled" format="boolean" />
+        <attr name="tinui_ThreadReplyOptionIcon" format="reference" />
+        <attr name="tinui_MessageOptionBackgroundColor" format="color" />
+
+        <attr name="tinui_MessageOptionsTextSize" format="dimension|reference" />
+        <attr name="tinui_MessageOptionsTextColor" format="color|reference" />
+        <attr name="tinui_MessageOptionsTextFont" format="reference" />
+        <attr name="tinui_MessageOptionsTextFontAssets" format="string" />
+        <attr name="tinui_MessageOptionsTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_WarningMessageOptionsTextSize" format="dimension|reference" />
+        <attr name="tinui_WarningMessageOptionsTextColor" format="color|reference" />
+        <attr name="tinui_WarningMessageOptionsTextFont" format="reference" />
+        <attr name="tinui_WarningMessageOptionsTextFontAssets" format="string" />
+        <attr name="tinui_WarningMessageOptionsTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- User reactions card -->
+        <attr name="tinui_UserReactionsBackgroundColor" format="color" />
+
+        <attr name="tinui_UserReactionsTitleTextSize" format="dimension|reference" />
+        <attr name="tinui_UserReactionsTitleTextColor" format="color|reference" />
+        <attr name="tinui_UserReactionsTitleTextFont" format="reference" />
+        <attr name="tinui_UserReactionsTitleTextFontAssets" format="string" />
+        <attr name="tinui_UserReactionsTitleTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <!-- Options overly dialog -->
+        <attr name="tinui_OptionsOverlayDimColor" format="color" />
+
+        <!-- Giphy view holder -->
+        <attr name="tinui_GiphyCardBackgroundColor" format="color|reference" />
+        <attr name="tinui_GiphyCardElevation" format="dimension|reference" />
+        <attr name="tinui_GiphyCardButtonDividerColor" format="color|reference" />
+        <attr name="tinui_GiphyIcon" format="reference" />
+
+        <attr name="tinui_GiphyLabelTextSize" format="dimension|reference" />
+        <attr name="tinui_GiphyLabelTextColor" format="color|reference" />
+        <attr name="tinui_GiphyLabelTextFont" format="reference" />
+        <attr name="tinui_GiphyLabelTextFontAssets" format="string" />
+        <attr name="tinui_GiphyLabelTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_GiphyQueryTextSize" format="dimension|reference" />
+        <attr name="tinui_GiphyQueryTextColor" format="color|reference" />
+        <attr name="tinui_GiphyQueryTextFont" format="reference" />
+        <attr name="tinui_GiphyQueryTextFontAssets" format="string" />
+        <attr name="tinui_GiphyQueryTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_GiphyCancelButtonTextSize" format="dimension|reference" />
+        <attr name="tinui_GiphyCancelButtonTextColor" format="color|reference" />
+        <attr name="tinui_GiphyCancelButtonTextFont" format="reference" />
+        <attr name="tinui_GiphyCancelButtonTextFontAssets" format="string" />
+        <attr name="tinui_GiphyCancelButtonTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_GiphyShuffleButtonTextSize" format="dimension|reference" />
+        <attr name="tinui_GiphyShuffleButtonTextColor" format="color|reference" />
+        <attr name="tinui_GiphyShuffleButtonTextFont" format="reference" />
+        <attr name="tinui_GiphyShuffleButtonTextFontAssets" format="string" />
+        <attr name="tinui_GiphyShuffleButtonTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_GiphySendButtonTextSize" format="dimension|reference" />
+        <attr name="tinui_GiphySendButtonTextColor" format="color|reference" />
+        <attr name="tinui_GiphySendButtonTextFont" format="reference" />
+        <attr name="tinui_GiphySendButtonTextFontAssets" format="string" />
+        <attr name="tinui_GiphySendButtonTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+        <attr name="tinui_MessageListLoadingView" format="reference" />
+        <attr name="tinui_EmptyStateTextSize" format="dimension|reference" />
+        <attr name="tinui_EmptyStateTextColor" format="color|reference" />
+        <attr name="tinui_EmptyStateTextFont" format="reference" />
+        <attr name="tinui_EmptyStateTextFontAssets" format="string" />
+        <attr name="tinui_EmptyStateTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_MessagesStart" format="enum">
+            <enum name="bottom" value="0" />
+            <enum name="top" value="1" />
+        </attr>
+
+        <attr name="tinui_ThreadMessagesStart" format="enum">
+            <enum name="bottom" value="0" />
+            <enum name="top" value="1" />
+        </attr>
+
+        <!-- Pinned message -->
+        <attr name="tinui_PinnedMessageIndicatorTextSize" format="dimension|reference" />
+        <attr name="tinui_PinnedMessageIndicatorTextColor" format="color|reference" />
+        <attr name="tinui_PinnedMessageIndicatorTextFont" format="reference" />
+        <attr name="tinui_PinnedMessageIndicatorTextFontAssets" format="string" />
+        <attr name="tinui_PinnedMessageIndicatorTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+            <flag name="italic" value="2" />
+        </attr>
+
+        <attr name="tinui_PinnedMessageIndicatorIcon" format="reference" />
+
+        <attr name="tinui_PinnedMessageBackgroundColor" format="color" />
+
+        <attr name="tinui_MessageStartMargin" format="dimension|reference" />
+        <attr name="tinui_MessageEndMargin" format="dimension|reference" />
+
+        <!-- Fraction used to compute max width for message sent by the current user. Should be in [75% - 100%] range. -->
+        <attr name="tinui_MessageMaxWidthFactorMine" format="fraction" />
+        <!-- Fraction used to compute max width for message sent by other user. Should be in [75% - 100%] range. -->
+        <attr name="tinui_MessageMaxWidthFactorTheirs" format="fraction" />
+    </declare-styleable>
+</resources>
