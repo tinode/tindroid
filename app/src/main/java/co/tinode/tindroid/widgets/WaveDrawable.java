@@ -306,7 +306,7 @@ public class WaveDrawable extends Drawable implements Runnable {
             // startX, endX
             float x = mLeftPadding + 1.0f + i * (sLineWidth + sSpacing) + sLineWidth * 0.5f;
             // Y length
-            float y = amp / max * height * 0.9f;
+            float y = amp / max * height * 0.9f + 0.01f;
             // startX
             mBars[i * 4] = x;
             // startY
@@ -316,6 +316,7 @@ public class WaveDrawable extends Drawable implements Runnable {
             // stopY
             mBars[i * 4 + 3] = (height + y) * 0.5f;
         }
+
     }
 
     // Get thumb position for level.
