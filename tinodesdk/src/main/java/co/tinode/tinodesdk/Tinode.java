@@ -2125,17 +2125,8 @@ public class Tinode {
      * @return true if the URL is trusted, false otherwise.
      */
     public boolean isTrustedURL(URL url) {
-        String host = url.getHost();
-
-        if (host != null) {
-            int port = url.getPort();
-            host += port > 0 ? ":" + port : "";
-        } else {
-            return false;
-        }
-
         return ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
-                && host.equals(mServerURI.getHost()));
+                && url.getAuthority().equals(mServerURI.getAuthority()));
     }
 
     /**
