@@ -5,26 +5,16 @@ import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.Data;
 import android.text.TextUtils;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.IOException;
 
-import androidx.annotation.NonNull;
-import androidx.preference.PreferenceManager;
-import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.db.BaseDb;
-import co.tinode.tindroid.db.SqlStore;
-import co.tinode.tindroid.media.VxCard;
-import co.tinode.tinodesdk.ComTopic;
-import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 
 /**
  * Constants and misc utils

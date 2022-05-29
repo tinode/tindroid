@@ -343,16 +343,21 @@ public class TindroidApp extends Application implements LifecycleObserver {
                         // Do not invalidate token on network failure.
                     } catch (ServerResponseException ex) {
                         Log.w(TAG, "Server rejected login sequence", ex);
-                        // Another try-catch because some users revoke needed permission after granting it.
-                        try {
-                            // Login failed due to invalid (expired) token or missing/disabled account.
-                            accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
-                            accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
-                        } catch (SecurityException ex2) {
-                            Log.e(TAG, "Unable to access android account", ex2);
+                        int code = ex.getCode();
+                        // 401: Token expired or invalid login.
+                        // 404: 'me' topic is not found (user deleted, but token is still valid).
+                        if (code == 401 || code == 404) {
+                            // Another try-catch because some users revoke needed permission after granting it.
+                            try {
+                                // Login failed due to invalid (expired) token or missing/disabled account.
+                                accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                                accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                            } catch (SecurityException ex2) {
+                                Log.e(TAG, "Unable to access android account", ex2);
+                            }
+                            // Force new login.
+                            UiUtils.doLogout(TindroidApp.this);
                         }
-                        // Force new login.
-                        UiUtils.doLogout(TindroidApp.this);
                         // 409 Already authenticated should not be possible here.
                     } catch (Exception ex) {
                         Log.e(TAG, "Other failure during login", ex);
