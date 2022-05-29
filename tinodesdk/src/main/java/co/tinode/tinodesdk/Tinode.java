@@ -773,8 +773,16 @@ public class Tinode {
                         // noinspection unchecked
                         topic.subscribe(null, builder.build());
                         topic.getMeta(builder.reset().withLaterData(24).build());
-                        result = topic.getMeta(builder.reset().withLaterDel(24).build());
-                        topic.leave();
+                        final Topic finalTopic = topic;
+                        //noinspection unchecked
+                        result = topic.getMeta(builder.reset().withLaterDel(24).build())
+                                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                    @Override
+                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                        finalTopic.noteRecv();
+                                        return null;
+                                    }
+                        });
                     }
 
                     if (result != null) {
@@ -782,6 +790,7 @@ public class Tinode {
                             // Wait for result before disconnecting.
                             result.getResult();
                         } catch (Exception ignored) {}
+                        topic.leave();
                     }
 
                     if (disconnect) {
