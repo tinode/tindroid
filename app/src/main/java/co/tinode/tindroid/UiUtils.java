@@ -1102,7 +1102,9 @@ public class UiUtils {
                 if (err instanceof ServerResponseException) {
                     ServerResponseException sre = (ServerResponseException) err;
                     int errCode = sre.getCode();
-                    if (errCode == 401 || errCode == 403 || errCode == 404) {
+                    // 401: attempt to subscribe to 'me' happened before login, do not log out.
+                    // 403: Does not apply to 'me' subscription.
+                    if (errCode == 404) {
                         doLogout(activity);
                         activity.finish();
                     } else if (errCode == 502 && "cluster unreachable".equals(sre.getMessage())) {
