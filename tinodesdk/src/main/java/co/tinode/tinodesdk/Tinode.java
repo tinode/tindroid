@@ -761,36 +761,27 @@ public class Tinode {
                     String senderId = data.get("xfrom");
                     if (senderId != null && getUser(senderId) == null) {
                         // If sender is not found, try to fetch description from the server.
+                        // OK to send without subscription.
                         getMeta(senderId, MsgGetMeta.desc());
                     }
 
-                    PromisedReply result = null;
                     // Check again if topic has attached while we tried to connect. It does not guarantee that there
                     // is no race condition to subscribe.
                     if (!topic.isAttached()) {
-                        // Fully asynchronous. We don't need to do anything with the result.
-                        // The new data will be automatically saved.
                         // noinspection unchecked
                         topic.subscribe(null, builder.build());
-                        topic.getMeta(builder.reset().withLaterData(24).build());
-                        final Topic finalTopic = topic;
-                        //noinspection unchecked
-                        result = topic.getMeta(builder.reset().withLaterDel(24).build())
-                                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                                    @Override
-                                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                        finalTopic.noteRecv();
-                                        return null;
-                                    }
-                        });
-                    }
-
-                    if (result != null) {
                         try {
-                            // Wait for result before disconnecting.
-                            result.getResult();
+                            // Wait for the messages to download.
+                            topic.getMeta(builder
+                                    .reset()
+                                    .withLaterDel(24)
+                                    .withLaterData(24)
+                                    .build()).getResult();
+                            // Notify the server than the message was received.
+                            topic.noteRecv();
+                            // Leave the topic before disconnecting.
+                            topic.leave().getResult();
                         } catch (Exception ignored) {}
-                        topic.leave();
                     }
 
                     if (disconnect) {
