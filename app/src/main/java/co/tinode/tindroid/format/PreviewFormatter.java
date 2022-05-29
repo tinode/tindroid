@@ -21,15 +21,25 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.UiUtils;
 
 // Drafty formatter for creating one-line message previews.
 public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
     private final float mFontSize;
 
+    // Video call related bits.
+    private String mCallState;
+    private boolean mCallIsOutgoing;
+
     public PreviewFormatter(final Context context, float fontSize) {
         super(context);
 
         mFontSize = fontSize;
+    }
+
+    public void setVideoCallContext(String state, boolean isOutgoing) {
+        mCallState = state;
+        mCallIsOutgoing = isOutgoing;
     }
 
     @Override
@@ -168,6 +178,11 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     protected SpannableStringBuilder handleQuote(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         // Not showing quoted content in preview.
         return null;
+    }
+
+    @Override
+    protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return UiUtils.videoCallMsg(ctx, mCallIsOutgoing, mCallState, -1);
     }
 
     @Override

@@ -61,8 +61,11 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     // Interactive form.
     protected abstract T handleForm(final Context ctx, List<T> content, final Map<String, Object> data);
 
-    // Interactive form.
+    // Quoted block.
     protected abstract T handleQuote(final Context ctx, List<T> content, final Map<String, Object> data);
+
+    // Video call.
+    protected abstract T handleVideoCall(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // Unknown or unsupported element.
     protected abstract T handleUnknown(final Context ctx, List<T> content, final Map<String, Object> data);
@@ -133,6 +136,10 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 case "QQ":
                     // Quoted block.
                     span = handleQuote(mContext, content, data);
+                    break;
+                case "VC":
+                    // Video call.
+                    span = handleVideoCall(mContext, content, data);
                     break;
                 default:
                     // Unknown element

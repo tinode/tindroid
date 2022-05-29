@@ -828,6 +828,21 @@ public class Drafty implements Serializable {
     }
 
     /**
+     * Create a (self-contained) video call Drafty document.
+     * @return new Drafty representing a video call.
+     */
+    public static Drafty videoCall() {
+        Drafty d = new Drafty(" ");
+        d.fmt = new Style[]{
+                new Style(0, 1, 0)
+        };
+        d.ent = new Entity[]{
+                new Entity("VC")
+        };
+        return d;
+    }
+
+    /**
      * Wrap contents of the document into the specified style.
      * @param style to wrap document into.
      * @return 'this' Drafty document.

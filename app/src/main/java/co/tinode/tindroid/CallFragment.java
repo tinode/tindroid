@@ -449,8 +449,8 @@ public class CallFragment extends Fragment {
             case OUTGOING:
                 // Send out a call invitation to the peer.
                 Map<String, Object> head = new HashMap<>();
-                head.put("mime", Tinode.VIDEO_CALL_MIME);
-                mTopic.publish(new Drafty("started"), head).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                head.put("webrtc", "started");
+                mTopic.publish(Drafty.videoCall(), head).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (result.ctrl != null && result.ctrl.code < 300) {

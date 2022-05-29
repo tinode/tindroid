@@ -78,6 +78,11 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private final ClickListener mClicker;
     private QuoteFormatter mQuoteFormatter;
 
+    // Video call related bits.
+    private String mCallState;
+    private boolean mCallIsOutgoing;
+    private int mCallDuration;
+
     public FullFormatter(final TextView container, final ClickListener clicker) {
         super(container.getContext());
 
@@ -111,6 +116,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     public void setQuoteFormatter(QuoteFormatter quoteFormatter) {
         mQuoteFormatter = quoteFormatter;
+    }
+
+    public void setVideoCallContext(String state, boolean isOutgoing, int duration) {
+        mCallState = state;
+        mCallIsOutgoing = isOutgoing;
+        mCallDuration = duration;
     }
 
     @Override
@@ -655,6 +666,11 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         SpannableStringBuilder node = handleQuote_Impl(ctx, content);
         // Increase spacing between the quote and the subsequent text.
         return node.append("\n\n", new RelativeSizeSpan(0.3f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+    }
+
+    @Override
+    protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+        return UiUtils.videoCallMsg(ctx, mCallIsOutgoing, mCallState, mCallDuration);
     }
 
     // Unknown or unsupported element.
