@@ -34,7 +34,7 @@ import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.Spannable;
-import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -520,9 +520,9 @@ public class UiUtils {
     // Builds and returns a video call message text given call direction, state and duration.
     // TODO: this should become a part of the Formatter interface.
     @NonNull
-    static Spanned videoCallMsg(Context context, boolean isOutgoing, String callState, int millis) {
+    public static SpannableStringBuilder videoCallMsg(Context context, boolean isOutgoing, String callState, int millis) {
         String dir = isOutgoing ? "↗" : "↙";
-        Spannable cont = new SpannableString(dir);
+        SpannableStringBuilder cont = new SpannableStringBuilder(dir);
         cont.setSpan(new ForegroundColorSpan(
                         "disconnected".equals(callState) ? Color.RED : Color.GREEN),
                 0, dir.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -533,7 +533,7 @@ public class UiUtils {
         if (millis > 0) {
             sb.append(" (" + millisToTime(millis) + ")");
         }
-        return (Spanned) TextUtils.concat(cont, sb.toString());
+        return cont.append(sb);
     }
 
     // Returns true if the specified mime type is a video call.

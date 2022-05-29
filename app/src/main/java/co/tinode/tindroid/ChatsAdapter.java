@@ -281,12 +281,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                     messageStatus.setVisibility(View.GONE);
                 }
                 Map<String, Object> head = msg.getHead();
-                if (head == null || !UiUtils.isVideoCallMime((String)head.get("mime"))) {
-                    priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH)
-                            .format(new PreviewFormatter(priv.getContext(), priv.getTextSize())));
-                } else {
-                    priv.setText(UiUtils.videoCallMsg(priv.getContext(), msg.isMine(), msg.getContent().toString(), -1));
+                PreviewFormatter fmt = new PreviewFormatter(priv.getContext(), priv.getTextSize());
+                if (head != null && UiUtils.isVideoCallMime((String)head.get("mime"))) {
+                    fmt.setVideoCallContext((String)head.get("webrtc"), msg.isMine());
                 }
+                priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH).format(fmt));
             } else {
                 messageStatus.setVisibility(View.GONE);
                 priv.setText(topic.getComment());
