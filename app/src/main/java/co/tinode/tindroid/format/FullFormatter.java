@@ -51,7 +51,7 @@ import co.tinode.tindroid.widgets.WaveDrawable;
  * Convert Drafty object into a Spanned object with full support for all features.
  */
 public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
-    private static final String TAG = "SpanFormatter";
+    private static final String TAG = "FullFormatter";
 
     private static final float FORM_LINE_SPACING = 1.2f;
     // Additional horizontal padding otherwise images sometimes fail to render.
@@ -82,7 +82,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         super(container.getContext());
 
         mContainer = container;
-        mViewport = container.getMaxWidth();
+        mViewport = container.getMaxWidth() - container.getPaddingLeft() - container.getPaddingRight();
         mFontSize = container.getTextSize();
         mClicker = clicker;
         mQuoteFormatter = null;

@@ -235,46 +235,8 @@ public class ImageViewFragment extends Fragment {
             } else {
                 final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
                 if (ref != null) {
-                    final String fn = fileName;
                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    Picasso.get().load(ref)
-                            .placeholder(R.drawable.ic_image)
-                            .error(R.drawable.ic_broken_image)
-                            .centerInside().fit().into(mImageView, new Callback() {
-                        @Override
-                        public void onSuccess() {
-                            Activity activity = getActivity();
-                            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                                return;
-                            }
-
-                            if (mScreenRect == null) {
-                                Log.i(TAG, "Image loaded before ImageView is ready");
-                                return;
-                            }
-
-                            Drawable drw = mImageView.getDrawable();
-                            if (drw instanceof BitmapDrawable) {
-                                Bitmap bmp = ((BitmapDrawable) drw).getBitmap();
-                                if (bmp != null) {
-                                    mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
-                                    mWorkingRect = new RectF(mInitialRect);
-                                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
-                                    mWorkingMatrix = new Matrix(mMatrix);
-                                    mImageView.setImageMatrix(mMatrix);
-                                    mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-                                    mImageView.enableOverlay(false);
-                                    activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
-                                    setupImagePostview(activity, args, fn, bmp.getByteCount());
-                                }
-                            }
-                        }
-
-                        @Override
-                        public void onError(Exception e) {
-                            Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + ref + ")");
-                        }
-                    });
+                    loadImage(ref, fileName, args);
                 }
             }
         }
@@ -350,6 +312,48 @@ public class ImageViewFragment extends Fragment {
                 mImageView.setImageMatrix(mMatrix);
             }
         });
+    }
+
+    private void loadImage(final Uri ref, final String fn, final Bundle args) {
+        Picasso.get().load(ref)
+                .placeholder(R.drawable.ic_image)
+                .error(R.drawable.ic_broken_image)
+                .centerInside().fit().into(mImageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Activity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+
+                        if (mScreenRect == null) {
+                            Log.e(TAG, "Image loaded before ImageView is ready");
+                            return;
+                        }
+
+                        Drawable drw = mImageView.getDrawable();
+                        if (drw instanceof BitmapDrawable) {
+                            Bitmap bmp = ((BitmapDrawable) drw).getBitmap();
+                            if (bmp != null) {
+                                mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
+                                mWorkingRect = new RectF(mInitialRect);
+                                mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                                mWorkingMatrix = new Matrix(mMatrix);
+                                mImageView.setImageMatrix(mMatrix);
+                                mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                                mImageView.enableOverlay(false);
+                                activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+                                setupImagePostview(activity, args, fn, bmp.getByteCount());
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + ref + ")");
+                    }
+                });
+
     }
 
     @Override
