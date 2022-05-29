@@ -236,7 +236,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 String seqStr = data.get("seq");
                 try {
                     int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
-                    if (UiUtils.isVideoCallMime(data.get("mime")) && !tinode.isMe(senderId) && seq > 0) {
+                    if (data.get("webrtc") != null && !tinode.isMe(senderId) && seq > 0) {
                         // If it's a video call, start it.
                         if (data.get("replace") == null) {
                             UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);

@@ -648,30 +648,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         boolean uploadingAttachment = hasAttachment && display.isPending();
         boolean uploadFailed = hasAttachment && (display.status == BaseDb.Status.FAILED);
 
-        Spanned text;
-        if (!UiUtils.isVideoCallMime(m.getStringHeader("mime"))) {
-            // Normal message.
-            // Disable clicker while message is processed.
-            FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
-            formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
-            text = display.content.format(formatter);
-        } else {
-            // Video call.
-            long duration = -1;
-            TreeSet<StoredMessage> vers = mCursor.getVersions(seq);
-            if (vers != null) {
-                StoredMessage prev = null;
-                for (StoredMessage v : vers) {
-                    if (prev != null && "accepted".equals(prev.content.toString()) &&
-                            "finished".equals(v.content.toString())) {
-                        duration = v.ts.getTime() - prev.ts.getTime();
-                        break;
-                    }
-                    prev = v;
-                }
-            }
-            text = UiUtils.videoCallMsg(holder.itemView.getContext(), m.isMine(), display.content.toString(), (int)duration);
+        // Normal message.
+        // Disable clicker while message is processed.
+        FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
+        formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
+        String webrtcState = display.getStringHeader("webrtc");
+        if (webrtcState != null) {
+            // It is a video call message. Set video call context.
+            formatter.setVideoCallContext(webrtcState, display.isMine(), display.getIntHeader("webrtc-duration", 0));
         }
+        Spanned text = display.content.format(formatter);
 
         if (text == null || text.length() == 0) {
             if (display.status == BaseDb.Status.DRAFT || display.status == BaseDb.Status.QUEUED || display.status == BaseDb.Status.SENDING) {

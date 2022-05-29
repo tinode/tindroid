@@ -1024,9 +1024,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
             head.put("mime", Drafty.MIME_TYPE);
             attachments = content.getEntReferences();
-        } else if (head != null && !Tinode.VIDEO_CALL_MIME.equals(head.get("mime"))) {
-            // Otherwise, plain text content should not have "mime" header
-            // (except video call messages). Clear it.
+        } else if (head != null) {
+            // Otherwise, plain text content should not have "mime" header. Clear it.
             head.remove("mime");
         }
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head, attachments).thenApply(
