@@ -113,9 +113,6 @@ public class Tinode {
     protected static final TypeFactory sTypeFactory;
     protected static final SimpleDateFormat sDateFormat;
 
-    // Mime type of the Video call messages.
-    public static final String VIDEO_CALL_MIME = "application/x-tinode-webrtc";
-
     static {
         sJsonMapper = new ObjectMapper();
         // Silently ignore unknown properties

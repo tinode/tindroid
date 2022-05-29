@@ -652,8 +652,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Disable clicker while message is processed.
         FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
         formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
-        if (UiUtils.isVideoCallMime(m.getStringHeader("mime"))) {
-            formatter.setVideoCallContext(display.getStringHeader("webrtc"), display.isMine(), display.getIntHeader("webrtc-duration", 0));
+        String webrtcState = display.getStringHeader("webrtc");
+        if (webrtcState != null) {
+            // It is a video call message. Set video call context.
+            formatter.setVideoCallContext(webrtcState, display.isMine(), display.getIntHeader("webrtc-duration", 0));
         }
         Spanned text = display.content.format(formatter);
 

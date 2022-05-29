@@ -282,8 +282,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 }
                 Map<String, Object> head = msg.getHead();
                 PreviewFormatter fmt = new PreviewFormatter(priv.getContext(), priv.getTextSize());
-                if (head != null && UiUtils.isVideoCallMime((String)head.get("mime"))) {
-                    fmt.setVideoCallContext((String)head.get("webrtc"), msg.isMine());
+                if (head != null) {
+                    String webrtcState = (String)head.get("webrtc");
+                    if (webrtcState != null) {
+                        fmt.setVideoCallContext(webrtcState, msg.isMine());
+                    }
                 }
                 priv.setText(content.preview(MAX_MESSAGE_PREVIEW_LENGTH).format(fmt));
             } else {

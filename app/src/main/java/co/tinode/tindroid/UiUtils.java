@@ -536,11 +536,6 @@ public class UiUtils {
         return cont.append(sb);
     }
 
-    // Returns true if the specified mime type is a video call.
-    public static boolean isVideoCallMime(String mime) {
-        return Tinode.VIDEO_CALL_MIME.equals(mime);
-    }
-
     // If an incoming info is a video call related,
     public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
         if ("call".equals(info.what)) {

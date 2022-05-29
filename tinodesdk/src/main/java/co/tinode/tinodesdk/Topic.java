@@ -1022,10 +1022,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (head == null) {
                 head = new HashMap<>();
             }
-            if (!Tinode.VIDEO_CALL_MIME.equals(head.get("mime"))) {
-                // Set "x-drafty" mime header (except video call messages.
-                head.put("mime", Drafty.MIME_TYPE);
-            }
+            head.put("mime", Drafty.MIME_TYPE);
             attachments = content.getEntReferences();
         } else if (head != null) {
             // Otherwise, plain text content should not have "mime" header. Clear it.
@@ -1076,7 +1073,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (extraHeaders != null) {
                 head.putAll(extraHeaders);
             }
-            if (!content.isPlain() && !Tinode.VIDEO_CALL_MIME.equals(head.get("mime"))) {
+            if (!content.isPlain()) {
                 head.put("mime", Drafty.MIME_TYPE);
             }
         } else {
