@@ -52,6 +52,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
@@ -659,9 +660,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (m.ts != null) {
             Context context = holder.itemView.getContext();
             if (holder.mDateDivider.getVisibility() == View.VISIBLE && m.ts != null) {
+                // DateUtils.getRelativeTimeSpanString is stupid: it assumes local time zone for
+                // calculations and is frequently off by one day, including "TOMORROW".
+                long now = System.currentTimeMillis();
+                long offset = TimeZone.getDefault().getOffset(now);
                 CharSequence date = DateUtils.getRelativeTimeSpanString(
-                        m.ts.getTime(),
-                        System.currentTimeMillis(),
+                        m.ts.getTime() + offset,
+                        System.currentTimeMillis() + offset,
                         DateUtils.DAY_IN_MILLIS,
                         DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
                 holder.mDateDivider.setText(date);
