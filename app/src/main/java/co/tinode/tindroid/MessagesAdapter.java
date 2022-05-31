@@ -53,6 +53,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
@@ -162,13 +163,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return;
             }
             mMessages = new ArrayList<>();
-            mComparator = new Comparator<StoredMessage>() {
-                @Override
-                public int compare(StoredMessage a, StoredMessage b) {
-                    return a.seq - b.seq;
-                }
-            };
-            mVersions = new HashMap<Integer, TreeSet<StoredMessage>>();
+            mComparator = (a, b) -> a.seq - b.seq;
+            mVersions = new HashMap<>();
             while (mCursor.moveToNext()) {
                 StoredMessage msg = StoredMessage.readMessage(mCursor, -1);
                 mMessages.add(msg);
@@ -748,10 +744,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         if (display.ts != null) {
             Context context = holder.itemView.getContext();
+
             if (holder.mDateDivider.getVisibility() == View.VISIBLE && display.ts != null) {
+                // DateUtils.getRelativeTimeSpanString is stupid: it assumes local time zone for
+                // calculations and is frequently off by one day, including "TOMORROW".
+                long now = System.currentTimeMillis();
+                long offset = TimeZone.getDefault().getOffset(now);
                 CharSequence date = DateUtils.getRelativeTimeSpanString(
-                        display.ts.getTime(),
-                        System.currentTimeMillis(),
+                        display.ts.getTime() + offset,
+                        System.currentTimeMillis() + offset,
                         DateUtils.DAY_IN_MILLIS,
                         DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
                 holder.mDateDivider.setText(date);
