@@ -52,8 +52,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
@@ -136,7 +134,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private final MessageLoaderCallbacks mMessageLoaderCallback;
     private ActionMode mSelectionMode;
     private RecyclerView mRecyclerView;
-    private CachedCursor mCursor;
+    private Cursor mCursor;
     private String mTopicName = null;
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
@@ -145,7 +143,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private int mPlayingAudioSeq = -1;
     private FullFormatter.AudioControlCallback mAudioControlCallback = null;
 
-    MessagesAdapter(MessageActivity context, SwipeRefreshLayout refresher) {
+    MessagesAdapter(@NonNull MessageActivity context, @NonNull SwipeRefreshLayout refresher) {
         super();
 
         mActivity = context;
@@ -563,38 +561,26 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        if (m.isReplacement()) {
-            // It is a replacement message. Hide it.
-            holder.itemView.setVisibility(View.GONE);
-            holder.itemView.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
-            return;
-        }
-
         if (mCursor == null) {
             return;
         }
 
-        StoredMessage replacement = mCursor.getLatestVersion(m);
-        boolean shouldReplace = m.getSeqId() != replacement.getSeqId();
-        StoredMessage display = shouldReplace ? replacement : m;
-        int seq = m.seq;
-
         final long msgId = m.getDbId();
 
-        boolean hasAttachment = display.content != null && display.content.getEntReferences() != null;
-        boolean uploadingAttachment = hasAttachment && display.isPending();
-        boolean uploadFailed = hasAttachment && (display.status == BaseDb.Status.FAILED);
+        boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
+        boolean uploadingAttachment = hasAttachment && m.isPending();
+        boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         // Normal message.
         // Disable clicker while message is processed.
         FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
         formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
-        Spanned text = display.content.format(formatter);
+        Spanned text = m.content.format(formatter);
 
         if (text == null || text.length() == 0) {
-            if (display.status == BaseDb.Status.DRAFT || display.status == BaseDb.Status.QUEUED || display.status == BaseDb.Status.SENDING) {
+            if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
-            } else if (display.status == BaseDb.Status.FAILED) {
+            } else if (m.status == BaseDb.Status.FAILED) {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
             } else {
                 text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
@@ -602,7 +588,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.mText.setText(text);
-        if (display.content != null && display.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
+        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -656,7 +642,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (holder.mAvatar != null || holder.mUserName != null) {
-            Subscription<VxCard, ?> sub = topic.getSubscription(display.from);
+            Subscription<VxCard, ?> sub = topic.getSubscription(m.from);
             if (sub != null) {
                 if (holder.mAvatar != null) {
                     UiUtils.setAvatar(holder.mAvatar, sub.pub, sub.user, false);
@@ -678,30 +664,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
 
-        if (display.ts != null) {
+        if (m.ts != null) {
             Context context = holder.itemView.getContext();
 
-            if (holder.mDateDivider.getVisibility() == View.VISIBLE && display.ts != null) {
+            if (holder.mDateDivider.getVisibility() == View.VISIBLE && m.ts != null) {
                 // DateUtils.getRelativeTimeSpanString is stupid: it assumes local time zone for
                 // calculations and is frequently off by one day, including "TOMORROW".
                 long now = System.currentTimeMillis();
                 long offset = TimeZone.getDefault().getOffset(now);
                 CharSequence date = DateUtils.getRelativeTimeSpanString(
-                        display.ts.getTime() + offset,
+                        m.ts.getTime() + offset,
                         System.currentTimeMillis() + offset,
                         DateUtils.DAY_IN_MILLIS,
                         DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
                 holder.mDateDivider.setText(date);
             }
             if (holder.mMeta != null) {
-                holder.mMeta.setText(UiUtils.timeOnly(context, display.ts));
+                holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
             }
         }
 
         if (holder.mDeliveredIcon != null) {
             if ((holder.mViewType & VIEWTYPE_SIDE_RIGHT) != 0) {
-                UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, display.status.value,
-                        topic.msgReadCount(seq), topic.msgRecvCount(seq));
+                UiUtils.setMessageStatusIcon(holder.mDeliveredIcon, m.status.value,
+                        topic.msgReadCount(m.seq), topic.msgRecvCount(m.seq));
             }
         }
 
@@ -725,15 +711,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 notifyItemChanged(pos);
                 updateSelectionMode();
             } else {
-                animateMessageBubble(holder, display.isMine(), true);
+                animateMessageBubble(holder, m.isMine(), true);
                 int replySeq = -1;
                 try {
                     replySeq = Integer.parseInt(m.getStringHeader("reply"));
                 } catch (NumberFormatException ignored) {
                 }
-                if (replySeq != -1 && mCursor.getCursor() != null) {
+                if (replySeq != -1) {
                     // A reply message was clicked. Scroll original into view and animate.
-                    final int pos = findInCursor(mCursor.getCursor(), replySeq);
+                    final int pos = findInCursor(mCursor, replySeq);
                     if (pos >= 0) {
                         StoredMessage mm = getMessage(pos);
                         if (mm != null) {
@@ -803,11 +789,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
-        if (cursor != null && !cursor.isClosed()) {
-            return position < mCursor.mMessages.size() ?
-                    mCursor.mMessages.get(position) :
-                    getMessage(cursor, position, -1);
+        if (mCursor != null && !mCursor.isClosed()) {
+            return getMessage(mCursor, position, -1);
         }
         return null;
     }
@@ -815,22 +798,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
-        if (cursor != null && !cursor.isClosed() && cursor.moveToPosition(position)) {
-            return MessageDb.getLocalId(cursor);
+        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+            return MessageDb.getLocalId(mCursor);
         }
         return View.NO_ID;
     }
 
     int findItemPositionById(long itemId, int first, int last) {
-        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
-        if (cursor == null || cursor.isClosed()) {
+        if (mCursor == null || mCursor.isClosed()) {
             return -1;
         }
 
         for (int i = first; i <= last; i++) {
-            if (cursor.moveToPosition(i)) {
-                if (MessageDb.getLocalId(cursor) == itemId) {
+            if (mCursor.moveToPosition(i)) {
+                if (MessageDb.getLocalId(mCursor) == itemId) {
                     return i;
                 }
             }
@@ -840,8 +821,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        Cursor cursor = mCursor != null ? mCursor.getCursor() : null;
-        return cursor != null ? cursor.getCount() : 0;
+        return mCursor != null && !mCursor.isClosed() ? mCursor.getCount() : 0;
     }
 
     private void toggleSelectionAt(int pos) {
@@ -881,7 +861,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @SuppressLint("NotifyDataSetChanged")
     private void swapCursor(final Cursor cursor, final int refresh) {
-        if (mCursor != null && mCursor.getCursor() == cursor) {
+        if (mCursor != null && mCursor == cursor) {
             return;
         }
 
@@ -891,10 +871,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mSelectionMode = null;
         }
 
-        CachedCursor oldCursor = mCursor;
-        mCursor = new CachedCursor(cursor);
+        Cursor oldCursor = mCursor;
+        mCursor = cursor;
         if (oldCursor != null) {
-            oldCursor.cleanUp();
+            oldCursor.close();
         }
 
         if (refresh != REFRESH_NONE) {
@@ -988,52 +968,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             wm.cancelUniqueWork(uniqueID);
         }
     }
-
-    private static class CachedCursor {
-        Cursor mCursor;
-        ArrayList<StoredMessage> mMessages;
-        Map<Integer, TreeSet<StoredMessage>> mVersions;
-        Comparator<StoredMessage> mComparator;
-
-        public Cursor getCursor() { return mCursor; }
-
-        public void cleanUp() {
-            if (mCursor != null) {
-                mCursor.close();
-            }
-            if (mMessages != null) {
-                mMessages.clear();
-            }
-            if (mVersions != null) {
-                mVersions.clear();
-            }
-        }
-
-        public StoredMessage getLatestVersion(StoredMessage msg) {
-            TreeSet<StoredMessage> versions = mVersions.get(msg.getSeqId());
-            return versions != null ? versions.last() : msg;
-        }
-
-        public CachedCursor(Cursor cur) {
-            mCursor = cur;
-            if (cur == null) {
-                return;
-            }
-            mMessages = new ArrayList<>();
-            mComparator = Comparator.comparingInt(a -> a.seq);
-            mVersions = new HashMap<>();
-            while (mCursor.moveToNext()) {
-                StoredMessage msg = StoredMessage.readMessage(mCursor, -1);
-                mMessages.add(msg);
-                int seq = msg.getReplacementSeqId();
-                if (seq > 0) {
-                    TreeSet<StoredMessage> versions = mVersions.computeIfAbsent(seq, k -> new TreeSet<>(mComparator));
-                    versions.add(msg);
-                }
-            }
-        }
-    }
-
+    
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mIcon;
