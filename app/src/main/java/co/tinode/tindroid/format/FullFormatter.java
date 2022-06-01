@@ -40,7 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
@@ -663,7 +662,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                                                      final Map<String, Object> data) {
 
         if (data == null) {
-            return handleUnknown(ctx, content, data);
+            return handleUnknown(ctx, content, null);
         }
 
         SpannableStringBuilder result = new SpannableStringBuilder();
@@ -695,8 +694,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         SpannableStringBuilder second = new SpannableStringBuilder();
         icon = AppCompatResources.getDrawable(ctx,
                 incoming ?
-                        (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
-                        (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled));
+                        (success ? R.drawable.ic_arrow_sw : R.drawable.ic_arrow_missed) :
+                        (success ? R.drawable.ic_arrow_ne : R.drawable.ic_arrow_cancelled));
         //noinspection ConstantConditions
         icon.setBounds(0, 0, (int) (icon.getIntrinsicWidth() * 0.67), (int) (icon.getIntrinsicHeight() * 0.67));
         icon.setTint(success ? 0xFF338833 : 0xFF993333);
@@ -717,9 +716,14 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     @Override
     protected SpannableStringBuilder handleUnknown(final Context ctx, List<SpannableStringBuilder> content,
                                                    final Map<String, Object> data) {
-        // Does object have viewport dimensions?
-        int width = 0, height = 0;
+        SpannableStringBuilder result;
+        Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.ic_unkn_type);
+        //noinspection ConstantConditions
+        unkn.setBounds(0, 0, unkn.getIntrinsicWidth(), unkn.getIntrinsicHeight());
+
         if (data != null) {
+            // Does object have viewport dimensions?
+            int width = 0, height = 0;
             Object tmp;
             if ((tmp = data.get("width")) instanceof Number) {
                 width = ((Number) tmp).intValue();
@@ -727,28 +731,32 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             if ((tmp = data.get("height")) instanceof Number) {
                 height = ((Number) tmp).intValue();
             }
-        }
 
-        if (width <= 0 || height <= 0) {
-            return handleAttachment(ctx, data);
-        }
+            if (width <= 0 || height <= 0) {
+                return handleAttachment(ctx, data);
+            }
 
-        // Calculate scaling factor for images to fit into the viewport.
-        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-        float scale = scaleBitmap(width, height, mViewport, metrics.density);
-        // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
-        int scaledWidth = 0, scaledHeight = 0;
-        if (scale > 0) {
-            scaledWidth = (int) (width * scale * metrics.density);
-            scaledHeight = (int) (height * scale * metrics.density);
-        }
+            // Calculate scaling factor for images to fit into the viewport.
+            DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+            float scale = scaleBitmap(width, height, mViewport, metrics.density);
+            // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
+            int scaledWidth = 0, scaledHeight = 0;
+            if (scale > 0) {
+                scaledWidth = (int) (width * scale * metrics.density);
+                scaledHeight = (int) (height * scale * metrics.density);
+            }
 
-        SpannableStringBuilder result = null;
-        Drawable unkn = AppCompatResources.getDrawable(ctx, R.drawable.ic_unkn_type);
-        if (unkn != null) {
-            unkn.setBounds(0, 0, unkn.getIntrinsicWidth(), unkn.getIntrinsicHeight());
             CharacterStyle span = new ImageSpan(UiUtils.getPlaceholder(ctx, unkn, null, scaledWidth, scaledHeight));
             result = assignStyle(span, content);
+        } else {
+            result = new SpannableStringBuilder();
+            result.append(" ", new ImageSpan(unkn, ImageSpan.ALIGN_BOTTOM), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.append(" ");
+            if (content != null) {
+                result.append(join(content));
+            } else {
+                result.append(ctx.getString(R.string.unknown));
+            }
         }
 
         return result;

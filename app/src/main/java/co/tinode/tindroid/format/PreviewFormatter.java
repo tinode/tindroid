@@ -22,10 +22,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.UiUtils;
 
 // Drafty formatter for creating one-line message previews.
 public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
+    private static final float DEFAULT_ICON_SCALE = 1.3f;
+
     private final float mFontSize;
 
     public PreviewFormatter(final Context context, float fontSize) {
@@ -90,7 +91,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         if (icon != null) {
             Resources res = ctx.getResources();
             icon.setTint(res.getColor(R.color.colorDarkGray));
-            icon.setBounds(0, 0, (int) (mFontSize * 1.3), (int) (mFontSize * 1.3));
+            icon.setBounds(0, 0, (int) (mFontSize * DEFAULT_ICON_SCALE), (int) (mFontSize * DEFAULT_ICON_SCALE));
             node = new SpannableStringBuilder(" ");
             node.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, node.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -181,7 +182,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content,
                                                      Map<String, Object> data) {
         if (data == null) {
-            return handleUnknown(ctx, content, data);
+            return handleUnknown(ctx, content, null);
         }
 
         Object val = data.get("incoming");
@@ -193,15 +194,13 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
 
         boolean success = !"disconnected".equals(state);
 
-        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_call, 0);
-        node.append(" ");
-        String status = duration > 0 ?
+        String status = " " + (duration > 0 ?
                 millisToTime(duration, false).toString() :
-                ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call);
-        node.append(annotatedIcon(ctx, incoming ?
+                ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call));
+        return annotatedIcon(ctx, incoming ?
                 (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
-                (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled), status));
-        return node;
+                (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled),
+                status);
     }
 
     @Override

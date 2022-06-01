@@ -8,9 +8,9 @@
         android:width="21dp"
         android:height="21dp"/>
     <item
-        android:drawable="@drawable/ic_arrow_missed"
-        android:top="-1dp"
+        android:drawable="@drawable/ic_arrow_ne"
         android:left="8dp"
+        android:top="0dp"
         android:height="13dp"
         android:width="13dp"/>
 </layer-list>

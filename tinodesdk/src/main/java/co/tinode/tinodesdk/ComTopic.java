@@ -151,7 +151,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
                 String mime = (String) data.head.get("mime");
                 if (state != null && Drafty.MIME_TYPE.equals(mime)) {
                     boolean outgoing = ((!isChannel() && data.from == null) || mTinode.isMe(data.from));
-                    Drafty.updateVideoEnt(data.content, data.head, outgoing);
+                    Drafty.updateVideoEnt(data.content, data.head, !outgoing);
                 }
             } catch (ClassCastException ignored) {}
         }
