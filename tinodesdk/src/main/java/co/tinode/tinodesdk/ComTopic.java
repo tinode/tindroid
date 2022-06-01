@@ -1,8 +1,10 @@
 package co.tinode.tinodesdk;
 
 import co.tinode.tinodesdk.model.Description;
+import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetDesc;
 import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -138,5 +140,21 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** Called by MeTopic when topic descriptor as contact is updated */
         public void onContUpdate(Subscription<DP,PrivateType> sub) {}
+    }
+
+    @Override
+    protected void routeData(MsgServerData data) {
+        if (data.head != null && data.content != null) {
+            // Rewrite VC body with info from the headers.
+            try {
+                String state = (String) data.head.get("webrtc");
+                String mime = (String) data.head.get("mime");
+                if (state != null && Drafty.MIME_TYPE.equals(mime)) {
+                    boolean outgoing = ((!isChannel() && data.from == null) || mTinode.isMe(data.from));
+                    Drafty.updateVideoEnt(data.content, data.head, outgoing);
+                }
+            } catch (ClassCastException ignored) {}
+        }
+        super.routeData(data);
     }
 }

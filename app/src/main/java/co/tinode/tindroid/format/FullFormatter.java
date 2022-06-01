@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
@@ -78,11 +79,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private final ClickListener mClicker;
     private QuoteFormatter mQuoteFormatter;
 
-    // Video call related bits.
-    private String mCallState;
-    private boolean mCallIsOutgoing;
-    private int mCallDuration;
-
     public FullFormatter(final TextView container, final ClickListener clicker) {
         super(container.getContext());
 
@@ -116,12 +112,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     public void setQuoteFormatter(QuoteFormatter quoteFormatter) {
         mQuoteFormatter = quoteFormatter;
-    }
-
-    public void setVideoCallContext(String state, boolean isOutgoing, int duration) {
-        mCallState = state;
-        mCallIsOutgoing = isOutgoing;
-        mCallDuration = duration;
     }
 
     @Override
@@ -669,26 +659,74 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     @Override
-    protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        return UiUtils.videoCallMsg(ctx, mCallIsOutgoing, mCallState, mCallDuration);
+    protected SpannableStringBuilder handleVideoCall(final Context ctx, List<SpannableStringBuilder> content,
+                                                     final Map<String, Object> data) {
+
+        if (data == null) {
+            return handleUnknown(ctx, content, data);
+        }
+
+        SpannableStringBuilder result = new SpannableStringBuilder();
+        // Insert document icon
+        Drawable icon = AppCompatResources.getDrawable(ctx, R.drawable.ic_call);
+        //noinspection ConstantConditions
+        icon.setBounds(0, 0, icon.getIntrinsicWidth(), icon.getIntrinsicHeight());
+        ImageSpan span = new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM);
+        final Rect bounds = span.getDrawable().getBounds();
+        result.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        Object val = data.get("incoming");
+        boolean incoming = val instanceof Boolean ? (Boolean) val : false;
+        result.append(ctx.getString(incoming ? R.string.incoming_call : R.string.outgoing_call),
+                new RelativeSizeSpan(1.2f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        val = data.get("duration");
+        int duration = val instanceof Number ? ((Number) val).intValue() : 0;
+
+        val = data.get("state");
+        String state = val instanceof String ? (String) val : "";
+
+        boolean success = !"disconnected".equals(state);
+
+        result.append("\n");
+
+        SpannableStringBuilder second = new SpannableStringBuilder();
+        icon = AppCompatResources.getDrawable(ctx,
+                incoming ?
+                        (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
+                        (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled));
+        //noinspection ConstantConditions
+        icon.setBounds(0, 0, (int) (icon.getIntrinsicWidth() * 0.67), (int) (icon.getIntrinsicHeight() * 0.67));
+        icon.setTint(success ? 0xFF338833 : 0xFF993333);
+        second.append(" ", new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        second.append(" ");
+        if (duration > 0) {
+            second.append(millisToTime(duration, false));
+        } else {
+            second.append(ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call));
+        }
+        // Shift second line to the right.
+        result.append(second, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        return result;
     }
 
     // Unknown or unsupported element.
     @Override
     protected SpannableStringBuilder handleUnknown(final Context ctx, List<SpannableStringBuilder> content,
                                                    final Map<String, Object> data) {
-        if (data == null) {
-            return null;
-        }
-
         // Does object have viewport dimensions?
         int width = 0, height = 0;
-        Object tmp;
-        if ((tmp = data.get("width")) instanceof Number) {
-            width = ((Number) tmp).intValue();
-        }
-        if ((tmp = data.get("height")) instanceof Number) {
-            height = ((Number) tmp).intValue();
+        if (data != null) {
+            Object tmp;
+            if ((tmp = data.get("width")) instanceof Number) {
+                width = ((Number) tmp).intValue();
+            }
+            if ((tmp = data.get("height")) instanceof Number) {
+                height = ((Number) tmp).intValue();
+            }
         }
 
         if (width <= 0 || height <= 0) {

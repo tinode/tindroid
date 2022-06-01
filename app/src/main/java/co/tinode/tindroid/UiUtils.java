@@ -517,25 +517,6 @@ public class UiUtils {
         return sb.append(sec).toString();
     }
 
-    // Builds and returns a video call message text given call direction, state and duration.
-    // TODO: this should become a part of the Formatter interface.
-    @NonNull
-    public static SpannableStringBuilder videoCallMsg(Context context, boolean isOutgoing, String callState, int millis) {
-        String dir = isOutgoing ? "↗" : "↙";
-        SpannableStringBuilder cont = new SpannableStringBuilder(dir);
-        cont.setSpan(new ForegroundColorSpan(
-                        "disconnected".equals(callState) ? Color.RED : Color.GREEN),
-                0, dir.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        cont.setSpan(new StyleSpan(Typeface.BOLD), 0, dir.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(context.getString(isOutgoing ? R.string.outgoing_call : R.string.incoming_call));
-        if (millis > 0) {
-            sb.append(" (" + millisToTime(millis) + ")");
-        }
-        return cont.append(sb);
-    }
-
     // If an incoming info is a video call related,
     public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
         if ("call".equals(info.what)) {

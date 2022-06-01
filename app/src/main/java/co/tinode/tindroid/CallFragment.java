@@ -65,7 +65,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
 
-    private class CustomSdpObserver implements SdpObserver {
+    private static class CustomSdpObserver implements SdpObserver {
         private String tag;
 
         CustomSdpObserver(String logTag) {
@@ -121,11 +121,11 @@ public class CallFragment extends Fragment {
     int mCallSeqID;
 
     // Check if we have camera and mic permissions.
-    private ActivityResultLauncher<String[]>  mMediaPermissionLauncher =
+    private final ActivityResultLauncher<String[]>  mMediaPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
-                        Log.d(TAG, "The user has disallowed " + e.toString());
+                        Log.d(TAG, "The user has disallowed " + e);
                         handleCallClose();
                         return;
                     }
@@ -135,7 +135,7 @@ public class CallFragment extends Fragment {
             });
 
     // Listens for incoming call-related info messages.
-    private class InfoListener extends UiUtils.EventListener {
+    private static class InfoListener extends UiUtils.EventListener {
         private static final String TAG = "CallFragment.InfoListener";
 
         private CallFragment parent;
@@ -223,7 +223,8 @@ public class CallFragment extends Fragment {
             return;
         }
         String name = args.getString("topic");
-        mTopic = (ComTopic<VxCard>)Cache.getTinode().getTopic(name);
+        //noinspection unchecked
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         String callStateStr = args.getString("call_direction");
         mCallSeqID = args.getInt("call_seq");
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
@@ -247,34 +248,18 @@ public class CallFragment extends Fragment {
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
 
-        AudioManager audioManager = (AudioManager)getActivity()
-                .getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
         audioManager.setSpeakerphoneOn(true);
 
         // Button click handlers: mute/unmute video/audio, hang up.
-        v.findViewById(R.id.hangupBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                handleCallClose();
-            }
-        });
-        v.findViewById(R.id.toggleCameraBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleMedia((FloatingActionButton)v, true,
-                        R.drawable.ic_outline_videocam_24,
-                        R.drawable.ic_outline_videocam_off_24);
-            }
-        });
-        v.findViewById(R.id.toggleMicBtn).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toggleMedia((FloatingActionButton)v, false,
-                        R.drawable.ic_outline_mic_24,
-                        R.drawable.ic_outline_mic_off_24);
-            }
-        });
+        v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
+        v.findViewById(R.id.toggleCameraBtn).setOnClickListener(v12 ->
+                toggleMedia((FloatingActionButton) v12, true,
+                        R.drawable.ic_outline_videocam_24, R.drawable.ic_outline_videocam_off_24));
+        v.findViewById(R.id.toggleMicBtn).setOnClickListener(v13 ->
+                toggleMedia((FloatingActionButton) v13, false,
+                        R.drawable.ic_outline_mic_24, R.drawable.ic_outline_mic_off_24));
         return v;
     }
 
@@ -400,22 +385,33 @@ public class CallFragment extends Fragment {
     }
 
     private void initIceServers() {
-        // TODO: ICE/WebRTC config should be obtained from the server.
         mIceServers = new ArrayList<>();
-        mIceServers.add(PeerConnection.IceServer.builder("stun:bn-turn1.xirsys.com").createIceServer());
-
-        PeerConnection.IceServer.Builder bld = PeerConnection.IceServer.builder(
-                new ArrayList<>(Arrays.asList(
-                        "turn:bn-turn1.xirsys.com:80?transport=udp",
-                        "turn:bn-turn1.xirsys.com:3478?transport=udp",
-                        "turn:bn-turn1.xirsys.com:80?transport=tcp",
-                        "turn:bn-turn1.xirsys.com:3478?transport=tcp",
-                        "turns:bn-turn1.xirsys.com:443?transport=tcp",
-                        "turns:bn-turn1.xirsys.com:5349?transport=tcp"
-                )));
-        bld.setUsername("0kYXFmQL9xojOrUy4VFemlTnNPVFZpp7jfPjpB3AjxahuRe4QWrCs6Ll1vDc7TTjAAAAAGAG2whXZWJUdXRzUGx1cw==");
-        bld.setPassword("285ff060-5a58-11eb-b269-0242ac140004");
-        mIceServers.add(bld.createIceServer());
+        try {
+            //noinspection unchecked
+            List<Map<String,Object>> iceServersConfig =
+                    (List<Map<String,Object>>) Cache.getTinode().getServerParam("iceServers");
+            //noinspection ConstantConditions
+            for (Map<String,Object> server : iceServersConfig) {
+                //noinspection unchecked
+                List<String> urls = (List<String>) server.get("urls");
+                if (urls == null || urls.isEmpty()) {
+                    Log.w(TAG, "Invalid ICE server config: no URLs");
+                    continue;
+                }
+                PeerConnection.IceServer.Builder builder = PeerConnection.IceServer.builder(urls);
+                String username = (String) server.get("username");
+                if (username != null) {
+                    builder.setUsername(username);
+                }
+                String credential = (String) server.get("credential");
+                if (credential != null) {
+                    builder.setPassword(credential);
+                }
+                mIceServers.add(builder.createIceServer());
+            }
+        } catch (ClassCastException | NullPointerException ex) {
+            Log.w(TAG, "Unexpected format of server-provided ICE config", ex);
+        }
     }
 
     // Sends a hang-up notification to the peer and closes the fragment.
@@ -476,7 +472,7 @@ public class CallFragment extends Fragment {
     }
 
     // Auxiliary class to facilitate serialization of SDP data.
-    class SDPAux {
+    static class SDPAux {
         public final String type;
         public final String sdp;
         SDPAux(String type, String sdp) {
@@ -555,11 +551,14 @@ public class CallFragment extends Fragment {
             @Override
             public void onAddStream(MediaStream mediaStream) {
                 Log.d(TAG, "Received Remote stream.");
-                //super.onAddStream(mediaStream);
+                Activity activity = getActivity();
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
 
                 // Add remote media stream to the renderer.
                 final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
-                getActivity().runOnUiThread(() -> {
+                activity.runOnUiThread(() -> {
                     try {
                         mRemoteVideoView.setVisibility(View.VISIBLE);
                         videoTrack.addSink(mRemoteVideoView);
@@ -600,7 +599,8 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
-                Log.d(TAG, "onIceCandidatesRemoved() called with: iceCandidates = [" + iceCandidates + "]");
+                Log.d(TAG, "onIceCandidatesRemoved() called with: iceCandidates = [" +
+                        Arrays.toString(iceCandidates) + "]");
             }
 
             @Override
@@ -627,7 +627,8 @@ public class CallFragment extends Fragment {
                     public void onCreateSuccess(SessionDescription sessionDescription) {
                         super.onCreateSuccess(sessionDescription);
                         Log.d("onCreateSuccess", "setting local desc - setLocalDescription");
-                        mLocalPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"), sessionDescription);
+                        mLocalPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"),
+                                sessionDescription);
                         handleSendOffer(sessionDescription);
                     }
                 }, mSdpConstraints);
@@ -635,7 +636,8 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-                Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver + "], mediaStreams = [" + mediaStreams + "]");
+                Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver +
+                        "], mediaStreams = [" + Arrays.toString(mediaStreams) + "]");
             }
         });
 
@@ -661,15 +663,13 @@ public class CallFragment extends Fragment {
         }
 
         createPeerConnection();
-        Map<String, Object> m = (Map<String, Object>)info.payload;
+        //noinspection unchecked
+        Map<String, Object> m = (Map<String, Object>) info.payload;
         String type = (String) m.getOrDefault("type", "");
-        String sdp = (String)m.getOrDefault("sdp", "");
+        String sdp = (String) m.getOrDefault("sdp", "");
 
         mLocalPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
-                new SessionDescription(
-                        SessionDescription.Type.fromCanonicalForm(
-                                type.toLowerCase()),
-                        sdp));
+                new SessionDescription(SessionDescription.Type.fromCanonicalForm(type.toLowerCase()), sdp));
 
         mLocalPeer.createAnswer(new CustomSdpObserver("localCreateAns") {
             @Override
@@ -689,15 +689,14 @@ public class CallFragment extends Fragment {
             handleCallClose();
             return;
         }
-        Map<String, Object> m = (Map<String, Object>)info.payload;
+        //noinspection unchecked
+        Map<String, Object> m = (Map<String, Object>) info.payload;
         String type = (String) m.getOrDefault("type", "");
         String sdp = (String)m.getOrDefault("sdp", "");
 
+        //noinspection ConstantConditions
         mLocalPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
-                new SessionDescription(
-                        SessionDescription.Type.fromCanonicalForm(
-                                type.toLowerCase()),
-                        sdp));
+                new SessionDescription(SessionDescription.Type.fromCanonicalForm(type.toLowerCase()), sdp));
     }
 
     // Adds remote ICE candidate data received from the peer to the peer connection.
@@ -707,17 +706,19 @@ public class CallFragment extends Fragment {
             Log.e(TAG, "Received ICE candidate message an empty payload. Skipping.");
             return;
         }
-        Map<String, Object> m = (Map<String, Object>)info.payload;
-        String sdpMid = (String)m.getOrDefault("sdpMid", "");
-        int sdpMLineIndex = (int)m.getOrDefault("sdpMLineIndex", 0);
-        String sdp = (String)m.getOrDefault("sdp", "");
+        //noinspection unchecked
+        Map<String, Object> m = (Map<String, Object>) info.payload;
+        String sdpMid = (String) m.getOrDefault("sdpMid", "");
+        //noinspection ConstantConditions
+        int sdpMLineIndex = (int) m.getOrDefault("sdpMLineIndex", 0);
+        String sdp = (String) m.getOrDefault("sdp", "");
 
         mLocalPeer.addIceCandidate(new IceCandidate(sdpMid,
                 sdpMLineIndex, sdp));
     }
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
-    private class IceCandidateAux {
+    private static class IceCandidateAux {
         public String type;
         public int sdpMLineIndex;
         public String sdpMid;

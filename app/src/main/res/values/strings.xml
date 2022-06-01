@@ -248,8 +248,8 @@
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
     <string name="full_name_required">Full name required</string>
-    <string name="outgoing_call">Outgoing Call</string>
-    <string name="incoming_call">Incoming Call</string>
+    <string name="outgoing_call">Outgoing call</string>
+    <string name="incoming_call">Incoming call</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
     <string name="permission_missing">Required permission is missing</string>
@@ -329,4 +329,6 @@
     <string name="caller_name">Caller Name</string>
     <string name="action_accept_call">Accept</string>
     <string name="action_decline_call">Decline</string>
+    <string name="missed_call">missed</string>
+    <string name="cancelled_call">cancelled</string>
 </resources>

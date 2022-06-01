@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.R;
@@ -27,19 +28,10 @@ import co.tinode.tindroid.UiUtils;
 public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBuilder> {
     private final float mFontSize;
 
-    // Video call related bits.
-    private String mCallState;
-    private boolean mCallIsOutgoing;
-
     public PreviewFormatter(final Context context, float fontSize) {
         super(context);
 
         mFontSize = fontSize;
-    }
-
-    public void setVideoCallContext(String state, boolean isOutgoing) {
-        mCallState = state;
-        mCallIsOutgoing = isOutgoing;
     }
 
     @Override
@@ -92,7 +84,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         return join(content);
     }
 
-    protected SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
+    protected SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @Nullable String str) {
         SpannableStringBuilder node = null;
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         if (icon != null) {
@@ -102,16 +94,21 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
             node = new SpannableStringBuilder(" ");
             node.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, node.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            if (stringId != -1) {
-                node.append(" ").append(res.getString(stringId));
+            if (str != null) {
+                node.append(" ").append(str);
             }
         }
         return node;
     }
 
+    protected SpannableStringBuilder annotatedIcon(Context ctx, @DrawableRes int iconId, @StringRes int stringId) {
+        String str = stringId != 0 ? ctx.getResources().getString(stringId) : null;
+        return annotatedIcon(ctx, iconId, str);
+    }
+
     @Override
     protected SpannableStringBuilder handleAudio(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_mic_ol, -1);
+        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_mic_ol, 0);
         node.append(" ");
         Number duration = null;
         try {
@@ -181,8 +178,30 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     }
 
     @Override
-    protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        return UiUtils.videoCallMsg(ctx, mCallIsOutgoing, mCallState, -1);
+    protected SpannableStringBuilder handleVideoCall(Context ctx, List<SpannableStringBuilder> content,
+                                                     Map<String, Object> data) {
+        if (data == null) {
+            return handleUnknown(ctx, content, data);
+        }
+
+        Object val = data.get("incoming");
+        boolean incoming = val instanceof Boolean ? (Boolean) val : false;
+        val = data.get("duration");
+        int duration = val instanceof Number ? ((Number) val).intValue() : 0;
+        val = data.get("state");
+        String state = val instanceof String ? (String) val : "";
+
+        boolean success = !"disconnected".equals(state);
+
+        SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_call, 0);
+        node.append(" ");
+        String status = duration > 0 ?
+                millisToTime(duration, false).toString() :
+                ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call);
+        node.append(annotatedIcon(ctx, incoming ?
+                (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
+                (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled), status));
+        return node;
     }
 
     @Override

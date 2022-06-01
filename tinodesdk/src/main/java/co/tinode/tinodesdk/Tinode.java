@@ -83,13 +83,17 @@ public class Tinode {
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_CHN_PREFIX = "chn";
     public static final String TOPIC_USR_PREFIX = "usr";
-    // Names of server-provided limits.
+    // Names of server-provided numeric limits.
     public static final String MAX_MESSAGE_SIZE = "maxMessageSize";
     public static final String MAX_SUBSCRIBER_COUNT = "maxSubscriberCount";
     public static final String MAX_TAG_LENGTH = "maxTagLength";
     public static final String MIN_TAG_LENGTH = "minTagLength";
     public static final String MAX_TAG_COUNT = "maxTagCount";
     public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+    private static final String[] SERVER_LIMITS = new String[]{
+            MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT, MAX_TAG_LENGTH, MIN_TAG_LENGTH,
+            MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE};
+
     // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
     // Notifications {note}.
@@ -176,7 +180,7 @@ public class Tinode {
     // Indicator that login is in progress
     private Boolean mLoginInProgress = false;
 
-    private Map<String, Long> mServerLimits = null;
+    private Map<String, Object> mServerParams = null;
 
     /**
      * Initialize Tinode package
@@ -928,12 +932,23 @@ public class Tinode {
      * @param defaultValue default value if limit is missing.
      * @return limit or default value.
      */
-    public long getServerLimit(String key, long defaultValue) {
-        Long val = mServerLimits != null ? mServerLimits.get(key) : null;
-        if (val != null) {
-            return val;
+    public long getServerLimit(@NotNull String key, long defaultValue) {
+        Object val = mServerParams != null ? mServerParams.get(key) : null;
+        if (val instanceof Long) {
+            return (Long) val;
         }
         return defaultValue;
+    }
+
+    /**
+     * Get generic server-provided named parameter.
+     *
+     * @param key name of the parameter.
+     * @return parameter value of null.
+     */
+    @Nullable
+    public Object getServerParam(@NotNull String key) {
+        return mServerParams != null ? mServerParams.get(key) : null;
     }
 
     /**
@@ -1138,16 +1153,17 @@ public class Tinode {
                         if (pkt.ctrl == null) {
                             throw new InvalidObjectException("Unexpected type of reply packet to hello");
                         }
-                        if (pkt.ctrl.params != null) {
-                            mServerVersion = (String) pkt.ctrl.params.get("ver");
-                            mServerBuild = (String) pkt.ctrl.params.get("build");
-                            mServerLimits = new HashMap<>();
-                            for (String key : new String[]{MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT,
-                                    MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE}) {
+                        Map<String,Object> params = pkt.ctrl.params;
+                        if (params != null) {
+                            mServerVersion = (String) params.get("ver");
+                            mServerBuild = (String) params.get("build");
+                            mServerParams = new HashMap<>(params);
+                            // Convert some parameters to Long values.
+                            for (String key : SERVER_LIMITS) {
                                 try {
-                                    Number val = ((Number) pkt.ctrl.params.get(key));
+                                    Number val = ((Number) mServerParams.get(key));
                                     if (val != null) {
-                                        mServerLimits.put(key, val.longValue());
+                                        mServerParams.put(key, val.longValue());
                                     } else {
                                         Log.w(TAG, "Server limit '" + key + "' is missing");
                                     }
@@ -1458,7 +1474,7 @@ public class Tinode {
             public void onFinally() {
                 disconnect(false);
                 mMyUid = null;
-                mServerLimits = null;
+                mServerParams = null;
 
                 if (mStore != null) {
                     mStore.logout();

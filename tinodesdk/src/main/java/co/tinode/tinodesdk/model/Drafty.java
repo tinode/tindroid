@@ -84,8 +84,8 @@ public class Drafty implements Serializable {
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
 
     private static final String[] DATA_FIELDS =
-            new String[]{"act", "duration", "height", "mime", "name", "preview", "ref",
-                    "size", "title", "url", "val", "width"};
+            new String[]{"act", "duration", "height", "incoming", "mime", "name", "preview", "ref",
+                    "size", "state", "title", "url", "val", "width"};
 
     private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
     static {
@@ -840,6 +840,31 @@ public class Drafty implements Serializable {
                 new Entity("VC")
         };
         return d;
+    }
+
+    @SuppressWarnings("UnusedReturnValue")
+    public static Drafty updateVideoEnt(@NotNull Drafty src, @Nullable Map<String, Object> params, boolean incoming) {
+        // The video element could be just a format or a format + entity.
+        // Must ensure it's the latter first.
+        Style[] fmt = src.fmt;
+        if (fmt == null || fmt.length == 0 || (fmt[0].tp != null && !"VC".equals(fmt[0].tp)) || params == null) {
+            return src;
+        }
+
+        if (fmt[0].tp != null) {
+            // Just a format, convert to format + entity.
+            fmt[0].tp = null;
+            fmt[0].key = 0;
+            src.ent = new Entity[]{new Entity("VC")};
+        } else if (src.ent == null || src.ent.length == 0 || !"VC".equals(src.ent[0].tp)) {
+            // No VC entity.
+            return src;
+        }
+        src.ent[0].putData("state", params.get("webrtc"));
+        src.ent[0].putData("duration", params.get("webrtc-duration"));
+        src.ent[0].putData("incoming", incoming);
+
+        return src;
     }
 
     /**
