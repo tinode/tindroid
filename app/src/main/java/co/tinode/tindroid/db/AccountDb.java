@@ -15,16 +15,17 @@ import android.provider.BaseColumns;
  */
 public class AccountDb implements BaseColumns {
     static final String TABLE_NAME = "accounts";
-    /**
-     * Statements to drop accounts table and index
-     */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
+
     private static final String COLUMN_NAME_UID = "uid";
     private static final String COLUMN_NAME_ACTIVE = "last_active";
     private static final String COLUMN_NAME_HOST_URI = "host_uri";
     private static final String COLUMN_NAME_CRED_METHODS = "cred_methods";
     private static final String COLUMN_NAME_DEVICE_ID = "device_id";
+
+    /**
+     * Statements to drop accounts table and index
+     */
+    static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
 
     /**
      * Statement to create account table - mapping of account UID to long id

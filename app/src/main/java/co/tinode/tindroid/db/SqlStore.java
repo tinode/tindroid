@@ -125,6 +125,7 @@ public class SqlStore implements Storage {
                 db.beginTransaction();
 
                 if (hard) {
+                    EditHistoryDb.deleteAll(db, st.id);
                     MessageDb.deleteAll(db, st.id);
                     SubscriberDb.deleteForTopic(db, st.id);
                     TopicDb.delete(db, st.id);

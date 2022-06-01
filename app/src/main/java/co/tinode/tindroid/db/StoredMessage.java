@@ -127,4 +127,20 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
     public boolean isSynced() {
         return status == BaseDb.Status.SYNCED;
     }
+
+    public boolean isReplacement() {
+        return getHeader("replace") != null;
+    }
+
+    public int getReplacementSeqId() {
+        String replace = getStringHeader("replace");
+        if (replace == null || replace.length() < 2 || replace.charAt(0) != ':') {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(replace.substring(1));
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
+    }
 }

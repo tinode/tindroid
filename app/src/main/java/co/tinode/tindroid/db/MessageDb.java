@@ -31,6 +31,8 @@ import co.tinode.tinodesdk.model.MsgRange;
  * public T content -> serialized into JSON;
  */
 public class MessageDb implements BaseColumns {
+    private static final String TAG = "MessageDb";
+
     static final int MESSAGE_PREVIEW_LENGTH = 80;
     /**
      * The name of the main table.
@@ -40,24 +42,6 @@ public class MessageDb implements BaseColumns {
      * Topic ID, references topics._ID
      */
     static final String COLUMN_NAME_TOPIC_ID = "topic_id";
-    /**
-     * SQL statement to drop Messages table.
-     */
-    static final String DROP_TABLE =
-            "DROP TABLE IF EXISTS " + TABLE_NAME;
-    static final int COLUMN_IDX_ID = 0;
-    static final int COLUMN_IDX_TOPIC_ID = 1;
-    static final int COLUMN_IDX_USER_ID = 2;
-    static final int COLUMN_IDX_STATUS = 3;
-    static final int COLUMN_IDX_SENDER = 4;
-    static final int COLUMN_IDX_TS = 5;
-    static final int COLUMN_IDX_SEQ = 6;
-    static final int COLUMN_IDX_HIGH = 7;
-    static final int COLUMN_IDX_DEL_ID = 8;
-    static final int COLUMN_IDX_HEAD = 9;
-    static final int COLUMN_IDX_CONTENT = 10;
-    static final int COLUMN_IDX_TOPIC_NAME = 11;
-    private static final String TAG = "MessageDb";
     /**
      * Id of the originator of the message, references users._ID
      */
@@ -90,6 +74,10 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_DEL_ID = "del_id";
     /**
+     * If the message replaces another message, the ID of the message being replaced.
+     */
+    private static final String COLUMN_NAME_REPLACES_SEQ ="repl_seq";
+    /**
      * Serialized header.
      */
     private static final String COLUMN_NAME_HEAD = "head";
@@ -113,12 +101,27 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_SEQ + " INT," +
                     COLUMN_NAME_HIGH + " INT," +
                     COLUMN_NAME_DEL_ID + " INT," +
+                    COLUMN_NAME_REPLACES_SEQ + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
+
+    static final int COLUMN_IDX_ID = 0;
+    static final int COLUMN_IDX_TOPIC_ID = 1;
+    static final int COLUMN_IDX_USER_ID = 2;
+    static final int COLUMN_IDX_STATUS = 3;
+    static final int COLUMN_IDX_SENDER = 4;
+    static final int COLUMN_IDX_TS = 5;
+    static final int COLUMN_IDX_SEQ = 6;
+    static final int COLUMN_IDX_HIGH = 7;
+    static final int COLUMN_IDX_DEL_ID = 8;
+    static final int COLUMN_IDX_HEAD = 9;
+    static final int COLUMN_IDX_CONTENT = 10;
+    static final int COLUMN_IDX_TOPIC_NAME = 11;
+
     /**
-     * Name of the topic when doing a join.
+     * SQL statement to drop Messages table.
      */
-    private static final String COLUMN_NAME_TOPIC_NAME = "topic";
+    static final String DROP_TABLE = "DROP TABLE IF EXISTS " + TABLE_NAME;
     /**
      * The name of index: messages by topic and sequence.
      */
@@ -126,8 +129,7 @@ public class MessageDb implements BaseColumns {
     /**
      * Drop the index too
      */
-    static final String DROP_INDEX =
-            "DROP INDEX IF EXISTS " + INDEX_NAME;
+    static final String DROP_INDEX = "DROP INDEX IF EXISTS " + INDEX_NAME;
     /**
      * Add unique index on topic-seq, in descending order
      */
@@ -144,10 +146,29 @@ public class MessageDb implements BaseColumns {
      */
     static long insert(SQLiteDatabase db, Topic topic, StoredMessage msg) {
         if (msg.id > 0) {
+            // Message is already inserted.
             return msg.id;
         }
 
         db.beginTransaction();
+        try {
+            msg.id = insertRaw(db, topic, msg, -1);
+        } catch (Exception ex) {
+            Log.w(TAG, "Insert failed", ex);
+        } finally {
+            db.endTransaction();
+        }
+
+        return msg.id;
+    }
+
+    /**
+     * Save message to DB
+     *
+     * @return ID of the newly added message
+     */
+    private static long insertRaw(SQLiteDatabase db, Topic topic, StoredMessage msg, int withSeq) {
+        long id = -1;
         try {
             if (msg.topicId <= 0) {
                 msg.topicId = TopicDb.getId(db, msg.topic);
@@ -158,7 +179,7 @@ public class MessageDb implements BaseColumns {
 
             if (msg.userId <= 0 || msg.topicId <= 0) {
                 Log.w(TAG, "Failed to insert message " + msg.seq);
-                return -1;
+                return id;
             }
 
             BaseDb.Status status;
@@ -176,25 +197,24 @@ public class MessageDb implements BaseColumns {
             values.put(COLUMN_NAME_STATUS, status.value);
             values.put(COLUMN_NAME_SENDER, msg.from);
             values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
-            values.put(COLUMN_NAME_SEQ, msg.seq);
+            values.put(COLUMN_NAME_SEQ, withSeq > 0 ? withSeq : msg.seq);
+            int replacesSeq = msg.getReplacementSeqId();
+            if (withSeq <= 0 && replacesSeq > 0) {
+                values.put(COLUMN_NAME_REPLACES_SEQ, replacesSeq);
+            }
             values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
-            msg.id = db.insertOrThrow(TABLE_NAME, null, values);
-            db.setTransactionSuccessful();
+            id = db.insertOrThrow(TABLE_NAME, null, values);
         } catch (SQLiteConstraintException ex) {
-            // Duplicate topics_id - seq value? Try finding the original.
-            msg.id = getId(db, msg.topicId, msg.seq);
-            if (msg.id <= 0) {
+            // Duplicate topic_id + seq value? Try finding the original.
+            id = getId(db, msg.topicId, msg.seq);
+            if (id <= 0) {
                 Log.w(TAG, "Insert failed", ex);
             }
-        } catch (Exception ex) {
-            Log.w(TAG, "Insert failed", ex);
-        } finally {
-            db.endTransaction();
         }
 
-        return msg.id;
+        return id;
     }
 
     static boolean updateStatusAndContent(SQLiteDatabase db, long msgId, BaseDb.Status status, Object content) {
@@ -221,6 +241,37 @@ public class MessageDb implements BaseColumns {
         return updated > 0;
     }
 
+    /**
+     * Replace headers and content of the message at oldSeq with the new message.
+     * Save the old message to edit_history table.
+     *
+     * @param db    Database to use.
+     * @param topic Tinode topic the message belongs to.
+     * @param oldSeq seq ID of the message being replaced.
+     * @param msg new message to replace the old one.
+     */
+    static void editMessage(SQLiteDatabase db, Topic topic, int oldSeq, StoredMessage msg) {
+        // Find old message. If old message is missing insert with the old seq, otherwise update.
+        if (msg.topicId <= 0) {
+            msg.topicId = TopicDb.getId(db, msg.topic);
+        }
+
+        long oldId = getId(db, msg.topicId, oldSeq);
+        if (oldId <= 0) {
+            insertRaw(db, topic, msg, oldSeq);
+        } else {
+            StoredMessage oldMsg = StoredMessage.readMessage(getMessageById(db, oldId), -1);
+
+            // Update the old message.
+            ContentValues values = new ContentValues();
+            values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
+            values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
+            db.update(TABLE_NAME, values, _ID + "=" + oldId, null);
+
+            // Save the old message to history.
+            EditHistoryDb.insert(db, msg.topicId, oldMsg, msg.seq, msg.ts);
+        }
+    }
 
     /**
      * Query latest messages
@@ -569,6 +620,17 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Delete single message by database ID.
+     *
+     * @param db    Database to use.
+     * @param msgId Database ID of the message (_id).
+     * @return true on success, false on failure
+     */
+    static boolean delete(SQLiteDatabase db, long msgId) {
+        return db.delete(TABLE_NAME, _ID + "=" + msgId, null) > 0;
+    }
+
+    /**
      * Delete all messages in a given topic, no exceptions. Use only when deleting the topic.
      *
      * @param db      Database to use.
@@ -600,16 +662,6 @@ public class MessageDb implements BaseColumns {
         return affected > 0;
     }
 
-    /**
-     * Delete single message by database ID.
-     *
-     * @param db    Database to use.
-     * @param msgId Database ID of the message (_id).
-     * @return true on success, false on failure
-     */
-    static boolean delete(SQLiteDatabase db, long msgId) {
-        return db.delete(TABLE_NAME, _ID + "=" + msgId, null) > 0;
-    }
 
     /**
      * Get locally-unique ID of the message (content of _ID field).
@@ -632,19 +684,14 @@ public class MessageDb implements BaseColumns {
     }
 
     private static long getId(SQLiteDatabase db, long topicId, int seq) {
-        long id = -1;
-        Cursor c = db.query(
-                TABLE_NAME, new String[]{_ID},
-                COLUMN_NAME_TOPIC_ID + "=?" + " AND " + COLUMN_NAME_SEQ + "=?",
-                new String[]{Long.toString(topicId), Integer.toString(seq)},
-                null, null, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                id = c.getLong(0);
-            }
-            c.close();
+        try {
+            return db.compileStatement("SELECT " + _ID + " FROM " + TABLE_NAME +
+                    " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
+                    COLUMN_NAME_SEQ + "=" + seq).simpleQueryForLong();
+        } catch (SQLException ignored) {
+            // Message not found
+            return -1;
         }
-        return id;
     }
 
     /**

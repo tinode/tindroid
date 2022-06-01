@@ -52,6 +52,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.StringTokenizer;
 import java.util.TreeSet;
 import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
@@ -127,67 +129,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
-
-    private class CachedCursor {
-        Cursor mCursor;
-        ArrayList<StoredMessage> mMessages;
-        Map<Integer, TreeSet<StoredMessage>> mVersions;
-        Comparator<StoredMessage> mComparator;
-
-        public Cursor getCursor() { return mCursor; }
-
-        public void cleanUp() {
-            if (mCursor != null) {
-                mCursor.close();
-            }
-            if (mMessages != null) {
-                mMessages.clear();
-            }
-            if (mVersions != null) {
-                mVersions.clear();
-            }
-        }
-
-        public StoredMessage getLatestVersion(StoredMessage msg) {
-            TreeSet<StoredMessage> versions = mVersions.get(msg.getSeqId());
-            return versions != null ? versions.last() : msg;
-        }
-
-        public TreeSet<StoredMessage> getVersions(int seq) {
-            return mVersions.get(seq);
-        }
-
-        public CachedCursor(Cursor cur) {
-            mCursor = cur;
-            if (cur == null) {
-                return;
-            }
-            mMessages = new ArrayList<>();
-            mComparator = (a, b) -> a.seq - b.seq;
-            mVersions = new HashMap<>();
-            while (mCursor.moveToNext()) {
-                StoredMessage msg = StoredMessage.readMessage(mCursor, -1);
-                mMessages.add(msg);
-                String replace = msg.getStringHeader("replace");
-                if (replace != null && !replace.isEmpty()) {
-                    String[] parts = replace.split(":");
-                    int seq = -1;
-                    try {
-                        seq = Integer.parseInt(parts[1]);
-                    } catch (NumberFormatException ignored) {
-                    }
-                    if (seq > 0) {
-                        TreeSet<StoredMessage> versions = mVersions.get(seq);
-                        if (versions == null) {
-                            versions = new TreeSet<>(mComparator);
-                            mVersions.put(seq, versions);
-                        }
-                        versions.add(msg);
-                    }
-                }
-            }
-        }
-    }
 
     private final MessageActivity mActivity;
     private final ActionMode.Callback mSelectionModeCallback;
@@ -622,7 +563,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return;
         }
 
-        if (m.getHeader("replace") != null) {
+        if (m.isReplacement()) {
             // It is a replacement message. Hide it.
             holder.itemView.setVisibility(View.GONE);
             holder.itemView.setLayoutParams(new RecyclerView.LayoutParams(0, 0));
@@ -1045,6 +986,51 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         if (state == null || !state.isFinished()) {
             wm.cancelUniqueWork(uniqueID);
+        }
+    }
+
+    private static class CachedCursor {
+        Cursor mCursor;
+        ArrayList<StoredMessage> mMessages;
+        Map<Integer, TreeSet<StoredMessage>> mVersions;
+        Comparator<StoredMessage> mComparator;
+
+        public Cursor getCursor() { return mCursor; }
+
+        public void cleanUp() {
+            if (mCursor != null) {
+                mCursor.close();
+            }
+            if (mMessages != null) {
+                mMessages.clear();
+            }
+            if (mVersions != null) {
+                mVersions.clear();
+            }
+        }
+
+        public StoredMessage getLatestVersion(StoredMessage msg) {
+            TreeSet<StoredMessage> versions = mVersions.get(msg.getSeqId());
+            return versions != null ? versions.last() : msg;
+        }
+
+        public CachedCursor(Cursor cur) {
+            mCursor = cur;
+            if (cur == null) {
+                return;
+            }
+            mMessages = new ArrayList<>();
+            mComparator = Comparator.comparingInt(a -> a.seq);
+            mVersions = new HashMap<>();
+            while (mCursor.moveToNext()) {
+                StoredMessage msg = StoredMessage.readMessage(mCursor, -1);
+                mMessages.add(msg);
+                int seq = msg.getReplacementSeqId();
+                if (seq > 0) {
+                    TreeSet<StoredMessage> versions = mVersions.computeIfAbsent(seq, k -> new TreeSet<>(mComparator));
+                    versions.add(msg);
+                }
+            }
         }
     }
 
