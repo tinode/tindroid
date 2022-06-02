@@ -47,12 +47,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeSet;
 import java.util.TimeZone;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -968,7 +966,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             wm.cancelUniqueWork(uniqueID);
         }
     }
-    
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mIcon;
