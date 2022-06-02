@@ -93,6 +93,8 @@ public class SqlStore implements Storage {
             do {
                 list[i++] = TopicDb.readOne(tinode, c);
             } while (c.moveToNext());
+
+            c.close();
             return list;
         }
         return null;
