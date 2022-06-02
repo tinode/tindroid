@@ -679,7 +679,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Object val = data.get("incoming");
         boolean incoming = val instanceof Boolean ? (Boolean) val : false;
         result.append(ctx.getString(incoming ? R.string.incoming_call : R.string.outgoing_call),
-                new RelativeSizeSpan(1.2f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                new RelativeSizeSpan(1.15f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         val = data.get("duration");
         int duration = val instanceof Number ? ((Number) val).intValue() : 0;

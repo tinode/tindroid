@@ -276,6 +276,7 @@ public class MessageDb implements BaseColumns {
             insertRaw(db, topic, msg, oldSeq);
         } else {
             Cursor cursor = getMessageById(db, oldId);
+            cursor.moveToFirst();
             oldMsg = StoredMessage.readMessage(cursor, -1);
             cursor.close();
 
