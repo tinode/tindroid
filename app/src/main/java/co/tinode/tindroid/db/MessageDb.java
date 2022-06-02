@@ -270,14 +270,11 @@ public class MessageDb implements BaseColumns {
             msg.topicId = TopicDb.getId(db, msg.topic);
         }
 
-        Log.i(TAG, "Replacing message " + oldSeq + " with " + msg.seq);
         long oldId = getId(db, msg.topicId, oldSeq);
         StoredMessage oldMsg = null;
         if (oldId <= 0) {
-            Log.i(TAG, "Not found, inserting " + msg.seq);
             insertRaw(db, topic, msg, oldSeq);
         } else {
-            Log.i(TAG, "Found, updating " + msg.seq);
             Cursor cursor = getMessageById(db, oldId);
             oldMsg = StoredMessage.readMessage(cursor, -1);
             cursor.close();

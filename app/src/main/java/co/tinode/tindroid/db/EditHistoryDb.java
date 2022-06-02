@@ -119,7 +119,6 @@ public class EditHistoryDb implements BaseColumns {
         // Check if message placeholder already exists in history.
         HistoryRec rec = getRecord(db, topicId, oldSeq);
         if (rec != null) {
-            Log.i(TAG, "Updating " + oldSeq);
             // Record exists: update it with the values from the message.
             // oldMsg must not be null in this case.
             ContentValues values = new ContentValues();
@@ -128,7 +127,6 @@ public class EditHistoryDb implements BaseColumns {
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(oldMsg.content));
             db.update(TABLE_NAME, values, _ID + "=" + rec.id, null);
         } else {
-            Log.i(TAG, "Inserting " + oldSeq);
             // No record fund, create.
             // oldMsg could be NULL.
             ContentValues values = new ContentValues();
