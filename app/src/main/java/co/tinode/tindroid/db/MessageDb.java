@@ -13,6 +13,7 @@ import android.util.Log;
 import java.util.ArrayList;
 import java.util.Date;
 
+import androidx.annotation.NonNull;
 import androidx.loader.content.CursorLoader;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgRange;
@@ -114,9 +115,11 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_SEQ = 6;
     static final int COLUMN_IDX_HIGH = 7;
     static final int COLUMN_IDX_DEL_ID = 8;
-    static final int COLUMN_IDX_HEAD = 9;
-    static final int COLUMN_IDX_CONTENT = 10;
-    static final int COLUMN_IDX_TOPIC_NAME = 11;
+    static final int COLUMN_IDX_REPLACES_SEQ = 9;
+    static final int COLUMN_IDX_HEAD = 10;
+    static final int COLUMN_IDX_CONTENT = 11;
+    // Used in JOIN.
+    static final int COLUMN_IDX_TOPIC_NAME = 12;
 
     /**
      * SQL statement to drop Messages table.
@@ -153,6 +156,13 @@ public class MessageDb implements BaseColumns {
         db.beginTransaction();
         try {
             msg.id = insertRaw(db, topic, msg, -1);
+            if (msg.id > 0) {
+                int oldSeq = msg.getReplacementSeqId();
+                if (oldSeq > 0) {
+                    replaceMessage(db, topic, oldSeq, msg);
+                }
+                db.setTransactionSuccessful();
+            }
         } catch (Exception ex) {
             Log.w(TAG, "Insert failed", ex);
         } finally {
@@ -210,7 +220,11 @@ public class MessageDb implements BaseColumns {
             // Duplicate topic_id + seq value? Try finding the original.
             id = getId(db, msg.topicId, msg.seq);
             if (id <= 0) {
+                // Original not found. It's a bug.
                 Log.w(TAG, "Insert failed", ex);
+            } else {
+                // Original found, maybe it's a saved earlier replacer message?
+                updateReplaced(db, id, msg);
             }
         }
 
@@ -250,31 +264,48 @@ public class MessageDb implements BaseColumns {
      * @param oldSeq seq ID of the message being replaced.
      * @param msg new message to replace the old one.
      */
-    static void editMessage(SQLiteDatabase db, Topic topic, int oldSeq, StoredMessage msg) {
+    private static void replaceMessage(SQLiteDatabase db, Topic topic, int oldSeq, StoredMessage msg) {
         // Find old message. If old message is missing insert with the old seq, otherwise update.
         if (msg.topicId <= 0) {
             msg.topicId = TopicDb.getId(db, msg.topic);
         }
 
+        Log.i(TAG, "Replacing message " + oldSeq + " with " + msg.seq);
         long oldId = getId(db, msg.topicId, oldSeq);
+        StoredMessage oldMsg = null;
         if (oldId <= 0) {
+            Log.i(TAG, "Not found, inserting " + msg.seq);
             insertRaw(db, topic, msg, oldSeq);
         } else {
-            StoredMessage oldMsg = StoredMessage.readMessage(getMessageById(db, oldId), -1);
+            Log.i(TAG, "Found, updating " + msg.seq);
+            Cursor cursor = getMessageById(db, oldId);
+            oldMsg = StoredMessage.readMessage(cursor, -1);
+            cursor.close();
 
             // Update the old message.
             ContentValues values = new ContentValues();
             values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
             values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
             db.update(TABLE_NAME, values, _ID + "=" + oldId, null);
-
-            // Save the old message to history.
-            EditHistoryDb.insert(db, msg.topicId, oldMsg, msg.seq, msg.ts);
         }
+        // Save the old message to history.
+        EditHistoryDb.upsert(db, msg.topicId, oldMsg, oldSeq, msg.seq, msg.ts);
+    }
+
+    // A placeholder message in history is updated with actual data.
+    private static void updateReplaced(SQLiteDatabase db, long oldId, @NonNull StoredMessage msg) {
+        ContentValues values = new ContentValues();
+        // Only timestamp should be updated in Messages table.
+        values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
+        db.update(TABLE_NAME, values, _ID + "=" + oldId, null);
+
+        // Save the old message to history.
+        EditHistoryDb.upsert(db, msg.topicId, msg, msg.seq, -1, msg.ts);
     }
 
     /**
      * Query latest messages
+     * Returned cursor must be closed after use.
      *
      * @param db        database to select from;
      * @param topicId   Tinode topic ID (topics._id) to select from
@@ -286,6 +317,8 @@ public class MessageDb implements BaseColumns {
         final String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE "
                 + COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND "
+                + COLUMN_NAME_REPLACES_SEQ + " IS NULL" +
                 " ORDER BY "
                 + COLUMN_NAME_SEQ + " DESC" +
                 " LIMIT " + (pageCount * pageSize);
@@ -295,6 +328,7 @@ public class MessageDb implements BaseColumns {
 
     /**
      * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
+     * Cursor must be closed after use.
      *
      * @param db    database to select from;
      * @param msgId _id of the message to retrieve.
