@@ -331,4 +331,8 @@
     <string name="action_decline_call">Decline</string>
     <string name="missed_call">missed</string>
     <string name="cancelled_call">cancelled</string>
+    <string name="toggle_camera_button">Toggle camera</string>
+    <string name="toggle_microphone_button">Mute/unmute call</string>
+    <string name="finish_call_button">Finish call</string>
+    <string name="video_calls_unavailable">Video calls unavailable</string>
 </resources>

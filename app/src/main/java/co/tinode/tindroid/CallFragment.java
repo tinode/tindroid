@@ -12,17 +12,21 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.Camera1Enumerator;
+import org.webrtc.CameraEnumerationAndroid;
 import org.webrtc.CameraEnumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
@@ -65,35 +69,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
 
-    private static class CustomSdpObserver implements SdpObserver {
-        private String tag;
-
-        CustomSdpObserver(String logTag) {
-            tag = this.getClass().getCanonicalName();
-            this.tag = this.tag + " " + logTag;
-        }
-
-        @Override
-        public void onCreateSuccess(SessionDescription sessionDescription) {
-            Log.d(tag, "onCreateSuccess() called with: sessionDescription = [" + sessionDescription + "]");
-        }
-
-        @Override
-        public void onSetSuccess() {
-            Log.d(tag, "onSetSuccess() called");
-        }
-
-        @Override
-        public void onCreateFailure(String s) {
-            Log.d(tag, "onCreateFailure() called with: s = [" + s + "]");
-        }
-
-        @Override
-        public void onSetFailure(String s) {
-            Log.d(tag, "onSetFailure() called with: s = [" + s + "]");
-        }
-    }
-
     PeerConnectionFactory mPeerConnectionFactory;
     MediaConstraints mAudioConstraints;
     MediaConstraints mVideoConstraints;
@@ -134,52 +109,80 @@ public class CallFragment extends Fragment {
                 this.startMediaAndSignal();
             });
 
-    // Listens for incoming call-related info messages.
-    private static class InfoListener extends UiUtils.EventListener {
-        private static final String TAG = "CallFragment.InfoListener";
-
-        private CallFragment parent;
-
-        InfoListener(Activity owner, Boolean connected) {
-            super(owner, connected);
-        }
-
-        public void setParent(CallFragment parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        public void onInfoMessage(MsgServerInfo info) {
-            if (!"call".equals(info.what)) {
-                // We are only interested in "call" info messages.
-                return;
-            }
-            switch (info.event) {
-                case "accept":
-                    this.parent.handleVideoCallAccepted();
-                    break;
-                case "offer":
-                    this.parent.handleVideoOfferMsg(info);
-                    break;
-                case "answer":
-                    this.parent.handleVideoAnswerMsg(info);
-                    break;
-                case "ice-candidate":
-                    this.parent.handleNewICECandidateMsg(info);
-                    break;
-                case "hang-up":
-                    this.parent.handleRemoteHangup(info);
-                    break;
-                default:
-                    break;
-            }
-        }
-    }
-
     private ComTopic<VxCard> mTopic;
     private InfoListener mTinodeListener;
 
     public CallFragment() {}
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View v = inflater.inflate(R.layout.fragment_call, container, false);
+        mLocalVideoView = v.findViewById(R.id.localView);
+        mRemoteVideoView = v.findViewById(R.id.remoteView);
+
+        AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_CALL);
+        audioManager.setSpeakerphoneOn(true);
+
+        // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
+        v.findViewById(R.id.toggleSpeakerphoneBtn).setOnClickListener(v0 ->
+                toggleSpeakerphone((FloatingActionButton) v0));
+        v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
+        v.findViewById(R.id.toggleCameraBtn).setOnClickListener(v2 ->
+                toggleMedia((FloatingActionButton) v2, true,
+                        R.drawable.ic_videocam, R.drawable.ic_videocam_off));
+        v.findViewById(R.id.toggleMicBtn).setOnClickListener(v3 ->
+                toggleMedia((FloatingActionButton) v3, false,
+                        R.drawable.ic_mic, R.drawable.ic_mic_off));
+        return v;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
+        final MessageActivity activity = (MessageActivity) getActivity();
+        final Bundle args = getArguments();
+        if (args == null || activity == null) {
+            // Reject the call.
+            handleCallClose();
+            return;
+        }
+        String name = args.getString("topic");
+        //noinspection unchecked
+        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
+        String callStateStr = args.getString("call_direction");
+        mCallSeqID = args.getInt("call_seq");
+        mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
+
+        VxCard pub = mTopic.getPub();
+        UiUtils.setAvatar(view.findViewById(R.id.imageAvatar), pub, name, false);
+        String peerName = pub != null ? pub.fn : null;
+        if (TextUtils.isEmpty(peerName)) {
+            peerName = getResources().getString(R.string.unknown);
+        }
+        ((TextView) view.findViewById(R.id.peerName)).setText(peerName);
+
+        // TODO: use WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS to show call window fullscreen.
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Check permissions.
+        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
+        if (!missing.isEmpty()) {
+            Log.d(TAG,"Requesting missing permissions:" + missing);
+            mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
+            return;
+        }
+
+        // Got all necessary permissions.
+        startMediaAndSignal();
+    }
+
+    @Override
+    public void onDestroyView() {
+        this.stopMediaAndSignal();
+        super.onDestroyView();
+    }
 
     @Override
     public void onResume() {
@@ -214,59 +217,15 @@ public class CallFragment extends Fragment {
         }
     }
 
-    @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final Bundle args = getArguments();
-        if (args == null) {
-            // Reject the call.
-            handleCallClose();
+    private void toggleSpeakerphone(FloatingActionButton b) {
+        if (mLocalPeer == null) {
             return;
         }
-        String name = args.getString("topic");
-        //noinspection unchecked
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
-        String callStateStr = args.getString("call_direction");
-        mCallSeqID = args.getInt("call_seq");
-        mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
-        // Check permissions.
-        final MessageActivity activity = (MessageActivity) getActivity();
-        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
-        if (!missing.isEmpty()) {
-            Log.d(TAG,"Requesting missing permissions:" + missing);
-            mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
-            return;
-        }
-        // Got all necessary permissions.
-        this.startMediaAndSignal();
-    }
 
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.fragment_call, container, false);
-        mLocalVideoView = v.findViewById(R.id.localView);
-        mRemoteVideoView = v.findViewById(R.id.remoteView);
-
-        AudioManager audioManager = (AudioManager) getActivity().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
-        audioManager.setSpeakerphoneOn(true);
-
-        // Button click handlers: mute/unmute video/audio, hang up.
-        v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
-        v.findViewById(R.id.toggleCameraBtn).setOnClickListener(v12 ->
-                toggleMedia((FloatingActionButton) v12, true,
-                        R.drawable.ic_outline_videocam_24, R.drawable.ic_outline_videocam_off_24));
-        v.findViewById(R.id.toggleMicBtn).setOnClickListener(v13 ->
-                toggleMedia((FloatingActionButton) v13, false,
-                        R.drawable.ic_outline_mic_24, R.drawable.ic_outline_mic_off_24));
-        return v;
-    }
-
-    @Override
-    public void onDestroyView() {
-        this.stopMediaAndSignal();
-        super.onDestroyView();
+        AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
+        boolean enabled = audioManager.isSpeakerphoneOn();
+        audioManager.setSpeakerphoneOn(!enabled);
+        b.setImageResource(enabled ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
     }
 
     // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
@@ -275,13 +234,16 @@ public class CallFragment extends Fragment {
         // Keep screen on.
         final Activity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            // We are done anyway. Just quite.
+            // We are done anyway. Just quit.
             return;
         }
-        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        if (!initIceServers()) {
+            Toast.makeText(activity, R.string.video_calls_unavailable, Toast.LENGTH_LONG).show();
+            handleCallClose();
+        }
 
         initVideos();
-        initIceServers();
 
         // Initialize PeerConnectionFactory globals.
         PeerConnectionFactory.InitializationOptions initializationOptions =
@@ -311,8 +273,13 @@ public class CallFragment extends Fragment {
         if (mVideoCapturerAndroid != null) {
             mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mRootEglBase.getEglBaseContext());
             mVideoSource = mPeerConnectionFactory.createVideoSource(mVideoCapturerAndroid.isScreencast());
-            mVideoCapturerAndroid.initialize(mSurfaceTextureHelper, this.getActivity(), mVideoSource.getCapturerObserver());
+            mVideoCapturerAndroid.initialize(mSurfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
         }
+        ViewGroup.LayoutParams lp = mLocalVideoView.getLayoutParams();
+        Log.i(TAG, "Params: " + lp.width + "x" + lp.height + ";");
+        int localFrame = (int) activity.getResources().getDimension(R.dimen.local_video_frame);
+        mVideoSource.adaptOutputFormat(localFrame / 2, localFrame, 15);
+
         mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
 
         // Create an AudioSource instance
@@ -329,19 +296,19 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setMirror(true);
         mRemoteVideoView.setMirror(true);
 
-        this.handleCallInvite();
+        handleCallInvite();
     }
 
     // Stops media and concludes the call (sends "hang-up" to the peer).
     private void stopMediaAndSignal() {
         // Clean up.
-        if (this.mLocalPeer != null) {
-            this.mLocalPeer.close();
-            this.mLocalPeer = null;
+        if (mLocalPeer != null) {
+            mLocalPeer.close();
+            mLocalPeer = null;
         }
-        if (this.mRemoteVideoView != null) {
-            this.mRemoteVideoView.release();
-            this.mRemoteVideoView = null;
+        if (mRemoteVideoView != null) {
+            mRemoteVideoView.release();
+            mRemoteVideoView = null;
         }
         if (mLocalVideoTrack != null) {
             mLocalVideoTrack.removeSink(mLocalVideoView);
@@ -355,22 +322,22 @@ public class CallFragment extends Fragment {
             }
             mVideoCapturerAndroid = null;
         }
-        if (this.mLocalVideoView != null) {
-            this.mLocalVideoView.release();
-            this.mLocalVideoView = null;
+        if (mLocalVideoView != null) {
+            mLocalVideoView.release();
+            mLocalVideoView = null;
         }
 
-        if (this.mAudioSource != null) {
-            this.mAudioSource.dispose();
-            this.mAudioSource = null;
+        if (mAudioSource != null) {
+            mAudioSource.dispose();
+            mAudioSource = null;
         }
-        if (this.mVideoSource != null) {
-            this.mVideoSource.dispose();
-            this.mVideoSource = null;
+        if (mVideoSource != null) {
+            mVideoSource.dispose();
+            mVideoSource = null;
         }
-        if (this.mRootEglBase != null) {
-            this.mRootEglBase.release();
-            this.mRootEglBase = null;
+        if (mRootEglBase != null) {
+            mRootEglBase.release();
+            mRootEglBase = null;
         }
 
         handleCallClose();
@@ -384,13 +351,16 @@ public class CallFragment extends Fragment {
         mRemoteVideoView.setZOrderMediaOverlay(true);
     }
 
-    private void initIceServers() {
+    private boolean initIceServers() {
         mIceServers = new ArrayList<>();
         try {
             //noinspection unchecked
             List<Map<String,Object>> iceServersConfig =
                     (List<Map<String,Object>>) Cache.getTinode().getServerParam("iceServers");
-            //noinspection ConstantConditions
+            if (iceServersConfig == null) {
+                return false;
+            }
+
             for (Map<String,Object> server : iceServersConfig) {
                 //noinspection unchecked
                 List<String> urls = (List<String>) server.get("urls");
@@ -411,14 +381,16 @@ public class CallFragment extends Fragment {
             }
         } catch (ClassCastException | NullPointerException ex) {
             Log.w(TAG, "Unexpected format of server-provided ICE config", ex);
+            return false;
         }
+        return !mIceServers.isEmpty();
     }
 
     // Sends a hang-up notification to the peer and closes the fragment.
     private void handleCallClose() {
         // Close fragment.
         if (mCallSeqID > 0) {
-            this.mTopic.videoCall("hang-up", mCallSeqID, null);
+            mTopic.videoCall("hang-up", mCallSeqID, null);
         }
         mCallSeqID = -1;
         final Activity activity = getActivity();
@@ -464,7 +436,7 @@ public class CallFragment extends Fragment {
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
-                this.mTopic.videoCall("accept", mCallSeqID, null);
+                mTopic.videoCall("accept", mCallSeqID, null);
                 break;
             default:
                 break;
@@ -483,26 +455,29 @@ public class CallFragment extends Fragment {
 
     // Sends a SDP offer to the peer.
     private void handleSendOffer(SessionDescription sd) {
-        this.mTopic.videoCall("offer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
+        mTopic.videoCall("offer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
     }
 
     // Sends a SDP answer to the peer.
     private void handleSendAnswer(SessionDescription sd) {
-        this.mTopic.videoCall("answer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
+        mTopic.videoCall("answer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
     }
 
-    private VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
+    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
         final String[] deviceNames = enumerator.getDeviceNames();
 
         // First, try to find front facing camera
         Log.d(TAG, "Looking for front facing cameras.");
         for (String deviceName : deviceNames) {
-            if (enumerator.isFrontFacing(deviceName)) {
+            if (enumerator.isFrontFacing(deviceName)) {;
                 Log.d(TAG, "Creating front facing camera capturer.");
                 VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-
                 if (videoCapturer != null) {
+                    Log.d(TAG, "Created FF camera " + deviceName);
+                    List<CameraEnumerationAndroid.CaptureFormat> cf = enumerator.getSupportedFormats(deviceName);
                     return videoCapturer;
+                } else {
+                    Log.d(TAG, "Failed to create FF camera " + deviceName);
                 }
             }
         }
@@ -741,5 +716,76 @@ public class CallFragment extends Fragment {
     // Cleans up call after receiving a remote hang-up notification.
     private void handleRemoteHangup(MsgServerInfo info) {
         this.handleCallClose();
+    }
+
+    // Listens for incoming call-related info messages.
+    private static class InfoListener extends UiUtils.EventListener {
+        private static final String TAG = "CallFragment.InfoListener";
+
+        private CallFragment parent;
+
+        InfoListener(Activity owner, Boolean connected) {
+            super(owner, connected);
+        }
+
+        public void setParent(CallFragment parent) {
+            this.parent = parent;
+        }
+
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            if (!"call".equals(info.what)) {
+                // We are only interested in "call" info messages.
+                return;
+            }
+            switch (info.event) {
+                case "accept":
+                    this.parent.handleVideoCallAccepted();
+                    break;
+                case "offer":
+                    this.parent.handleVideoOfferMsg(info);
+                    break;
+                case "answer":
+                    this.parent.handleVideoAnswerMsg(info);
+                    break;
+                case "ice-candidate":
+                    this.parent.handleNewICECandidateMsg(info);
+                    break;
+                case "hang-up":
+                    this.parent.handleRemoteHangup(info);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private static class CustomSdpObserver implements SdpObserver {
+        private String tag;
+
+        CustomSdpObserver(String logTag) {
+            tag = this.getClass().getCanonicalName();
+            this.tag = this.tag + " " + logTag;
+        }
+
+        @Override
+        public void onCreateSuccess(SessionDescription sessionDescription) {
+            Log.d(tag, "onCreateSuccess() called with: sessionDescription = [" + sessionDescription + "]");
+        }
+
+        @Override
+        public void onSetSuccess() {
+            Log.d(tag, "onSetSuccess() called");
+        }
+
+        @Override
+        public void onCreateFailure(String s) {
+            Log.d(tag, "onCreateFailure() called with: s = [" + s + "]");
+        }
+
+        @Override
+        public void onSetFailure(String s) {
+            Log.d(tag, "onSetFailure() called with: s = [" + s + "]");
+        }
     }
 }

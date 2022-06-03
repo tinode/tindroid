@@ -944,7 +944,7 @@ public class Tinode {
      * Get generic server-provided named parameter.
      *
      * @param key name of the parameter.
-     * @return parameter value of null.
+     * @return parameter value or null.
      */
     @Nullable
     public Object getServerParam(@NotNull String key) {
