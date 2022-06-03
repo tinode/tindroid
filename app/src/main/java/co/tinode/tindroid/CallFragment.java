@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.PixelFormat;
 import android.media.AudioManager;
 import android.os.Bundle;
 
@@ -351,10 +352,13 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setEnableHardwareScaler(true);
         mLocalVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mLocalVideoView.setZOrderMediaOverlay(true);
+        mLocalVideoView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
+        mRemoteVideoView.setEnableHardwareScaler(true);
         mRemoteVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mRemoteVideoView.setZOrderMediaOverlay(true);
+        mRemoteVideoView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
     }
 
     private boolean initIceServers() {
