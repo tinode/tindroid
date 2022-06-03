@@ -59,15 +59,15 @@
 
         <org.webrtc.SurfaceViewRenderer
             android:id="@+id/remoteView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:visibility="gone"/>
 
     </FrameLayout>
 
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/localView"
-        android:layout_width="@dimen/local_video_frame"
+        android:layout_width="wrap_content"
         android:layout_height="@dimen/local_video_frame"
         android:layout_margin="@dimen/fab_margin"
         app:layout_constraintEnd_toEndOf="parent"

@@ -38,6 +38,7 @@ import org.webrtc.MediaStream;
 import org.webrtc.MediaStreamTrack;
 import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
+import org.webrtc.RendererCommon;
 import org.webrtc.RtpReceiver;
 import org.webrtc.RtpSender;
 import org.webrtc.SdpObserver;
@@ -345,9 +346,14 @@ public class CallFragment extends Fragment {
 
     private void initVideos() {
         mRootEglBase = EglBase.create();
+
         mLocalVideoView.init(mRootEglBase.getEglBaseContext(), null);
-        mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
+        mLocalVideoView.setEnableHardwareScaler(true);
+        mLocalVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mLocalVideoView.setZOrderMediaOverlay(true);
+
+        mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
+        mRemoteVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mRemoteVideoView.setZOrderMediaOverlay(true);
     }
 
