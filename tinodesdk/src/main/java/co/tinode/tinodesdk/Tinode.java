@@ -418,11 +418,11 @@ public class Tinode {
      */
     protected PromisedReply<ServerMessage> connect(@NotNull URI serverURI, boolean background) {
         synchronized (mConnLock) {
-            boolean newHost = serverURI.equals(mServerURI);
+            boolean sameHost = serverURI.equals(mServerURI);
             // Connection already exists and connected.
             if (mConnection != null && mConnection.isConnected()) {
                 // If the connection is live and the server address has not changed, return a resolved promise.
-                if (!newHost) {
+                if (sameHost) {
                     return new PromisedReply<>((ServerMessage) null);
                 } else {
                     // Clear auto-login because saved credentials won't work with the new server.

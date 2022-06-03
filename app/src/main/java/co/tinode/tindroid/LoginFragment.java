@@ -50,7 +50,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
 
         View fragment = inflater.inflate(R.layout.fragment_login, container, false);
 
-        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
 
         if (!TextUtils.isEmpty(login)) {
