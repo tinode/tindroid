@@ -16,10 +16,15 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.telecom.Call;
 import android.util.Log;
 import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
+import java.util.Timer;
+import java.util.TimerTask;
 
 import co.tinode.tindroid.BuildConfig;
 import co.tinode.tindroid.Cache;
@@ -41,6 +46,7 @@ public class CallService extends Service {
     private Tinode mTinode;
     private EventListener mListener;
     public static int NOTIFICATION_ID = 4096;
+    private Timer mTimer;
 
     private class EventListener extends Tinode.EventListener {
         @Override
@@ -48,7 +54,7 @@ public class CallService extends Service {
             Log.d(TAG, "Remote hangup: " + info.toString());
             if ("call".equals(info.what) && "hang-up".equals(info.event)) {
                 Log.d(TAG, "Remote hangup");
-                stopForeground(true);
+                stopService();
             }
         }
     }
@@ -74,7 +80,24 @@ public class CallService extends Service {
         return null;
     }
 
+    private void cleanUp() {
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
+    }
+
+    private void stopService() {
+        stopForeground(true);
+        // In case the full screen notification (represented by IncomingCallActivity)
+        // has been displayed, close it too.
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager
+                .getInstance(this);
+        localBroadcastManager.sendBroadcast(new Intent(
+                IncomingCallActivity.INCOMING_CALL_FULL_SCREEN_CLOSE));
+    }
+
     private int declineCall(Intent intent) {
+        cleanUp();
         String topicName = intent.getStringExtra("topic");
         int seq = intent.getIntExtra("seq", -1);
         Log.d(TAG, "Call declined: " + topicName + ":" + seq);
@@ -82,11 +105,12 @@ public class CallService extends Service {
         if (topic != null) {
             topic.videoCall("hang-up", seq, null);
         }
-        stopForeground(true);
+        stopService();
         return START_NOT_STICKY;
     }
 
     private int acceptCall(Intent intent) {
+        cleanUp();
         String topicName = intent.getStringExtra("topic");
         int seq = intent.getIntExtra("seq", -1);
         Log.d(TAG, "Call accepted: " + topicName + ":" + seq);
@@ -97,7 +121,7 @@ public class CallService extends Service {
         acceptIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(acceptIntent);
         // Remove notification.
-        stopForeground(true);
+        stopService();
         return START_NOT_STICKY;
     }
 
@@ -109,21 +133,19 @@ public class CallService extends Service {
                     new NotificationChannel("IncomingCall",
                             "IncomingCall", NotificationManager.IMPORTANCE_HIGH);
             notificationChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
-            notificationManager.createNotificationChannel(notificationChannel);
 
-            Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            //Ringtone r = RingtoneManager.getRingtone(getApplicationContext(), ringtoneSound);
-            //r.play();
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                    .setUsage(AudioAttributes.USAGE_ALARM)
                     .build();
+            Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             notificationChannel.setSound(ringtoneSound, audioAttributes);
-            notificationChannel.setDescription("abnc3443");
+            notificationChannel.setDescription("Tinode incoming video call notification.");
             notificationChannel.enableLights(true);
             notificationChannel.setLightColor(Color.RED);
             notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 1000});
             notificationChannel.enableVibration(true);
+            notificationManager.createNotificationChannel(notificationChannel);
 
             NotificationCompat.Builder notification =
                     new NotificationCompat.Builder(getApplicationContext(), "IncomingCall")
@@ -131,10 +153,9 @@ public class CallService extends Service {
                             .setTicker("Call")
                             .setContentText("IncomingCall")
                             .setSmallIcon(R.drawable.ic_icon_push)
-                            .setDefaults(Notification.DEFAULT_LIGHTS | Notification.DEFAULT_SOUND)
+                            .setDefaults(Notification.DEFAULT_VIBRATE)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
-                            //.setVibrate(null)
-                            .setSound(ringtoneSound)
+                            .setSound(null)
                             .setOngoing(true)
                             .setFullScreenIntent(notifIntent, true)
                             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -195,11 +216,22 @@ public class CallService extends Service {
         customView.setOnClickPendingIntent(R.id.btnDecline, declinePI);
         // Notification view and intent are ready. Present notification.
         showCallInviteNotification(customView, pendingIntent);
+        cleanUp();
+        // Dismiss notification after 40 seconds since we've lost "{info accept|hang-up}".
+        // TODO: receive call timeout from the server instead of hardcoding 40 seconds here.
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                CallService.this.stopService();
+            }
+        }, 40000);
         return START_STICKY;
     }
 
     private int dismissCall(Intent intent) {
-        stopForeground(true);
+        cleanUp();
+        stopService();
         return START_NOT_STICKY;
     }
 

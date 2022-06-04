@@ -96,6 +96,8 @@ public class CallFragment extends Fragment {
 
     CallDirection mCallDirection;
     int mCallSeqID;
+    // If true, the client has received a remote SDP from the peer and has sent a local SDP to the peer.
+    boolean mCallInitialSetupComplete;
 
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]>  mMediaPermissionLauncher =
@@ -198,7 +200,6 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onPause() {
-        this.stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
         super.onPause();
     }
@@ -298,7 +299,27 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setMirror(true);
         mRemoteVideoView.setMirror(true);
 
-        handleCallInvite();
+        if (!mTopic.isAttached()) {
+            mTopic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                @Override
+                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    if (result.ctrl != null && result.ctrl.code < 300) {
+                        handleCallInvite();
+                    } else {
+                        handleCallClose();
+                    }
+                    return null;
+                }
+            }, new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) throws Exception {
+                    handleCallClose();
+                    return null;
+                }
+            });
+        } else {
+            handleCallInvite();
+        }
     }
 
     // Stops media and concludes the call (sends "hang-up" to the peer).
@@ -525,10 +546,7 @@ public class CallFragment extends Fragment {
         mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer()/*CustomPeerConnectionObserver("localPeerCreation")*/ {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
-                //super.onIceCandidate(iceCandidate);
-                //onIceCandidateReceived(iceCandidate);
                 // Send ICE candidate to the peer.
-
                 Log.d(TAG, iceCandidate.toString());
                 handleIceCandidateEvent(iceCandidate);
             }
@@ -602,6 +620,13 @@ public class CallFragment extends Fragment {
             public void onRenegotiationNeeded() {
                 Log.d(TAG, "onRenegotiationNeeded() called");
 
+                if (CallFragment.this.mCallDirection == CallDirection.INCOMING &&
+                    !CallFragment.this.mCallInitialSetupComplete) {
+                    // Do not send an offer yet as
+                    // - We are still in initial setup phase.
+                    // - The caller is supposed to send us an offer.
+                    return;
+                }
                 mSdpConstraints = new MediaConstraints();
                 mSdpConstraints.mandatory.add(
                         new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
@@ -663,6 +688,8 @@ public class CallFragment extends Fragment {
                 mLocalPeer.setLocalDescription(new CustomSdpObserver("localSetLocal"), sessionDescription);
 
                 handleSendAnswer(sessionDescription);
+
+                CallFragment.this.mCallInitialSetupComplete = true;
             }
         }, new MediaConstraints());
     }
@@ -682,6 +709,9 @@ public class CallFragment extends Fragment {
         //noinspection ConstantConditions
         mLocalPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
                 new SessionDescription(SessionDescription.Type.fromCanonicalForm(type.toLowerCase()), sdp));
+        if (mCallDirection == CallDirection.OUTGOING) {
+            mCallInitialSetupComplete = true;
+        }
     }
 
     // Adds remote ICE candidate data received from the peer to the peer connection.
