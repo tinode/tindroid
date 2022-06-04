@@ -10,7 +10,9 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.media.audiofx.AcousticEchoCanceler;
 import android.media.audiofx.AutomaticGainControl;
+import android.media.audiofx.NoiseSuppressor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -140,6 +142,10 @@ public class MessagesFragment extends Fragment {
     private long mRecordingStarted = 0;
     // Duration of audio recording.
     private int mAudioRecordDuration = 0;
+    private AcousticEchoCanceler mEchoCanceler;
+    private NoiseSuppressor mNoiseSuppressor;
+    private AutomaticGainControl mGainControl;
+
     // Playback of audio recording.
     private MediaPlayer mAudioPlayer = null;
     // Preview or audio amplitudes.
@@ -849,6 +855,8 @@ public class MessagesFragment extends Fragment {
 
                 menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
                 menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
+
+                menu.findItem(R.id.action_call).setVisible(mTopic.isP2PType());
             }
         }
     }
@@ -913,6 +921,17 @@ public class MessagesFragment extends Fragment {
         mAudioRecorder.setAudioEncodingBitRate(16);
         mAudioRecorder.setAudioSamplingRate(16000);
         mAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+
+        if (AcousticEchoCanceler.isAvailable()) {
+            mEchoCanceler = AcousticEchoCanceler.create(MediaRecorder.AudioSource.MIC);
+        }
+        if (NoiseSuppressor.isAvailable()) {
+            mNoiseSuppressor = NoiseSuppressor.create(MediaRecorder.AudioSource.MIC);
+        }
+        if (AutomaticGainControl.isAvailable()) {
+            mGainControl = AutomaticGainControl.create(MediaRecorder.AudioSource.MIC);
+        }
+
         try {
             mAudioRecord = File.createTempFile("audio", ".m4a", activity.getCacheDir());
             mAudioRecorder.setOutputFile(mAudioRecord.getAbsolutePath());
@@ -931,6 +950,15 @@ public class MessagesFragment extends Fragment {
         if (mAudioPlayer != null) {
             return;
         }
+
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_CALL);
+        audioManager.setSpeakerphoneOn(true);
 
         mAudioPlayer = new MediaPlayer();
         mAudioPlayer.setOnCompletionListener(mp -> {
@@ -954,6 +982,15 @@ public class MessagesFragment extends Fragment {
     }
 
     private void releaseAudio(boolean keepRecord) {
+        final MessageActivity activity = (MessageActivity) getActivity();
+        if (activity == null) {
+            return;
+        }
+
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_NORMAL);
+        audioManager.setSpeakerphoneOn(false);
+
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
             mAudioRecord = null;
@@ -975,6 +1012,21 @@ public class MessagesFragment extends Fragment {
             mAudioRecorder.reset();
             mAudioRecorder.release();
             mAudioRecorder = null;
+        }
+
+        if (mEchoCanceler != null) {
+            mEchoCanceler.release();
+            mEchoCanceler = null;
+        }
+
+        if (mNoiseSuppressor != null) {
+            mNoiseSuppressor.release();
+            mNoiseSuppressor = null;
+        }
+
+        if (mGainControl != null) {
+            mGainControl.release();
+            mGainControl = null;
         }
     }
 
