@@ -1076,6 +1076,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (!content.isPlain()) {
                 head.put("mime", Drafty.MIME_TYPE);
             }
+            if (head.get("webrtc") != null) {
+                Drafty.updateVideoEnt(content, head, false);
+            }
         } else {
             head = null;
         }

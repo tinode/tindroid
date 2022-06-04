@@ -197,6 +197,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         String status = " " + (duration > 0 ?
                 millisToTime(duration, false).toString() :
                 ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call));
+
         return annotatedIcon(ctx, incoming ?
                 (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
                 (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled),

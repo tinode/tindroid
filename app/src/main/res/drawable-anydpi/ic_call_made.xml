@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <size android:width="24dp" android:height="24dp" />
+        </shape>
+    </item>
     <item
         android:drawable="@drawable/ic_call"
-        android:top="0dp"
-        android:left="0dp"
-        android:width="21dp"
-        android:height="21dp"/>
+        android:insetLeft="2dp"
+        android:insetTop="2dp"
+        android:insetRight="2dp"
+        android:insetBottom="2dp" />
     <item
         android:drawable="@drawable/ic_arrow_ne"
-        android:left="8dp"
+        android:left="6dp"
         android:top="0dp"
-        android:height="13dp"
-        android:width="13dp"/>
+        android:right="0dp"
+        android:bottom="6dp"/>
 </layer-list>

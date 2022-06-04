@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.graphics.PixelFormat;
 import android.media.AudioManager;
 import android.os.Bundle;
@@ -16,6 +17,8 @@ import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -71,23 +74,24 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
 
-    PeerConnectionFactory mPeerConnectionFactory;
-    MediaConstraints mAudioConstraints;
-    MediaConstraints mVideoConstraints;
-    MediaConstraints mSdpConstraints;
-    VideoCapturer mVideoCapturerAndroid;
-    VideoSource mVideoSource;
-    VideoTrack mLocalVideoTrack;
-    AudioSource mAudioSource;
-    AudioTrack mLocalAudioTrack;
-    SurfaceTextureHelper mSurfaceTextureHelper;
-    PeerConnection mLocalPeer;
-    List<PeerConnection.IceServer> mIceServers;
-    EglBase mRootEglBase;
+    private PeerConnectionFactory mPeerConnectionFactory;
+    private MediaConstraints mSdpConstraints;
+    private VideoCapturer mVideoCapturerAndroid;
+    private VideoSource mVideoSource;
+    private VideoTrack mLocalVideoTrack;
+    private AudioSource mAudioSource;
+    private AudioTrack mLocalAudioTrack;
+    private PeerConnection mLocalPeer;
+    private List<PeerConnection.IceServer> mIceServers;
+    private EglBase mRootEglBase;
+
+    // Media state
+    private boolean mAudioOff = false;
+    private boolean mVideoOff = false;
 
     // Video (camera views).
-    SurfaceViewRenderer mLocalVideoView;
-    SurfaceViewRenderer mRemoteVideoView;
+    private SurfaceViewRenderer mLocalVideoView;
+    private SurfaceViewRenderer mRemoteVideoView;
 
     public enum CallDirection {
         OUTGOING,
@@ -198,45 +202,55 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onPause() {
-        this.stopMediaAndSignal();
+        stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
         super.onPause();
     }
 
-    // Mute/unmute media (video if toggleCamera, audio otherwise).
-    private void toggleMedia(FloatingActionButton b, boolean toggleCamera, @DrawableRes int enabledIcon, int disabledIcon) {
+    // Mute/unmute media.
+    private void toggleMedia(FloatingActionButton b, boolean video, @DrawableRes int enabledIcon, int disabledIcon) {
+        boolean enabled;
+        if (video) {
+            enabled = mVideoOff;
+            mVideoOff = !mVideoOff;
+        } else {
+            enabled = mAudioOff;
+            mAudioOff = !mAudioOff;
+        }
+
+        b.setImageResource(enabled ? enabledIcon : disabledIcon);
+
+        if (video) {
+            mLocalVideoTrack.setEnabled(!mVideoOff);
+        } else {
+            mLocalAudioTrack.setEnabled(!mVideoOff);
+        }
+
         if (mLocalPeer == null) {
             return;
         }
+
         for (RtpSender transceiver : mLocalPeer.getSenders()) {
             MediaStreamTrack track = transceiver.track();
-            if ((toggleCamera && track instanceof VideoTrack) ||
-                    (!toggleCamera && track instanceof AudioTrack)) {
-                boolean enabled = !track.enabled();
+            if ((video && track instanceof VideoTrack) || (!video && track instanceof AudioTrack)) {
                 track.setEnabled(enabled);
-                b.setImageResource(enabled ? enabledIcon : disabledIcon);
             }
         }
     }
 
     private void toggleSpeakerphone(FloatingActionButton b) {
-        if (mLocalPeer == null) {
-            return;
-        }
-
         AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
         boolean enabled = audioManager.isSpeakerphoneOn();
         audioManager.setSpeakerphoneOn(!enabled);
-        b.setImageResource(enabled ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
+        b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
     }
 
     // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
     // and "accept" for incoming call).
     private void startMediaAndSignal() {
-        // Keep screen on.
         final Activity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            // We are done anyway. Just quit.
+            // We are done. Just quit.
             return;
         }
 
@@ -268,24 +282,25 @@ public class CallFragment extends Fragment {
         mVideoCapturerAndroid = createCameraCapturer(new Camera1Enumerator(false));
 
         // Create MediaConstraints - Will be useful for specifying video and audio constraints.
-        mAudioConstraints = new MediaConstraints();
-        mVideoConstraints = new MediaConstraints();
+        MediaConstraints audioConstraints = new MediaConstraints();
+        MediaConstraints videoConstraints = new MediaConstraints();
 
         // Create a VideoSource instance
         if (mVideoCapturerAndroid != null) {
-            mSurfaceTextureHelper = SurfaceTextureHelper.create("CaptureThread", mRootEglBase.getEglBaseContext());
+            SurfaceTextureHelper surfaceTextureHelper =
+                    SurfaceTextureHelper.create("CaptureThread", mRootEglBase.getEglBaseContext());
             mVideoSource = mPeerConnectionFactory.createVideoSource(mVideoCapturerAndroid.isScreencast());
-            mVideoCapturerAndroid.initialize(mSurfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
+            mVideoCapturerAndroid.initialize(surfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
         }
-        ViewGroup.LayoutParams lp = mLocalVideoView.getLayoutParams();
-        Log.i(TAG, "Params: " + lp.width + "x" + lp.height + ";");
-        int localFrame = (int) activity.getResources().getDimension(R.dimen.local_video_frame);
-        mVideoSource.adaptOutputFormat(localFrame / 2, localFrame, 15);
+
+        //ViewGroup.LayoutParams lp = mLocalVideoView.getLayoutParams();
+        //int localFrame = (int) activity.getResources().getDimension(R.dimen.local_video_frame);
+        //mVideoSource.adaptOutputFormat(localFrame / 2, localFrame, 15);
 
         mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
 
         // Create an AudioSource instance
-        mAudioSource = mPeerConnectionFactory.createAudioSource(mAudioConstraints);
+        mAudioSource = mPeerConnectionFactory.createAudioSource(audioConstraints);
         mLocalAudioTrack = mPeerConnectionFactory.createAudioTrack("101", mAudioSource);
 
         if (mVideoCapturerAndroid != null) {
@@ -352,13 +367,11 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setEnableHardwareScaler(true);
         mLocalVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mLocalVideoView.setZOrderMediaOverlay(true);
-        mLocalVideoView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
 
         mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
         mRemoteVideoView.setEnableHardwareScaler(true);
         mRemoteVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mRemoteVideoView.setZOrderMediaOverlay(true);
-        mRemoteVideoView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
     }
 
     private boolean initIceServers() {
@@ -522,7 +535,7 @@ public class CallFragment extends Fragment {
         rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 
         rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
-        mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer()/*CustomPeerConnectionObserver("localPeerCreation")*/ {
+        mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 //super.onIceCandidate(iceCandidate);
