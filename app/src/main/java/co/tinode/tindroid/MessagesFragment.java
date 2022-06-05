@@ -808,6 +808,10 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_NORMAL);
+        audioManager.setSpeakerphoneOn(false);
+
         // Save the text in the send field.
         EditText input = activity.findViewById(R.id.editMessage);
         String draft = input.getText().toString().trim();
@@ -984,10 +988,6 @@ public class MessagesFragment extends Fragment {
         if (activity == null) {
             return;
         }
-
-        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_NORMAL);
-        audioManager.setSpeakerphoneOn(false);
 
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
