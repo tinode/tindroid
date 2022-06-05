@@ -855,8 +855,6 @@ public class MessagesFragment extends Fragment {
 
                 menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
                 menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
-
-                menu.findItem(R.id.action_call).setVisible(mTopic.isP2PType());
             }
         }
     }
