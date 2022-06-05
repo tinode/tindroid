@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -69,6 +70,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
+
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
@@ -137,6 +139,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
 
+    private AudioManager mAudioManager = null;
     private MediaPlayer mAudioPlayer = null;
     private int mPlayingAudioSeq = -1;
     private FullFormatter.AudioControlCallback mAudioControlCallback = null;
@@ -1296,6 +1299,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     mAudioControlCallback.reset();
                 }
             }
+
+            if (mAudioManager == null) {
+                mAudioManager = (AudioManager) mActivity.getSystemService(Activity.AUDIO_SERVICE);
+                mAudioManager.setMode(AudioManager.MODE_IN_CALL);
+                mAudioManager.setSpeakerphoneOn(true);
+            }
+
             mAudioControlCallback = control;
             mAudioPlayer = new MediaPlayer();
             mAudioPlayer.setOnCompletionListener(mp -> {
