@@ -236,10 +236,29 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 String seqStr = data.get("seq");
                 try {
                     int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
-                    if (data.get("webrtc") != null && !tinode.isMe(senderId) && seq > 0) {
-                        // If it's a video call, start it.
-                        if (data.get("replace") == null) {
-                            UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
+                    String webrtc = data.get("webrtc");
+                    if (webrtc != null && seq > 0) {
+                        // It's a video call.
+                        switch (webrtc) {
+                            case "started":
+                                if (!tinode.isMe(senderId)) {
+                                    // Incoming call.
+                                    UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
+                                }
+                                break;
+                            case "accepted":
+                            case "missed":
+                            case "declined":
+                            case "disconnected":
+                                String origSeqStr = data.get("replace");
+                                int origSeq = origSeqStr != null ? Integer.parseInt(origSeqStr) : 0;
+                                if (origSeq > 0) {
+                                    // Dismiss the call UI.
+                                    UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);
+                                }
+                                break;
+                            default:
+                                break;
                         }
                         return;
                     }
