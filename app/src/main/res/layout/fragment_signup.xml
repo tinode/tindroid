@@ -134,6 +134,7 @@
             android:text="@string/sign_up"
             android:textColor="@color/white"
             android:textSize="@dimen/button_text"
+            android:contentDescription="@string/sign_up"
             app:backgroundTint="@color/button_background" />
     </LinearLayout>
 </RelativeLayout>

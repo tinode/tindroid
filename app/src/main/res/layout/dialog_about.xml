@@ -118,6 +118,7 @@
             android:layout_gravity="center"
             android:autoLink="web"
             android:text="@string/tinode_url"
+            android:padding="8dp"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
     </LinearLayout>
