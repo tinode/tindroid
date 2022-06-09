@@ -7,16 +7,16 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
-import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-import android.telecom.Call;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.RemoteViews;
 
@@ -35,6 +35,7 @@ import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.User;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 
@@ -43,9 +44,12 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
  */
 public class CallService extends Service {
     private static final String TAG = "CallService";
+
+    public static int NOTIFICATION_ID = 4096;
+    public static int AVATAR_SIZE = 128;
+
     private Tinode mTinode;
     private EventListener mListener;
-    public static int NOTIFICATION_ID = 4096;
     private Timer mTimer;
 
     private class EventListener extends Tinode.EventListener {
@@ -101,7 +105,8 @@ public class CallService extends Service {
         String topicName = intent.getStringExtra("topic");
         int seq = intent.getIntExtra("seq", -1);
         Log.d(TAG, "Call declined: " + topicName + ":" + seq);
-        ComTopic<VxCard> topic = (ComTopic<VxCard>)mTinode.getTopic(topicName);
+        //noinspection unchecked
+        ComTopic<VxCard> topic = (ComTopic<VxCard>) mTinode.getTopic(topicName);
         if (topic != null) {
             topic.videoCall("hang-up", seq, null);
         }
@@ -136,7 +141,7 @@ public class CallService extends Service {
 
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                     .build();
             Uri ringtoneSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
             notificationChannel.setSound(ringtoneSound, audioAttributes);
@@ -147,16 +152,19 @@ public class CallService extends Service {
             notificationChannel.enableVibration(true);
             notificationManager.createNotificationChannel(notificationChannel);
 
+            String incomingCallText = getResources().getString(R.string.incoming_call);
+
             NotificationCompat.Builder notification =
                     new NotificationCompat.Builder(getApplicationContext(), "IncomingCall")
                             .setContentTitle(BuildConfig.APPLICATION_ID)
-                            .setTicker("Call")
-                            .setContentText("IncomingCall")
+                            .setTicker(incomingCallText)
+                            .setContentText(incomingCallText)
                             .setSmallIcon(R.drawable.ic_icon_push)
                             .setDefaults(Notification.DEFAULT_VIBRATE)
                             .setCategory(NotificationCompat.CATEGORY_CALL)
                             .setSound(null)
                             .setOngoing(true)
+                            .setContentIntent(notifIntent)
                             .setFullScreenIntent(notifIntent, true)
                             .setPriority(NotificationCompat.PRIORITY_MAX)
                             .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
@@ -174,20 +182,20 @@ public class CallService extends Service {
         String topic = intent.getStringExtra("topic");
         String from = intent.getStringExtra("from");
         int seq = intent.getIntExtra("seq", -1);
-        if (topic == null || from == null || topic.isEmpty() || seq < 0 || from.isEmpty()) {
-            Log.w(TAG, "Invalid call intent: " + intent.toString());
+        if (TextUtils.isEmpty(topic) || TextUtils.isEmpty(from) || seq < 0) {
+            Log.w(TAG, "Invalid call parameters: topic='" + topic + "'; from='" + from + "'; seq=" + seq);
             return START_NOT_STICKY;
         }
 
         Log.d(TAG, "Incoming call received: " + topic + ":" + seq);
         // Prepare notification view and intents.
-        RemoteViews customView = new RemoteViews(BuildConfig.APPLICATION_ID,
-                R.layout.call_notification);
+        RemoteViews customView = new RemoteViews(BuildConfig.APPLICATION_ID, R.layout.call_notification_collapsed);
+        //noinspection ConstantConditions
         User<VxCard> sender = mTinode.getUser(from);
         if (sender != null && sender.pub != null) {
             customView.setTextViewText(R.id.name, sender.pub.fn);
-            Drawable local = UiUtils.avatarDrawable(this, sender.pub.getBitmap(), sender.pub.fn, from, false);
-            customView.setImageViewBitmap(R.id.photo, ((BitmapDrawable)local).getBitmap());
+            customView.setImageViewBitmap(R.id.avatar,
+                    UiUtils.avatarBitmap(this, sender.pub, Topic.TopicType.P2P, from, AVATAR_SIZE));
         } else {
             customView.setTextViewText(R.id.name, BuildConfig.APPLICATION_ID);
         }

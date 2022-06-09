@@ -861,6 +861,41 @@ public class UiUtils {
         return bitmap;
     }
 
+    // Create round avatar bitmap.
+    public static Bitmap avatarBitmap(Context context, VxCard pub, Topic.TopicType tp, String id, int size) {
+        Bitmap bitmap = null;
+        String fullName = null;
+        if (pub != null) {
+            fullName = pub.fn;
+            URL ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
+            if (ref != null) {
+                try {
+                    bitmap = Picasso.get()
+                            .load(ref.toString())
+                            .resize(size, size).get();
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to load avatar", ex);
+                }
+            } else {
+                bitmap = pub.getBitmap();
+            }
+        }
+
+        if (bitmap != null) {
+            bitmap = Bitmap.createScaledBitmap(bitmap, size, size, false);
+        } else {
+            bitmap = new LetterTileDrawable(context)
+                    .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
+                            LetterTileDrawable.ContactType.GROUP :
+                            LetterTileDrawable.ContactType.PERSON, false)
+                    .setLetterAndColor(fullName, id, false)
+                    .getSquareBitmap(size);
+        }
+
+        Resources res = context.getResources();
+        return new RoundImageDrawable(res, bitmap).getRoundedBitmap();
+    }
+
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
     // Used in chat bubbled to generate placeholder and error images for Picasso.
     public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {

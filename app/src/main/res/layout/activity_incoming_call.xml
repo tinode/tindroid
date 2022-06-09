@@ -5,33 +5,41 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".IncomingCallActivity">
-    <LinearLayout
-        android:layout_width="match_parent"
+
+    <Button
+        android:id="@+id/btnDecline"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingStart="5dp"
-        android:paddingEnd="5dp"
-        >
+        android:padding="16dp"
+        android:paddingStart="18dp"
+        android:paddingEnd="24dp"
+        android:backgroundTint="@color/colorNegativeAction"
+        android:text="@string/action_decline_call"
+        android:textColor="?android:colorForegroundInverse"
+        android:drawableStart="@drawable/ic_call_end"
+        android:drawableTint="?android:colorForegroundInverse"
+        android:drawablePadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnAccept"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <Button
-            android:id="@+id/btnDecline"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginEnd="5dp"
-            android:layout_weight="0.5"
-            android:backgroundTint="@color/red"
-            android:text="@string/action_decline_call"
-            android:textColor="@color/white" />
+    <Button
+        android:id="@+id/btnAccept"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:paddingStart="18dp"
+        android:paddingEnd="24dp"
+        android:backgroundTint="@color/colorPositiveAction"
+        android:text="@string/action_accept_call"
+        android:textColor="?android:colorForegroundInverse"
+        android:drawableStart="@drawable/ic_call"
+        android:drawableTint="?android:colorForegroundInverse"
+        android:drawablePadding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnDecline" />
 
-        <Button
-            android:id="@+id/btnAccept"
-            android:layout_width="0dp"
-            android:layout_height="40dp"
-            android:layout_marginStart="5dp"
-            android:layout_weight="0.5"
-            android:backgroundTint="@color/green"
-            android:text="@string/action_accept_call"
-            android:textColor="@color/white" />
-
-    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

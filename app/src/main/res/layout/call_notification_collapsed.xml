@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <!-- Collapsed notification: height must be under 64dp -->
+    <TextView
+        android:id="@+id/name"
+        style="@style/TextAppearance.Compat.Notification.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/caller_name"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"/>
+
+    <TextView
+        android:id="@+id/callType"
+        style="@style/TextAppearance.Compat.Notification.Line2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/incoming_call"
+        android:layout_below="@id/name"
+        android:layout_alignParentStart="true" />
+
+    <ImageView
+        android:id="@+id/avatar"
+        android:layout_width="@dimen/avatar_size_normal"
+        android:layout_height="@dimen/avatar_size_normal"
+        android:contentDescription="@string/avatar"
+        android:layout_alignParentEnd="true"
+        app:shapeAppearanceOverlay="@style/roundImageView"
+        app:srcCompat="@drawable/disk" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/callType">
+        <Button
+            android:id="@+id/btnAccept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp"
+            android:backgroundTint="@color/colorPositiveAction"
+            android:text="@string/action_accept_call"
+            android:textColor="?android:colorForegroundInverse"
+            android:drawableStart="@drawable/ic_call"
+            android:drawableTint="?android:colorForegroundInverse"
+            android:drawablePadding="2dp" />
+
+        <Button
+            android:id="@+id/btnDecline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="2dp"
+            android:paddingStart="12dp"
+            android:paddingEnd="16dp"
+            android:backgroundTint="@color/colorNegativeAction"
+            android:text="@string/action_decline_call"
+            android:textColor="?android:colorForegroundInverse"
+            android:drawableStart="@drawable/ic_call_end"
+            android:drawableTint="?android:colorForegroundInverse"
+            android:drawablePadding="8dp" />
+    </LinearLayout>
+</RelativeLayout>

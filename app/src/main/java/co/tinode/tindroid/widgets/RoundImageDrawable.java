@@ -14,7 +14,7 @@ import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 
 /**
- * Helper class to make avatars round
+ * Helper class to make avatars round.
  */
 public class RoundImageDrawable extends BitmapDrawable {
     private static final Matrix sMatrix = new Matrix();

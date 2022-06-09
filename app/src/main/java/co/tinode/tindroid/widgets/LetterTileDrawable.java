@@ -141,8 +141,8 @@ public class LetterTileDrawable extends Drawable {
     }
 
     // Render LTD as a bitmap of the given size.
-    public Bitmap getBitmap(final int width, final int height) {
-        Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    public Bitmap getSquareBitmap(final int size) {
+        Bitmap bmp = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bmp);
         setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
         draw(canvas);

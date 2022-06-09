@@ -55,40 +55,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     // Max length of the message.
     private static final int MAX_MESSAGE_LENGTH = 80;
 
-    private static Bitmap makeLargeIcon(Context context, VxCard pub, Topic.TopicType tp, String id) {
-        Bitmap bitmap = null;
-        String fullName = null;
-        if (pub != null) {
-            fullName = pub.fn;
-            URL ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
-            if (ref != null) {
-                try {
-                    bitmap = Picasso.get()
-                            .load(ref.toString())
-                            .resize(AVATAR_SIZE, AVATAR_SIZE).get();
-                } catch (IOException ex) {
-                    Log.w(TAG, "Failed to load avatar", ex);
-                }
-            } else {
-                bitmap = pub.getBitmap();
-            }
-        }
-
-        if (bitmap != null) {
-            bitmap = Bitmap.createScaledBitmap(bitmap, AVATAR_SIZE, AVATAR_SIZE, false);
-        } else {
-            bitmap = new LetterTileDrawable(context)
-                    .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
-                            LetterTileDrawable.ContactType.GROUP :
-                            LetterTileDrawable.ContactType.PERSON, false)
-                    .setLetterAndColor(fullName, id, false)
-                    .getBitmap(AVATAR_SIZE, AVATAR_SIZE);
-        }
-
-        Resources res = context.getResources();
-        return new RoundImageDrawable(res, bitmap).getRoundedBitmap();
-    }
-
     private static int unwrapInteger(Integer value, int defaultValue) {
         return value != null ? value : defaultValue;
     }
@@ -216,7 +182,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Assign sender's name and avatar.
                 if (sender != null && sender.pub != null) {
                     senderName = sender.pub.fn;
-                    senderIcon = makeLargeIcon(this, sender.pub, Topic.TopicType.P2P, senderId);
+                    senderIcon = UiUtils.avatarBitmap(this, sender.pub, Topic.TopicType.P2P, senderId, AVATAR_SIZE);
                 }
             }
 
@@ -224,7 +190,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 senderName = getResources().getString(R.string.sender_unknown);
             }
             if (senderIcon == null) {
-                senderIcon = makeLargeIcon(this, null, Topic.TopicType.P2P, senderId);
+                senderIcon = UiUtils.avatarBitmap(this, null, Topic.TopicType.P2P, senderId, AVATAR_SIZE);
             }
 
             String title = null;
@@ -346,10 +312,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     VxCard pub = topic.getPub();
                     if (pub == null) {
                         body = getResources().getString(R.string.sender_unknown);
-                        avatar = makeLargeIcon(this, null, tp, topicName);
+                        avatar = UiUtils.avatarBitmap(this, null, tp, topicName, AVATAR_SIZE);
                     } else {
                         body = pub.fn;
-                        avatar = makeLargeIcon(this, pub, tp, topicName);
+                        avatar = UiUtils.avatarBitmap(this, pub, tp, topicName, AVATAR_SIZE);
                     }
                 }
             }

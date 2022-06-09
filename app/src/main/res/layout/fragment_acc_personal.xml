@@ -12,8 +12,8 @@
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageAvatar"
-            android:layout_width="@dimen/avatar_size_large"
-            android:layout_height="@dimen/avatar_size_large"
+            android:layout_width="@dimen/avatar_size_huge"
+            android:layout_height="@dimen/avatar_size_huge"
             android:layout_centerHorizontal="true"
             android:layout_margin="4sp"
             android:clickable="true"

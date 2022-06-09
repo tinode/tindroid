@@ -4,6 +4,6 @@
     android:shape="oval">
     <solid android:color="#FF757575"/>
     <size
-        android:width="@dimen/avatar_size_large"
-        android:height="@dimen/avatar_size_large"/>
+        android:width="@dimen/avatar_size_huge"
+        android:height="@dimen/avatar_size_huge"/>
 </shape>

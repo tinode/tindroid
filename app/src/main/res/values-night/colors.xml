@@ -11,6 +11,9 @@
     <color name="colorReplyBubble">#10CCCCCC</color>
     <color name="colorReplyText">#CCCCCC</color>
 
+    <color name="colorNegativeAction">#d32f2f</color>
+    <color name="colorPositiveAction">#2E7D32</color>
+
     <!-- Audio waveform color -->
     <color name="waveform">#60CCCCCC</color>
     <color name="waveformPast">#80FFFFFF</color>

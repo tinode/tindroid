@@ -44,9 +44,9 @@
 
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/imageAvatar"
-                android:layout_width="@dimen/avatar_size_large"
-                android:layout_height="@dimen/avatar_size_large"
-                android:layout_marginTop="@dimen/avatar_size_large"
+                android:layout_width="@dimen/avatar_size_huge"
+                android:layout_height="@dimen/avatar_size_huge"
+                android:layout_marginTop="@dimen/avatar_size_huge"
                 android:contentDescription="@string/avatar"
                 android:focusable="false"
                 app:layout_constraintStart_toStartOf="parent"

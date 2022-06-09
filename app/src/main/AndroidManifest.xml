@@ -30,10 +30,14 @@
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
     <!-- Record audio messages -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <!-- Needed for audio visualization -->
+    <!-- Needed for audio visualization and audio recording adjustments. -->
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.INSERT" />
@@ -82,7 +86,7 @@
             android:launchMode="singleTask"
             android:theme="@style/AppTheme"
             android:exported="true">
-            <intent-filter android:autoVerify="true" tools:targetApi="m">
+            <intent-filter android:autoVerify="true" >
                 <action android:name="android.intent.action.VIEW"/>
 
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -185,10 +189,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
         <service
             android:name=".services.CallService"
             android:enabled="true"
-            android:exported="true"></service>
+            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

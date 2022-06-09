@@ -14,7 +14,9 @@
     <dimen name="fab_micro">32dp</dimen>
     <dimen name="fab_micro_icon">16dp</dimen>
     <dimen name="activity_padding">6dp</dimen>
-    <dimen name="avatar_size_large">144dp</dimen>
+    <dimen name="avatar_size_huge">144dp</dimen>
+    <dimen name="avatar_size_large">96dp</dimen>
+    <dimen name="avatar_size_normal">64dp</dimen>
     <dimen name="label_h_padding">4dp</dimen>
     <dimen name="label_margin">1.5dp</dimen>
     <dimen name="activity_default_margin">16dp</dimen>

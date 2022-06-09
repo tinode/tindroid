@@ -9,8 +9,6 @@ android {
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
 
-        versionCode rootProject.ext.version_code
-        versionName rootProject.ext.version_name
     }
 
     buildTypes {
