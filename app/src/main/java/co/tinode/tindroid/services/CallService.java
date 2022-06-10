@@ -7,10 +7,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
@@ -97,7 +94,7 @@ public class CallService extends Service {
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager
                 .getInstance(this);
         localBroadcastManager.sendBroadcast(new Intent(
-                IncomingCallActivity.INCOMING_CALL_FULL_SCREEN_CLOSE));
+                IncomingCallActivity.INTENT_ACTION_CALL_CLOSE));
     }
 
     private int declineCall(Intent intent) {

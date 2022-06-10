@@ -49,8 +49,6 @@ public class ChatsActivity extends AppCompatActivity
     static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
     static final String FRAGMENT_BANNED = "banned";
-    // DEBUG ONLY.
-    static final String DEBUG_FRAGMENT_CALL = "incoming_call";
 
     private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
@@ -186,9 +184,6 @@ public class ChatsActivity extends AppCompatActivity
                     break;
                 case FRAGMENT_CHATLIST:
                     fragment = new ChatsFragment();
-                    break;
-                case DEBUG_FRAGMENT_CALL:
-                    fragment = new IncomingCallFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);

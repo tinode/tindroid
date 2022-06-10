@@ -134,6 +134,7 @@
             android:label="@string/action_new_chat"
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="adjustResize" />
+
         <activity
             android:name=".SendToActivity"
             android:label="@string/send_to"
@@ -145,13 +146,20 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".IncomingCallActivity"
             android:exported="false"
-            android:showOnLockScreen="true" />
+            android:showOnLockScreen="true">
+            <intent-filter>
+                <action android:name="tindroidx.intent.action.call.INCOMING" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity"
             android:theme="@style/LicensesTheme" />
+
         <activity
             android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
             android:theme="@style/LicensesTheme" />
