@@ -85,6 +85,7 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -517,7 +518,7 @@ public class UiUtils {
         return sb.append(sec).toString();
     }
 
-    // If an incoming info is a video call related,
+    // Start or dismiss Incoming Call UI if the MsgServerInfo packet is video call related.
     public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
         if ("call".equals(info.what)) {
             final Tinode tinode = Cache.getTinode();
@@ -525,36 +526,31 @@ public class UiUtils {
                 case "invite":
                     if (!tinode.isMe(info.from)) {
                         // Call invite from the peer.
-                        UiUtils.handleIncomingVideoCall(ctx, "invite", info.src, info.from, info.seq);
+                        Intent intent = new Intent();
+                        intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
+                        intent.putExtra("topic", info.src);
+                        intent.putExtra("seq", info.seq);
+                        intent.putExtra("from", info.from);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        ctx.startActivity(intent);
                     }
                     break;
                 case "accept":
                     if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
                         // Another client has accepted the call. Dismiss call notification.
-                        UiUtils.handleIncomingVideoCall(ctx, "dismiss", info.src, info.from, info.seq);
+                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(ctx);
+                        Intent intent = new Intent(IncomingCallActivity.INTENT_ACTION_CALL_CLOSE);
+                        intent.putExtra("topic", info.src);
+                        intent.putExtra("seq", info.seq);
+                        lbm.sendBroadcast(intent);
                     }
                     break;
             }
         }
     }
 
-    // Triggers an incoming video call notification/banner.
-    public static void handleIncomingVideoCall(Context context, String action, String topic,
-                                               String from, int seq) {
-        // CallService will actually build and display the notification.
-        Intent intent = new Intent(context, CallService.class);
-        intent.setAction(action);
-        intent.putExtra("topic", topic);
-        intent.putExtra("seq", seq);
-        intent.putExtra("from", from);
-        if (context instanceof Service && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(intent);
-        } else {
-            context.startService(intent);
-        }
-    }
-
     // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean isSameDate(@Nullable Date one, @Nullable Date two) {
         if (one == two) {
             return true;

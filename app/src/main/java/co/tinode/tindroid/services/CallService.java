@@ -39,94 +39,13 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
 /**
  * Handles incoming video calls: notification display and routing.
  */
-public class CallService extends Service {
+public class CallService {
     private static final String TAG = "CallService";
 
     public static int NOTIFICATION_ID = 4096;
     public static int AVATAR_SIZE = 128;
 
-    private Tinode mTinode;
-    private EventListener mListener;
-    private Timer mTimer;
-
-    private class EventListener extends Tinode.EventListener {
-        @Override
-        public void onInfoMessage(MsgServerInfo info) {
-            Log.d(TAG, "Remote hangup: " + info.toString());
-            if ("call".equals(info.what) && "hang-up".equals(info.event)) {
-                Log.d(TAG, "Remote hangup");
-                stopService();
-            }
-        }
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(TAG, "Destroying service");
-        mTinode.removeListener(mListener);
-        super.onDestroy();
-    }
-
-    @Override
-    public void onCreate() {
-        Log.d(TAG, "Creating service");
-        mTinode = Cache.getTinode();
-        mListener = new EventListener();
-        mTinode.addListener(mListener);
-        super.onCreate();
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
-    }
-
-    private void cleanUp() {
-        if (mTimer != null) {
-            mTimer.cancel();
-        }
-    }
-
-    private void stopService() {
-        stopForeground(true);
-        // In case the full screen notification (represented by IncomingCallActivity)
-        // has been displayed, close it too.
-        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager
-                .getInstance(this);
-        localBroadcastManager.sendBroadcast(new Intent(
-                IncomingCallActivity.INTENT_ACTION_CALL_CLOSE));
-    }
-
-    private int declineCall(Intent intent) {
-        cleanUp();
-        String topicName = intent.getStringExtra("topic");
-        int seq = intent.getIntExtra("seq", -1);
-        Log.d(TAG, "Call declined: " + topicName + ":" + seq);
-        //noinspection unchecked
-        ComTopic<VxCard> topic = (ComTopic<VxCard>) mTinode.getTopic(topicName);
-        if (topic != null) {
-            topic.videoCall("hang-up", seq, null);
-        }
-        stopService();
-        return START_NOT_STICKY;
-    }
-
-    private int acceptCall(Intent intent) {
-        cleanUp();
-        String topicName = intent.getStringExtra("topic");
-        int seq = intent.getIntExtra("seq", -1);
-        Log.d(TAG, "Call accepted: " + topicName + ":" + seq);
-        Intent acceptIntent = new Intent(this, MessageActivity.class);
-        acceptIntent.setAction("incoming_call");
-        acceptIntent.putExtra("topic", topicName);
-        acceptIntent.putExtra("seq", seq);
-        acceptIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(acceptIntent);
-        // Remove notification.
-        stopService();
-        return START_NOT_STICKY;
-    }
-
+    /*
     private void showCallInviteNotification(RemoteViews notifView, PendingIntent notifIntent) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationManager notificationManager = (NotificationManager)
@@ -234,30 +153,5 @@ public class CallService extends Service {
         return START_STICKY;
     }
 
-    private int dismissCall(Intent intent) {
-        cleanUp();
-        stopService();
-        return START_NOT_STICKY;
-    }
-
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String action = intent.getAction();
-        if (action == null) {
-            return START_NOT_STICKY;
-        }
-
-        switch (action) {
-            case "decline":
-                return declineCall(intent);
-            case "accept":
-                return acceptCall(intent);
-            case "invite":
-                return showCallInvite(intent);
-            case "dismiss":
-                return dismissCall(intent);
-            default:
-                return START_NOT_STICKY;
-        }
-    }
+     */
 }

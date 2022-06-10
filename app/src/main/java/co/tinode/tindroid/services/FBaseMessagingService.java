@@ -16,10 +16,7 @@ import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
-import com.squareup.picasso.Picasso;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
@@ -29,14 +26,13 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.ChatsActivity;
+import co.tinode.tindroid.IncomingCallActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.format.FontFormatter;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.widgets.LetterTileDrawable;
-import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
@@ -55,41 +51,18 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     // Max length of the message.
     private static final int MAX_MESSAGE_LENGTH = 80;
 
-    private static int unwrapInteger(Integer value, int defaultValue) {
-        return value != null ? value : defaultValue;
-    }
+    @Override
+    public void onNewToken(@NonNull final String refreshedToken) {
+        super.onNewToken(refreshedToken);
+        Log.d(TAG, "Refreshed token: " + refreshedToken);
 
-    @SuppressWarnings("SameParameterValue")
-    private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
-        int id = res.getIdentifier(name, resourceType, packageName);
-        return id != 0 ? id : defaultId;
-    }
+        // Send token to the server.
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        Intent intent = new Intent("FCM_REFRESH_TOKEN");
+        intent.putExtra("token", refreshedToken);
+        lbm.sendBroadcast(intent);
 
-    private static int unwrapColor(String strColor, int defaultColor) {
-        int color = defaultColor;
-        if (strColor != null) {
-            try {
-                color = Color.parseColor(strColor);
-            } catch (IllegalAccessError ignored) {
-            }
-        }
-        return color;
-    }
-
-    // Localized text from resource name.
-    private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
-        String result = defaultText;
-        if (locKey != null) {
-            int id = res.getIdentifier(locKey, "string", packageName);
-            if (id != 0) {
-                if (locArgs != null) {
-                    result = res.getString(id, (Object[]) locArgs);
-                } else {
-                    result = res.getString(id);
-                }
-            }
-        }
-        return result;
+        // The token is currently retrieved in co.tinode.tindroid.Cache.
     }
 
     @Override
@@ -198,7 +171,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             Bitmap avatar = null;
             if (TextUtils.isEmpty(what) || "msg".equals(what)) {
                 // Message notification.
-
                 String seqStr = data.get("seq");
                 try {
                     int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
@@ -208,8 +180,16 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         switch (webrtc) {
                             case "started":
                                 if (!tinode.isMe(senderId)) {
-                                    // Incoming call.
-                                    UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
+                                    // Show UI for accepting/declining the incoming call.
+                                    Intent intent = new Intent();
+                                    intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
+                                    intent.putExtra("topic", topicName);
+                                    intent.putExtra("seq", seq);
+                                    intent.putExtra("from", senderName);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    startActivity(intent);
+
+                                    // UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
                                 }
                                 break;
                             case "accepted":
@@ -220,7 +200,13 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                                 int origSeq = origSeqStr != null ? Integer.parseInt(origSeqStr) : 0;
                                 if (origSeq > 0) {
                                     // Dismiss the call UI.
-                                    UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);
+                                    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+                                    Intent intent = new Intent(IncomingCallActivity.INTENT_ACTION_CALL_CLOSE);
+                                    intent.putExtra("topic", topicName);
+                                    intent.putExtra("seq", seq);
+                                    lbm.sendBroadcast(intent);
+
+                                    // UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);
                                 }
                                 break;
                             default:
@@ -415,17 +401,40 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION));
     }
 
-    @Override
-    public void onNewToken(@NonNull final String refreshedToken) {
-        super.onNewToken(refreshedToken);
-        Log.d(TAG, "Refreshed token: " + refreshedToken);
+    private static int unwrapInteger(Integer value, int defaultValue) {
+        return value != null ? value : defaultValue;
+    }
 
-        // Send token to the server.
-        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-        Intent intent = new Intent("FCM_REFRESH_TOKEN");
-        intent.putExtra("token", refreshedToken);
-        lbm.sendBroadcast(intent);
+    @SuppressWarnings("SameParameterValue")
+    private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
+        int id = res.getIdentifier(name, resourceType, packageName);
+        return id != 0 ? id : defaultId;
+    }
 
-        // The token is currently retrieved in co.tinode.tindroid.Cache.
+    private static int unwrapColor(String strColor, int defaultColor) {
+        int color = defaultColor;
+        if (strColor != null) {
+            try {
+                color = Color.parseColor(strColor);
+            } catch (IllegalAccessError ignored) {
+            }
+        }
+        return color;
+    }
+
+    // Localized text from resource name.
+    private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
+        String result = defaultText;
+        if (locKey != null) {
+            int id = res.getIdentifier(locKey, "string", packageName);
+            if (id != 0) {
+                if (locArgs != null) {
+                    result = res.getString(id, (Object[]) locArgs);
+                } else {
+                    result = res.getString(id);
+                }
+            }
+        }
+        return result;
     }
 }

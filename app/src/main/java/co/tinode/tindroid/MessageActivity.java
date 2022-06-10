@@ -224,29 +224,30 @@ public class MessageActivity extends AppCompatActivity
             return;
         }
 
-        mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
-        Uri attachment = intent.getData();
-        String type = intent.getType();
-        if (attachment != null && type != null) {
-            // Need to retain access right to the given Uri.
-            Bundle args = new Bundle();
-            args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
-            args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
-            if (type.startsWith("image/")) {
-                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
-                showFragment(FRAGMENT_VIEW_IMAGE, args, true);
-            } else {
-                showFragment(FRAGMENT_FILE_PREVIEW, args, true);
-            }
-        }
         String action = intent.getAction();
-        if ("incoming_call".equals(action)) {
+        if (IncomingCallActivity.INTENT_ACTION_CALL_ACCEPT.equals(action)) {
             // We are executing the requested action only once.
             intent.setAction(null);
             Bundle args = new Bundle();
             args.putString("call_direction", "incoming");
             args.putInt("call_seq", intent.getIntExtra("seq", 0));
             showFragment(FRAGMENT_CALL, args, true);
+        } else {
+            mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
+            Uri attachment = intent.getData();
+            String type = intent.getType();
+            if (attachment != null && type != null) {
+                // Need to retain access right to the given Uri.
+                Bundle args = new Bundle();
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
+                args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
+                if (type.startsWith("image/")) {
+                    args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                    showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+                } else {
+                    showFragment(FRAGMENT_FILE_PREVIEW, args, true);
+                }
+            }
         }
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -365,21 +366,19 @@ public class MessageActivity extends AppCompatActivity
             }
         }
 
-        if (TextUtils.isEmpty(name)) {
-            // mTopicName is empty, so this is an external intent
-            Uri contactUri = intent.getData();
-            if (contactUri != null) {
-                Cursor cursor = getContentResolver().query(contactUri,
-                        new String[]{Utils.DATA_PID}, null, null, null);
-                if (cursor != null) {
-                    if (cursor.moveToFirst()) {
-                        int idx = cursor.getColumnIndex(Utils.DATA_PID);
-                        if (idx >= 0) {
-                            name = cursor.getString(idx);
-                        }
+        // mTopicName is empty, so this is an external intent
+        Uri contactUri = intent.getData();
+        if (contactUri != null) {
+            Cursor cursor = getContentResolver().query(contactUri,
+                    new String[]{Utils.DATA_PID}, null, null, null);
+            if (cursor != null) {
+                if (cursor.moveToFirst()) {
+                    int idx = cursor.getColumnIndex(Utils.DATA_PID);
+                    if (idx >= 0) {
+                        name = cursor.getString(idx);
                     }
-                    cursor.close();
                 }
+                cursor.close();
             }
         }
 

@@ -153,6 +153,7 @@
             android:showOnLockScreen="true">
             <intent-filter>
                 <action android:name="tindroidx.intent.action.call.INCOMING" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
 
@@ -200,11 +201,6 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
-        <service
-            android:name=".services.CallService"
-            android:enabled="true"
-            android:exported="true" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

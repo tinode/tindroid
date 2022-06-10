@@ -12,35 +12,45 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.KeyguardManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.services.CallService;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 
 /**
  * Incoming call view with accept/decline buttons.
  */
-public class IncomingCallActivity extends AppCompatActivity implements MotionLayout.TransitionListener {
+public class IncomingCallActivity extends AppCompatActivity
+        implements MotionLayout.TransitionListener {
     private static final String TAG = "IncomingCallActivity";
 
+    private static final long DEFAULT_CALL_TIMEOUT = 30_000;
+
     public static final String INTENT_ACTION_CALL_INCOMING = "tindroidx.intent.action.call.INCOMING";
-    public static final String INTENT_ACTION_CALL_DECLINE = "tindroidx.intent.action.call.DECLINE";
     public static final String INTENT_ACTION_CALL_ACCEPT = "tindroidx.intent.action.call.ACCEPT";
     public static final String INTENT_ACTION_CALL_CLOSE = "tindroidx.intent.action.call.CLOSE";
 
@@ -50,34 +60,40 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
     private MediaPlayer mMediaPlayer;
     private ProcessCameraProvider mCamera;
 
+    private Tinode mTinode;
+    private InfoEventListener mListener;
+
     private String mTopicName;
     private int mSeq;
     private ComTopic<VxCard> mTopic;
 
-    /*
+    private Timer mTimer;
+
     // Receives close requests from CallService (e.g. upon remote hang-up).
-    LocalBroadcastManager mLocalBroadcastManager;
-    BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (INTENT_FILTER_CALL_CLOSE.equals(intent.getAction())){
-                finish();
+            if (INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
+                String topicName = intent.getStringExtra("topic");
+                int seq = intent.getIntExtra("seq", -1);
+                if (mTopicName.equals(topicName) && mSeq == seq) {
+                    finish();
+                } else {
+                    Log.d(TAG, "Close intent dismissed: topic or seq do not match");
+                }
             }
         }
     };
-    */
 
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
-                        // handleCallClose();
+                        declineCall();
                         return;
                     }
                 }
-                // All permissions granted.
-                // this.startMediaAndSignal();
             });
 
     @Override
@@ -91,35 +107,41 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
         }
 
         if (!INTENT_ACTION_CALL_INCOMING.equals(intent.getAction())) {
+            Log.w(TAG, "Unknown intent action '" + intent.getAction() + "'");
             finish();
             return;
         }
 
+        setContentView(R.layout.activity_incoming_call);
+        ((MotionLayout) findViewById(R.id.incomingCallMainLayout)).setTransitionListener(this);
+
+        mTinode = Cache.getTinode();
+        mListener = new InfoEventListener();
+        mTinode.addListener(mListener);
+
         mTopicName = intent.getStringExtra("topic");
+        // Technically the call is from intent.getStringExtra("from")
+        // but it's the same as "topic" for p2p topics;
         mSeq = intent.getIntExtra("seq", -1);
-        /*
+
         //noinspection unchecked
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
+        mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
 
         VxCard pub = mTopic.getPub();
-        UiUtils.setAvatar(view.findViewById(R.id.imageAvatar), pub, name, false);
+        UiUtils.setAvatar(findViewById(R.id.imageAvatar), pub, mTopicName, false);
         String peerName = pub != null ? pub.fn : null;
         if (TextUtils.isEmpty(peerName)) {
             peerName = getResources().getString(R.string.unknown);
         }
-        ((TextView) view.findViewById(R.id.peerName)).setText(peerName);
-         */
-
-        setContentView(R.layout.activity_incoming_call);
+        ((TextView) findViewById(R.id.peerName)).setText(peerName);
 
         mLocalCameraView = findViewById(R.id.cameraPreviewView);
 
-        /*
-        mLocalBroadcastManager = LocalBroadcastManager.getInstance(this);
+        // Handle external request to close activity.
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
         IntentFilter mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(INTENT_FILTER_CALL_CLOSE);
-        mLocalBroadcastManager.registerReceiver(mBroadcastReceiver, mIntentFilter);
-        */
+        mIntentFilter.addAction(INTENT_ACTION_CALL_CLOSE);
+        lbm.registerReceiver(mBroadcastReceiver, mIntentFilter);
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean isScreenOff = !pm.isInteractive();
@@ -142,6 +164,15 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
                 mgr.requestDismissKeyguard(this, null);
             }
         }
+
+        long timeout = mTinode.getServerLimit("callTimeout", DEFAULT_CALL_TIMEOUT);
+        mTimer = new Timer();
+        mTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                declineCall();
+            }
+        }, timeout + 5_000);
 
         // Check permissions.
         LinkedList<String> missing = UiUtils.getMissingPermissions(this,
@@ -168,6 +199,11 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
 
     @Override
     public void onDestroy() {
+        mTinode.removeListener(mListener);
+        mTimer.cancel();
+
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
+
         // mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         if (mTurnScreenOffWhenDone) {
             Log.d(TAG, "Turning screen off.");
@@ -195,29 +231,17 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
     @Override
     public void onTransitionCompleted(MotionLayout motionLayout, int currentId) {
         if  (currentId == R.id.answerActivated) {
-            Log.i(TAG, "Answered");
-            scheduleActionAndClose(INTENT_ACTION_CALL_ACCEPT);
+            acceptCall();
         } else if (currentId == R.id.hangUpActivated) {
-            Log.i(TAG, "Declined");
-            scheduleActionAndClose(INTENT_ACTION_CALL_DECLINE);
+            declineCall();
         } else {
-            Log.i(TAG,"Unknown");
+            Log.i(TAG,"Unknown transition (normal?)");
         }
     }
 
     @Override
     public void onTransitionTrigger(MotionLayout motionLayout, int triggerId, boolean positive, float progress) {
         // Do nothing.
-    }
-
-    // Handles accept or decline button click.
-    private void scheduleActionAndClose(String action) {
-        Intent intent = new Intent(IncomingCallActivity.this, CallService.class);
-        intent.setAction(action);
-        intent.putExtra("topic", mTopicName);
-        intent.putExtra("seq", mSeq);
-        startService(intent);
-        finish();
     }
 
     private void startCamera() {
@@ -238,5 +262,41 @@ public class IncomingCallActivity extends AppCompatActivity implements MotionLay
                 Log.e(TAG, "Failed to start camera", ex);
             }
         }, ContextCompat.getMainExecutor(this));
+    }
+
+    private void declineCall() {
+        // Send message to server that the call is declined.
+        Log.d(TAG, "Call declined: " + mTopicName + ":" + mSeq);
+        if (mTopic != null) {
+            mTopic.videoCall("hang-up", mSeq, null);
+        }
+        finish();
+    }
+
+    private void acceptCall() {
+        // Open MessageActivity with CallFragment activated.
+
+        Log.d(TAG, "Call accepted: " + mTopicName + ":" + mSeq);
+
+        Intent intent = new Intent(this, MessageActivity.class);
+        intent.setAction(INTENT_ACTION_CALL_ACCEPT);
+        intent.putExtra("topic", mTopicName);
+        intent.putExtra("seq", mSeq);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private class InfoEventListener extends Tinode.EventListener {
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            if (mTopicName.equals(info.topic) && mSeq == info.seq) {
+                Log.d(TAG, "Remote hangup: " + info);
+                if ("call".equals(info.what) && "hang-up".equals(info.event)) {
+                    Log.d(TAG, "Remote hangup");
+                    finish();
+                }
+            }
+        }
     }
 }
