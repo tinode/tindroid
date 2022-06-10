@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MotionScene xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:motion="http://schemas.android.com/apk/res-auto">
+
+    <Transition
+        motion:constraintSetEnd="@+id/hangUpActivated"
+        motion:constraintSetStart="@id/normal"
+        motion:duration="300"
+        motion:motionInterpolator="easeInOut">
+        <OnSwipe
+            motion:dragDirection="dragUp"
+            motion:maxAcceleration="200"
+            motion:touchRegionId="@+id/hangupBtn" />
+    </Transition>
+
+    <Transition
+        motion:constraintSetEnd="@+id/answerActivated"
+        motion:constraintSetStart="@id/normal"
+        motion:duration="300"
+        motion:motionInterpolator="easeInOut">
+        <OnSwipe
+            motion:dragDirection="dragUp"
+            motion:maxAcceleration="200"
+            motion:touchRegionId="@+id/answerBtn" />
+    </Transition>
+
+    <ConstraintSet android:id="@+id/normal">
+        <Constraint
+            android:id="@id/answerBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/fab_margin"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintHorizontal_bias="0.5"
+            motion:layout_constraintLeft_toLeftOf="parent"
+            motion:layout_constraintRight_toRightOf="parent" />
+
+        <Constraint
+            android:id="@id/hangupBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="32dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintHorizontal_bias="0.15"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/answerActivated">
+        <Constraint
+            android:id="@id/answerBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="224dp"
+            motion:layout_constraintBottom_toBottomOf="parent"
+            motion:layout_constraintHorizontal_bias="0.5"
+            motion:layout_constraintLeft_toLeftOf="parent"
+            motion:layout_constraintRight_toRightOf="parent" />
+    </ConstraintSet>
+
+    <ConstraintSet android:id="@+id/hangUpActivated">
+        <Constraint
+            android:id="@id/hangupBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="196dp"
+            motion:layout_constraintBottom_toBottomOf="@id/answerBtn"
+            motion:layout_constraintHorizontal_bias="0.15"
+            motion:layout_constraintStart_toStartOf="parent"
+            motion:layout_constraintEnd_toEndOf="parent" />
+    </ConstraintSet>
+
+</MotionScene>

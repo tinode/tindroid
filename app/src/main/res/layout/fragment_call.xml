@@ -117,7 +117,7 @@
             android:id="@+id/hangupBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/ic_baseline_call_end_24"
+            android:src="@drawable/ic_call_end"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/finish_call_button"
             app:backgroundTint="@android:color/holo_red_dark"

@@ -21,11 +21,17 @@
             android:icon="@drawable/ic_filecab"
             app:showAsAction="never" />
 
-
         <item
             android:id="@+id/action_settings"
             android:orderInCategory="102"
             android:title="@string/action_settings"
+            android:icon="@drawable/ic_settings"
+            app:showAsAction="never" />
+
+        <item
+            android:id="@+id/debug_action_call"
+            android:orderInCategory="103"
+            android:title="Incoming call"
             android:icon="@drawable/ic_settings"
             app:showAsAction="never" />
     </group>

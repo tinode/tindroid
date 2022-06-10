@@ -6,11 +6,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-    <!-- Needed for adding an avatar pic when registering new accounts and reading attachments -->
+    <!-- Needed for adding an avatar pic when registering new accounts and reading attachments and for video calls. -->
     <uses-permission android:name="android.permission.CAMERA"/>
+    <!-- To disable installation on devices without the camera -->
+    <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>

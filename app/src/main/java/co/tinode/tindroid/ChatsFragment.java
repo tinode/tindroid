@@ -212,6 +212,9 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             return true;
         } else if (id == R.id.action_offline) {
             Cache.getTinode().reconnectNow(true, false, false);
+        } else if (id == R.id.debug_action_call) {
+            activity.showFragment(ChatsActivity.DEBUG_FRAGMENT_CALL, null);
+            return true;
         }
         return false;
     }

@@ -3,8 +3,6 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
-import android.graphics.PixelFormat;
 import android.media.AudioManager;
 import android.os.Bundle;
 
@@ -17,8 +15,6 @@ import androidx.fragment.app.Fragment;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -30,7 +26,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
 import org.webrtc.Camera1Enumerator;
-import org.webrtc.CameraEnumerationAndroid;
 import org.webrtc.CameraEnumerator;
 import org.webrtc.DataChannel;
 import org.webrtc.DefaultVideoDecoderFactory;
@@ -74,6 +69,11 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
 
+    public enum CallDirection {
+        OUTGOING,
+        INCOMING,
+    }
+
     private PeerConnectionFactory mPeerConnectionFactory;
     private MediaConstraints mSdpConstraints;
     private VideoCapturer mVideoCapturerAndroid;
@@ -93,10 +93,8 @@ public class CallFragment extends Fragment {
     private SurfaceViewRenderer mLocalVideoView;
     private SurfaceViewRenderer mRemoteVideoView;
 
-    public enum CallDirection {
-        OUTGOING,
-        INCOMING,
-    }
+    private ComTopic<VxCard> mTopic;
+    private InfoListener mTinodeListener;
 
     CallDirection mCallDirection;
     int mCallSeqID;
@@ -117,8 +115,6 @@ public class CallFragment extends Fragment {
                 this.startMediaAndSignal();
             });
 
-    private ComTopic<VxCard> mTopic;
-    private InfoListener mTinodeListener;
 
     public CallFragment() {}
 
@@ -294,10 +290,6 @@ public class CallFragment extends Fragment {
             mVideoCapturerAndroid.initialize(surfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
         }
 
-        //ViewGroup.LayoutParams lp = mLocalVideoView.getLayoutParams();
-        //int localFrame = (int) activity.getResources().getDimension(R.dimen.local_video_frame);
-        //mVideoSource.adaptOutputFormat(localFrame / 2, localFrame, 15);
-
         mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
 
         // Create an AudioSource instance
@@ -327,7 +319,7 @@ public class CallFragment extends Fragment {
                 }
             }, new PromisedReply.FailureListener<ServerMessage>() {
                 @Override
-                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) throws Exception {
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                     handleCallClose();
                     return null;
                 }
@@ -513,12 +505,11 @@ public class CallFragment extends Fragment {
         // First, try to find front facing camera
         Log.d(TAG, "Looking for front facing cameras.");
         for (String deviceName : deviceNames) {
-            if (enumerator.isFrontFacing(deviceName)) {;
+            if (enumerator.isFrontFacing(deviceName)) {
                 Log.d(TAG, "Creating front facing camera capturer.");
                 VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
                 if (videoCapturer != null) {
                     Log.d(TAG, "Created FF camera " + deviceName);
-                    List<CameraEnumerationAndroid.CaptureFormat> cf = enumerator.getSupportedFormats(deviceName);
                     return videoCapturer;
                 } else {
                     Log.d(TAG, "Failed to create FF camera " + deviceName);
