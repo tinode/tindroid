@@ -225,6 +225,7 @@ public class MessageActivity extends AppCompatActivity
         }
 
         String action = intent.getAction();
+        Log.d(TAG, "Resumed with intent action: " + action);
         if (IncomingCallActivity.INTENT_ACTION_CALL_ACCEPT.equals(action)) {
             // We are executing the requested action only once.
             intent.setAction(null);
@@ -233,7 +234,10 @@ public class MessageActivity extends AppCompatActivity
             args.putInt("call_seq", intent.getIntExtra("seq", 0));
             showFragment(FRAGMENT_CALL, args, true);
         } else {
-            mMessageText = intent.getStringExtra(Intent.EXTRA_TEXT);
+            CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+            //noinspection ConstantConditions
+            mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
+            intent.putExtra(Intent.EXTRA_TEXT, (String) null);
             Uri attachment = intent.getData();
             String type = intent.getType();
             if (attachment != null && type != null) {
