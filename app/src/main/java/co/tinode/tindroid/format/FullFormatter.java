@@ -36,6 +36,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -687,7 +688,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         val = data.get("state");
         String state = val instanceof String ? (String) val : "";
 
-        boolean success = !"disconnected".equals(state);
+        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
 
         result.append("\n");
 
