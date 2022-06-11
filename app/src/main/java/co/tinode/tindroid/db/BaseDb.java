@@ -55,6 +55,59 @@ public class BaseDb extends SQLiteOpenHelper {
         return sInstance;
     }
 
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL(AccountDb.CREATE_TABLE);
+        db.execSQL(AccountDb.CREATE_INDEX_1);
+        db.execSQL(AccountDb.CREATE_INDEX_2);
+        db.execSQL(TopicDb.CREATE_TABLE);
+        db.execSQL(TopicDb.CREATE_INDEX);
+        db.execSQL(UserDb.CREATE_TABLE);
+        db.execSQL(UserDb.CREATE_INDEX);
+        db.execSQL(SubscriberDb.CREATE_TABLE);
+        db.execSQL(SubscriberDb.CREATE_INDEX);
+        db.execSQL(MessageDb.CREATE_TABLE);
+        db.execSQL(MessageDb.CREATE_INDEX);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // Keep existing account to be sure the user is not logged out on DB upgrade.
+        StoredAccount acc = AccountDb.getActiveAccount(db);
+        String deviceToken = AccountDb.getDeviceToken(db);
+
+        // This is just a cache. Drop then re-fetch everything from the server.
+        db.execSQL(MessageDb.DROP_INDEX);
+        db.execSQL(MessageDb.DROP_TABLE);
+        db.execSQL(SubscriberDb.DROP_INDEX);
+        db.execSQL(SubscriberDb.DROP_TABLE);
+        db.execSQL(UserDb.DROP_INDEX);
+        db.execSQL(UserDb.DROP_TABLE);
+        db.execSQL(TopicDb.DROP_INDEX);
+        db.execSQL(TopicDb.DROP_TABLE);
+        db.execSQL(AccountDb.DROP_INDEX_2);
+        db.execSQL(AccountDb.DROP_INDEX_1);
+        db.execSQL(AccountDb.DROP_TABLE);
+        onCreate(db);
+
+        if (acc != null) {
+            // Restore active account.
+            AccountDb.addOrActivateAccount(db, acc.uid, acc.hostURI);
+            AccountDb.updateCredentials(db, acc.credMethods);
+            AccountDb.updateDeviceToken(db, deviceToken);
+        }
+    }
+
+    @Override
+    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        onUpgrade(db, oldVersion, newVersion);
+    }
+
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        db.setForeignKeyConstraintsEnabled(true);
+    }
+
     /**
      * Serializes object as "canonical_class_name;json_representation of content".
      *
@@ -252,54 +305,6 @@ public class BaseDb extends SQLiteOpenHelper {
 
     long getAccountId() {
         return mAcc != null ? mAcc.id : -1;
-    }
-
-    @Override
-    public void onCreate(SQLiteDatabase db) {
-        db.execSQL(AccountDb.CREATE_TABLE);
-        db.execSQL(AccountDb.CREATE_INDEX_1);
-        db.execSQL(AccountDb.CREATE_INDEX_2);
-        db.execSQL(TopicDb.CREATE_TABLE);
-        db.execSQL(TopicDb.CREATE_INDEX);
-        db.execSQL(UserDb.CREATE_TABLE);
-        db.execSQL(UserDb.CREATE_INDEX);
-        db.execSQL(SubscriberDb.CREATE_TABLE);
-        db.execSQL(SubscriberDb.CREATE_INDEX);
-        db.execSQL(MessageDb.CREATE_TABLE);
-        db.execSQL(MessageDb.CREATE_INDEX);
-        db.execSQL(EditHistoryDb.CREATE_TABLE);
-        db.execSQL(EditHistoryDb.CREATE_INDEX);
-        db.execSQL(EditHistoryDb.CREATE_INDEX_2);
-    }
-
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // This is just a cache. Drop then re-fetch everything from the server.
-        db.execSQL(EditHistoryDb.DROP_INDEX_2);
-        db.execSQL(EditHistoryDb.DROP_INDEX);
-        db.execSQL(EditHistoryDb.DROP_TABLE);
-        db.execSQL(MessageDb.DROP_INDEX);
-        db.execSQL(MessageDb.DROP_TABLE);
-        db.execSQL(SubscriberDb.DROP_INDEX);
-        db.execSQL(SubscriberDb.DROP_TABLE);
-        db.execSQL(UserDb.DROP_INDEX);
-        db.execSQL(UserDb.DROP_TABLE);
-        db.execSQL(TopicDb.DROP_INDEX);
-        db.execSQL(TopicDb.DROP_TABLE);
-        db.execSQL(AccountDb.DROP_INDEX_2);
-        db.execSQL(AccountDb.DROP_INDEX_1);
-        db.execSQL(AccountDb.DROP_TABLE);
-        onCreate(db);
-    }
-
-    @Override
-    public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        onUpgrade(db, oldVersion, newVersion);
-    }
-
-    @Override
-    public void onConfigure(SQLiteDatabase db) {
-        db.setForeignKeyConstraintsEnabled(true);
     }
 
     public enum Status {
