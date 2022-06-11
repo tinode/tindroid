@@ -27,7 +27,7 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 * Replying and forwarding messages.
 * Trusted account badges: verified account, staff, etc.
 * Form messages suitable for chatbots.
-* Attachments and inline images.
+* Attachments and inline images, voice messages.
 * Muting/un-muting conversations and other granular permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
@@ -37,7 +37,7 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 ## Not done yet:
 
 * End-to-end encryption.
-* No voice or video messages. No video or audio calling.
+* No video messages. No video or audio calling.
 * No support for switching between multiple backends.
 * Mentions, hashtags.
 * Previews not generated for videos, audio, links or docs.
