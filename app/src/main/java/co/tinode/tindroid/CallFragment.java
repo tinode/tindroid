@@ -147,10 +147,12 @@ public class CallFragment extends Fragment {
         final MessageActivity activity = (MessageActivity) getActivity();
         final Bundle args = getArguments();
         if (args == null || activity == null) {
+            Log.w(TAG, "Call fragment created with no arguments");
             // Reject the call.
             handleCallClose();
             return;
         }
+
         String name = args.getString("topic");
         //noinspection unchecked
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);

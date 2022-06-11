@@ -291,9 +291,8 @@ public class IncomingCallActivity extends AppCompatActivity
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {
-                Log.d(TAG, "Remote hangup: " + info);
                 if ("call".equals(info.what) && "hang-up".equals(info.event)) {
-                    Log.d(TAG, "Remote hangup");
+                    Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
                     finish();
                 }
             }

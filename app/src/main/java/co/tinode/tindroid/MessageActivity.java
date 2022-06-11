@@ -232,6 +232,7 @@ public class MessageActivity extends AppCompatActivity
             Bundle args = new Bundle();
             args.putString("call_direction", "incoming");
             args.putInt("call_seq", intent.getIntExtra("seq", 0));
+            Log.d(TAG, "Show fragment Call seq=" + intent.getIntExtra("seq", 0));
             showFragment(FRAGMENT_CALL, args, true);
         } else {
             CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
@@ -304,7 +305,7 @@ public class MessageActivity extends AppCompatActivity
                     //noinspection unchecked
                     mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
                 } catch (ClassCastException ex) {
-                    Log.w(TAG, "The unknown topic is a non-comm topic: " + mTopicName);
+                    Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
                     return false;
                 }
                 showFragment(FRAGMENT_INVALID, null, false);
