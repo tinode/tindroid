@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import androidx.annotation.NonNull;
+import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
 
 public abstract class AbstractDraftyFormatter<T extends Spanned> implements Drafty.Formatter<T> {
@@ -184,5 +185,22 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
             sb.append("0");
         }
         return sb.append(sec);
+    }
+
+    protected static int callStatus(boolean incoming, String event) {
+        int comment = 0;
+        if (incoming) {
+            if ("declined".equals(event)) {
+                comment = R.string.declined_call;
+            } else if ("missed".equals(event)) {
+                comment = R.string.missed_call;
+            }
+        } else {
+            comment = R.string.cancelled_call;
+        }
+        if (comment == 0) {
+            comment = R.string.disconnected_call;
+        }
+        return comment;
     }
 }

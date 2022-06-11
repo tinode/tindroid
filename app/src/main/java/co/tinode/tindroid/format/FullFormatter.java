@@ -688,11 +688,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         val = data.get("state");
         String state = val instanceof String ? (String) val : "";
 
-        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
-
         result.append("\n");
 
         SpannableStringBuilder second = new SpannableStringBuilder();
+        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
         icon = AppCompatResources.getDrawable(ctx,
                 incoming ?
                         (success ? R.drawable.ic_arrow_sw : R.drawable.ic_arrow_missed) :
@@ -705,7 +704,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (duration > 0) {
             second.append(millisToTime(duration, false));
         } else {
-            second.append(ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call));
+            second.append(ctx.getString(callStatus(incoming, state)));
         }
         // Shift second line to the right.
         result.append(second, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

@@ -14,6 +14,7 @@ import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
 import android.util.TypedValue;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -192,12 +193,10 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         val = data.get("state");
         String state = val instanceof String ? (String) val : "";
 
-        boolean success = !"disconnected".equals(state);
-
+        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
         String status = " " + (duration > 0 ?
                 millisToTime(duration, false).toString() :
-                ctx.getString(incoming ? R.string.missed_call : R.string.cancelled_call));
-
+                ctx.getString(callStatus(incoming, state)));
         return annotatedIcon(ctx, incoming ?
                 (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
                 (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled),
