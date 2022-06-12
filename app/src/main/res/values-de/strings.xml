@@ -308,4 +308,15 @@
     <string name="unable_to_play_audio">Diese Audio Nachricht kann nicht abgespielt werden</string>
     <string name="audio">Audio</string>
     <string name="record_audio_button_hint">Lange drücken, um eine Sprachnachricht aufnehmen</string>
+    <string name="video_calls_unavailable">Videoanrufe nicht verfügbar</string>
+    <string name="action_video_call">Videoanruf</string>
+    <string name="outgoing_call">Ausgehender Anruf</string>
+    <string name="incoming_call">Eingehender Anruf</string>
+    <string name="finish_call_button">Anruf beenden</string>
+    <string name="cancelled_call">abgebrochen</string>
+    <string name="missed_call">verpasster</string>
+    <string name="declined_call">abgelehnt</string>
+    <string name="disconnected_call">getrennt</string>
+    <string name="toggle_camera_button">Kamera umschalten</string>
+    <string name="toggle_microphone_button">Mikrofon umschalten</string>
 </resources>

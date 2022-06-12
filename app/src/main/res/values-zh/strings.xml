@@ -308,4 +308,15 @@
     <string name="pause_audio_button_hint">暂停播放</string>
     <string name="lock_recording_for_long_messages">锁定用于录制长音频消息</string>
     <string name="deleted">已删除</string>
+    <string name="video_calls_unavailable">无法进行视频通话</string>
+    <string name="action_video_call">视频电话</string>
+    <string name="outgoing_call">拨出电话</string>
+    <string name="incoming_call">来电</string>
+    <string name="finish_call_button">结束通话</string>
+    <string name="cancelled_call">取消</string>
+    <string name="missed_call">未接</string>
+    <string name="declined_call">被拒</string>
+    <string name="disconnected_call">通话中断</string>
+    <string name="toggle_camera_button">切换相机</string>
+    <string name="toggle_microphone_button">切换麦克风</string>
 </resources>

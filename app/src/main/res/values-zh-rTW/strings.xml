@@ -307,4 +307,15 @@
     <string name="play_record_audio_button_hint">播放錄製的音頻</string>
     <string name="pause_audio_button_hint">暫停播放</string>
     <string name="lock_recording_for_long_messages">鎖定用於錄製長音頻消息</string>
+    <string name="video_calls_unavailable">無法進行視頻通話</string>
+    <string name="action_video_call">視頻電話</string>
+    <string name="outgoing_call">撥出電話</string>
+    <string name="incoming_call">來電</string>
+    <string name="finish_call_button">結束通話</string>
+    <string name="cancelled_call">取消</string>
+    <string name="missed_call">未接</string>
+    <string name="declined_call">被拒</string>
+    <string name="disconnected_call">通話中斷</string>
+    <string name="toggle_camera_button">切換相機</string>
+    <string name="toggle_microphone_button">切換麥克風</string>
 </resources>

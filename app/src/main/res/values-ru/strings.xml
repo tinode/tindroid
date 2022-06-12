@@ -287,4 +287,15 @@
     <string name="pause_audio_button_hint">Приостановить аудио</string>
     <string name="deleted">удалено</string>
     <string name="lock_recording_for_long_messages">Зафиксировать для записи длинного сообщения</string>
+    <string name="video_calls_unavailable">Видео звонки недоступны</string>
+    <string name="missed_call">пропущен</string>
+    <string name="cancelled_call">отменён</string>
+    <string name="declined_call">отклонён</string>
+    <string name="finish_call_button">Завершить звонок</string>
+    <string name="disconnected_call">прерван</string>
+    <string name="toggle_microphone_button">Переключатель звука</string>
+    <string name="toggle_camera_button">Переключатель видео</string>
+    <string name="action_video_call">Видео звонок</string>
+    <string name="outgoing_call">Исходящий звонок</string>
+    <string name="incoming_call">Входящий звонок</string>
 </resources>

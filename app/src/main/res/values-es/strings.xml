@@ -307,4 +307,15 @@
     <string name="pause_audio_button_hint">Pausar reproducción</string>
     <string name="lock_recording_for_long_messages">Bloquear la grabación de mensajes largos</string>
     <string name="deleted">eliminado</string>
+    <string name="video_calls_unavailable">Videollamadas no disponibles</string>
+    <string name="action_video_call">Videollamada</string>
+    <string name="outgoing_call">Llamada saliente</string>
+    <string name="incoming_call">Llamada entrante</string>
+    <string name="finish_call_button">Terminar llamada</string>
+    <string name="cancelled_call">cancelada</string>
+    <string name="missed_call">perdida</string>
+    <string name="declined_call">rechazada</string>
+    <string name="disconnected_call">interrumpida</string>
+    <string name="toggle_camera_button">Alternar cámara</string>
+    <string name="toggle_microphone_button">Alternar micrófono</string>
 </resources>

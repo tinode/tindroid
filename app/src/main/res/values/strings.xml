@@ -326,8 +326,7 @@
     <string name="play_record_audio_button_hint">Play recorded audio</string>
     <string name="pause_audio_button_hint">Pause playback</string>
     <string name="lock_recording_for_long_messages">Lock recording for long messages</string>
-    
-    <string name="caller_name">Caller Name</string>
+
     <string name="action_accept_call">Accept</string>
     <string name="action_decline_call">Decline</string>
     <string name="missed_call">missed</string>

@@ -306,4 +306,15 @@
     <string name="audio_recording_failed">오디오 녹음 실패</string>
     <string name="play_record_audio_button_hint">녹음된 오디오 재생</string>
     <string name="lock_recording_for_long_messages">긴 메시지에 대한 녹음 잠금</string>
+    <string name="video_calls_unavailable">화상 통화를 사용할 수 없음</string>
+    <string name="action_video_call">영상 통화</string>
+    <string name="outgoing_call">발신 전화</string>
+    <string name="incoming_call">수신 전화</string>
+    <string name="finish_call_button">통화 종료</string>
+    <string name="declined_call">통화 거부</string>
+    <string name="missed_call">부재중</string>
+    <string name="cancelled_call">취소 된</string>
+    <string name="disconnected_call">중단</string>
+    <string name="toggle_camera_button">카메라 토글</string>
+    <string name="toggle_microphone_button">마이크 토글</string>
 </resources>
