@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -183,8 +184,13 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         if (!Settings.canDrawOverlays(activity)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + activity.getPackageName()));
-            //noinspection deprecation: registerForActivityResult does not work for this permission.
-            startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
+            try {
+                //noinspection deprecation: registerForActivityResult does not work for this permission.
+                startActivityForResult(intent, ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE);
+            } catch (ActivityNotFoundException ignored) {
+                Log.w(TAG, "Unable to enable overlays, incoming calls limited.");
+                Toast.makeText(activity, R.string.voice_calls_limited, Toast.LENGTH_LONG).show();
+            }
         }
     }
 
