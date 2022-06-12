@@ -180,7 +180,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         mAdapter.resetContent(activity);
 
         // This is needed in order to accept video calls while the app is in the background.
-        // It should be already granted in production.
+        // It should be already granted to apps in playstore, but needed when developing.
         if (!Settings.canDrawOverlays(activity)) {
             Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
                     Uri.parse("package:" + activity.getPackageName()));

@@ -202,7 +202,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
                                     Intent intent = new Intent(IncomingCallActivity.INTENT_ACTION_CALL_CLOSE);
                                     intent.putExtra("topic", topicName);
-                                    intent.putExtra("seq", seq);
+                                    intent.putExtra("seq", origSeq);
                                     lbm.sendBroadcast(intent);
 
                                     // UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);

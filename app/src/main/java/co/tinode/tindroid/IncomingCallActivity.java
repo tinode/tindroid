@@ -80,7 +80,8 @@ public class IncomingCallActivity extends AppCompatActivity
                 if (mTopicName.equals(topicName) && mSeq == seq) {
                     finish();
                 } else {
-                    Log.d(TAG, "Close intent dismissed: topic or seq do not match");
+                    Log.d(TAG, "Close intent dismissed: topic '" + topicName + "'!='" + mTopicName +
+                            "' or seq " + mSeq + "!=" + seq);
                 }
             }
         }
