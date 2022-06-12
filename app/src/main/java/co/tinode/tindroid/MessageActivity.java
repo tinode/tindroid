@@ -225,14 +225,12 @@ public class MessageActivity extends AppCompatActivity
         }
 
         String action = intent.getAction();
-        Log.d(TAG, "Resumed with intent action: " + action);
         if (IncomingCallActivity.INTENT_ACTION_CALL_ACCEPT.equals(action)) {
             // We are executing the requested action only once.
             intent.setAction(null);
             Bundle args = new Bundle();
             args.putString("call_direction", "incoming");
             args.putInt("call_seq", intent.getIntExtra("seq", 0));
-            Log.d(TAG, "Show fragment Call seq=" + intent.getIntExtra("seq", 0));
             showFragment(FRAGMENT_CALL, args, true);
         } else {
             CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);

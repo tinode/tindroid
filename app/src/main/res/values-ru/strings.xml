@@ -298,4 +298,5 @@
     <string name="action_video_call">Видео звонок</string>
     <string name="outgoing_call">Исходящий звонок</string>
     <string name="incoming_call">Входящий звонок</string>
+    <string name="voice_calls_limited">Вы не сможете принимать некоторые входящие звонки.</string>
 </resources>

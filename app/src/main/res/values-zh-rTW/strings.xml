@@ -318,4 +318,5 @@
     <string name="disconnected_call">通話中斷</string>
     <string name="toggle_camera_button">切換相機</string>
     <string name="toggle_microphone_button">切換麥克風</string>
+    <string name="voice_calls_limited">您將無法接聽某些來電。</string>
 </resources>

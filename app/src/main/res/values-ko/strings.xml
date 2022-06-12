@@ -317,4 +317,5 @@
     <string name="disconnected_call">중단</string>
     <string name="toggle_camera_button">카메라 토글</string>
     <string name="toggle_microphone_button">마이크 토글</string>
+    <string name="voice_calls_limited">일부 수신 음성 전화를 받을 수 없습니다.</string>
 </resources>

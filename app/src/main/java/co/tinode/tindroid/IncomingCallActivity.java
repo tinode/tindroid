@@ -79,9 +79,6 @@ public class IncomingCallActivity extends AppCompatActivity
                 int seq = intent.getIntExtra("seq", -1);
                 if (mTopicName.equals(topicName) && mSeq == seq) {
                     finish();
-                } else {
-                    Log.d(TAG, "Close intent dismissed: topic '" + topicName + "'!='" + mTopicName +
-                            "' or seq " + mSeq + "!=" + seq);
                 }
             }
         }
@@ -101,8 +98,6 @@ public class IncomingCallActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        Log.i(TAG, "Created!");
 
         final Intent intent = getIntent();
         if (intent == null) {
@@ -152,7 +147,6 @@ public class IncomingCallActivity extends AppCompatActivity
 
         mTurnScreenOffWhenDone = isScreenOff;
         if (isScreenOff) {
-            Log.i(TAG, "Turning screen ON.");
             // Turn screen on and unlock.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(true);
@@ -168,12 +162,9 @@ public class IncomingCallActivity extends AppCompatActivity
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 mgr.requestDismissKeyguard(this, null);
             }
-        } else {
-            Log.i(TAG, "Screen is already ON");
         }
 
         long timeout = mTinode.getServerLimit("callTimeout", DEFAULT_CALL_TIMEOUT) * 1_000;
-        Log.i(TAG, "Call timeout: " + timeout);
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
@@ -218,7 +209,6 @@ public class IncomingCallActivity extends AppCompatActivity
 
         // mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         if (mTurnScreenOffWhenDone) {
-            Log.i(TAG, "Turning screen off.");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(false);
                 setTurnScreenOn(false);
@@ -278,7 +268,6 @@ public class IncomingCallActivity extends AppCompatActivity
 
     private void declineCall() {
         // Send message to server that the call is declined.
-        Log.d(TAG, "Call declined: " + mTopicName + ":" + mSeq);
         if (mTopic != null) {
             mTopic.videoCall("hang-up", mSeq, null);
         }
@@ -287,9 +276,6 @@ public class IncomingCallActivity extends AppCompatActivity
 
     private void acceptCall() {
         // Open MessageActivity with CallFragment activated.
-
-        Log.d(TAG, "Call accepted: " + mTopicName + ":" + mSeq);
-
         Intent intent = new Intent(this, MessageActivity.class);
         intent.setAction(INTENT_ACTION_CALL_ACCEPT);
         intent.putExtra("topic", mTopicName);

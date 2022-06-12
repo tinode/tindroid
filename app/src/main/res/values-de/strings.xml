@@ -319,4 +319,5 @@
     <string name="disconnected_call">getrennt</string>
     <string name="toggle_camera_button">Kamera umschalten</string>
     <string name="toggle_microphone_button">Mikrofon umschalten</string>
+    <string name="voice_calls_limited">Sie können einige eingehende Sprachanrufe nicht empfangen.</string>
 </resources>

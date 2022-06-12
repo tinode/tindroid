@@ -327,8 +327,6 @@
     <string name="pause_audio_button_hint">Pause playback</string>
     <string name="lock_recording_for_long_messages">Lock recording for long messages</string>
 
-    <string name="action_accept_call">Accept</string>
-    <string name="action_decline_call">Decline</string>
     <string name="missed_call">missed</string>
     <string name="declined_call">declined</string>
     <string name="disconnected_call">disconnected</string>

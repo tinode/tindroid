@@ -318,4 +318,5 @@
     <string name="disconnected_call">interrumpida</string>
     <string name="toggle_camera_button">Alternar cámara</string>
     <string name="toggle_microphone_button">Alternar micrófono</string>
+    <string name="voice_calls_limited">No podrá recibir algunas llamadas de voz entrantes.</string>
 </resources>

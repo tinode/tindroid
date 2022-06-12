@@ -120,7 +120,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             tinode.oobNotification(data, token);
 
             if (Boolean.parseBoolean(data.get("silent"))) {
-                Log.i(TAG, "Silent notification, quitting");
                 // Silent notification: nothing to show.
                 return;
             }
@@ -134,7 +133,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             String visibleTopic = UiUtils.getVisibleTopic();
             if (visibleTopic != null && visibleTopic.equals(topicName)) {
                 // No need to do anything if we are in the topic already.
-                Log.d(TAG, "Topic is visible, no need to show a notification");
                 return;
             }
 
@@ -181,7 +179,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         switch (webrtc) {
                             case "started":
                                 if (!tinode.isMe(senderId)) {
-                                    Log.i(TAG, "Launching IncomingCallActivity");
                                     // Show UI for accepting/declining the incoming call.
                                     Intent intent = new Intent(getApplicationContext(), IncomingCallActivity.class);
                                     intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
@@ -310,7 +307,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
         } else if (remoteMessage.getNotification() != null) {
             RemoteMessage.Notification remote = remoteMessage.getNotification();
-            Log.d(TAG, "RemoteMessage Body: " + remote.getBody());
 
             topicName = remote.getTag();
             builder = composeNotification(remote);
