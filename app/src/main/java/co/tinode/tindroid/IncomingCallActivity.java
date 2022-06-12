@@ -48,7 +48,8 @@ public class IncomingCallActivity extends AppCompatActivity
         implements MotionLayout.TransitionListener {
     private static final String TAG = "IncomingCallActivity";
 
-    private static final long DEFAULT_CALL_TIMEOUT = 30_000;
+    // Default call timeout in seconds.
+    private static final long DEFAULT_CALL_TIMEOUT = 30;
 
     public static final String INTENT_ACTION_CALL_INCOMING = "tindroidx.intent.action.call.INCOMING";
     public static final String INTENT_ACTION_CALL_ACCEPT = "tindroidx.intent.action.call.ACCEPT";
@@ -100,6 +101,8 @@ public class IncomingCallActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Log.i(TAG, "Created!");
+
         final Intent intent = getIntent();
         if (intent == null) {
             finish();
@@ -148,6 +151,7 @@ public class IncomingCallActivity extends AppCompatActivity
 
         mTurnScreenOffWhenDone = isScreenOff;
         if (isScreenOff) {
+            Log.i(TAG, "Turning screen ON.");
             // Turn screen on and unlock.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(true);
@@ -163,9 +167,12 @@ public class IncomingCallActivity extends AppCompatActivity
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 mgr.requestDismissKeyguard(this, null);
             }
+        } else {
+            Log.i(TAG, "Screen is already ON");
         }
 
-        long timeout = mTinode.getServerLimit("callTimeout", DEFAULT_CALL_TIMEOUT);
+        long timeout = mTinode.getServerLimit("callTimeout", DEFAULT_CALL_TIMEOUT) * 1_000;
+        Log.i(TAG, "Call timeout: " + timeout);
         mTimer = new Timer();
         mTimer.schedule(new TimerTask() {
             @Override
@@ -192,8 +199,12 @@ public class IncomingCallActivity extends AppCompatActivity
 
     @Override
     public void onPause() {
-        mCamera.unbindAll();
-        mMediaPlayer.stop();
+        if (mCamera != null) {
+            mCamera.unbindAll();
+        }
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+        }
         super.onPause();
     }
 
@@ -206,7 +217,7 @@ public class IncomingCallActivity extends AppCompatActivity
 
         // mLocalBroadcastManager.unregisterReceiver(mBroadcastReceiver);
         if (mTurnScreenOffWhenDone) {
-            Log.d(TAG, "Turning screen off.");
+            Log.i(TAG, "Turning screen off.");
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(false);
                 setTurnScreenOn(false);

@@ -37,6 +37,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
@@ -149,8 +150,8 @@
 
         <activity
             android:name=".IncomingCallActivity"
-            android:exported="false"
-            android:showOnLockScreen="true">
+            android:showOnLockScreen="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="tindroidx.intent.action.call.INCOMING" />
                 <category android:name="android.intent.category.DEFAULT" />

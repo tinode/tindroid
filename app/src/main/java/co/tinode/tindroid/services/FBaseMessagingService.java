@@ -120,6 +120,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             tinode.oobNotification(data, token);
 
             if (Boolean.parseBoolean(data.get("silent"))) {
+                Log.i(TAG, "Silent notification, quitting");
                 // Silent notification: nothing to show.
                 return;
             }
@@ -180,24 +181,22 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         switch (webrtc) {
                             case "started":
                                 if (!tinode.isMe(senderId)) {
+                                    Log.i(TAG, "Launching IncomingCallActivity");
                                     // Show UI for accepting/declining the incoming call.
-                                    Intent intent = new Intent();
+                                    Intent intent = new Intent(getApplicationContext(), IncomingCallActivity.class);
                                     intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
                                     intent.putExtra("topic", topicName);
                                     intent.putExtra("seq", seq);
                                     intent.putExtra("from", senderName);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                     startActivity(intent);
-
-                                    // UiUtils.handleIncomingVideoCall(this, "invite", topicName, senderId, seq);
                                 }
                                 break;
                             case "accepted":
                             case "missed":
                             case "declined":
                             case "disconnected":
-                                String origSeqStr = data.get("replace");
-                                int origSeq = origSeqStr != null ? Integer.parseInt(origSeqStr) : 0;
+                                int origSeq = parseSeqReference(data.get("replace"));
                                 if (origSeq > 0) {
                                     // Dismiss the call UI.
                                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -212,10 +211,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                             default:
                                 break;
                         }
+
                         return;
                     }
-                } catch (NumberFormatException ignored) {
-                    Log.w(TAG, "Invalid seq value '" + seqStr + "'");
+                } catch (NumberFormatException ex) {
+                    Log.w(TAG, "Invalid seq value '" + seqStr + "'", ex);
                 }
 
                 avatar = senderIcon;
@@ -436,5 +436,20 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
         }
         return result;
+    }
+
+    private static int parseSeqReference(String ref) {
+        if (TextUtils.isEmpty(ref)) {
+            return 0;
+        }
+
+        try {
+            if (ref.length() > 1 && ref.charAt(0) == ':') {
+                return Integer.parseInt(ref.substring(1));
+            }
+            return Integer.parseInt(ref);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 }

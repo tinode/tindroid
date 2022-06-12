@@ -337,5 +337,6 @@
     <string name="toggle_microphone_button">Mute/unmute call</string>
     <string name="finish_call_button">Finish call</string>
     <string name="video_calls_unavailable">Video calls unavailable</string>
+    <string name="voice_calls_limited">You will not be able to receive some incoming voice calls.</string>
 
 </resources>

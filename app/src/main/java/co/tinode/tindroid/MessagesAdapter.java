@@ -713,12 +713,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 updateSelectionMode();
             } else {
                 animateMessageBubble(holder, m.isMine(), true);
-                int replySeq = -1;
-                try {
-                    replySeq = Integer.parseInt(m.getStringHeader("reply"));
-                } catch (NumberFormatException ignored) {
-                }
-                if (replySeq != -1) {
+                int replySeq = UiUtils.parseSeqReference(m.getStringHeader("reply"));
+                if (replySeq > 0) {
                     // A reply message was clicked. Scroll original into view and animate.
                     final int pos = findInCursor(mCursor, replySeq);
                     if (pos >= 0) {

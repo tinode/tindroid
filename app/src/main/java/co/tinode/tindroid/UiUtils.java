@@ -1403,6 +1403,21 @@ public class UiUtils {
         return null;
     }
 
+    static int parseSeqReference(String ref) {
+        if (TextUtils.isEmpty(ref)) {
+            return 0;
+        }
+
+        try {
+            if (ref.length() > 1 && ref.charAt(0) == ':') {
+                return Integer.parseInt(ref.substring(1));
+            }
+            return Integer.parseInt(ref);
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
+    }
+
     // The same as TextUtils.equals except null == "".
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean stringsEqual(CharSequence a, CharSequence b) {
