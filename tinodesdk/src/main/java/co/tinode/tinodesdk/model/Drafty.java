@@ -1141,7 +1141,7 @@ public class Drafty implements Serializable {
         }
 
         // Sort spans first by start index (asc) then by length (desc).
-        Collections.sort(spans, (a, b) -> {
+        spans.sort((a, b) -> {
             int diff = a.start - b.start;
             if (diff != 0) {
                 return diff;
@@ -1822,16 +1822,6 @@ public class Drafty implements Serializable {
             MutableDrafty doc = new MutableDrafty();
             appendToDrafty(doc);
             return doc.toDrafty();
-        }
-
-        protected boolean isInContext(@NotNull String tp) {
-            if (parent == null) {
-                return false;
-            }
-            if (tp.equals(parent.tp)) {
-                return true;
-            }
-            return parent.isInContext(tp);
         }
 
         private void appendToDrafty(@NotNull MutableDrafty doc) {
