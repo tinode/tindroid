@@ -149,7 +149,7 @@
         </activity>
 
         <activity
-            android:name=".IncomingCallActivity"
+            android:name=".CallActivity"
             android:showOnLockScreen="true"
             android:exported="false">
             <intent-filter>

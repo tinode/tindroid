@@ -106,13 +106,13 @@ public class Tinode {
     private static final long NOTE_KP_DELAY = 3000L;
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.18";
+    private static final String VERSION = "0.20";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     // Reject unresolved futures after this many milliseconds.
-    private static final long EXPIRE_FUTURES_TIMEOUT = 5000L;
+    private static final long EXPIRE_FUTURES_TIMEOUT = 5_000L;
     // Periodicity of garbage collection of unresolved futures.
-    private static final long EXPIRE_FUTURES_PERIOD = 1000L;
+    private static final long EXPIRE_FUTURES_PERIOD = 1_000L;
     private static final ObjectMapper sJsonMapper;
     protected static final TypeFactory sTypeFactory;
     protected static final SimpleDateFormat sDateFormat;
@@ -718,17 +718,13 @@ public class Tinode {
      *
      * @param data FCM payload.
      * @param authToken authentication token to use in case login is needed.
+     * @param keepConnection if <code>true</code> do not terminate new connection.
      */
-    public void oobNotification(Map<String, String> data, String authToken) {
+    public void oobNotification(Map<String, String> data, String authToken, boolean keepConnection) {
         Log.d(TAG, "oob: " + data);
 
         String what = data.get("what");
         String topicName = data.get("topic");
-        if (what == null || topicName == null) {
-            // Invalid payload.
-            return;
-        }
-
         String seqStr = data.get("seq");
         Integer seq = null;
         if (seqStr != null) {
@@ -736,6 +732,7 @@ public class Tinode {
         }
 
         Topic topic = getTopic(topicName);
+        //noinspection ConstantConditions
         switch (what) {
             case "msg":
                 // Check and maybe download new messages right away.
@@ -760,7 +757,7 @@ public class Tinode {
                 }
 
                 if (topic.getSeq() < seq) {
-                    boolean disconnect = syncLogin(authToken);
+                    boolean newConnection = syncLogin(authToken);
 
                     String senderId = data.get("xfrom");
                     if (senderId != null && getUser(senderId) == null) {
@@ -783,12 +780,14 @@ public class Tinode {
                                     .build()).getResult();
                             // Notify the server than the message was received.
                             topic.noteRecv();
-                            // Leave the topic before disconnecting.
-                            topic.leave().getResult();
+                            if (!keepConnection) {
+                                // Leave the topic before disconnecting.
+                                topic.leave().getResult();
+                            }
                         } catch (Exception ignored) {}
                     }
 
-                    if (disconnect) {
+                    if (newConnection && !keepConnection) {
                         disconnect(true);
                     }
                 }
@@ -807,13 +806,13 @@ public class Tinode {
                 break;
             case "sub":
                 if (topic == null) {
-                    boolean disconnect = syncLogin(authToken);
+                    boolean newConnection = syncLogin(authToken);
                     // New topic subscription, fetch topic description.
                     try {
                         getMeta(topicName, MsgGetMeta.desc()).getResult();
                     } catch (Exception ignored) {}
 
-                    if (disconnect) {
+                    if (newConnection && !keepConnection) {
                         disconnect(true);
                     }
                 } else if (new Acs(data.get("modeGiven"), data.get("modeWant")).isNone()) {
@@ -829,18 +828,18 @@ public class Tinode {
     // Synchronous (blocking) token login using stored parameters.
     // Returns true if a new connection was established, false if already connected or failed to connect.
     private boolean syncLogin(String authToken) {
-        boolean connected = false;
+        boolean newConnection = false;
         if (!isAuthenticated() && mStore != null) {
             try {
                 URI connectTo = new URI(mStore.getServerURI());
                 if (!isConnected()) {
                     connect(connectTo, true).getResult();
-                    connected = true;
+                    newConnection = true;
                 }
                 loginToken(authToken).getResult();
             } catch (Exception ignored) {}
         }
-        return connected;
+        return newConnection;
     }
 
     /**
@@ -1509,6 +1508,7 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> leave(final String topicName, boolean unsub) {
+        Log.i(TAG, "Leave", new Exception("stacktrace"));
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         return sendWithPromise(msg, msg.leave.id);
     }

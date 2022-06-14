@@ -517,7 +517,7 @@ public class UiUtils {
                     if (!tinode.isMe(info.from)) {
                         // Call invite from the peer.
                         Intent intent = new Intent();
-                        intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
+                        intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
                         intent.putExtra("topic", info.src);
                         intent.putExtra("seq", info.seq);
                         intent.putExtra("from", info.from);
@@ -529,7 +529,7 @@ public class UiUtils {
                     if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
                         // Another client has accepted the call. Dismiss call notification.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(ctx);
-                        Intent intent = new Intent(IncomingCallActivity.INTENT_ACTION_CALL_CLOSE);
+                        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
                         intent.putExtra("topic", info.src);
                         intent.putExtra("seq", info.seq);
                         lbm.sendBroadcast(intent);

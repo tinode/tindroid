@@ -24,7 +24,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 16;
+    private static final int DATABASE_VERSION = 17;
 
     /**
      * Filename for SQLite file.
@@ -68,6 +68,9 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(SubscriberDb.CREATE_INDEX);
         db.execSQL(MessageDb.CREATE_TABLE);
         db.execSQL(MessageDb.CREATE_INDEX);
+        db.execSQL(EditHistoryDb.CREATE_TABLE);
+        db.execSQL(EditHistoryDb.CREATE_INDEX);
+        db.execSQL(EditHistoryDb.CREATE_INDEX_2);
     }
 
     @Override
@@ -77,6 +80,9 @@ public class BaseDb extends SQLiteOpenHelper {
         String deviceToken = AccountDb.getDeviceToken(db);
 
         // This is just a cache. Drop then re-fetch everything from the server.
+        db.execSQL(EditHistoryDb.DROP_INDEX_2);
+        db.execSQL(EditHistoryDb.DROP_INDEX);
+        db.execSQL(EditHistoryDb.DROP_TABLE);
         db.execSQL(MessageDb.DROP_INDEX);
         db.execSQL(MessageDb.DROP_TABLE);
         db.execSQL(SubscriberDb.DROP_INDEX);

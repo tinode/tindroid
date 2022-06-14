@@ -84,7 +84,6 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_FORWARD_TO = "forward_to";
-    static final String FRAGMENT_CALL = "call";
 
     static final String TOPIC_NAME = "topicName";
 
@@ -224,32 +223,22 @@ public class MessageActivity extends AppCompatActivity
             return;
         }
 
-        String action = intent.getAction();
-        if (IncomingCallActivity.INTENT_ACTION_CALL_ACCEPT.equals(action)) {
-            // We are executing the requested action only once.
-            intent.setAction(null);
+        CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        //noinspection ConstantConditions
+        mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
+        intent.putExtra(Intent.EXTRA_TEXT, (String) null);
+        Uri attachment = intent.getData();
+        String type = intent.getType();
+        if (attachment != null && type != null) {
+            // Need to retain access right to the given Uri.
             Bundle args = new Bundle();
-            args.putString("call_direction", "incoming");
-            args.putInt("call_seq", intent.getIntExtra("seq", 0));
-            showFragment(FRAGMENT_CALL, args, true);
-        } else {
-            CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-            //noinspection ConstantConditions
-            mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
-            intent.putExtra(Intent.EXTRA_TEXT, (String) null);
-            Uri attachment = intent.getData();
-            String type = intent.getType();
-            if (attachment != null && type != null) {
-                // Need to retain access right to the given Uri.
-                Bundle args = new Bundle();
-                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
-                args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
-                if (type.startsWith("image/")) {
-                    args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
-                    showFragment(FRAGMENT_VIEW_IMAGE, args, true);
-                } else {
-                    showFragment(FRAGMENT_FILE_PREVIEW, args, true);
-                }
+            args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
+            args.putString(AttachmentHandler.ARG_MIME_TYPE, type);
+            if (type.startsWith("image/")) {
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+            } else {
+                showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
         }
 
@@ -543,7 +532,11 @@ public class MessageActivity extends AppCompatActivity
             }
             return true;
         } else if (id == R.id.action_call) {
-            showFragment(FRAGMENT_CALL, null, true);
+            Intent intent = new Intent(getApplicationContext(), CallActivity.class);
+            intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
+            intent.putExtra("topic", mTopicName);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
             return true;
         }
 
@@ -636,9 +629,6 @@ public class MessageActivity extends AppCompatActivity
                     break;
                 case FRAGMENT_FORWARD_TO:
                     fragment = new ForwardToFragment();
-                    break;
-                case FRAGMENT_CALL:
-                    fragment = new CallFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);

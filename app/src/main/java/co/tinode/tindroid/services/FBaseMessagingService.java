@@ -25,8 +25,8 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.ChatsActivity;
-import co.tinode.tindroid.IncomingCallActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
@@ -115,18 +115,23 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         if (remoteMessage.getData().size() > 0) {
             Map<String, String> data = remoteMessage.getData();
 
-            // Update data state, maybe fetch missing data.
-            String token = Utils.getLoginToken(getApplicationContext());
-            tinode.oobNotification(data, token);
-
-            if (Boolean.parseBoolean(data.get("silent"))) {
-                // Silent notification: nothing to show.
+            // Check notification type: message, subscription.
+            String what = data.get("what");
+            topicName = data.get("topic");
+            if (topicName == null || what == null) {
+                Log.w(TAG, "Invalid payload: " + (what == null ? "what" : "topic") + " is NULL");
                 return;
             }
 
-            topicName = data.get("topic");
-            if (topicName == null) {
-                Log.w(TAG, "NULL topic in a push notification");
+            String webrtc = data.get("webrtc");
+
+            // Update data state, maybe fetch missing data.
+            String token = Utils.getLoginToken(getApplicationContext());
+            tinode.oobNotification(data, token, "started".equals(webrtc));
+
+            if (Boolean.parseBoolean(data.get("silent"))) {
+                // TODO: cancel some notifications.
+                // Silent notification: nothing to show.
                 return;
             }
 
@@ -141,9 +146,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;
             }
-
-            // Check notification type: message, subscription.
-            String what = data.get("what");
 
             // Try to resolve sender using locally stored contacts.
             String senderId = data.get("xfrom");
@@ -173,15 +175,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 String seqStr = data.get("seq");
                 try {
                     int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
-                    String webrtc = data.get("webrtc");
                     if (webrtc != null && seq > 0) {
                         // It's a video call.
                         switch (webrtc) {
                             case "started":
                                 if (!tinode.isMe(senderId)) {
                                     // Show UI for accepting/declining the incoming call.
-                                    Intent intent = new Intent(getApplicationContext(), IncomingCallActivity.class);
-                                    intent.setAction(IncomingCallActivity.INTENT_ACTION_CALL_INCOMING);
+                                    Intent intent = new Intent(getApplicationContext(), CallActivity.class);
+                                    intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
                                     intent.putExtra("topic", topicName);
                                     intent.putExtra("seq", seq);
                                     intent.putExtra("from", senderName);
@@ -197,7 +198,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                                 if (origSeq > 0) {
                                     // Dismiss the call UI.
                                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-                                    Intent intent = new Intent(IncomingCallActivity.INTENT_ACTION_CALL_CLOSE);
+                                    Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
                                     intent.putExtra("topic", topicName);
                                     intent.putExtra("seq", origSeq);
                                     lbm.sendBroadcast(intent);

@@ -121,6 +121,8 @@ public class CallFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(TAG, "CREATED");
+
         View v = inflater.inflate(R.layout.fragment_call, container, false);
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
@@ -144,7 +146,7 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final MessageActivity activity = (MessageActivity) getActivity();
+        final Activity activity = getActivity();
         final Bundle args = getArguments();
         if (args == null || activity == null) {
             Log.w(TAG, "Call fragment created with no arguments");
@@ -186,14 +188,14 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        this.stopMediaAndSignal();
+        stopMediaAndSignal();
         super.onDestroyView();
     }
 
     @Override
     public void onResume() {
         Tinode tinode = Cache.getTinode();
-        mTinodeListener = new InfoListener(this.getActivity(), tinode.isConnected());
+        mTinodeListener = new InfoListener(getActivity(), tinode.isConnected());
         mTinodeListener.setParent(this);
         tinode.addListener(mTinodeListener);
 
@@ -426,14 +428,17 @@ public class CallFragment extends Fragment {
 
     // Sends a hang-up notification to the peer and closes the fragment.
     private void handleCallClose() {
+        Log.w(TAG, "Terminating the call", new Exception("stacktrace"));
+
         // Close fragment.
         if (mCallSeqID > 0) {
             mTopic.videoCall("hang-up", mCallSeqID, null);
         }
+
         mCallSeqID = -1;
-        final Activity activity = getActivity();
+        final CallActivity activity = (CallActivity) getActivity();
         if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-            getActivity().getSupportFragmentManager().popBackStack();
+            activity.finishCall();
         }
     }
 
