@@ -39,7 +39,6 @@ public class CallActivity extends AppCompatActivity  {
     private boolean mTurnScreenOffWhenDone;
 
     private Tinode mTinode;
-    private ServerEventListener mListener;
 
     private String mTopicName;
     private int mSeq;
@@ -98,17 +97,15 @@ public class CallActivity extends AppCompatActivity  {
         }
 
         mTopicName = intent.getStringExtra("topic");
-        // Technically the call is from intent.getStringExtra("from")
-        // but it's the same as "topic" for p2p topics;
         mSeq = intent.getIntExtra("seq", -1);
 
         setContentView(R.layout.activity_call);
 
         mTinode = Cache.getTinode();
-        mListener = new ServerEventListener();
-        mTinode.addListener(mListener);
 
-        //noinspection unchecked
+        // Technically the call is from intent.getStringExtra("from")
+        // but it's the same as "topic" for p2p topics;
+        // noinspection unchecked
         mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
 
         // Handle external request to finish call.
@@ -117,8 +114,10 @@ public class CallActivity extends AppCompatActivity  {
         mIntentFilter.addAction(INTENT_ACTION_CALL_CLOSE);
         lbm.registerReceiver(mBroadcastReceiver, mIntentFilter);
 
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        // TODO: use WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS to show call window fullscreen.
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mTurnScreenOffWhenDone = !pm.isInteractive();
         if (mTurnScreenOffWhenDone) {
             // Turn screen on and unlock.
@@ -126,10 +125,8 @@ public class CallActivity extends AppCompatActivity  {
                 setShowWhenLocked(true);
                 setTurnScreenOn(true);
             } else {
-                getWindow().addFlags(
-                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
-                                | WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON
-                );
+                getWindow().addFlags(WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
             }
 
             KeyguardManager mgr = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
@@ -155,17 +152,17 @@ public class CallActivity extends AppCompatActivity  {
     public void onDestroy() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
 
-        mTinode.removeListener(mListener);
-
         if (mTurnScreenOffWhenDone) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(false);
                 setTurnScreenOn(false);
             } else {
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
-                        WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON);
+                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
             }
         }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         super.onDestroy();
     }
 
@@ -248,10 +245,6 @@ public class CallActivity extends AppCompatActivity  {
                 .withLaterData()
                 .withDel();
 
-        if (mTopic.isOwner()) {
-            builder = builder.withTags();
-        }
-
         if (mTopic.isDeleted()) {
             declineCall();
             return;
@@ -273,17 +266,5 @@ public class CallActivity extends AppCompatActivity  {
                         return null;
                     }
                 });
-    }
-
-    private class ServerEventListener extends Tinode.EventListener {
-        @Override
-        public void onInfoMessage(MsgServerInfo info) {
-            if (mTopicName.equals(info.topic) && mSeq == info.seq) {
-                if ("call".equals(info.what) && "hang-up".equals(info.event)) {
-                    Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
-                    finish();
-                }
-            }
-        }
     }
 }

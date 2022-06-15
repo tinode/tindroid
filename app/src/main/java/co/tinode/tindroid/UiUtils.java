@@ -1476,8 +1476,7 @@ public class UiUtils {
         }
 
         private void setConnected(final boolean connected) {
-            if (mActivity != null &&
-                    (mConnected == null || connected != mConnected)) {
+            if (mActivity != null && (mConnected == null || connected != mConnected)) {
                 mConnected = connected;
                 setConnectedStatus(mActivity, connected);
             } else {

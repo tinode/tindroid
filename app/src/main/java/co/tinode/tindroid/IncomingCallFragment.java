@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -32,6 +33,8 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 
 /**
  * Incoming call view with accept/decline buttons.
@@ -58,6 +61,10 @@ public class IncomingCallFragment extends Fragment
     private MediaPlayer mMediaPlayer;
     private ProcessCameraProvider mCamera;
     private Timer mTimer;
+
+    private String mTopicName;
+    private int mSeq;
+    private ServerEventListener mListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -91,16 +98,21 @@ public class IncomingCallFragment extends Fragment
             declineCall();
             return;
         }
+        final Tinode tinode = Cache.getTinode();
 
-        String topicName = args.getString("topic");
+        mListener = new ServerEventListener();
+        tinode.addListener(mListener);
+
+        mTopicName = args.getString("topic");
+        mSeq = args.getInt("call_seq");
 
         // Technically the call is from args.getString("from")
         // but it's the same as "topic" for p2p topics;
-        //noinspection unchecked
-        ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(topicName);
+        // noinspection unchecked
+        ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
 
         VxCard pub = topic.getPub();
-        UiUtils.setAvatar(view.findViewById(R.id.imageAvatar), pub, topicName, false);
+        UiUtils.setAvatar(view.findViewById(R.id.imageAvatar), pub, mTopicName, false);
         String peerName = pub != null ? pub.fn : null;
         if (TextUtils.isEmpty(peerName)) {
             peerName = getResources().getString(R.string.unknown);
@@ -144,6 +156,7 @@ public class IncomingCallFragment extends Fragment
     @Override
     public void onDestroy() {
         mTimer.cancel();
+        Cache.getTinode().removeListener(mListener);
         super.onDestroy();
     }
 
@@ -209,5 +222,17 @@ public class IncomingCallFragment extends Fragment
             return;
         }
         activity.acceptCall();
+    }
+
+    private class ServerEventListener extends Tinode.EventListener {
+        @Override
+        public void onInfoMessage(MsgServerInfo info) {
+            if (mTopicName.equals(info.topic) && mSeq == info.seq) {
+                if ("call".equals(info.what) && "hang-up".equals(info.event)) {
+                    Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
+                    declineCall();
+                }
+            }
+        }
     }
 }

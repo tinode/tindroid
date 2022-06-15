@@ -209,9 +209,6 @@ public class CallFragment extends Fragment {
         mPeerName = view.findViewById(R.id.peerName);
         mPeerName.setText(peerName);
 
-        // TODO: use WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS to show call window fullscreen.
-        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-
         // Check permissions.
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
@@ -234,10 +231,8 @@ public class CallFragment extends Fragment {
     @Override
     public void onResume() {
         Tinode tinode = Cache.getTinode();
-        mTinodeListener = new InfoListener(getActivity(), tinode.isConnected());
-        mTinodeListener.setParent(this);
+        mTinodeListener = new InfoListener();
         tinode.addListener(mTinodeListener);
-
         super.onResume();
     }
 
@@ -770,19 +765,7 @@ public class CallFragment extends Fragment {
     }
 
     // Listens for incoming call-related info messages.
-    private static class InfoListener extends UiUtils.EventListener {
-        private static final String TAG = "CallFragment.InfoListener";
-
-        private CallFragment parent;
-
-        InfoListener(Activity owner, Boolean connected) {
-            super(owner, connected);
-        }
-
-        public void setParent(CallFragment parent) {
-            this.parent = parent;
-        }
-
+    private class InfoListener extends Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (!"call".equals(info.what)) {
@@ -791,19 +774,19 @@ public class CallFragment extends Fragment {
             }
             switch (info.event) {
                 case "accept":
-                    parent.handleVideoCallAccepted();
+                    handleVideoCallAccepted();
                     break;
                 case "offer":
-                    parent.handleVideoOfferMsg(info);
+                    handleVideoOfferMsg(info);
                     break;
                 case "answer":
-                    parent.handleVideoAnswerMsg(info);
+                    handleVideoAnswerMsg(info);
                     break;
                 case "ice-candidate":
-                    parent.handleNewICECandidateMsg(info);
+                    handleNewICECandidateMsg(info);
                     break;
                 case "hang-up":
-                    parent.handleRemoteHangup(info);
+                    handleRemoteHangup(info);
                     break;
                 default:
                     break;

@@ -74,12 +74,19 @@ import co.tinode.tinodesdk.model.Subscription;
 
 @SuppressWarnings("WeakerAccess")
 public class Tinode {
+    private static final String TAG = "Tinode";
+
+    private static final String PROTOVERSION = "0";
+    private static final String VERSION = "0.20";
+    private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
+
     public static final String USER_NEW = "new";
     public static final String TOPIC_NEW = "new";
     public static final String CHANNEL_NEW = "nch";
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
     public static final String TOPIC_SYS = "sys";
+
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_CHN_PREFIX = "chn";
     public static final String TOPIC_USR_PREFIX = "usr";
@@ -90,29 +97,29 @@ public class Tinode {
     public static final String MIN_TAG_LENGTH = "minTagLength";
     public static final String MAX_TAG_COUNT = "maxTagCount";
     public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+
     private static final String[] SERVER_LIMITS = new String[]{
             MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT, MAX_TAG_LENGTH, MIN_TAG_LENGTH,
             MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE};
 
     // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
+
     // Notifications {note}.
+    protected static final String NOTE_CALL = "call";
     protected static final String NOTE_KP = "kp";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
-    private static final String TAG = "Tinode";
+
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
     private static final long NOTE_KP_DELAY = 3000L;
-
-    private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.20";
-    private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     // Reject unresolved futures after this many milliseconds.
     private static final long EXPIRE_FUTURES_TIMEOUT = 5_000L;
     // Periodicity of garbage collection of unresolved futures.
     private static final long EXPIRE_FUTURES_PERIOD = 1_000L;
+
     private static final ObjectMapper sJsonMapper;
     protected static final TypeFactory sTypeFactory;
     protected static final SimpleDateFormat sDateFormat;
@@ -145,6 +152,7 @@ public class Tinode {
     private final ConcurrentMap<String, FutureHolder> mFutures;
     private final ConcurrentHashMap<String, Pair<Topic, Storage.Message>> mTopics;
     private final ConcurrentHashMap<String, User> mUsers;
+
     private JavaType mDefaultTypeOfMetaPacket = null;
     private URI mServerURI = null;
     private String mServerVersion = null;
