@@ -1508,7 +1508,6 @@ public class Tinode {
      */
     @SuppressWarnings("WeakerAccess")
     public PromisedReply<ServerMessage> leave(final String topicName, boolean unsub) {
-        Log.i(TAG, "Leave", new Exception("stacktrace"));
         ClientMessage msg = new ClientMessage(new MsgClientLeave(getNextId(), topicName, unsub));
         return sendWithPromise(msg, msg.leave.id);
     }

@@ -18,8 +18,13 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerInfo;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 public class CallActivity extends AppCompatActivity  {
     private static final String TAG = "CallActivity";
@@ -34,7 +39,7 @@ public class CallActivity extends AppCompatActivity  {
     private boolean mTurnScreenOffWhenDone;
 
     private Tinode mTinode;
-    private InfoEventListener mListener;
+    private ServerEventListener mListener;
 
     private String mTopicName;
     private int mSeq;
@@ -56,6 +61,8 @@ public class CallActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "CREATED");
+
         super.onCreate(savedInstanceState);
 
         final Intent intent = getIntent();
@@ -98,7 +105,7 @@ public class CallActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_call);
 
         mTinode = Cache.getTinode();
-        mListener = new InfoEventListener();
+        mListener = new ServerEventListener();
         mTinode.addListener(mListener);
 
         //noinspection unchecked
@@ -111,10 +118,9 @@ public class CallActivity extends AppCompatActivity  {
         lbm.registerReceiver(mBroadcastReceiver, mIntentFilter);
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        boolean isScreenOff = !pm.isInteractive();
 
-        mTurnScreenOffWhenDone = isScreenOff;
-        if (isScreenOff) {
+        mTurnScreenOffWhenDone = !pm.isInteractive();
+        if (mTurnScreenOffWhenDone) {
             // Turn screen on and unlock.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
                 setShowWhenLocked(true);
@@ -228,7 +234,48 @@ public class CallActivity extends AppCompatActivity  {
         }
     }
 
-    private class InfoEventListener extends Tinode.EventListener {
+    private void topicAttach() {
+        if (!mTinode.isAuthenticated()) {
+            // If connection is not ready, wait for completion. This method will be called again
+            // from the onLogin callback;
+            Cache.getTinode().reconnectNow(true, false, false);
+            return;
+        }
+
+        Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
+                .withDesc()
+                .withSub()
+                .withLaterData()
+                .withDel();
+
+        if (mTopic.isOwner()) {
+            builder = builder.withTags();
+        }
+
+        if (mTopic.isDeleted()) {
+            declineCall();
+            return;
+        }
+
+        mTopic.subscribe(null, builder.build())
+                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        if (!(err instanceof NotConnectedException)) {
+                            Log.w(TAG, "Subscribe failed", err);
+                            if (err instanceof ServerResponseException) {
+                                int code = ((ServerResponseException) err).getCode();
+                                if (code == 404) {
+                                    declineCall();
+                                }
+                            }
+                        }
+                        return null;
+                    }
+                });
+    }
+
+    private class ServerEventListener extends Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {

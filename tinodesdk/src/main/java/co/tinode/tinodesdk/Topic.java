@@ -2275,6 +2275,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return this;
         }
 
+        /**
+         * Get description if it was updated since the last recorded update.
+         * @return <code>this</code>
+         */
         public MetaGetBuilder withDesc() {
             return withDesc(topic.getUpdated());
         }
@@ -2296,6 +2300,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return withSub(null, topic.getSubsUpdated(), null);
         }
 
+        /**
+         * Get subscriptions updated since the last recorded update.
+         * @return <code>this</code>
+         */
         public MetaGetBuilder withSub(String userOrTopic) {
             return withSub(userOrTopic, topic.getSubsUpdated(), null);
         }

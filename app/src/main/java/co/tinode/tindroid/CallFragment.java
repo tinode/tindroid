@@ -5,19 +5,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
-
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.fragment.app.Fragment;
-
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -55,6 +49,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -85,6 +84,10 @@ public class CallFragment extends Fragment {
     private List<PeerConnection.IceServer> mIceServers;
     private EglBase mRootEglBase;
 
+    private CallDirection mCallDirection;
+    // If true, the client has received a remote SDP from the peer and has sent a local SDP to the peer.
+    private boolean mCallInitialSetupComplete;
+
     // Media state
     private boolean mAudioOff = false;
     private boolean mVideoOff = false;
@@ -93,18 +96,17 @@ public class CallFragment extends Fragment {
     private SurfaceViewRenderer mLocalVideoView;
     private SurfaceViewRenderer mRemoteVideoView;
 
+    private TextView mPeerName;
+    private ImageView mPeerAvatar;
+
     private ComTopic<VxCard> mTopic;
+    private int mCallSeqID;
     private InfoListener mTinodeListener;
 
-    CallDirection mCallDirection;
-    int mCallSeqID;
-    // If true, the client has received a remote SDP from the peer and has sent a local SDP to the peer.
-    boolean mCallInitialSetupComplete;
-
     // Check if we have camera and mic permissions.
-    private final ActivityResultLauncher<String[]>  mMediaPermissionLauncher =
+    private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                for (Map.Entry<String, Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
                         Log.d(TAG, "The user has disallowed " + e);
                         handleCallClose();
@@ -112,11 +114,45 @@ public class CallFragment extends Fragment {
                     }
                 }
                 // All permissions granted.
-                this.startMediaAndSignal();
+                startMediaAndSignal();
             });
 
+    public CallFragment() {
+    }
 
-    public CallFragment() {}
+    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
+        final String[] deviceNames = enumerator.getDeviceNames();
+
+        // First, try to find front facing camera
+        Log.d(TAG, "Looking for front facing cameras.");
+        for (String deviceName : deviceNames) {
+            if (enumerator.isFrontFacing(deviceName)) {
+                Log.d(TAG, "Creating front facing camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+                if (videoCapturer != null) {
+                    Log.d(TAG, "Created FF camera " + deviceName);
+                    return videoCapturer;
+                } else {
+                    Log.d(TAG, "Failed to create FF camera " + deviceName);
+                }
+            }
+        }
+
+        // Front facing camera not found, try something else
+        Log.d(TAG, "Looking for other cameras.");
+        for (String deviceName : deviceNames) {
+            if (!enumerator.isFrontFacing(deviceName)) {
+                Log.d(TAG, "Creating other camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+
+                if (videoCapturer != null) {
+                    return videoCapturer;
+                }
+            }
+        }
+
+        return null;
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -163,12 +199,15 @@ public class CallFragment extends Fragment {
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
 
         VxCard pub = mTopic.getPub();
-        UiUtils.setAvatar(view.findViewById(R.id.imageAvatar), pub, name, false);
+        mPeerAvatar = view.findViewById(R.id.imageAvatar);
+        UiUtils.setAvatar(mPeerAvatar, pub, name, false);
+
         String peerName = pub != null ? pub.fn : null;
         if (TextUtils.isEmpty(peerName)) {
             peerName = getResources().getString(R.string.unknown);
         }
-        ((TextView) view.findViewById(R.id.peerName)).setText(peerName);
+        mPeerName = view.findViewById(R.id.peerName);
+        mPeerName.setText(peerName);
 
         // TODO: use WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS to show call window fullscreen.
         activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -177,7 +216,7 @@ public class CallFragment extends Fragment {
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
         if (!missing.isEmpty()) {
-            Log.d(TAG,"Requesting missing permissions:" + missing);
+            Log.d(TAG, "Requesting missing permissions:" + missing);
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
@@ -264,7 +303,7 @@ public class CallFragment extends Fragment {
 
         // Initialize PeerConnectionFactory globals.
         PeerConnectionFactory.InitializationOptions initializationOptions =
-                PeerConnectionFactory.InitializationOptions.builder(this.getActivity())
+                PeerConnectionFactory.InitializationOptions.builder(activity)
                         .createInitializationOptions();
         PeerConnectionFactory.initialize(initializationOptions);
 
@@ -308,14 +347,14 @@ public class CallFragment extends Fragment {
         mLocalVideoTrack.addSink(mLocalVideoView);
 
         mLocalVideoView.setMirror(true);
-        mRemoteVideoView.setMirror(true);
+        mRemoteVideoView.setMirror(false);
 
         if (!mTopic.isAttached()) {
             mTopic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (result.ctrl != null && result.ctrl.code < 300) {
-                        handleCallInvite();
+                        handleCallStart();
                     } else {
                         handleCallClose();
                     }
@@ -329,7 +368,7 @@ public class CallFragment extends Fragment {
                 }
             });
         } else {
-            handleCallInvite();
+            handleCallStart();
         }
     }
 
@@ -380,28 +419,29 @@ public class CallFragment extends Fragment {
     private void initVideos() {
         mRootEglBase = EglBase.create();
 
+        mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
+        mRemoteVideoView.setEnableHardwareScaler(true);
+        mRemoteVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_BALANCED);
+        mRemoteVideoView.setZOrderMediaOverlay(false);
+
         mLocalVideoView.init(mRootEglBase.getEglBaseContext(), null);
         mLocalVideoView.setEnableHardwareScaler(true);
         mLocalVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mLocalVideoView.setZOrderMediaOverlay(true);
-
-        mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
-        mRemoteVideoView.setEnableHardwareScaler(true);
-        mRemoteVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
-        mRemoteVideoView.setZOrderMediaOverlay(true);
+        mLocalVideoView.setVisibility(View.VISIBLE);
     }
 
     private boolean initIceServers() {
         mIceServers = new ArrayList<>();
         try {
             //noinspection unchecked
-            List<Map<String,Object>> iceServersConfig =
-                    (List<Map<String,Object>>) Cache.getTinode().getServerParam("iceServers");
+            List<Map<String, Object>> iceServersConfig =
+                    (List<Map<String, Object>>) Cache.getTinode().getServerParam("iceServers");
             if (iceServersConfig == null) {
                 return false;
             }
 
-            for (Map<String,Object> server : iceServersConfig) {
+            for (Map<String, Object> server : iceServersConfig) {
                 //noinspection unchecked
                 List<String> urls = (List<String>) server.get("urls");
                 if (urls == null || urls.isEmpty()) {
@@ -442,40 +482,29 @@ public class CallFragment extends Fragment {
         }
     }
 
-    private class FailureHandler extends UiUtils.ToastFailureListener {
-        FailureHandler(Activity activity) {
-            super(activity);
-        }
-
-        @Override
-        public PromisedReply<ServerMessage> onFailure(final Exception err) {
-            handleCallClose();
-            return super.onFailure(err);
-        }
-    }
-
     // Call initiation.
-    private void handleCallInvite() {
+    private void handleCallStart() {
         switch (mCallDirection) {
             case OUTGOING:
                 // Send out a call invitation to the peer.
                 Map<String, Object> head = new HashMap<>();
                 head.put("webrtc", "started");
-                mTopic.publish(Drafty.videoCall(), head).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    if (result.ctrl != null && result.ctrl.code < 300) {
-                        int seq = result.ctrl.getIntParam("seq", -1);
-                        if (seq > 0) {
-                            // All good.
-                            mCallSeqID = seq;
-                            return null;
-                        }
-                    }
-                    handleCallClose();
-                    return null;
-                    }
-                }, new FailureHandler(getActivity()));
+                mTopic.publish(Drafty.videoCall(), head).thenApply(
+                        new PromisedReply.SuccessListener<ServerMessage>() {
+                            @Override
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                                if (result.ctrl != null && result.ctrl.code < 300) {
+                                    int seq = result.ctrl.getIntParam("seq", -1);
+                                    if (seq > 0) {
+                                        // All good.
+                                        mCallSeqID = seq;
+                                        return null;
+                                    }
+                                }
+                                handleCallClose();
+                                return null;
+                            }
+                        }, new FailureHandler(getActivity()));
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
@@ -483,16 +512,6 @@ public class CallFragment extends Fragment {
                 break;
             default:
                 break;
-        }
-    }
-
-    // Auxiliary class to facilitate serialization of SDP data.
-    static class SDPAux {
-        public final String type;
-        public final String sdp;
-        SDPAux(String type, String sdp) {
-            this.type = type;
-            this.sdp = sdp;
         }
     }
 
@@ -504,40 +523,6 @@ public class CallFragment extends Fragment {
     // Sends a SDP answer to the peer.
     private void handleSendAnswer(SessionDescription sd) {
         mTopic.videoCall("answer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
-    }
-
-    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
-        final String[] deviceNames = enumerator.getDeviceNames();
-
-        // First, try to find front facing camera
-        Log.d(TAG, "Looking for front facing cameras.");
-        for (String deviceName : deviceNames) {
-            if (enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating front facing camera capturer.");
-                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-                if (videoCapturer != null) {
-                    Log.d(TAG, "Created FF camera " + deviceName);
-                    return videoCapturer;
-                } else {
-                    Log.d(TAG, "Failed to create FF camera " + deviceName);
-                }
-            }
-        }
-
-        // Front facing camera not found, try something else
-        Log.d(TAG, "Looking for other cameras.");
-        for (String deviceName : deviceNames) {
-            if (!enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating other camera capturer.");
-                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-
-                if (videoCapturer != null) {
-                    return videoCapturer;
-                }
-            }
-        }
-
-        return null;
     }
 
     // Creates and initializes a peer connection.
@@ -632,7 +617,7 @@ public class CallFragment extends Fragment {
                 Log.d(TAG, "onRenegotiationNeeded() called");
 
                 if (CallFragment.this.mCallDirection == CallDirection.INCOMING &&
-                    !CallFragment.this.mCallInitialSetupComplete) {
+                        !CallFragment.this.mCallInitialSetupComplete) {
                     // Do not send an offer yet as
                     // - We are still in initial setup phase.
                     // - The caller is supposed to send us an offer.
@@ -670,6 +655,8 @@ public class CallFragment extends Fragment {
     }
 
     private void handleVideoCallAccepted() {
+        mPeerName.setVisibility(View.INVISIBLE);
+        mPeerAvatar.setVisibility(View.INVISIBLE);
         createPeerConnection();
     }
 
@@ -716,7 +703,7 @@ public class CallFragment extends Fragment {
         //noinspection unchecked
         Map<String, Object> m = (Map<String, Object>) info.payload;
         String type = (String) m.getOrDefault("type", "");
-        String sdp = (String)m.getOrDefault("sdp", "");
+        String sdp = (String) m.getOrDefault("sdp", "");
 
         //noinspection ConstantConditions
         mLocalPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
@@ -744,20 +731,6 @@ public class CallFragment extends Fragment {
                 sdpMLineIndex, sdp));
     }
 
-    // Auxiliary class to facilitate serialization of the ICE candidate data.
-    private static class IceCandidateAux {
-        public String type;
-        public int sdpMLineIndex;
-        public String sdpMid;
-        public String candidate;
-        IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) {
-            this.type = type;
-            this.sdpMLineIndex = sdpMLineIndex;
-            this.sdpMid = sdpMid;
-            this.candidate = candidate;
-        }
-    }
-
     // Sends a local ICE candidate to the other party.
     private void handleIceCandidateEvent(IceCandidate candidate) {
         mTopic.videoCall(
@@ -767,7 +740,33 @@ public class CallFragment extends Fragment {
 
     // Cleans up call after receiving a remote hang-up notification.
     private void handleRemoteHangup(MsgServerInfo info) {
-        this.handleCallClose();
+        handleCallClose();
+    }
+
+    // Auxiliary class to facilitate serialization of SDP data.
+    static class SDPAux {
+        public final String type;
+        public final String sdp;
+
+        SDPAux(String type, String sdp) {
+            this.type = type;
+            this.sdp = sdp;
+        }
+    }
+
+    // Auxiliary class to facilitate serialization of the ICE candidate data.
+    private static class IceCandidateAux {
+        public String type;
+        public int sdpMLineIndex;
+        public String sdpMid;
+        public String candidate;
+
+        IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) {
+            this.type = type;
+            this.sdpMLineIndex = sdpMLineIndex;
+            this.sdpMid = sdpMid;
+            this.candidate = candidate;
+        }
     }
 
     // Listens for incoming call-related info messages.
@@ -792,19 +791,19 @@ public class CallFragment extends Fragment {
             }
             switch (info.event) {
                 case "accept":
-                    this.parent.handleVideoCallAccepted();
+                    parent.handleVideoCallAccepted();
                     break;
                 case "offer":
-                    this.parent.handleVideoOfferMsg(info);
+                    parent.handleVideoOfferMsg(info);
                     break;
                 case "answer":
-                    this.parent.handleVideoAnswerMsg(info);
+                    parent.handleVideoAnswerMsg(info);
                     break;
                 case "ice-candidate":
-                    this.parent.handleNewICECandidateMsg(info);
+                    parent.handleNewICECandidateMsg(info);
                     break;
                 case "hang-up":
-                    this.parent.handleRemoteHangup(info);
+                    parent.handleRemoteHangup(info);
                     break;
                 default:
                     break;
@@ -816,7 +815,7 @@ public class CallFragment extends Fragment {
         private String tag;
 
         CustomSdpObserver(String logTag) {
-            tag = this.getClass().getCanonicalName();
+            tag = getClass().getCanonicalName();
             this.tag = this.tag + " " + logTag;
         }
 
@@ -838,6 +837,18 @@ public class CallFragment extends Fragment {
         @Override
         public void onSetFailure(String s) {
             Log.d(tag, "onSetFailure() called with: s = [" + s + "]");
+        }
+    }
+
+    private class FailureHandler extends UiUtils.ToastFailureListener {
+        FailureHandler(Activity activity) {
+            super(activity);
+        }
+
+        @Override
+        public PromisedReply<ServerMessage> onFailure(final Exception err) {
+            handleCallClose();
+            return super.onFailure(err);
         }
     }
 }

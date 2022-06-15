@@ -6,72 +6,63 @@
     android:id="@+id/callMainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
-    <FrameLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+    <TextView
+        android:id="@+id/peerName"
+        style="@style/TextAppearance.AppCompat.Headline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:alpha="0.9"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:background="@drawable/bubble"
+        android:backgroundTint="@color/colorChipBackground"
+        android:backgroundTintMode="multiply"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/imageAvatar"
+        tools:text="John Doe" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imageAvatar"
+        android:layout_width="@dimen/avatar_size_huge"
+        android:layout_height="@dimen/avatar_size_huge"
+        android:layout_marginTop="@dimen/avatar_size_huge"
+        android:contentDescription="@string/avatar"
+        android:focusable="false"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:shapeAppearanceOverlay="@style/roundImageView"
+        app:srcCompat="@drawable/disk" />
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/remoteViewPlaceholder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@drawable/message_view_bkg">
-
-            <TextView
-                android:id="@+id/peerName"
-                style="@style/TextAppearance.AppCompat.Headline"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:alpha="0.9"
-                android:paddingStart="18dp"
-                android:paddingEnd="18dp"
-                android:paddingTop="6dp"
-                android:paddingBottom="6dp"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="@dimen/activity_vertical_margin"
-                android:background="@drawable/bubble"
-                android:backgroundTint="@color/colorChipBackground"
-                android:backgroundTintMode="multiply"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toTopOf="@id/imageAvatar"
-                tools:text="John Doe" />
-
-            <com.google.android.material.imageview.ShapeableImageView
-                android:id="@+id/imageAvatar"
-                android:layout_width="@dimen/avatar_size_huge"
-                android:layout_height="@dimen/avatar_size_huge"
-                android:layout_marginTop="@dimen/avatar_size_huge"
-                android:contentDescription="@string/avatar"
-                android:focusable="false"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:shapeAppearanceOverlay="@style/roundImageView"
-                app:srcCompat="@drawable/disk" />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <org.webrtc.SurfaceViewRenderer
-            android:id="@+id/remoteView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/message_view_bkg"
-            android:visibility="gone"/>
-
-    </FrameLayout>
+    <org.webrtc.SurfaceViewRenderer
+        android:id="@+id/remoteView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:keepScreenOn="true"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintVertical_bias="0.5" />
 
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/localView"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/local_video_frame"
         android:layout_margin="@dimen/fab_margin"
-        android:backgroundTint="@android:color/transparent"
+        android:elevation="4dp"
+        android:keepScreenOn="true"
+        android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@id/callControlsPanel" />
 
