@@ -75,6 +75,14 @@ public class CallActivity extends AppCompatActivity  {
         // Using action once.
         intent.setAction(null);
 
+        mTopicName = intent.getStringExtra("topic");
+        mSeq = intent.getIntExtra("seq", -1);
+        mTinode = Cache.getTinode();
+        // Technically the call is from intent.getStringExtra("from")
+        // but it's the same as "topic" for p2p topics;
+        // noinspection unchecked
+        mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
+
         Bundle args = new Bundle();
         String fragmentToShow;
         switch (action) {
@@ -82,6 +90,9 @@ public class CallActivity extends AppCompatActivity  {
                 // Incoming call started by the ser
                 fragmentToShow = FRAGMENT_INCOMING;
                 args.putString("call_direction", "incoming");
+                if (mTopic != null && mSeq > 0) {
+                    mTopic.videoCall("ringing", mSeq, null);
+                }
                 break;
 
             case INTENT_ACTION_CALL_START:
@@ -95,18 +106,7 @@ public class CallActivity extends AppCompatActivity  {
                 finish();
                 return;
         }
-
-        mTopicName = intent.getStringExtra("topic");
-        mSeq = intent.getIntExtra("seq", -1);
-
         setContentView(R.layout.activity_call);
-
-        mTinode = Cache.getTinode();
-
-        // Technically the call is from intent.getStringExtra("from")
-        // but it's the same as "topic" for p2p topics;
-        // noinspection unchecked
-        mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
 
         // Handle external request to finish call.
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
