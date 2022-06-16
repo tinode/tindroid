@@ -52,6 +52,7 @@ import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -456,16 +457,16 @@ public class MessageActivity extends AppCompatActivity
                 .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
-                            if (!(err instanceof NotConnectedException)) {
-                                Log.w(TAG, "Subscribe failed", err);
-                                if (err instanceof ServerResponseException) {
-                                    int code = ((ServerResponseException) err).getCode();
-                                    if (code == 404) {
-                                        showFragment(FRAGMENT_INVALID, null, false);
-                                    }
+                        if (!(err instanceof NotConnectedException) && !(err instanceof AlreadySubscribedException)) {
+                            Log.w(TAG, "Subscribe failed", err);
+                            if (err instanceof ServerResponseException) {
+                                int code = ((ServerResponseException) err).getCode();
+                                if (code == 404) {
+                                    showFragment(FRAGMENT_INVALID, null, false);
                                 }
                             }
-                            return null;
+                        }
+                        return null;
                     }
                 })
                 .thenFinally(new PromisedReply.FinalListener() {

@@ -17,6 +17,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
@@ -76,6 +77,20 @@ public class CallActivity extends AppCompatActivity  {
         // Using action once.
         intent.setAction(null);
 
+        mTopicName = intent.getStringExtra("topic");
+        mSeq = intent.getIntExtra("seq", -1);
+        // noinspection unchecked
+        mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
+        if (mSeq <= 0 || mTinode == null) {
+            Log.e(TAG, "Started with invalid parameters seq=" + mSeq +
+                    "; topic=" + mTopic + " (" + mTopicName + ")");
+            return;
+        }
+
+        mTinode = Cache.getTinode();
+        mLoginListener = new EventListener();
+        mTinode.addListener(mLoginListener);
+
         Bundle args = new Bundle();
         String fragmentToShow;
         switch (action) {
@@ -96,20 +111,7 @@ public class CallActivity extends AppCompatActivity  {
                 finish();
                 return;
         }
-
-        mTopicName = intent.getStringExtra("topic");
-        mSeq = intent.getIntExtra("seq", -1);
-
         setContentView(R.layout.activity_call);
-
-        mTinode = Cache.getTinode();
-        mLoginListener = new EventListener();
-        mTinode.addListener(mLoginListener);
-
-        // Technically the call is from intent.getStringExtra("from")
-        // but it's the same as "topic" for p2p topics;
-        // noinspection unchecked
-        mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
 
         // Handle external request to finish call.
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -137,18 +139,10 @@ public class CallActivity extends AppCompatActivity  {
                 mgr.requestDismissKeyguard(this, null);
             }
         }
-
         showFragment(fragmentToShow, args);
-    }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
+        // Try to reconnect and subscribe.
+        topicAttach();
     }
 
     @Override
@@ -236,6 +230,11 @@ public class CallActivity extends AppCompatActivity  {
     }
 
     private void topicAttach() {
+        if (mTopic.isAttached()) {
+            mTopic.videoCall("ringing", mSeq, null);
+            return;
+        }
+
         if (!mTinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
@@ -249,11 +248,22 @@ public class CallActivity extends AppCompatActivity  {
                 .withDel();
 
         mTopic.subscribe(null, builder.build())
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        mTopic.videoCall("ringing", mSeq, null);
+                        return null;
+                    }
+                })
                 .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        Log.w(TAG, "Subscribe failed", err);
-                        declineCall();
+                        if (err instanceof AlreadySubscribedException) {
+                            mTopic.videoCall("ringing", mSeq, null);
+                        } else {
+                            Log.w(TAG, "Subscribe failed", err);
+                            declineCall();
+                        }
                         return null;
                     }
                 });
