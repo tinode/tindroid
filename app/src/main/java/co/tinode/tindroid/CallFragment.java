@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -344,27 +343,7 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setMirror(true);
         mRemoteVideoView.setMirror(false);
 
-        if (!mTopic.isAttached()) {
-            mTopic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    if (result.ctrl != null && result.ctrl.code < 300) {
-                        handleCallStart();
-                    } else {
-                        handleCallClose();
-                    }
-                    return null;
-                }
-            }, new PromisedReply.FailureListener<ServerMessage>() {
-                @Override
-                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                    handleCallClose();
-                    return null;
-                }
-            });
-        } else {
-            handleCallStart();
-        }
+        handleCallStart();
     }
 
     // Stops media and concludes the call (sends "hang-up" to the peer).

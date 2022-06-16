@@ -43,6 +43,7 @@ public class CallActivity extends AppCompatActivity  {
     private String mTopicName;
     private int mSeq;
     private ComTopic<VxCard> mTopic;
+    private EventListener mLoginListener;
 
     // Receives 'close' requests from FCM (e.g. upon remote hang-up).
     private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
@@ -102,6 +103,8 @@ public class CallActivity extends AppCompatActivity  {
         setContentView(R.layout.activity_call);
 
         mTinode = Cache.getTinode();
+        mLoginListener = new EventListener();
+        mTinode.addListener(mLoginListener);
 
         // Technically the call is from intent.getStringExtra("from")
         // but it's the same as "topic" for p2p topics;
@@ -150,6 +153,7 @@ public class CallActivity extends AppCompatActivity  {
 
     @Override
     public void onDestroy() {
+        mTinode.removeListener(mLoginListener);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
 
         if (mTurnScreenOffWhenDone) {
@@ -241,30 +245,29 @@ public class CallActivity extends AppCompatActivity  {
 
         Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
                 .withDesc()
-                .withSub()
                 .withLaterData()
                 .withDel();
-
-        if (mTopic.isDeleted()) {
-            declineCall();
-            return;
-        }
 
         mTopic.subscribe(null, builder.build())
                 .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
-                        if (!(err instanceof NotConnectedException)) {
-                            Log.w(TAG, "Subscribe failed", err);
-                            if (err instanceof ServerResponseException) {
-                                int code = ((ServerResponseException) err).getCode();
-                                if (code == 404) {
-                                    declineCall();
-                                }
-                            }
-                        }
+                        Log.w(TAG, "Subscribe failed", err);
+                        declineCall();
                         return null;
                     }
                 });
+    }
+
+    private class EventListener extends Tinode.EventListener {
+        @Override
+        public void onLogin(int code, String txt) {
+            super.onLogin(code, txt);
+            if (code < ServerMessage.STATUS_MULTIPLE_CHOICES) {
+                topicAttach();
+            } else {
+                declineCall();
+            }
+        }
     }
 }

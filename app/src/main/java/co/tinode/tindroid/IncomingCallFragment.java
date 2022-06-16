@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.TextView;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -64,7 +63,7 @@ public class IncomingCallFragment extends Fragment
 
     private String mTopicName;
     private int mSeq;
-    private ServerEventListener mListener;
+    private InfoListener mListener;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -100,7 +99,7 @@ public class IncomingCallFragment extends Fragment
         }
         final Tinode tinode = Cache.getTinode();
 
-        mListener = new ServerEventListener();
+        mListener = new InfoListener();
         tinode.addListener(mListener);
 
         mTopicName = args.getString("topic");
@@ -224,7 +223,7 @@ public class IncomingCallFragment extends Fragment
         activity.acceptCall();
     }
 
-    private class ServerEventListener extends Tinode.EventListener {
+    private class InfoListener extends Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {
