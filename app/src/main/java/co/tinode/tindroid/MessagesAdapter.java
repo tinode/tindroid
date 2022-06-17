@@ -572,22 +572,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
 
         // Normal message.
-        // Disable clicker while message is processed.
-        FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
-        formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
-        Spanned text = m.content.format(formatter);
-
-        if (text == null || text.length() == 0) {
-            if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
-            } else if (m.status == BaseDb.Status.FAILED) {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
-            } else {
-                text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
+        if (m.content != null) {
+            // Disable clicker while message is processed.
+            FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
+            formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));
+            Spanned text = m.content.format(formatter);
+            if (TextUtils.isEmpty(text)) {
+                if (m.status == BaseDb.Status.DRAFT || m.status == BaseDb.Status.QUEUED || m.status == BaseDb.Status.SENDING) {
+                    text = serviceContentSpanned(mActivity, R.drawable.ic_schedule_gray, R.string.processing);
+                } else if (m.status == BaseDb.Status.FAILED) {
+                    text = serviceContentSpanned(mActivity, R.drawable.ic_error_gray, R.string.failed);
+                } else {
+                    text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
+                }
             }
+            holder.mText.setText(text);
         }
 
-        holder.mText.setText(text);
         if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
