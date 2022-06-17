@@ -148,6 +148,8 @@ public class IncomingCallFragment extends Fragment
         }
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
         }
         super.onPause();
     }

@@ -67,7 +67,7 @@ Background patterns from http://subtlepatterns.com/, commercial and non-commerci
 
 The [`contacts.vcf`](./contacts.vcf) contains a list of contacts which can be used for testing. Push it to your emulator using command
 ```
-adb push contacts.vcf /sdcard/contacts.vcf`
+adb push contacts.vcf /sdcard/contacts.vcf
 ```
 
 ## Push notifications

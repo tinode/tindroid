@@ -77,17 +77,18 @@ public class CallActivity extends AppCompatActivity  {
         // Using action once.
         intent.setAction(null);
 
+        mTinode = Cache.getTinode();
+
         mTopicName = intent.getStringExtra("topic");
         mSeq = intent.getIntExtra("seq", -1);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
-        if (mSeq <= 0 || mTinode == null) {
-            Log.e(TAG, "Started with invalid parameters seq=" + mSeq +
-                    "; topic=" + mTopic + " (" + mTopicName + ")");
+        if (mTopic == null) {
+            Log.e(TAG, "Invalid topic '" + mTopicName + "'");
+            finish();
             return;
         }
 
-        mTinode = Cache.getTinode();
         mLoginListener = new EventListener();
         mTinode.addListener(mLoginListener);
 

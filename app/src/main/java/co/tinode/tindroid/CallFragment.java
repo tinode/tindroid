@@ -119,40 +119,6 @@ public class CallFragment extends Fragment {
     public CallFragment() {
     }
 
-    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
-        final String[] deviceNames = enumerator.getDeviceNames();
-
-        // First, try to find front facing camera
-        Log.d(TAG, "Looking for front facing cameras.");
-        for (String deviceName : deviceNames) {
-            if (enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating front facing camera capturer.");
-                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-                if (videoCapturer != null) {
-                    Log.d(TAG, "Created FF camera " + deviceName);
-                    return videoCapturer;
-                } else {
-                    Log.d(TAG, "Failed to create FF camera " + deviceName);
-                }
-            }
-        }
-
-        // Front facing camera not found, try something else
-        Log.d(TAG, "Looking for other cameras.");
-        for (String deviceName : deviceNames) {
-            if (!enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating other camera capturer.");
-                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
-
-                if (videoCapturer != null) {
-                    return videoCapturer;
-                }
-            }
-        }
-
-        return null;
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -190,12 +156,16 @@ public class CallFragment extends Fragment {
             return;
         }
 
+        Tinode tinode = Cache.getTinode();
         String name = args.getString("topic");
-        //noinspection unchecked
-        mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
+        // noinspection unchecked
+        mTopic = (ComTopic<VxCard>) tinode.getTopic(name);
         String callStateStr = args.getString("call_direction");
         mCallSeqID = args.getInt("call_seq");
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
+
+        mTinodeListener = new InfoListener();
+        tinode.addListener(mTinodeListener);
 
         VxCard pub = mTopic.getPub();
         mPeerAvatar = view.findViewById(R.id.imageAvatar);
@@ -224,21 +194,52 @@ public class CallFragment extends Fragment {
     @Override
     public void onDestroyView() {
         stopMediaAndSignal();
+        Cache.getTinode().removeListener(mTinodeListener);
         super.onDestroyView();
     }
 
     @Override
     public void onResume() {
-        Tinode tinode = Cache.getTinode();
-        mTinodeListener = new InfoListener();
-        tinode.addListener(mTinodeListener);
         super.onResume();
     }
 
     @Override
     public void onPause() {
-        Cache.getTinode().removeListener(mTinodeListener);
         super.onPause();
+    }
+
+    private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
+        final String[] deviceNames = enumerator.getDeviceNames();
+
+        // First, try to find front facing camera
+        Log.d(TAG, "Looking for front facing cameras.");
+        for (String deviceName : deviceNames) {
+            if (enumerator.isFrontFacing(deviceName)) {
+                Log.d(TAG, "Creating front facing camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+                if (videoCapturer != null) {
+                    Log.d(TAG, "Created FF camera " + deviceName);
+                    return videoCapturer;
+                } else {
+                    Log.d(TAG, "Failed to create FF camera " + deviceName);
+                }
+            }
+        }
+
+        // Front facing camera not found, try something else
+        Log.d(TAG, "Looking for other cameras.");
+        for (String deviceName : deviceNames) {
+            if (!enumerator.isFrontFacing(deviceName)) {
+                Log.d(TAG, "Creating other camera capturer.");
+                VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
+
+                if (videoCapturer != null) {
+                    return videoCapturer;
+                }
+            }
+        }
+
+        return null;
     }
 
     // Mute/unmute media.
@@ -314,11 +315,6 @@ public class CallFragment extends Fragment {
 
         // Create a VideoCapturer instance.
         mVideoCapturerAndroid = createCameraCapturer(new Camera1Enumerator(false));
-
-        // Create MediaConstraints - Will be useful for specifying video and audio constraints.
-        MediaConstraints audioConstraints = new MediaConstraints();
-        MediaConstraints videoConstraints = new MediaConstraints();
-
         // Create a VideoSource instance
         if (mVideoCapturerAndroid != null) {
             SurfaceTextureHelper surfaceTextureHelper =
@@ -326,6 +322,10 @@ public class CallFragment extends Fragment {
             mVideoSource = mPeerConnectionFactory.createVideoSource(mVideoCapturerAndroid.isScreencast());
             mVideoCapturerAndroid.initialize(surfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
         }
+
+        // Create MediaConstraints - Will be useful for specifying video and audio constraints.
+        MediaConstraints audioConstraints = new MediaConstraints();
+        MediaConstraints videoConstraints = new MediaConstraints();
 
         mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
 
@@ -442,8 +442,6 @@ public class CallFragment extends Fragment {
 
     // Sends a hang-up notification to the peer and closes the fragment.
     private void handleCallClose() {
-        Log.w(TAG, "Terminating the call", new Exception("stacktrace"));
-
         // Close fragment.
         if (mCallSeqID > 0) {
             mTopic.videoCall("hang-up", mCallSeqID, null);
@@ -481,6 +479,7 @@ public class CallFragment extends Fragment {
                         }, new FailureHandler(getActivity()));
                 break;
             case INCOMING:
+                Log.w(TAG, "Accepting call " + mCallSeqID + " attached=" + mTopic.isAttached());
                 // The callee (we) has accepted the call. Notify the caller.
                 mTopic.videoCall("accept", mCallSeqID, null);
                 break;
