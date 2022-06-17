@@ -4,6 +4,7 @@ import android.accounts.Account;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.provider.BaseColumns;
 import android.util.Log;
@@ -74,8 +75,14 @@ public class BaseDb extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Keep existing account to be sure the user is not logged out on DB upgrade.
-        StoredAccount acc = AccountDb.getActiveAccount(db);
-        String deviceToken = AccountDb.getDeviceToken(db);
+        StoredAccount acc = null;
+        String deviceToken = null;
+        try {
+            acc = AccountDb.getActiveAccount(db);
+            deviceToken = AccountDb.getDeviceToken(db);
+        } catch (SQLiteException ex) {
+            Log.w(TAG, "Unable to retain account across DB upgrade", ex);
+        }
 
         // This is just a cache. Drop then re-fetch everything from the server.
         db.execSQL(MessageDb.DROP_INDEX);
