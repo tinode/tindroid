@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -92,6 +93,9 @@ public class CallFragment extends Fragment {
     // Media state
     private boolean mAudioOff = false;
     private boolean mVideoOff = false;
+
+    // For playing ringing sounds.
+    MediaPlayer mMediaPlayer = null;
 
     // Video (camera views).
     private SurfaceViewRenderer mLocalVideoView;
@@ -217,6 +221,11 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onPause() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
         super.onPause();
     }
 
@@ -786,6 +795,11 @@ public class CallFragment extends Fragment {
             MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
             switch (event) {
                 case ACCEPT:
+                    if (mMediaPlayer != null) {
+                        mMediaPlayer.stop();
+                        mMediaPlayer.release();
+                        mMediaPlayer = null;
+                    }
                     handleVideoCallAccepted();
                     break;
                 case OFFER:
@@ -799,6 +813,11 @@ public class CallFragment extends Fragment {
                     break;
                 case HANG_UP:
                     handleRemoteHangup(info);
+                    break;
+                case RINGING:
+                    mMediaPlayer = MediaPlayer.create(getContext(), R.raw.call_out);
+                    mMediaPlayer.setLooping(true);
+                    mMediaPlayer.start();
                     break;
                 default:
                     break;
