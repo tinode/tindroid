@@ -151,6 +151,7 @@
         <activity
             android:name=".CallActivity"
             android:showOnLockScreen="true"
+            android:screenOrientation="locked"
             android:exported="false">
             <intent-filter>
                 <action android:name="tindroidx.intent.action.call.INCOMING" />

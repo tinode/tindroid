@@ -52,6 +52,8 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
@@ -95,6 +97,7 @@ public class CallFragment extends Fragment {
     private SurfaceViewRenderer mLocalVideoView;
     private SurfaceViewRenderer mRemoteVideoView;
 
+    private ConstraintLayout mLayout;
     private TextView mPeerName;
     private ImageView mPeerAvatar;
 
@@ -125,6 +128,8 @@ public class CallFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_call, container, false);
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
+
+        mLayout = v.findViewById(R.id.callMainLayout);
 
         AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
@@ -192,6 +197,16 @@ public class CallFragment extends Fragment {
     public void onDestroyView() {
         stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
+
+        Context ctx = getContext();
+        if (ctx != null) {
+            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                audioManager.setMicrophoneMute(false);
+                audioManager.setSpeakerphoneOn(false);
+            }
+        }
+
         super.onDestroyView();
     }
 
@@ -236,21 +251,27 @@ public class CallFragment extends Fragment {
 
     // Mute/unmute media.
     private void toggleMedia(FloatingActionButton b, boolean video, @DrawableRes int enabledIcon, int disabledIcon) {
-        boolean enabled;
+        boolean disabled;
         if (video) {
-            enabled = mVideoOff;
-            mVideoOff = !mVideoOff;
+            disabled = !mVideoOff;
+            mVideoOff = disabled;
         } else {
-            enabled = mAudioOff;
-            mAudioOff = !mAudioOff;
+            disabled = !mAudioOff;
+            mAudioOff = disabled;
         }
 
-        b.setImageResource(enabled ? enabledIcon : disabledIcon);
+        b.setImageResource(disabled ? disabledIcon : enabledIcon);
 
         if (video) {
-            mLocalVideoTrack.setEnabled(!mVideoOff);
+            mLocalVideoTrack.setEnabled(!disabled);
         } else {
-            mLocalAudioTrack.setEnabled(!mVideoOff);
+            mLocalAudioTrack.setEnabled(!disabled);
+
+            // Need to disable microphone too, otherwise webrtc LocalPeer produces echo.
+            AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
+            if (audioManager != null) {
+                audioManager.setMicrophoneMute(disabled);
+            }
         }
 
         if (mLocalPeer == null) {
@@ -260,16 +281,22 @@ public class CallFragment extends Fragment {
         for (RtpSender transceiver : mLocalPeer.getSenders()) {
             MediaStreamTrack track = transceiver.track();
             if ((video && track instanceof VideoTrack) || (!video && track instanceof AudioTrack)) {
-                track.setEnabled(enabled);
+                track.setEnabled(!disabled);
             }
+        }
+
+        if (disabled) {
+            Log.i(TAG, "Audio enabled=" + mLocalAudioTrack.enabled());
         }
     }
 
     private void toggleSpeakerphone(FloatingActionButton b) {
         AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
-        boolean enabled = audioManager.isSpeakerphoneOn();
-        audioManager.setSpeakerphoneOn(!enabled);
-        b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+        if (audioManager != null) {
+            boolean enabled = audioManager.isSpeakerphoneOn();
+            audioManager.setSpeakerphoneOn(!enabled);
+            b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+        }
     }
 
     // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
@@ -324,6 +351,9 @@ public class CallFragment extends Fragment {
         // Create an AudioSource instance
         mAudioSource = mPeerConnectionFactory.createAudioSource(audioConstraints);
         mLocalAudioTrack = mPeerConnectionFactory.createAudioTrack("101", mAudioSource);
+        if (mAudioOff) {
+            mLocalAudioTrack.setEnabled(false);
+        }
 
         if (mVideoCapturerAndroid != null) {
             mVideoCapturerAndroid.startCapture(1024, 720, 30);
@@ -331,7 +361,9 @@ public class CallFragment extends Fragment {
 
         // VideoRenderer is ready => add the renderer to the VideoTrack.
         mLocalVideoTrack.addSink(mLocalVideoView);
-
+        if (mVideoOff) {
+            mLocalVideoTrack.setEnabled(false);
+        }
         mLocalVideoView.setMirror(true);
         mRemoteVideoView.setMirror(false);
 
@@ -619,8 +651,19 @@ public class CallFragment extends Fragment {
     }
 
     private void handleVideoCallAccepted() {
-        mPeerName.setVisibility(View.INVISIBLE);
-        mPeerAvatar.setVisibility(View.INVISIBLE);
+        Activity activity = getActivity();
+        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+            return;
+        }
+        activity.runOnUiThread(() -> {
+            ConstraintSet cs = new ConstraintSet();
+            cs.clone(mLayout);
+            cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP,0);
+            cs.applyTo(mLayout);
+            mPeerName.setElevation(8);
+
+            mPeerAvatar.setVisibility(View.INVISIBLE);
+        });
         createPeerConnection();
     }
 
