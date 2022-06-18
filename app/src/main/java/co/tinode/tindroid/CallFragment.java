@@ -122,8 +122,6 @@ public class CallFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        Log.i(TAG, "CREATED");
-
         View v = inflater.inflate(R.layout.fragment_call, container, false);
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
@@ -182,7 +180,6 @@ public class CallFragment extends Fragment {
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
         if (!missing.isEmpty()) {
-            Log.d(TAG, "Requesting missing permissions:" + missing);
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
@@ -212,13 +209,10 @@ public class CallFragment extends Fragment {
         final String[] deviceNames = enumerator.getDeviceNames();
 
         // First, try to find front facing camera
-        Log.d(TAG, "Looking for front facing cameras.");
         for (String deviceName : deviceNames) {
             if (enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating front facing camera capturer.");
                 VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
                 if (videoCapturer != null) {
-                    Log.d(TAG, "Created FF camera " + deviceName);
                     return videoCapturer;
                 } else {
                     Log.d(TAG, "Failed to create FF camera " + deviceName);
@@ -227,10 +221,8 @@ public class CallFragment extends Fragment {
         }
 
         // Front facing camera not found, try something else
-        Log.d(TAG, "Looking for other cameras.");
         for (String deviceName : deviceNames) {
             if (!enumerator.isFrontFacing(deviceName)) {
-                Log.d(TAG, "Creating other camera capturer.");
                 VideoCapturer videoCapturer = enumerator.createCapturer(deviceName, null);
 
                 if (videoCapturer != null) {
@@ -365,7 +357,7 @@ public class CallFragment extends Fragment {
             try {
                 mVideoCapturerAndroid.stopCapture();
             } catch (InterruptedException e) {
-                Log.e(TAG, "Failed to stop camera " + e);
+                Log.e(TAG, "Failed to stop camera", e);
             }
             mVideoCapturerAndroid = null;
         }
@@ -444,7 +436,7 @@ public class CallFragment extends Fragment {
     private void handleCallClose() {
         // Close fragment.
         if (mCallSeqID > 0) {
-            mTopic.videoCall("hang-up", mCallSeqID, null);
+            mTopic.videoCallHangUp(mCallSeqID);
         }
 
         mCallSeqID = -1;
@@ -480,7 +472,7 @@ public class CallFragment extends Fragment {
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
-                mTopic.videoCall("accept", mCallSeqID, null);
+                mTopic.videoCallAccept(mCallSeqID);
                 break;
             default:
                 break;
@@ -489,12 +481,12 @@ public class CallFragment extends Fragment {
 
     // Sends a SDP offer to the peer.
     private void handleSendOffer(SessionDescription sd) {
-        mTopic.videoCall("offer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
+        mTopic.videoCallOffer(mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
     }
 
     // Sends a SDP answer to the peer.
     private void handleSendAnswer(SessionDescription sd) {
-        mTopic.videoCall("answer", mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
+        mTopic.videoCallAnswer(mCallSeqID, new SDPAux(sd.type.canonicalForm(), sd.description));
     }
 
     // Creates and initializes a peer connection.
@@ -705,8 +697,7 @@ public class CallFragment extends Fragment {
 
     // Sends a local ICE candidate to the other party.
     private void handleIceCandidateEvent(IceCandidate candidate) {
-        mTopic.videoCall(
-                "ice-candidate", mCallSeqID,
+        mTopic.videoCallICECandidate(mCallSeqID,
                 new IceCandidateAux("candidate", candidate.sdpMLineIndex, candidate.sdpMid, candidate.sdp));
     }
 

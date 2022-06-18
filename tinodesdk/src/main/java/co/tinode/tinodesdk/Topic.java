@@ -1613,13 +1613,62 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Send a video call notification to server.
+     * Send a generic video call notification to server.
      * @param event is a video call event to notify the other call party about (e.g. "accept" or "hang-up").
      * @param seq call message ID.
      * @param payload is a JSON payload associated with the event.
      */
-    public void videoCall(String event, int seq, Object payload) {
+    protected void videoCall(String event, int seq, Object payload) {
         mTinode.videoCall(getName(), seq, event, payload);
+    }
+
+    /**
+     * Send a video call accept notification to server.
+     * @param seq call message ID.
+     */
+    public void videoCallAccept(int seq) {
+        videoCall("accept", seq, null);
+    }
+
+    /**
+     * Video call ICE exchange notification to the server.
+     * @param seq call message ID.
+     */
+    public void videoCallAnswer(int seq, Object payload) {
+        videoCall("answer", seq, payload);
+    }
+
+    /**
+     * Send a video call hang up notification to server.
+     * @param seq call message ID.
+     */
+    public void videoCallHangUp(int seq) {
+        videoCall("hang-up", seq, null);
+    }
+
+    /**
+     * Video call ICE exchange notification to the server.
+     * @param seq call message ID.
+     * @param payload is a JSON payload associated with the event.
+     */
+    public void videoCallICECandidate(int seq, Object payload) {
+        videoCall("ice-candidate", seq, payload);
+    }
+
+    /**
+     * Video call ICE exchange notification to the server.
+     * @param seq call message ID.
+     */
+    public void videoCallOffer(int seq, Object payload) {
+        videoCall("offer", seq, payload);
+    }
+
+    /**
+     * Send a notification that the call invite was received but not answered yet.
+     * @param seq call message ID.
+     */
+    public void videoCallRinging(int seq) {
+        videoCall("ringing", seq, null);
     }
 
     public String getName() {

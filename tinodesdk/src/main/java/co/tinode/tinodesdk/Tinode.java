@@ -1733,10 +1733,8 @@ public class Tinode {
      */
     public void videoCall(String topicName, int seq, String event, Object payload) {
         try {
-            send(new ClientMessage(new MsgClientNote(topicName, "call", seq, event, payload)));
-        } catch (JsonProcessingException | NotConnectedException ignored) {
-
-        }
+            send(new ClientMessage(new MsgClientNote(topicName, NOTE_CALL, seq, event, payload)));
+        } catch (JsonProcessingException | NotConnectedException ignored) {}
     }
 
     /**

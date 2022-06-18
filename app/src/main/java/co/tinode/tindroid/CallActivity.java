@@ -174,7 +174,7 @@ public class CallActivity extends AppCompatActivity  {
     void declineCall() {
         // Send message to server that the call is declined.
         if (mTopic != null) {
-            mTopic.videoCall("hang-up", mSeq, null);
+            mTopic.videoCallHangUp(mSeq);
         }
         finish();
     }
@@ -232,7 +232,7 @@ public class CallActivity extends AppCompatActivity  {
 
     private void topicAttach() {
         if (mTopic.isAttached()) {
-            mTopic.videoCall("ringing", mSeq, null);
+            mTopic.videoCallRinging(mSeq);
             return;
         }
 
@@ -252,7 +252,7 @@ public class CallActivity extends AppCompatActivity  {
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        mTopic.videoCall("ringing", mSeq, null);
+                        mTopic.videoCallRinging(mSeq);
                         return null;
                     }
                 })
@@ -260,7 +260,7 @@ public class CallActivity extends AppCompatActivity  {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         if (err instanceof AlreadySubscribedException) {
-                            mTopic.videoCall("ringing", mSeq, null);
+                            mTopic.videoCallRinging(mSeq);
                         } else {
                             Log.w(TAG, "Subscribe failed", err);
                             declineCall();

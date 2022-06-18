@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Info packet
  */
 public class MsgServerInfo implements Serializable {
-    public enum What {KP, RECV, READ, CALL, UNKNOWN}
+    public enum What {CALL, KP, RECV, READ, UNKNOWN}
     public enum Event {ACCEPT, ANSWER, HANG_UP, ICE_CANDIDATE, INVITE, OFFER, RINGING, UNKNOWN}
 
     public String topic;
