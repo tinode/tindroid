@@ -53,6 +53,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.RawRes;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
@@ -221,11 +222,7 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onPause() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.stop();
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
+        stopSoundEffect();
         super.onPause();
     }
 
@@ -475,6 +472,8 @@ public class CallFragment extends Fragment {
 
     // Sends a hang-up notification to the peer and closes the fragment.
     private void handleCallClose() {
+        stopSoundEffect();
+
         // Close fragment.
         if (mCallSeqID > 0) {
             mTopic.videoCallHangUp(mCallSeqID);
@@ -664,6 +663,9 @@ public class CallFragment extends Fragment {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
+
+        stopSoundEffect();
+
         activity.runOnUiThread(() -> {
             ConstraintSet cs = new ConstraintSet();
             cs.clone(mLayout);
@@ -758,6 +760,21 @@ public class CallFragment extends Fragment {
         handleCallClose();
     }
 
+    private void playSoundEffect(@RawRes int effectId) {
+        mMediaPlayer = MediaPlayer.create(getContext(), effectId);
+        mMediaPlayer.setLooping(true);
+        mMediaPlayer.start();
+    }
+
+    private void stopSoundEffect() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.stop();
+            mMediaPlayer.release();
+            mMediaPlayer = null;
+        }
+    }
+
+
     // Auxiliary class to facilitate serialization of SDP data.
     static class SDPAux {
         public final String type;
@@ -795,11 +812,6 @@ public class CallFragment extends Fragment {
             MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
             switch (event) {
                 case ACCEPT:
-                    if (mMediaPlayer != null) {
-                        mMediaPlayer.stop();
-                        mMediaPlayer.release();
-                        mMediaPlayer = null;
-                    }
                     handleVideoCallAccepted();
                     break;
                 case OFFER:
@@ -815,9 +827,7 @@ public class CallFragment extends Fragment {
                     handleRemoteHangup(info);
                     break;
                 case RINGING:
-                    mMediaPlayer = MediaPlayer.create(getContext(), R.raw.call_out);
-                    mMediaPlayer.setLooping(true);
-                    mMediaPlayer.start();
+                    playSoundEffect(R.raw.call_out);
                     break;
                 default:
                     break;
