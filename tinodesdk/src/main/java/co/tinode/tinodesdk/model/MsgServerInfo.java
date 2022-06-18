@@ -6,6 +6,9 @@ import java.io.Serializable;
  * Info packet
  */
 public class MsgServerInfo implements Serializable {
+    public enum What {KP, RECV, READ, CALL, UNKNOWN}
+    public enum Event {ACCEPT, ANSWER, HANG_UP, ICE_CANDIDATE, INVITE, OFFER, RINGING, UNKNOWN}
+
     public String topic;
     public String src;
     public String from;
@@ -17,5 +20,41 @@ public class MsgServerInfo implements Serializable {
     public Object payload;
 
     public MsgServerInfo() {
+    }
+
+    public static What parseWhat(String what) {
+        if (what == null) {
+            return What.UNKNOWN;
+        } else if (what.equals("kp")) {
+            return What.KP;
+        } else if (what.equals("recv")) {
+            return What.RECV;
+        } else if (what.equals("read")) {
+            return What.READ;
+        } else if (what.equals("call")) {
+            return What.CALL;
+        }
+        return What.UNKNOWN;
+    }
+
+    public static Event parseEvent(String event) {
+        if (event == null) {
+            return Event.UNKNOWN;
+        } else if (event.equals("accept")) {
+            return Event.ACCEPT;
+        } else if (event.equals("answer")) {
+            return Event.ANSWER;
+        } else if (event.equals("hang-up")) {
+            return Event.HANG_UP;
+        } else if (event.equals("ice-candidate")) {
+            return Event.ICE_CANDIDATE;
+        } else if (event.equals("invite")) {
+            return Event.INVITE;
+        } else if (event.equals("offer")) {
+            return Event.OFFER;
+        } else if (event.equals("ringing")) {
+            return Event.RINGING;
+        }
+        return Event.UNKNOWN;
     }
 }

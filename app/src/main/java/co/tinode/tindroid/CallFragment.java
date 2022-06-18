@@ -479,7 +479,6 @@ public class CallFragment extends Fragment {
                         }, new FailureHandler(getActivity()));
                 break;
             case INCOMING:
-                Log.w(TAG, "Accepting call " + mCallSeqID + " attached=" + mTopic.isAttached());
                 // The callee (we) has accepted the call. Notify the caller.
                 mTopic.videoCall("accept", mCallSeqID, null);
                 break;
@@ -522,7 +521,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onAddStream(MediaStream mediaStream) {
-                Log.d(TAG, "Received Remote stream.");
+                // Received remote stream.
                 Activity activity = getActivity();
                 if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                     return;
@@ -746,24 +745,25 @@ public class CallFragment extends Fragment {
     private class InfoListener extends Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
-            if (!"call".equals(info.what)) {
+            if (MsgServerInfo.parseWhat(info.what) != MsgServerInfo.What.CALL) {
                 // We are only interested in "call" info messages.
                 return;
             }
-            switch (info.event) {
-                case "accept":
+            MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
+            switch (event) {
+                case ACCEPT:
                     handleVideoCallAccepted();
                     break;
-                case "offer":
+                case OFFER:
                     handleVideoOfferMsg(info);
                     break;
-                case "answer":
+                case ANSWER:
                     handleVideoAnswerMsg(info);
                     break;
-                case "ice-candidate":
+                case ICE_CANDIDATE:
                     handleNewICECandidateMsg(info);
                     break;
-                case "hang-up":
+                case HANG_UP:
                     handleRemoteHangup(info);
                     break;
                 default:

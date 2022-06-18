@@ -49,8 +49,7 @@ public class MsgServerPres implements Serializable {
             return What.DEL;
         } else if (what.equals("tags")) {
             return What.TAGS;
-        } else {
-            return What.UNKNOWN;
         }
+        return What.UNKNOWN;
     }
 }

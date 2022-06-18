@@ -498,7 +498,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @Override
     protected void routeInfo(MsgServerInfo info) {
-        if (info.what.equals(Tinode.NOTE_KP)) {
+        if (Tinode.NOTE_KP.equals(info.what)) {
             return;
         }
         if (info.src == null) {

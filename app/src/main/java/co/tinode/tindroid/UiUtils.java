@@ -510,10 +510,12 @@ public class UiUtils {
 
     // Start or dismiss Incoming Call UI if the MsgServerInfo packet is video call related.
     public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
-        if ("call".equals(info.what)) {
+        MsgServerInfo.What what = MsgServerInfo.parseWhat(info.what);
+        if (what == MsgServerInfo.What.CALL) {
             final Tinode tinode = Cache.getTinode();
-            switch (info.event) {
-                case "invite":
+            MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
+            switch (event) {
+                case INVITE:
                     if (!tinode.isMe(info.from)) {
                         // Call invite from the peer.
                         Intent intent = new Intent();
@@ -525,7 +527,7 @@ public class UiUtils {
                         ctx.startActivity(intent);
                     }
                     break;
-                case "accept":
+                case ACCEPT:
                     if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
                         // Another client has accepted the call. Dismiss call notification.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(ctx);

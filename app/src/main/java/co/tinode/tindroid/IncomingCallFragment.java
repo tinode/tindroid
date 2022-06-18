@@ -229,7 +229,8 @@ public class IncomingCallFragment extends Fragment
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {
-                if ("call".equals(info.what) && "hang-up".equals(info.event)) {
+                if (MsgServerInfo.parseWhat(info.what) == MsgServerInfo.What.CALL &&
+                        MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.HANG_UP) {
                     Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
                     declineCall();
                 }

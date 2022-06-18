@@ -880,8 +880,8 @@ public class MessageActivity extends AppCompatActivity
         @Override
         public void onPres(MsgServerPres pres) {
             // noinspection SwitchStatementWithTooFewBranches
-            switch (pres.what) {
-                case "acs":
+            switch (MsgServerPres.parseWhat(pres.what)) {
+                case ACS:
                     runOnUiThread(() -> {
                         Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                         if (fragment != null) {
@@ -901,9 +901,9 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public void onInfo(MsgServerInfo info) {
-            switch (info.what) {
-                case "read":
-                case "recv":
+            switch (MsgServerInfo.parseWhat(info.what)) {
+                case READ:
+                case RECV:
                     runOnUiThread(() -> {
                         MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                                 findFragmentByTag(FRAGMENT_MESSAGES);
@@ -912,7 +912,7 @@ public class MessageActivity extends AppCompatActivity
                         }
                     });
                     break;
-                case "kp":
+                case KP:
                     runOnUiThread(() -> {
                         // Show typing indicator as animation over avatar in toolbar
                         mTypingAnimationTimer = UiUtils.toolbarTypingIndicator(MessageActivity.this,
@@ -920,6 +920,7 @@ public class MessageActivity extends AppCompatActivity
                     });
                     break;
                 default:
+                    // Call.
                     break;
             }
         }

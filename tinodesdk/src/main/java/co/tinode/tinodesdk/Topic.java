@@ -2075,7 +2075,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeInfo(MsgServerInfo info) {
-        if (!info.what.equals(Tinode.NOTE_KP)) {
+        if (!Tinode.NOTE_KP.equals(info.what)) {
             setReadRecvByRemote(info.from, info.what, info.seq);
 
             // If this is an update from the current user, update the contact with the new count too.
