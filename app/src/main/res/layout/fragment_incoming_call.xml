@@ -48,6 +48,7 @@
         android:layout_marginTop="@dimen/avatar_size_huge"
         android:contentDescription="@string/avatar"
         android:focusable="false"
+        android:elevation="@dimen/fab_elevation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
