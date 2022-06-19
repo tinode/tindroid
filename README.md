@@ -96,4 +96,4 @@ More translations are welcome. See [instructions](https://github.com/tinode/chat
 
 ## Screenshots
 <img src="android-contacts.png" alt="App screenshot - chat list" width="250" /> <img src="android-chat.png" alt="App screenshot - chat" width="250" /> <img src="android-topic-info.png" alt="App screenshot - chat settings" width="250" />
-<img src="android-account.png" alt="App screenshot - account info" width="250" /> <img src="android-find-people.png" alt="App screenshot - searching for contacts" width="250" /> <img src="android-forward.png" alt="App screenshot - forward message" width="250" />
+<img src="android-video-call.png" alt="App screenshot - video call" width="250" /> <img src="android-find-people.png" alt="App screenshot - searching for contacts" width="250" /> <img src="android-forward.png" alt="App screenshot - forward message" width="250" />
