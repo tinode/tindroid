@@ -669,7 +669,9 @@ public class CallFragment extends Fragment {
         activity.runOnUiThread(() -> {
             ConstraintSet cs = new ConstraintSet();
             cs.clone(mLayout);
+            cs.removeFromVerticalChain(R.id.peerName);
             cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP,0);
+            cs.setHorizontalBias(R.id.peerName, 0.05f);
             cs.applyTo(mLayout);
             mPeerName.setElevation(8);
 
@@ -814,9 +816,6 @@ public class CallFragment extends Fragment {
                 case ACCEPT:
                     handleVideoCallAccepted();
                     break;
-                case OFFER:
-                    handleVideoOfferMsg(info);
-                    break;
                 case ANSWER:
                     handleVideoAnswerMsg(info);
                     break;
@@ -825,6 +824,9 @@ public class CallFragment extends Fragment {
                     break;
                 case HANG_UP:
                     handleRemoteHangup(info);
+                    break;
+                case OFFER:
+                    handleVideoOfferMsg(info);
                     break;
                 case RINGING:
                     playSoundEffect(R.raw.call_out);
