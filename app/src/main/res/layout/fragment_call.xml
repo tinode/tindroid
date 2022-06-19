@@ -82,7 +82,7 @@
             android:src="@drawable/ic_volume_up"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
-            app:backgroundTint="@android:color/darker_gray"
+            app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -92,7 +92,7 @@
             android:src="@drawable/ic_videocam"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
-            app:backgroundTint="@android:color/darker_gray"
+            app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -102,7 +102,7 @@
             android:src="@drawable/ic_mic"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_microphone_button"
-            app:backgroundTint="@android:color/darker_gray"
+            app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -112,7 +112,7 @@
             android:src="@drawable/ic_call_end"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/finish_call_button"
-            app:backgroundTint="@android:color/holo_red_dark"
+            app:backgroundTint="@color/colorNegativeAction"
             app:borderWidth="0dp" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -5,11 +5,14 @@
 
     <color name="colorNegativeAction">#B71C1C</color>
     <color name="colorPositiveAction">#FF40C040</color>
+    <color name="colorNeutralAction">#FF909090</color>
 
     <color name="colorAccentLight">#E0F2F1</color>
     <color name="colorAccent">#00897B</color>
     <color name="colorAccentDark">#004D40</color>
     <color name="colorButtonNormal">#D6D7D7</color>
+
+    <color name="colorSwipeChervon">#FFF</color>
 
     <color name="colorDanger">#B71C1C</color>
 

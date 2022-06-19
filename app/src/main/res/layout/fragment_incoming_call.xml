@@ -70,8 +70,8 @@
             android:layout_height="@dimen/swipe_to_accept"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
+            android:tint="@color/colorSwipeChervon"
             android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse"
             android:alpha="0.5"/>
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -79,8 +79,8 @@
             android:layout_height="@dimen/swipe_to_accept"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
+            android:tint="@color/colorSwipeChervon"
             android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse"
             android:alpha="0.75"/>
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -88,8 +88,8 @@
             android:layout_height="@dimen/swipe_to_accept"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse" />
+            android:tint="@color/colorSwipeChervon"
+            android:src="@drawable/ic_chevron_up" />
 
     </TableLayout>
 
@@ -108,8 +108,8 @@
             android:layout_height="@dimen/swipe_to_reject"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
+            android:tint="@color/colorSwipeChervon"
             android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse"
             android:alpha="0.5"/>
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -117,8 +117,8 @@
             android:layout_height="@dimen/swipe_to_reject"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
+            android:tint="@color/colorSwipeChervon"
             android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse"
             android:alpha="0.75"/>
 
         <androidx.appcompat.widget.AppCompatImageView
@@ -126,8 +126,8 @@
             android:layout_height="@dimen/swipe_to_reject"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
-            android:src="@drawable/ic_chevron_up"
-            android:tint="?android:colorForegroundInverse" />
+            android:tint="@color/colorSwipeChervon"
+            android:src="@drawable/ic_chevron_up" />
 
     </TableLayout>
 
@@ -138,7 +138,7 @@
         android:layout_marginBottom="@dimen/fab_margin"
         android:contentDescription="@string/toggle_microphone_button"
         android:src="@drawable/ic_call"
-        android:tint="?android:colorForegroundInverse"
+        android:tint="@color/white"
         app:elevation="@dimen/fab_elevation"
         app:backgroundTint="@color/colorPositiveAction"
         app:borderWidth="0dp"
@@ -156,7 +156,6 @@
         android:layout_marginBottom="32dp"
         android:contentDescription="@string/finish_call_button"
         android:src="@drawable/ic_call_end"
-        android:tint="?android:colorForegroundInverse"
         app:elevation="@dimen/fab_elevation"
         app:backgroundTint="@color/colorNegativeAction"
         app:borderWidth="0dp"
