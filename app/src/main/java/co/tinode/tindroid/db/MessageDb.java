@@ -238,9 +238,7 @@ public class MessageDb implements BaseColumns {
         if (replacesSeq > 0) {
             values.put(COLUMN_NAME_REPLACES_SEQ, replacesSeq);
         }
-        if (withEffSeq > 0) {
-            values.put(COLUMN_NAME_EFFECTIVE_SEQ, withEffSeq);
-        }
+        values.put(COLUMN_NAME_EFFECTIVE_SEQ, withEffSeq > 0 ? withEffSeq : msg.seq);
         values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
         values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
