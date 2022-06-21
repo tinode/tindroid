@@ -153,7 +153,7 @@ public class MessageDb implements BaseColumns {
             "CREATE UNIQUE INDEX " + INDEX_NAME_2 +
                     " ON " + TABLE_NAME + " (" +
                     COLUMN_NAME_TOPIC_ID + "," +
-                    COLUMN_NAME_EFFECTIVE_SEQ + " DESC WHERE " + COLUMN_NAME_EFFECTIVE_SEQ + " IS NOT NULL)";
+                    COLUMN_NAME_EFFECTIVE_SEQ + " DESC) WHERE " + COLUMN_NAME_EFFECTIVE_SEQ + " IS NOT NULL";
     /**
      * Save message to DB
      *

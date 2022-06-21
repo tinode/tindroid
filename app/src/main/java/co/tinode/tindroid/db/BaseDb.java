@@ -88,6 +88,8 @@ public class BaseDb extends SQLiteOpenHelper {
         db.execSQL(MessageDb.DROP_INDEX);
         db.execSQL(MessageDb.DROP_INDEX_2);
         db.execSQL(MessageDb.DROP_TABLE);
+        // Remove this on the next release.
+        db.execSQL("DROP TABLE IF EXISTS edit_history");
         db.execSQL(SubscriberDb.DROP_INDEX);
         db.execSQL(SubscriberDb.DROP_TABLE);
         db.execSQL(UserDb.DROP_INDEX);
