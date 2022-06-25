@@ -1006,8 +1006,9 @@ public class MessagesFragment extends Fragment {
         }
 
         if (mAudioRecorder != null) {
-            mAudioRecorder.stop();
-            mAudioRecorder.reset();
+            try {
+                mAudioRecorder.stop();
+            } catch (RuntimeException ignored) {}
             mAudioRecorder.release();
             mAudioRecorder = null;
         }
