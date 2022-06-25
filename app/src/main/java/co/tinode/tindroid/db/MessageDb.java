@@ -181,13 +181,15 @@ public class MessageDb implements BaseColumns {
         db.beginTransaction();
         try {
             int origSeq = getOriginalSeqFor(db, msg.topicId, effSeq);
-            if (origSeq > 0 && origSeq < msg.seq) {
-                // Newer message version. Invalidate the old effective message record.
-                invalidateMessage(db, msg.topicId, origSeq);
-            } else {
-                // The already existing message version is newer than this one.
-                // Do not set effective seq.
-                effSeq = -1;
+            if (origSeq > 0) {
+                if (origSeq < msg.seq) {
+                    // Newer message version. Invalidate the old effective message record.
+                    invalidateMessage(db, msg.topicId, origSeq);
+                } else {
+                    // The already existing message version is newer than this one.
+                    // Do not set effective seq.
+                    effSeq = -1;
+                }
             }
 
             msg.id = insertRaw(db, topic, msg, effSeq);
@@ -238,7 +240,9 @@ public class MessageDb implements BaseColumns {
         if (replacesSeq > 0) {
             values.put(COLUMN_NAME_REPLACES_SEQ, replacesSeq);
         }
-        values.put(COLUMN_NAME_EFFECTIVE_SEQ, withEffSeq > 0 ? withEffSeq : msg.seq);
+        if (withEffSeq > 0) {
+            values.put(COLUMN_NAME_EFFECTIVE_SEQ, withEffSeq);
+        }
         values.put(COLUMN_NAME_HEAD, BaseDb.serialize(msg.head));
         values.put(COLUMN_NAME_CONTENT, BaseDb.serialize(msg.content));
 
@@ -335,13 +339,14 @@ public class MessageDb implements BaseColumns {
         final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
-                " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
-                " AND m1." + COLUMN_NAME_SEQ + "<m2." + COLUMN_NAME_SEQ + ")" +
+                    " ON (m1." + COLUMN_NAME_TOPIC_ID + "=m2." + COLUMN_NAME_TOPIC_ID +
+                        " AND m1." + COLUMN_NAME_EFFECTIVE_SEQ + "<m2." + COLUMN_NAME_EFFECTIVE_SEQ + ")" +
                 " LEFT JOIN " + TopicDb.TABLE_NAME + " AS t" +
-                " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
+                    " ON m1." + COLUMN_NAME_TOPIC_ID + "=t." + TopicDb._ID +
                 " WHERE m1." + COLUMN_NAME_DEL_ID + " IS NULL" +
-                " AND m2." + COLUMN_NAME_DEL_ID + " IS NULL" +
-                " AND m2." + _ID + " IS NULL";
+                    " AND m2." + COLUMN_NAME_DEL_ID + " IS NULL" +
+                    " AND m2." + _ID + " IS NULL" +
+                    " AND m1." + COLUMN_NAME_EFFECTIVE_SEQ + " IS NOT NULL";
 
         return db.rawQuery(sql, null);
     }

@@ -512,6 +512,10 @@ public class CallFragment extends Fragment {
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
+                Activity activity = getActivity();
+                if (activity != null) {
+                    rearrangePeerViews(activity);
+                }
                 mTopic.videoCallAccept(mCallSeqID);
                 break;
             default:
@@ -665,18 +669,8 @@ public class CallFragment extends Fragment {
         }
 
         stopSoundEffect();
+        rearrangePeerViews(activity);
 
-        activity.runOnUiThread(() -> {
-            ConstraintSet cs = new ConstraintSet();
-            cs.clone(mLayout);
-            cs.removeFromVerticalChain(R.id.peerName);
-            cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP,0);
-            cs.setHorizontalBias(R.id.peerName, 0.05f);
-            cs.applyTo(mLayout);
-            mPeerName.setElevation(8);
-
-            mPeerAvatar.setVisibility(View.INVISIBLE);
-        });
         createPeerConnection();
     }
 
@@ -776,7 +770,19 @@ public class CallFragment extends Fragment {
         }
     }
 
+    private void rearrangePeerViews(final Activity activity) {
+        activity.runOnUiThread(() -> {
+            ConstraintSet cs = new ConstraintSet();
+            cs.clone(mLayout);
+            cs.removeFromVerticalChain(R.id.peerName);
+            cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP,0);
+            cs.setHorizontalBias(R.id.peerName, 0.05f);
+            cs.applyTo(mLayout);
+            mPeerName.setElevation(8);
 
+            mPeerAvatar.setVisibility(View.INVISIBLE);
+        });
+    }
     // Auxiliary class to facilitate serialization of SDP data.
     static class SDPAux {
         public final String type;
