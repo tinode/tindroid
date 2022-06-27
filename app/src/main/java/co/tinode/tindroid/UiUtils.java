@@ -517,14 +517,20 @@ public class UiUtils {
             switch (event) {
                 case INVITE:
                     if (!tinode.isMe(info.from)) {
-                        // Call invite from the peer.
-                        Intent intent = new Intent();
-                        intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                        intent.putExtra("topic", info.src);
-                        intent.putExtra("seq", info.seq);
-                        intent.putExtra("from", info.from);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        ctx.startActivity(intent);
+                        CallInProgress call = Cache.getCallInProgress();
+                        if (call == null) {
+                            // Call invite from the peer.
+                            Intent intent = new Intent();
+                            intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
+                            intent.putExtra("topic", info.src);
+                            intent.putExtra("seq", info.seq);
+                            intent.putExtra("from", info.from);
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            ctx.startActivity(intent);
+                        } else if (!call.equals(info.src, info.seq)) {
+                            // Another incoming call. Decline.
+                            tinode.getTopic(info.src).videoCallHangUp(info.seq);
+                        }
                     }
                     break;
                 case ACCEPT:

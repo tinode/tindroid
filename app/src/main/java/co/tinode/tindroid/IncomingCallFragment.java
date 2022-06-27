@@ -104,6 +104,7 @@ public class IncomingCallFragment extends Fragment
 
         mTopicName = args.getString("topic");
         mSeq = args.getInt("call_seq");
+        Cache.registerCallInProgress(mTopicName, mSeq);
 
         // Technically the call is from args.getString("from")
         // but it's the same as "topic" for p2p topics;

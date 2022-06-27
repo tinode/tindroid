@@ -23,6 +23,21 @@ public class Cache {
 
     private static Tinode sTinode = null;
 
+    // Current video call.
+    private static CallInProgress sCallInProgress = null;
+
+    public static CallInProgress getCallInProgress() {
+        return sCallInProgress;
+    }
+
+    public static void registerCallInProgress(String topic, int seq) {
+        sCallInProgress = new CallInProgress(topic, seq);
+    }
+
+    public static void unregisterCallInProgress() {
+        sCallInProgress = null;
+    }
+
     public static Tinode getTinode() {
         if (sTinode == null) {
             sTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,

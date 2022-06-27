@@ -149,6 +149,7 @@ public class CallActivity extends AppCompatActivity  {
     @Override
     public void onDestroy() {
         mTinode.removeListener(mLoginListener);
+        Cache.unregisterCallInProgress();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
 
         if (mTurnScreenOffWhenDone) {

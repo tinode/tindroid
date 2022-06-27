@@ -502,6 +502,7 @@ public class CallFragment extends Fragment {
                                     if (seq > 0) {
                                         // All good.
                                         mCallSeqID = seq;
+                                        Cache.registerCallInProgress(mTopic.getName(), seq);
                                         return null;
                                     }
                                 }
