@@ -733,14 +733,14 @@ public class Tinode {
 
         String what = data.get("what");
         String topicName = data.get("topic");
-        String seqStr = data.get("seq");
         Integer seq = null;
-        if (seqStr != null) {
-            seq = Integer.parseInt(seqStr);
-        }
+        try {
+            // noinspection ConstantConditions: null value is acceptable here.
+            seq = Integer.parseInt(data.get("seq"));
+        } catch (NumberFormatException ignored) {}
 
         Topic topic = getTopic(topicName);
-        //noinspection ConstantConditions
+        // noinspection ConstantConditions
         switch (what) {
             case "msg":
                 // Check and maybe download new messages right away.
