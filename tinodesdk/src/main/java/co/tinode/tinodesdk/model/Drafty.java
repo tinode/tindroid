@@ -1181,7 +1181,7 @@ public class Drafty implements Serializable {
         }
 
         // Sort spans first by start index (asc) then by length (desc).
-        spans.sort((a, b) -> {
+        Collections.sort(spans, (a, b) -> {
             int diff = a.start - b.start;
             if (diff != 0) {
                 return diff;
