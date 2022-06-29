@@ -1205,6 +1205,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         return result;
     }
 
+    public Storage.Message getMessage(int seq) {
+        if (mStore == null) {
+            return null;
+        }
+        return mStore.getMessageBySeq(this, seq);
+    }
+
     /**
      * Query topic for data or metadata
      */

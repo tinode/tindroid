@@ -87,13 +87,15 @@ public class SqlStore implements Storage {
     @Override
     public Topic[] topicGetAll(final Tinode tinode) {
         Cursor c = TopicDb.query(mDbh.getReadableDatabase());
-        if (c != null && c.moveToFirst()) {
-            Topic[] list = new Topic[c.getCount()];
-            int i = 0;
-            do {
-                list[i++] = TopicDb.readOne(tinode, c);
-            } while (c.moveToNext());
-
+        if (c != null) {
+            Topic[] list = null;
+            if (c.moveToFirst()) {
+                list = new Topic[c.getCount()];
+                int i = 0;
+                do {
+                    list[i++] = TopicDb.readOne(tinode, c);
+                } while (c.moveToNext());
+            }
             c.close();
             return list;
         }
@@ -483,9 +485,11 @@ public class SqlStore implements Storage {
     private <T extends Storage.Message> T messageById(long dbMessageId, int previewLength) {
         T msg = null;
         Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
-        if (c != null && c.moveToFirst()) {
-            //noinspection unchecked
-            msg = (T) StoredMessage.readMessage(c, previewLength);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                //noinspection unchecked
+                msg = (T) StoredMessage.readMessage(c, previewLength);
+            }
             c.close();
         }
         return msg;
@@ -494,6 +498,24 @@ public class SqlStore implements Storage {
     @Override
     public <T extends Storage.Message> T getMessageById(long dbMessageId) {
         return messageById(dbMessageId, -1);
+    }
+
+    @Override
+    public <T extends Storage.Message> T getMessageBySeq(Topic topic, int seq) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return null;
+        }
+        T msg = null;
+        Cursor c = MessageDb.getMessageBySeq(mDbh.getReadableDatabase(), st.id, seq);
+        if (c != null) {
+            if (c.moveToFirst()) {
+                //noinspection unchecked
+                msg = (T) StoredMessage.readMessage(c, -1);
+            }
+            c.close();
+        }
+        return msg;
     }
 
     @Override

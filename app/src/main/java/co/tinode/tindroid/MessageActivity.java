@@ -1013,10 +1013,5 @@ public class MessageActivity extends AppCompatActivity
             UiUtils.attachMeTopic(MessageActivity.this, null);
             topicAttach(false);
         }
-
-        @Override
-        public void onInfoMessage(MsgServerInfo info) {
-            UiUtils.maybeHandleVideoCall(MessageActivity.this, info);
-        }
     }
 }

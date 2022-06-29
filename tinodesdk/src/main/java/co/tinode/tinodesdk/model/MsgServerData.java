@@ -10,6 +10,7 @@ import java.util.Map;
  * Content packet
  */
 public class MsgServerData implements Serializable {
+    public enum WebRTC {ACCEPTED, DECLINED, DISCONNECTED, FINISHED, MISSED, STARTED, UNKNOWN}
 
     public String id;
     public String topic;
@@ -43,5 +44,24 @@ public class MsgServerData implements Serializable {
             return (String) val;
         }
         return null;
+    }
+
+    public static WebRTC parseWebRTC(String what) {
+        if (what == null) {
+            return WebRTC.UNKNOWN;
+        } else if (what.equals("accepted")) {
+            return WebRTC.ACCEPTED;
+        } else if (what.equals("declined")) {
+            return WebRTC.DECLINED;
+        } else if (what.equals("disconnected")) {
+            return WebRTC.DISCONNECTED;
+        } else if (what.equals("finished")) {
+            return WebRTC.FINISHED;
+        } else if (what.equals("missed")) {
+            return WebRTC.MISSED;
+        } else if (what.equals("started")) {
+            return WebRTC.STARTED;
+        }
+        return WebRTC.UNKNOWN;
     }
 }

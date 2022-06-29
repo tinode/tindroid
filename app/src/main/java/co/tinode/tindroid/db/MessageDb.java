@@ -318,19 +318,31 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
-     * Query messages. To select all messages set <b>from</b> and <b>to</b> equal to -1.
+     * Load a single message by database ID.
      * Cursor must be closed after use.
      *
      * @param db    database to select from;
      * @param msgId _id of the message to retrieve.
-     * @return cursor with the message.
+     * @return cursor with the message (close after use!).
      */
     static Cursor getMessageById(SQLiteDatabase db, long msgId) {
-        final String sql = "SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId;
-
-        return db.rawQuery(sql, null);
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE _id=" + msgId, null);
     }
 
+    /**
+     * Load a single message by topic and seq IDs.
+     * Cursor must be closed after use.
+     *
+     * @param db    database to select from;
+     * @param topicId _id of the topic which owns the message.
+     * @param effSeq effective seq ID of the message tp get.
+     * @return cursor with the message (close after use!).
+     */
+    static Cursor getMessageBySeq(SQLiteDatabase db, long topicId, int effSeq) {
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME +
+                    " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
+                    COLUMN_NAME_EFFECTIVE_SEQ + "=" + effSeq, null);
+    }
     /**
      * Get a list of the latest message for every topic, sent or received.
      * See explanation here: https://stackoverflow.com/a/2111420

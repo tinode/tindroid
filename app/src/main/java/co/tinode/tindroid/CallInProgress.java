@@ -5,9 +5,9 @@ package co.tinode.tindroid;
  */
 public class CallInProgress {
     // Call topic.
-    private String mTopic;
+    private final String mTopic;
     // Call seq id.
-    private int mSeq;
+    private final int mSeq;
 
     public CallInProgress(String topic, int  seq) {
         mTopic = topic;

@@ -226,11 +226,20 @@ public interface Storage {
      */
     MsgRange[] getQueuedMessageDeletes(Topic topic, boolean hard);
 
+    /**
+     * Retrieve a single message by topic and seq ID.
+     */
+    <T extends Message> T getMessageBySeq(Topic topic, int seq);
+
     interface Message {
         String getTopic();
 
         /** Get message headers */
         Map<String, Object> getHead();
+        Object getHeader(String key);
+        String getStringHeader(String key);
+        Integer getIntHeader(String key);
+
         /** Get message payload */
         Drafty getContent();
         /** Set message payload */

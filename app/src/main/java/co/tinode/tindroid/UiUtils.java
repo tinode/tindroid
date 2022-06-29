@@ -95,7 +95,6 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
-import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -506,45 +505,6 @@ public class UiUtils {
             sb.append("0");
         }
         return sb.append(sec).toString();
-    }
-
-    // Start or dismiss Incoming Call UI if the MsgServerInfo packet is video call related.
-    public static void maybeHandleVideoCall(Context ctx, MsgServerInfo info) {
-        MsgServerInfo.What what = MsgServerInfo.parseWhat(info.what);
-        if (what == MsgServerInfo.What.CALL) {
-            final Tinode tinode = Cache.getTinode();
-            MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
-            switch (event) {
-                case INVITE:
-                    if (!tinode.isMe(info.from)) {
-                        CallInProgress call = Cache.getCallInProgress();
-                        if (call == null) {
-                            // Call invite from the peer.
-                            Intent intent = new Intent();
-                            intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                            intent.putExtra("topic", info.src);
-                            intent.putExtra("seq", info.seq);
-                            intent.putExtra("from", info.from);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            ctx.startActivity(intent);
-                        } else if (!call.equals(info.src, info.seq)) {
-                            // Another incoming call. Decline.
-                            tinode.getTopic(info.src).videoCallHangUp(info.seq);
-                        }
-                    }
-                    break;
-                case ACCEPT:
-                    if (Tinode.TOPIC_ME.equals(info.topic) && tinode.isMe(info.from)) {
-                        // Another client has accepted the call. Dismiss call notification.
-                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(ctx);
-                        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
-                        intent.putExtra("topic", info.src);
-                        intent.putExtra("seq", info.seq);
-                        lbm.sendBroadcast(intent);
-                    }
-                    break;
-            }
-        }
     }
 
     // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.

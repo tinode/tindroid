@@ -90,6 +90,15 @@ public class StoredMessage extends MsgServerData implements Storage.Message {
         return head;
     }
 
+    @Override
+    public Integer getIntHeader(String key) {
+        Object val = getHeader(key);
+        if (val instanceof Integer) {
+            return (Integer) val;
+        }
+        return null;
+    }
+
     public int getStatus() {
         return status != null ? status.value : BaseDb.Status.UNDEFINED.value;
     }

@@ -40,8 +40,10 @@ import java.util.Date;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
+import androidx.lifecycle.DefaultLifecycleObserver;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -50,15 +52,20 @@ import androidx.work.WorkManager;
 import co.tinode.tindroid.account.ContactsObserver;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.ServerResponseException;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgServerData;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
 /**
  * A class for providing global context for database access
  */
-public class TindroidApp extends Application implements LifecycleObserver {
+public class TindroidApp extends Application implements DefaultLifecycleObserver {
     private static final String TAG = "TindroidApp";
 
     // 32 MB.
@@ -173,7 +180,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
-                if (token != null && !token.equals("") && sTinodeCache != null) {
+                if (token != null && !token.equals("")) {
                     sTinodeCache.setDeviceToken(token);
                 }
             }
@@ -183,23 +190,6 @@ public class TindroidApp extends Application implements LifecycleObserver {
         createNotificationChannel();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
-        // Listen to connectivity changes.
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-        if (cm == null) {
-            return;
-        }
-        NetworkRequest req = new NetworkRequest.
-                Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
-        cm.registerNetworkCallback(req, new ConnectivityManager.NetworkCallback() {
-            @Override
-            public void onAvailable(@NonNull Network network) {
-                super.onAvailable(network);
-                if (sTinodeCache != null) {
-                    sTinodeCache.reconnectNow(true, false, false);
-                }
-            }
-        });
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -216,6 +206,68 @@ public class TindroidApp extends Application implements LifecycleObserver {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
 
+        // Event handlers for video calls.
+        Cache.getTinode().addListener(new Tinode.EventListener() {
+            @Override
+            public void onDataMessage(MsgServerData data) {
+                if (sTinodeCache.isMe(data.from)) {
+                    return;
+                }
+                String webrtc = data.getStringHeader("webrtc");
+                if (MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
+                    return;
+                }
+                ComTopic topic = (ComTopic) sTinodeCache.getTopic(data.topic);
+                if (topic == null) {
+                    return;
+                }
+
+                // Check if we have a later version of the message (which means the call
+                // has been not yet been either accepted or finished).
+                Storage.Message msg = topic.getMessage(data.seq);
+                if (msg != null) {
+                    webrtc = msg.getStringHeader("webrtc");
+                    if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
+                        return;
+                    }
+                }
+
+                CallInProgress call = Cache.getCallInProgress();
+                if (call == null) {
+                    // Call invite from the peer.
+                    Intent intent = new Intent();
+                    intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
+                    intent.putExtra("topic", data.topic);
+                    intent.putExtra("seq", data.seq);
+                    intent.putExtra("from", data.from);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    TindroidApp.this.startActivity(intent);
+                } else if (!call.equals(data.topic, data.seq)) {
+                    // Another incoming call. Decline.
+                    topic.videoCallHangUp(data.seq);
+                }
+            }
+
+            @Override
+            public void onInfoMessage(MsgServerInfo info) {
+                if (MsgServerInfo.parseWhat(info.what) != MsgServerInfo.What.CALL) {
+                    return;
+                }
+                if (MsgServerInfo.parseEvent(info.event) != MsgServerInfo.Event.ACCEPT) {
+                    return;
+                }
+
+                if (Tinode.TOPIC_ME.equals(info.topic) && sTinodeCache.isMe(info.from)) {
+                    // Another client has accepted the call. Dismiss call notification.
+                    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
+                    Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
+                    intent.putExtra("topic", info.src);
+                    intent.putExtra("seq", info.seq);
+                    lbm.sendBroadcast(intent);
+                }
+            }
+        });
+
         // Clear completed/failed upload tasks.
         WorkManager.getInstance(this).pruneWork();
 
@@ -225,7 +277,7 @@ public class TindroidApp extends Application implements LifecycleObserver {
                 .addInterceptor(chain -> {
                     Request picassoReq = chain.request();
                     Map<String, String> headers;
-                    if (sTinodeCache != null && sTinodeCache.isTrustedURL(picassoReq.url().url()) &&
+                    if (sTinodeCache.isTrustedURL(picassoReq.url().url()) &&
                             (headers = sTinodeCache.getRequestHeaders()) != null) {
                         Request.Builder builder = picassoReq.newBuilder();
                         for (Map.Entry<String, String> el : headers.entrySet()) {
@@ -240,19 +292,34 @@ public class TindroidApp extends Application implements LifecycleObserver {
         Picasso.setSingletonInstance(new Picasso.Builder(this)
                 .downloader(new OkHttp3Downloader(client))
                 .build());
+
+        // Listen to connectivity changes.
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
+        if (cm == null) {
+            return;
+        }
+        NetworkRequest req = new NetworkRequest.
+                Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET).build();
+        cm.registerNetworkCallback(req, new ConnectivityManager.NetworkCallback() {
+            @Override
+            public void onAvailable(@NonNull Network network) {
+                super.onAvailable(network);
+                sTinodeCache.reconnectNow(true, false, false);
+            }
+        });
     }
 
     static File createDefaultCacheDir(Context context) {
         File cache = new File(context.getApplicationContext().getCacheDir(), "picasso-cache");
         if (!cache.exists()) {
-            //noinspection ResultOfMethodCallIgnored
+            // noinspection ResultOfMethodCallIgnored
             cache.mkdirs();
         }
         return cache;
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    void onStart() {
+    @Override
+    public void onStart(@NonNull LifecycleOwner owner) {
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
@@ -261,8 +328,8 @@ public class TindroidApp extends Application implements LifecycleObserver {
         }
     }
 
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    void onStop() {
+    @Override
+    public void onStop(@NonNull LifecycleOwner owner) {
         // Disconnect now, so the connection does not wait for the timeout.
         if (sTinodeCache != null) {
             sTinodeCache.disconnect(false);

@@ -341,11 +341,5 @@ public class ChatsActivity extends AppCompatActivity
             // Update online status of contacts.
             datasetChanged();
         }
-
-        @Override
-        public void onInfoMessage(MsgServerInfo info) {
-            // Check if it's a video call.
-            UiUtils.maybeHandleVideoCall(ChatsActivity.this, info);
-        }
     }
 }
