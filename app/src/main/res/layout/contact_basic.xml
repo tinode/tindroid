@@ -22,6 +22,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:contentDescription="@string/avatar"
+            app:strokeColor="@android:color/transparent"
             app:shapeAppearanceOverlay="@style/roundImageView"
             app:srcCompat="@drawable/ic_person_circle" />
 
@@ -30,6 +31,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:contentDescription="@string/avatar"
+            app:strokeColor="@android:color/transparent"
             app:shapeAppearanceOverlay="@style/roundImageView"
             app:srcCompat="@drawable/ic_selected" />
     </ImageSwitcher>

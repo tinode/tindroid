@@ -15,6 +15,7 @@
         android:clickable="true"
         android:contentDescription="@string/avatar"
         android:focusable="true"
+        app:strokeColor="@android:color/transparent"
         app:shapeAppearanceOverlay="@style/roundImageView"
         app:srcCompat="@drawable/ic_person_grey" />
 

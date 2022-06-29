@@ -14,6 +14,7 @@
         android:layout_gravity="center"
         android:layout_margin="4sp"
         android:contentDescription="@string/avatar"
+        app:strokeColor="@android:color/transparent"
         app:shapeAppearanceOverlay="@style/roundImageView"
         app:srcCompat="@drawable/disk" />
 

@@ -872,8 +872,8 @@ public class MessageActivity extends AppCompatActivity
                 sendNoteRead(data.seq);
             }
             // Cancel typing animation.
-            mTypingAnimationTimer =
-                    UiUtils.toolbarTypingIndicator(MessageActivity.this, mTypingAnimationTimer, -1);
+            runOnUiThread(() -> mTypingAnimationTimer =
+                    UiUtils.toolbarTypingIndicator(MessageActivity.this, mTypingAnimationTimer, -1));
             runMessagesLoader();
         }
 
