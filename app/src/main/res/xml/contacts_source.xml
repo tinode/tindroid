@@ -2,7 +2,7 @@
 <ContactsAccountType xmlns:android="http://schemas.android.com/apk/res/android">
     <ContactsDataKind
         android:mimeType="vnd.android.cursor.item/vnd.co.tinode.im"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_launcher2"
         android:summaryColumn="data2"
         android:detailColumn="data3" />
 </ContactsAccountType>

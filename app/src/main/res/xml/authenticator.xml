@@ -2,6 +2,6 @@
 <account-authenticator
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:accountType="co.tinode.account"
-    android:icon="@mipmap/ic_launcher"
+    android:icon="@mipmap/ic_launcher2"
     android:label="@string/tinode"
-    android:smallIcon="@mipmap/ic_launcher"/>
+    android:smallIcon="@mipmap/ic_launcher2"/>
