@@ -811,7 +811,7 @@ public class CallFragment extends Fragment {
     }
 
     // Listens for incoming call-related info messages.
-    private class InfoListener extends Tinode.EventListener {
+    private class InfoListener implements Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (MsgServerInfo.parseWhat(info.what) != MsgServerInfo.What.CALL) {

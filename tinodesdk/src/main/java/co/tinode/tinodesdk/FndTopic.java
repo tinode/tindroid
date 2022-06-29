@@ -95,7 +95,7 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
         /* Do nothing: all fnd data is transient. */
     }
 
-    public static class FndListener<SP> extends Listener<String, String, SP, String[]> {
+    public static class FndListener<SP> implements Listener<String, String, SP, String[]> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<String, String, SP, String[]> meta) {}
     }

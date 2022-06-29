@@ -2219,8 +2219,7 @@ public class Tinode {
      * Callback interface called by Connection when it receives events from the websocket.
      * Default no-op method implementations are provided for convenience.
      */
-    @SuppressWarnings("EmptyMethod")
-    public static class EventListener {
+    public interface EventListener {
         /**
          * Connection established successfully, handshakes exchanged. The connection is ready for
          * login.
@@ -2229,7 +2228,7 @@ public class Tinode {
          * @param reason should be always "Created"
          * @param params server parameters, such as protocol version
          */
-        public void onConnect(int code, String reason, Map<String, Object> params) {
+        default void onConnect(int code, String reason, Map<String, Object> params) {
         }
 
         /**
@@ -2239,7 +2238,7 @@ public class Tinode {
          * @param code     numeric code of the error which caused connection to drop
          * @param reason   error message
          */
-        public void onDisconnect(boolean byServer, int code, String reason) {
+        default void onDisconnect(boolean byServer, int code, String reason) {
         }
 
         /**
@@ -2248,7 +2247,7 @@ public class Tinode {
          * @param code a numeric value between 200 and 299 on success, 400 or higher on failure
          * @param text "OK" on success or error message
          */
-        public void onLogin(int code, String text) {
+        default void onLogin(int code, String text) {
         }
 
         /**
@@ -2257,7 +2256,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onMessage(ServerMessage msg) {
+        default void onMessage(ServerMessage msg) {
         }
 
         /**
@@ -2268,7 +2267,7 @@ public class Tinode {
          * @param msg message to be processed
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onRawMessage(String msg) {
+        default void onRawMessage(String msg) {
         }
 
         /**
@@ -2277,7 +2276,7 @@ public class Tinode {
          * @param ctrl control message to process
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onCtrlMessage(MsgServerCtrl ctrl) {
+        default void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
         /**
@@ -2286,7 +2285,7 @@ public class Tinode {
          * @param data control message to process
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onDataMessage(MsgServerData data) {
+        default void onDataMessage(MsgServerData data) {
         }
 
         /**
@@ -2295,7 +2294,7 @@ public class Tinode {
          * @param info info message to process
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onInfoMessage(MsgServerInfo info) {
+        default void onInfoMessage(MsgServerInfo info) {
         }
 
         /**
@@ -2304,7 +2303,7 @@ public class Tinode {
          * @param meta meta message to process
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onMetaMessage(MsgServerMeta meta) {
+        default void onMetaMessage(MsgServerMeta meta) {
         }
 
         /**
@@ -2313,7 +2312,7 @@ public class Tinode {
          * @param pres control message to process
          */
         @SuppressWarnings("WeakerAccess,UnusedParameters")
-        public void onPresMessage(MsgServerPres pres) {
+        default void onPresMessage(MsgServerPres pres) {
         }
     }
 

@@ -271,10 +271,9 @@ public class CallActivity extends AppCompatActivity  {
                 });
     }
 
-    private class EventListener extends Tinode.EventListener {
+    private class EventListener implements Tinode.EventListener {
         @Override
         public void onLogin(int code, String txt) {
-            super.onLogin(code, txt);
             if (code < ServerMessage.STATUS_MULTIPLE_CHOICES) {
                 topicAttach();
             } else {

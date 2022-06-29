@@ -574,7 +574,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
     }
 
-    public static class MeListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
+    public static class MeListener<DP> implements Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** Called by MeTopic when credentials are updated */

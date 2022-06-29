@@ -2184,13 +2184,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     protected enum NoteType {READ, RECV}
 
-    @SuppressWarnings("EmptyMethod")
-    public static class Listener<DP, DR, SP, SR> {
+    public interface Listener<DP, DR, SP, SR> {
 
-        public void onSubscribe(int code, String text) {
+        default void onSubscribe(int code, String text) {
         }
 
-        public void onLeave(boolean unsub, int code, String text) {
+        default void onLeave(boolean unsub, int code, String text) {
         }
 
         /**
@@ -2198,65 +2197,65 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          *
          * @param data data packet
          */
-        public void onData(MsgServerData data) {
+        default void onData(MsgServerData data) {
         }
 
         /**
          * All requested data messages received.
          */
-        public void onAllMessagesReceived(Integer count) {
+        default void onAllMessagesReceived(Integer count) {
         }
 
         /**
          * {info} message received
          */
-        public void onInfo(MsgServerInfo info) {
+        default void onInfo(MsgServerInfo info) {
         }
 
         /**
          * {meta} message received
          */
-        public void onMeta(MsgServerMeta<DP, DR, SP, SR> meta) {
+        default void onMeta(MsgServerMeta<DP, DR, SP, SR> meta) {
         }
 
         /**
          * {meta what="sub"} message received, and this is one of the subs
          */
-        public void onMetaSub(Subscription<SP, SR> sub) {
+        default void onMetaSub(Subscription<SP, SR> sub) {
         }
 
         /**
          * {meta what="desc"} message received
          */
-        public void onMetaDesc(Description<DP, DR> desc) {
+        default void onMetaDesc(Description<DP, DR> desc) {
         }
 
         /**
          * {meta what="tags"} message received
          */
-        public void onMetaTags(String[] tags) {
+        default void onMetaTags(String[] tags) {
         }
 
         /**
          * {meta what="sub"} message received and all subs were processed
          */
-        public void onSubsUpdated() {
+        default void onSubsUpdated() {
         }
 
         /**
          * {pres} received
          */
-        public void onPres(MsgServerPres pres) {
+        default void onPres(MsgServerPres pres) {
         }
 
         /**
          * {pres what="on|off"} is received
          */
-        public void onOnline(boolean online) {
+        default void onOnline(boolean online) {
         }
 
         /** Called when subscription is updated. */
-        public void onContUpdated(String contact) {
+        default void onContUpdated(String contact) {
         }
     }
 

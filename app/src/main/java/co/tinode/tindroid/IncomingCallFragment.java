@@ -226,7 +226,7 @@ public class IncomingCallFragment extends Fragment
         activity.acceptCall();
     }
 
-    private class InfoListener extends Tinode.EventListener {
+    private class InfoListener implements Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {

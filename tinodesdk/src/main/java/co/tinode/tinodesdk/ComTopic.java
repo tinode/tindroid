@@ -135,7 +135,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         return setMeta(new MsgSetMeta<>(new MetaSetDesc<>(null, priv)));
     }
 
-    public static class ComListener<DP> extends Listener<DP,PrivateType,DP,PrivateType> {
+    public static class ComListener<DP> implements Listener<DP,PrivateType,DP,PrivateType> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** Called by MeTopic when topic descriptor as contact is updated */

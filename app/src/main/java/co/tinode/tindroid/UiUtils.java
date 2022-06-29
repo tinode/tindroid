@@ -1415,7 +1415,7 @@ public class UiUtils {
         }
     }
 
-    static class EventListener extends Tinode.EventListener {
+    static class EventListener implements Tinode.EventListener {
         private final Activity mActivity;
         private Boolean mConnected;
 
