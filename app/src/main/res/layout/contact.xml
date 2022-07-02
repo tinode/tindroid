@@ -73,7 +73,7 @@
                 tools:ignore="RtlSymmetry"
                 tools:text="Contact title" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_channel"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
@@ -84,7 +84,7 @@
                 app:srcCompat="@drawable/ic_channel"
                 app:tint="?android:attr/textColorSecondary" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_verified"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -94,7 +94,7 @@
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_verified" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_staff"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -104,7 +104,7 @@
                 android:visibility="gone"
                 app:srcCompat="@drawable/ic_verified_user" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_danger"
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -140,7 +140,7 @@
                 app:srcCompat="@drawable/ic_notifications_off"
                 app:tint="@color/colorGray" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_blocked"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
@@ -151,7 +151,7 @@
                 app:srcCompat="@drawable/ic_block"
                 app:tint="@color/colorGray" />
 
-            <ImageView
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_archived"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
