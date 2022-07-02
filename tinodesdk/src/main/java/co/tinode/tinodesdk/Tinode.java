@@ -812,9 +812,6 @@ public class Tinode {
                     if (disconnect) {
                         disconnect(true);
                     }
-                } else if (new Acs(data.get("modeGiven"), data.get("modeWant")).isNone()) {
-                    // Topic deleted.
-                    topic.expunge(false);
                 }
                 break;
             default:
@@ -863,7 +860,7 @@ public class Tinode {
      * @param uid ID of the user to check.
      * @return true if the ID belong to the current user, false otherwise.
      */
-    public boolean isMe(String uid) {
+    public boolean isMe(@Nullable String uid) {
         return mMyUid != null && mMyUid.equals(uid);
     }
 
