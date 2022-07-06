@@ -90,6 +90,8 @@ public class CallFragment extends Fragment {
     private CallDirection mCallDirection;
     // If true, the client has received a remote SDP from the peer and has sent a local SDP to the peer.
     private boolean mCallInitialSetupComplete;
+    // Stores remote ice candidates until initial call setup is complete.
+    private List<IceCandidate> mRemoteIceCandidatesCache;
 
     // Media state
     private boolean mAudioOff = false;
@@ -193,6 +195,7 @@ public class CallFragment extends Fragment {
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
+        mRemoteIceCandidatesCache = new ArrayList<>();
 
         // Got all necessary permissions.
         startMediaAndSignal();
@@ -470,6 +473,24 @@ public class CallFragment extends Fragment {
         return !mIceServers.isEmpty();
     }
 
+    private void addRemoteIceCandidateToCache(IceCandidate candidate) {
+        mRemoteIceCandidatesCache.add(candidate);
+    }
+
+    private void drainRemoteIceCandidatesCache() {
+        Log.d(TAG, "Draining remote ICE candidate cache: " + mRemoteIceCandidatesCache.size() + " elements.");
+        for (IceCandidate candidate: mRemoteIceCandidatesCache) {
+            mLocalPeer.addIceCandidate(candidate);
+        }
+        mRemoteIceCandidatesCache.clear();
+    }
+
+    // Peers have exchanged their local and remote SDPs.
+    private void initialSetupComplete() {
+        mCallInitialSetupComplete = true;
+        drainRemoteIceCandidatesCache();
+    }
+
     // Sends a hang-up notification to the peer and closes the fragment.
     private void handleCallClose() {
         stopSoundEffect();
@@ -703,7 +724,7 @@ public class CallFragment extends Fragment {
 
                 handleSendAnswer(sessionDescription);
 
-                CallFragment.this.mCallInitialSetupComplete = true;
+                CallFragment.this.initialSetupComplete();
             }
         }, new MediaConstraints());
     }
@@ -723,9 +744,7 @@ public class CallFragment extends Fragment {
         //noinspection ConstantConditions
         mLocalPeer.setRemoteDescription(new CustomSdpObserver("localSetRemote"),
                 new SessionDescription(SessionDescription.Type.fromCanonicalForm(type.toLowerCase()), sdp));
-        if (mCallDirection == CallDirection.OUTGOING) {
-            mCallInitialSetupComplete = true;
-        }
+        initialSetupComplete();
     }
 
     // Adds remote ICE candidate data received from the peer to the peer connection.
@@ -742,8 +761,12 @@ public class CallFragment extends Fragment {
         int sdpMLineIndex = (int) m.getOrDefault("sdpMLineIndex", 0);
         String sdp = (String) m.getOrDefault("sdp", "");
 
-        mLocalPeer.addIceCandidate(new IceCandidate(sdpMid,
-                sdpMLineIndex, sdp));
+        IceCandidate candidate = new IceCandidate(sdpMid, sdpMLineIndex, sdp);
+        if (mCallInitialSetupComplete) {
+            mLocalPeer.addIceCandidate(candidate);
+        } else {
+            addRemoteIceCandidateToCache(candidate);
+        }
     }
 
     // Sends a local ICE candidate to the other party.
