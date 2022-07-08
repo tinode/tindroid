@@ -257,7 +257,9 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     return;
                 }
 
-                if (Tinode.TOPIC_ME.equals(info.topic) && sTinodeCache.isMe(info.from)) {
+                CallInProgress call = Cache.getCallInProgress();
+                if (Tinode.TOPIC_ME.equals(info.topic) && sTinodeCache.isMe(info.from) &&
+                    call != null && call.equals(info.src, info.seq)) {
                     // Another client has accepted the call. Dismiss call notification.
                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
                     Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
