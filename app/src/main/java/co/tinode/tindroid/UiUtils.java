@@ -1169,7 +1169,7 @@ public class UiUtils {
     }
 
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
-    static String getContentPath(Context context, Uri uri) {
+    static String getContentPath(@NonNull Context context, @NonNull Uri uri) {
         // DocumentProvider
         if (DocumentsContract.isDocumentUri(context, uri)) {
             final String docId = DocumentsContract.getDocumentId(uri);
@@ -1231,15 +1231,19 @@ public class UiUtils {
                         } else if ("audio".equals(type)) {
                             contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
                         }
-                        final String selection = "_id=?";
-                        final String[] selectionArgs = new String[]{split[1]};
-                        return getResolverData(context, contentUri, selection, selectionArgs);
+                        if (contentUri != null) {
+                            final String selection = "_id=?";
+                            final String[] selectionArgs = new String[]{split[1]};
+                            return getResolverData(context, contentUri, selection, selectionArgs);
+                        } else {
+                            Log.i(TAG, "Unknown MediaProvider type " + type);
+                        }
                     }
                     default:
-                        Log.d(TAG, "Unknown content authority " + uri.getAuthority());
+                        Log.i(TAG, "Unknown content authority " + uri.getAuthority());
                 }
             } else {
-                Log.d(TAG, "URI has no content authority " + uri);
+                Log.i(TAG, "URI has no content authority " + uri);
             }
         } else if ("content".equalsIgnoreCase(uri.getScheme())) {
             // MediaStore (and general)
@@ -1255,7 +1259,7 @@ public class UiUtils {
         return null;
     }
 
-    private static String getResolverData(Context context, Uri uri, String selection, String[] selectionArgs) {
+    private static String getResolverData(Context context, @NonNull Uri uri, String selection, String[] selectionArgs) {
         final String column = MediaStore.Files.FileColumns.DATA;
         final String[] projection = {column};
         try {
