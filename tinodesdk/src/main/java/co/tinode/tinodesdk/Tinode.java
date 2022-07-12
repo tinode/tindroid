@@ -820,6 +820,13 @@ public class Tinode {
                         getMeta(topicName, MsgGetMeta.desc()).getResult();
                     } catch (Exception ignored) {}
 
+                    String senderId = data.get("xfrom");
+                    if (senderId != null && getUser(senderId) == null) {
+                        // If sender is not found, try to fetch description from the server.
+                        // OK to send without subscription.
+                        getMeta(senderId, MsgGetMeta.desc());
+                    }
+
                     if (newConnection && !keepConnection) {
                         disconnect(true);
                     }
