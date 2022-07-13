@@ -150,7 +150,19 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
                         return null;
                     }
                 })
-                .thenCatch(new UiUtils.ToastFailureListener(getActivity()));
+                .thenCatch(new UiUtils.ToastFailureListener(getActivity()))
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        final FragmentActivity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return null;
+                        }
+                        // Load local contacts even if there is no connection.
+                        activity.runOnUiThread(() -> restartLoader(activity, mSearchTerm));
+                        return null;
+                    }
+                });
     }
 
     @Override
