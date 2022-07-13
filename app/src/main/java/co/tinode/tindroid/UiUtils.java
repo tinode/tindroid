@@ -314,11 +314,12 @@ public class UiUtils {
         }
 
         Drawable logo = toolbar.getLogo();
-        if (!(logo instanceof LayerDrawable)) {
-            return;
+        if (logo instanceof LayerDrawable) {
+            Drawable onlineDisk = ((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE);
+            if (onlineDisk instanceof OnlineDrawable) {
+                ((OnlineDrawable) onlineDisk).setOnline(online);
+            }
         }
-
-        ((OnlineDrawable) ((LayerDrawable) logo).findDrawableByLayerId(LOGO_LAYER_ONLINE)).setOnline(online);
         if (online) {
             toolbar.setSubtitle(null);
         } else if (lastSeen != null) {
