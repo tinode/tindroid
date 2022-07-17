@@ -1167,6 +1167,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             while (toSend.hasNext()) {
                 Storage.Message msg = toSend.next();
                 final long msgId = msg.getDbId();
+                if (msg.getStringHeader("webrtc") != null) {
+                    // Drop unsent video call messages.
+                    mStore.msgDiscard(this, msgId);
+                    continue;
+                }
                 mStore.msgSyncing(this, msgId, true);
                 last = publish(msg.getContent(), msg.getHead(), msgId);
             }
