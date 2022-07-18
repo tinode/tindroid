@@ -3,12 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_margin="@dimen/activity_default_margin"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    tools:context=".SignUpFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        tools:context=".SignUpFragment">
+        android:layout_height="wrap_content">
 
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/imageAvatar"
@@ -140,6 +140,7 @@
                 android:text="@string/sign_up"
                 android:textColor="@color/white"
                 android:textSize="@dimen/button_text"
+                android:layout_marginBottom="16dp"
                 app:backgroundTint="@color/button_background" />
         </LinearLayout>
     </RelativeLayout>
