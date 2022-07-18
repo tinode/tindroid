@@ -1,141 +1,146 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
     android:layout_margin="@dimen/activity_default_margin"
-    tools:context=".SignUpFragment">
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
 
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/imageAvatar"
-        android:layout_width="@dimen/avatar_size_huge"
-        android:layout_height="@dimen/avatar_size_huge"
-        android:layout_centerHorizontal="true"
-        android:layout_margin="4sp"
-        android:clickable="true"
-        android:contentDescription="@string/avatar"
-        android:focusable="true"
-        app:strokeColor="@android:color/transparent"
-        app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/ic_person_grey" />
-
-    <Button
-        android:id="@+id/uploadAvatar"
-        android:layout_width="48sp"
-        android:layout_height="48sp"
-        android:layout_alignEnd="@id/imageAvatar"
-        android:layout_alignBottom="@id/imageAvatar"
-        android:layout_margin="2sp"
-        android:background="@drawable/pill_counter"
-        android:contentDescription="@string/change_avatar"
-        android:gravity="center"
-        android:paddingTop="10dp"
-        app:drawableTopCompat="@drawable/ic_add_a_photo" />
-
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/imageAvatar"
-        android:orientation="vertical"
-        android:paddingTop="@dimen/activity_default_margin">
+        tools:context=".SignUpFragment">
 
-        <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/security" />
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imageAvatar"
+            android:layout_width="@dimen/avatar_size_huge"
+            android:layout_height="@dimen/avatar_size_huge"
+            android:layout_centerHorizontal="true"
+            android:layout_margin="4sp"
+            android:clickable="true"
+            android:contentDescription="@string/avatar"
+            android:focusable="true"
+            app:shapeAppearanceOverlay="@style/roundImageView"
+            app:srcCompat="@drawable/ic_person_grey"
+            app:strokeColor="@android:color/transparent" />
 
-        <com.google.android.material.textfield.TextInputLayout
+        <Button
+            android:id="@+id/uploadAvatar"
+            android:layout_width="48sp"
+            android:layout_height="48sp"
+            android:layout_alignEnd="@id/imageAvatar"
+            android:layout_alignBottom="@id/imageAvatar"
+            android:layout_margin="2sp"
+            android:background="@drawable/pill_counter"
+            android:contentDescription="@string/change_avatar"
+            android:gravity="center"
+            android:paddingTop="10dp"
+            app:drawableTopCompat="@drawable/ic_add_a_photo" />
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/login_new">
+            android:layout_below="@id/imageAvatar"
+            android:orientation="vertical"
+            android:paddingTop="@dimen/activity_default_margin">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/newLogin"
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/security" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:inputType="textShortMessage" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="@string/login_new">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/password_new"
-            app:passwordToggleEnabled="true">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/newLogin"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:inputType="textShortMessage" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/newPassword"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="textPassword" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="@string/password_new"
+                app:passwordToggleEnabled="true">
 
-        <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/general" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/newPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:inputType="textPassword" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/full_name">
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/general" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/fullName"
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="@string/full_name">
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/fullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:inputType="textPersonName" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/topicDescription"
-                style="?android:textAppearanceMedium"
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/topicDescription"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:hint="@string/description_optional"
+                    android:inputType="textPersonName|textMultiLine"
+                    android:maxLines="3"
+                    tools:text="I'm an all around nice guy. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/contacts" />
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:hint="@string/description_optional"
-                android:inputType="textPersonName|textMultiLine"
-                android:maxLines="3"
-                tools:text="I'm an all around nice guy. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:hint="@string/email">
 
-        <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/contacts" />
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/email"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ems="10"
+                    android:inputType="textEmailAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/email">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/email"
-                android:layout_width="match_parent"
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/signUp"
+                style="?attr/buttonStyle"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:ems="10"
-                android:inputType="textEmailAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/signUp"
-            style="?attr/buttonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:text="@string/sign_up"
-            android:textColor="@color/white"
-            android:textSize="@dimen/button_text"
-            android:contentDescription="@string/sign_up"
-            app:backgroundTint="@color/button_background" />
-    </LinearLayout>
-</RelativeLayout>
+                android:layout_gravity="center_horizontal"
+                android:contentDescription="@string/sign_up"
+                android:text="@string/sign_up"
+                android:textColor="@color/white"
+                android:textSize="@dimen/button_text"
+                app:backgroundTint="@color/button_background" />
+        </LinearLayout>
+    </RelativeLayout>
+</ScrollView>
