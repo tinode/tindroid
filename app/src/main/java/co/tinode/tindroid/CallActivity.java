@@ -140,10 +140,9 @@ public class CallActivity extends AppCompatActivity  {
                 mgr.requestDismissKeyguard(this, null);
             }
         }
-        showFragment(fragmentToShow, args);
-
         // Try to reconnect and subscribe.
         topicAttach();
+        showFragment(fragmentToShow, args);
     }
 
     @Override

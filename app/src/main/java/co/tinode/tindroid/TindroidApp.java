@@ -41,10 +41,7 @@ import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.LifecycleOwner;
-import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.preference.PreferenceManager;
@@ -56,7 +53,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import okhttp3.OkHttpClient;
@@ -205,7 +201,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         } else {
             sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
-
         // Event handlers for video calls.
         Cache.getTinode().addListener(new Tinode.EventListener() {
             @Override
