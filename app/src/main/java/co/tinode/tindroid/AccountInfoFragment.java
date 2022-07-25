@@ -1,5 +1,8 @@
 package co.tinode.tindroid;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -10,6 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -48,6 +52,13 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         toolbar.setTitle(R.string.account_settings);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
+        fragment.findViewById(R.id.copy_iv).setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("message text", Cache.getTinode().getMyId()));
+                Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+            }
+        });
         fragment.findViewById(R.id.notifications).setOnClickListener(v ->
                 ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null));
         fragment.findViewById(R.id.security).setOnClickListener(v ->
