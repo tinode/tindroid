@@ -219,12 +219,13 @@ public class MessagesFragment extends Fragment {
 
                 final Intent data = result.getData();
                 final MessageActivity activity = (MessageActivity) getActivity();
-                if (data == null || activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                // Image from the camera， data == null
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
                 final Bundle args = new Bundle();
-                if (data.getData() == null) {
+                if (data == null) {
                     // Image from the camera.
                     args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
                     args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
