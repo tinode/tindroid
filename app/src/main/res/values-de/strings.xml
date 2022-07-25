@@ -320,4 +320,5 @@
     <string name="toggle_camera_button">Kamera umschalten</string>
     <string name="toggle_microphone_button">Mikrofon umschalten</string>
     <string name="voice_calls_limited">Sie können einige eingehende Sprachanrufe nicht empfangen.</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 </resources>

@@ -47,7 +47,8 @@
         <TextView
             android:id="@+id/topicAddress"
             style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:clickable="false"
             android:ellipsize="end"
@@ -56,6 +57,13 @@
             android:textIsSelectable="false"
             android:typeface="monospace"
             tools:text="usrfv2qrUr6vAd" />
+
+        <ImageView
+            android:id="@+id/copy_iv"
+            app:tint="@color/colorAccent"
+            android:src="@drawable/ic_copy"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <TextView

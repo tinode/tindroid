@@ -336,5 +336,6 @@
     <string name="finish_call_button">Finish call</string>
     <string name="video_calls_unavailable">Video calls unavailable</string>
     <string name="voice_calls_limited">You will not be able to receive some incoming voice calls.</string>
+    <string name="copied_to_clipboard">Copied to clipboard</string>
 
 </resources>

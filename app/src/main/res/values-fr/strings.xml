@@ -319,4 +319,5 @@
     <string name="toggle_camera_button">Basculer la caméra</string>
     <string name="toggle_microphone_button">Basculer le microphone</string>
     <string name="voice_calls_limited">Vous ne pourrez pas recevoir certains appels vocaux entrants.</string>
+    <string name="copied_to_clipboard">Copié dans le presse-papiers</string>
 </resources>

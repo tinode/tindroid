@@ -320,4 +320,5 @@
     <string name="toggle_camera_button">切换相机</string>
     <string name="toggle_microphone_button">切换麦克风</string>
     <string name="voice_calls_limited">您将无法接听某些来电。</string>
+    <string name="copied_to_clipboard">复制成功</string>
 </resources>
