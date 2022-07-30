@@ -61,8 +61,10 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerInfo;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -109,8 +111,9 @@ public class CallFragment extends Fragment {
     private ImageView mPeerAvatar;
 
     private ComTopic<VxCard> mTopic;
-    private int mCallSeqID;
+    private int mCallSeqID = 0;
     private InfoListener mTinodeListener;
+    private boolean mCallStarted = false;
 
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
@@ -171,8 +174,19 @@ public class CallFragment extends Fragment {
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) tinode.getTopic(name);
         String callStateStr = args.getString("call_direction");
-        mCallSeqID = args.getInt("call_seq");
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
+        if (mCallDirection == CallDirection.INCOMING) {
+            mCallSeqID = args.getInt("call_seq");
+        }
+
+        if (!mTopic.isAttached()) {
+            mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
+                @Override
+                public void onSubscribe(int code, String text) {
+                    handleCallStart();
+                }
+            });
+        }
 
         mTinodeListener = new InfoListener();
         tinode.addListener(mTinodeListener);
@@ -205,6 +219,7 @@ public class CallFragment extends Fragment {
     public void onDestroyView() {
         stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
+        mTopic.setListener(null);
 
         Context ctx = getContext();
         if (ctx != null) {
@@ -509,6 +524,11 @@ public class CallFragment extends Fragment {
 
     // Call initiation.
     private void handleCallStart() {
+        if (!mTopic.isAttached() || mCallStarted) {
+            // Already started or not attached. wait to attach.
+            return;
+        }
+        mCallStarted = true;
         switch (mCallDirection) {
             case OUTGOING:
                 // Send out a call invitation to the peer.
@@ -537,8 +557,10 @@ public class CallFragment extends Fragment {
                 Activity activity = getActivity();
                 if (activity != null) {
                     rearrangePeerViews(activity);
+                    mTopic.videoCallAccept(mCallSeqID);
+                } else {
+                    handleCallClose();
                 }
-                mTopic.videoCallAccept(mCallSeqID);
                 break;
             default:
                 break;

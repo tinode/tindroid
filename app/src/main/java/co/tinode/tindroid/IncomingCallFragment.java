@@ -40,7 +40,7 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
  */
 public class IncomingCallFragment extends Fragment
         implements MotionLayout.TransitionListener {
-    private static final String TAG = "IncomingCallActivity";
+    private static final String TAG = "IncomingCallFragment";
 
     // Default call timeout in seconds.
     private static final long DEFAULT_CALL_TIMEOUT = 30;
