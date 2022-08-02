@@ -49,7 +49,7 @@ public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
 
     // Maximum count of pixels in a zoomed image: width * height * scale^2.
-    private static final int MAX_SCALED_PIXELS = 1024 * 1024 * 16;
+    private static final int MAX_SCALED_PIXELS = 1024 * 1024 * 12;
     // How much bigger any image dimension is allowed to be compare to the screen size.
     private static final float MAX_SCALE_FACTOR = 8f;
 
