@@ -974,7 +974,11 @@ public class MessagesFragment extends Fragment {
             mAudioPlayer.setDataSource(mAudioRecord.getAbsolutePath());
             mAudioPlayer.prepare();
             if (AutomaticGainControl.isAvailable()) {
-                AutomaticGainControl.create(mAudioPlayer.getAudioSessionId()).setEnabled(true);
+                AutomaticGainControl agc = AutomaticGainControl.create(mAudioPlayer.getAudioSessionId());
+                if (agc != null) {
+                    // Even when isAvailable returns true, create() may still return null.
+                    agc.setEnabled(true);
+                }
             }
         } catch (IOException | IllegalStateException ex) {
             Log.e(TAG, "Unable to play recording", ex);
