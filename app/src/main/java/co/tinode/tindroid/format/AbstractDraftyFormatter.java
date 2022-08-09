@@ -189,17 +189,16 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
 
     protected static int callStatus(boolean incoming, String event) {
         int comment = 0;
-        if (incoming) {
-            if ("declined".equals(event)) {
+        switch (event) {
+            case "declined":
                 comment = R.string.declined_call;
-            } else if ("missed".equals(event)) {
-                comment = R.string.missed_call;
-            }
-        } else {
-            comment = R.string.cancelled_call;
-        }
-        if (comment == 0) {
-            comment = R.string.disconnected_call;
+                break;
+            case "missed":
+                comment = incoming ? R.string.missed_call : R.string.cancelled_call;
+                break;
+            default:
+                comment = R.string.disconnected_call;
+                break;
         }
         return comment;
     }
