@@ -428,11 +428,13 @@ public class Tinode {
         synchronized (mConnLock) {
             boolean sameHost = serverURI.equals(mServerURI);
             // Connection already exists and connected.
-            if (mConnection != null && mConnection.isConnected()) {
-                // If the connection is live and the server address has not changed, return a resolved promise.
-                if (sameHost) {
+            if (mConnection != null) {
+                if (mConnection.isConnected() && sameHost) {
+                    // If the connection is live and the server address has not changed, return a resolved promise.
                     return new PromisedReply<>((ServerMessage) null);
-                } else {
+                }
+
+                if (!sameHost) {
                     // Clear auto-login because saved credentials won't work with the new server.
                     setAutoLogin(null, null);
                     // Stop exponential backoff timer if it's running.
@@ -469,6 +471,7 @@ public class Tinode {
      */
     public PromisedReply<ServerMessage> connect(@Nullable String hostName, boolean tls, boolean background) {
         URI connectTo = mServerURI;
+        Log.d(TAG, "Connecting to " + hostName + " (" + (tls ? "HTTPS" : "http") + ")");
         if (hostName != null) {
             try {
                 connectTo = createWebsocketURI(hostName, tls);
@@ -477,6 +480,7 @@ public class Tinode {
             }
         }
 
+        Log.d(TAG, "Connection URI=" + connectTo.toString());
         return connect(connectTo, background);
     }
 
@@ -1478,18 +1482,22 @@ public class Tinode {
      * Log out current user.
      */
     public void logout() {
+        mMyUid = null;
+        mServerParams = null;
+        setAutoLoginToken(null);
+
+        if (mStore != null) {
+            // Clear token here, because of logout setDeviceToken will not be able to clear it.
+            mStore.saveDeviceToken(null);
+            mStore.logout();
+        }
+
         // Best effort to clear device token on logout.
         // The app logs out even if the token request has failed.
         setDeviceToken(NULL_VALUE).thenFinally(new PromisedReply.FinalListener() {
             @Override
             public void onFinally() {
                 disconnect(false);
-                mMyUid = null;
-                mServerParams = null;
-
-                if (mStore != null) {
-                    mStore.logout();
-                }
             }
         });
     }
@@ -2536,6 +2544,12 @@ public class Tinode {
         @Override
         protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
             handleDisconnect(byServer, -code, reason);
+            // Promises may have already been rejected if onError was called first.
+            try {
+                rejectPromises(new ServerResponseException(503, "disconnected"));
+            } catch (Exception ignored) {
+                // Don't throw an exception as no one can catch it.
+            }
         }
 
         @Override
