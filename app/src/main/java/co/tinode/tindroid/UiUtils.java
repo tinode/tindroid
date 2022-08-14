@@ -278,6 +278,10 @@ public class UiUtils {
 
         final AnimationDrawable typing = (AnimationDrawable) ((LayerDrawable) logo)
                 .findDrawableByLayerId(LOGO_LAYER_TYPING);
+        if (typing == null) {
+            return null;
+        }
+
         if (duration <= 0) {
             // Stop the animation and return.
             typing.setVisible(false, true);
