@@ -161,7 +161,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
-        if (mTopic.isGrpType()) {
+        if (mTopic.isGrpType() && !mTopic.isChannel()) {
             // Group topic
             groupMembers.setVisibility(View.VISIBLE);
 
@@ -177,7 +177,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 button.setVisibility(View.VISIBLE);
             }
         } else {
-            // P2P topic
+            // P2P topic or channel.
             groupMembers.setVisibility(View.GONE);
         }
 
