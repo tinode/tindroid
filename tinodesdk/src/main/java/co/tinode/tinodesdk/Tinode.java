@@ -2267,7 +2267,6 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onMessage(ServerMessage msg) {
         }
 
@@ -2278,7 +2277,6 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onRawMessage(String msg) {
         }
 
@@ -2287,7 +2285,6 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onCtrlMessage(MsgServerCtrl ctrl) {
         }
 
@@ -2296,7 +2293,6 @@ public class Tinode {
          *
          * @param data control message to process
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onDataMessage(MsgServerData data) {
         }
 
@@ -2305,7 +2301,6 @@ public class Tinode {
          *
          * @param info info message to process
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onInfoMessage(MsgServerInfo info) {
         }
 
@@ -2314,7 +2309,6 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onMetaMessage(MsgServerMeta meta) {
         }
 
@@ -2323,7 +2317,6 @@ public class Tinode {
          *
          * @param pres control message to process
          */
-        @SuppressWarnings("WeakerAccess,UnusedParameters")
         default void onPresMessage(MsgServerPres pres) {
         }
     }
