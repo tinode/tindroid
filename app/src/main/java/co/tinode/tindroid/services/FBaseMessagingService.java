@@ -29,6 +29,7 @@ import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
+import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.format.FontFormatter;
@@ -127,7 +128,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
             // Update data state, maybe fetch missing data.
             String token = Utils.getLoginToken(getApplicationContext());
-            tinode.oobNotification(data, token, "started".equals(webrtc));
+            String selectedTopic = Cache.getSelectedTopicName();
+            tinode.oobNotification(data, token, "started".equals(webrtc) ||
+                    topicName.equals(selectedTopic));
 
             if (Boolean.parseBoolean(data.get("silent"))) {
                 // TODO: cancel some notifications.

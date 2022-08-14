@@ -89,6 +89,8 @@ public class ChatsActivity extends AppCompatActivity
         mTinodeListener = new ContactsEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
 
+        Cache.setSelectedTopicName(null);
+
         UiUtils.setupToolbar(this, null, null, false, null, false);
 
         if (!mMeTopic.isAttached()) {

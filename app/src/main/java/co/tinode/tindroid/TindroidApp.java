@@ -72,7 +72,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static ContentObserver sContactsObserver = null;
 
     // The Tinode cache is linked from here so it's never garbage collected.
-    private static Tinode sTinodeCache;
+    private static Cache sCache;
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
@@ -106,9 +106,9 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         return !isEmulator();
     }
 
-    public static void retainTinodeCache(Tinode tinode) {
-        sTinodeCache = tinode;
-        sTinodeCache.setServer(sServerHost, sUseTLS);
+    public static void retainCache(Cache cache) {
+        sCache = cache;
+        Cache.setServer(sServerHost, sUseTLS);
     }
 
     // Detect if the code is running in an emulator.
@@ -177,7 +177,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
                 if (token != null && !token.equals("")) {
-                    sTinodeCache.setDeviceToken(token);
+                    Cache.getTinode().setDeviceToken(token);
                 }
             }
         };
@@ -205,14 +205,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         Cache.getTinode().addListener(new Tinode.EventListener() {
             @Override
             public void onDataMessage(MsgServerData data) {
-                if (sTinodeCache.isMe(data.from)) {
+                if (Cache.getTinode().isMe(data.from)) {
                     return;
                 }
                 String webrtc = data.getStringHeader("webrtc");
                 if (MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
                     return;
                 }
-                ComTopic topic = (ComTopic) sTinodeCache.getTopic(data.topic);
+                ComTopic topic = (ComTopic) Cache.getTinode().getTopic(data.topic);
                 if (topic == null) {
                     return;
                 }
@@ -253,7 +253,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 }
 
                 CallInProgress call = Cache.getCallInProgress();
-                if (Tinode.TOPIC_ME.equals(info.topic) && sTinodeCache.isMe(info.from) &&
+                if (Tinode.TOPIC_ME.equals(info.topic) && Cache.getTinode().isMe(info.from) &&
                     call != null && call.equals(info.src, info.seq)) {
                     // Another client has accepted the call. Dismiss call notification.
                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
@@ -274,8 +274,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 .addInterceptor(chain -> {
                     Request picassoReq = chain.request();
                     Map<String, String> headers;
-                    if (sTinodeCache.isTrustedURL(picassoReq.url().url()) &&
-                            (headers = sTinodeCache.getRequestHeaders()) != null) {
+                    if (Cache.getTinode().isTrustedURL(picassoReq.url().url()) &&
+                            (headers = Cache.getTinode().getRequestHeaders()) != null) {
                         Request.Builder builder = picassoReq.newBuilder();
                         for (Map.Entry<String, String> el : headers.entrySet()) {
                             builder = builder.addHeader(el.getKey(), el.getValue());
@@ -301,7 +301,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             @Override
             public void onAvailable(@NonNull Network network) {
                 super.onAvailable(network);
-                sTinodeCache.reconnectNow(true, false, false);
+                Cache.getTinode().reconnectNow(true, false, false);
             }
         });
     }
@@ -328,8 +328,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     @Override
     public void onStop(@NonNull LifecycleOwner owner) {
         // Disconnect now, so the connection does not wait for the timeout.
-        if (sTinodeCache != null) {
-            sTinodeCache.disconnect(false);
+        if (Cache.getTinode() != null) {
+            Cache.getTinode().disconnect(false);
         }
     }
 

@@ -220,6 +220,7 @@ public class MessageActivity extends AppCompatActivity
 
         // Get the topic name from intent, internal or external.
         if (!changeTopic(readTopicNameFromIntent(intent), false)) {
+            Cache.setSelectedTopicName(null);
             finish();
             return;
         }
@@ -259,6 +260,7 @@ public class MessageActivity extends AppCompatActivity
     }
 
     // Topic has changed. Update all the views with the new data.
+    // Returns 'true' if topic was successfully changed, false otherwise.
     boolean changeTopic(String topicName, boolean forceReset) {
         if (TextUtils.isEmpty(topicName)) {
             Log.w(TAG, "Failed to switch topics: empty topic name");
@@ -284,7 +286,9 @@ public class MessageActivity extends AppCompatActivity
         mTopic = topic;
         boolean changed = false;
         if (mTopicName == null || !mTopicName.equals(topicName)) {
+            Cache.setSelectedTopicName(topicName);
             mTopicName = topicName;
+
             changed = true;
 
             if (mTopic == null) {
@@ -437,7 +441,7 @@ public class MessageActivity extends AppCompatActivity
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        if (result.ctrl.code == 303) {
+                        if (result.ctrl != null && result.ctrl.code == 303) {
                             // Redirect.
                             changeTopic(result.ctrl.getStringParam("topic", null), false);
                             return null;
@@ -487,11 +491,6 @@ public class MessageActivity extends AppCompatActivity
 
         if (mTopic != null) {
             mTopic.setListener(null);
-
-            // Deactivate current topic
-            if (mTopic.isAttached()) {
-                mTopic.leave();
-            }
         }
         UiUtils.setVisibleTopic(null);
     }

@@ -8,6 +8,7 @@ import java.util.Locale;
 
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -21,60 +22,87 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class Cache {
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
-    private static Tinode sTinode = null;
+    private static final Cache sInstance = new Cache();
+
+    private Tinode mTinode = null;
+
+    // Currently active topic.
+    private String mTopicSelected = null;
 
     // Current video call.
-    private static CallInProgress sCallInProgress = null;
+    private CallInProgress mCallInProgress = null;
 
-    public static CallInProgress getCallInProgress() {
-        return sCallInProgress;
-    }
-
-    public static void registerCallInProgress(String topic, int seq) {
-        sCallInProgress = new CallInProgress(topic, seq);
-    }
-
-    public static void unregisterCallInProgress() {
-        sCallInProgress = null;
-    }
-
-    public static Tinode getTinode() {
-        if (sTinode == null) {
-            sTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,
+    public static synchronized Tinode getTinode() {
+        if (sInstance.mTinode == null) {
+            sInstance.mTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,
                     BaseDb.getInstance().getStore(), null);
-            sTinode.setOsString(Build.VERSION.RELEASE);
+            sInstance.mTinode.setOsString(Build.VERSION.RELEASE);
 
             // Default types for parsing Public, Private fields of messages
-            sTinode.setDefaultTypeOfMetaPacket(VxCard.class, PrivateType.class);
-            sTinode.setMeTypeOfMetaPacket(VxCard.class);
-            sTinode.setFndTypeOfMetaPacket(VxCard.class);
+            sInstance.mTinode.setDefaultTypeOfMetaPacket(VxCard.class, PrivateType.class);
+            sInstance.mTinode.setMeTypeOfMetaPacket(VxCard.class);
+            sInstance.mTinode.setFndTypeOfMetaPacket(VxCard.class);
 
             // Set device language
-            sTinode.setLanguage(Locale.getDefault().toString());
+            sInstance.mTinode.setLanguage(Locale.getDefault().toString());
 
             // Keep in app to prevent garbage collection.
-            TindroidApp.retainTinodeCache(sTinode);
+            TindroidApp.retainCache(sInstance);
         }
 
         FirebaseMessaging fbId = FirebaseMessaging.getInstance();
         //noinspection ConstantConditions: Google lies about getInstance not returning null.
         if (fbId != null) {
             fbId.getToken().addOnSuccessListener(token -> {
-                if (sTinode != null) {
-                    sTinode.setDeviceToken(token);
+                if (sInstance.mTinode != null) {
+                    sInstance.mTinode.setDeviceToken(token);
                 }
             });
         }
-        return sTinode;
+        return sInstance.mTinode;
     }
 
     // Invalidate existing cache.
     static void invalidate() {
-        if (sTinode != null) {
-            sTinode.logout();
-            sTinode = null;
-            FirebaseMessaging.getInstance().deleteToken();
+        unregisterCallInProgress();
+        setSelectedTopicName(null);
+        if (sInstance.mTinode != null) {
+            sInstance.mTinode.logout();
+            sInstance.mTinode = null;
         }
+        FirebaseMessaging.getInstance().deleteToken();
+    }
+
+    public static CallInProgress getCallInProgress() {
+        return sInstance.mCallInProgress;
+    }
+
+    public static void registerCallInProgress(String topic, int seq) {
+        sInstance.mCallInProgress = new CallInProgress(topic, seq);
+    }
+
+    public static void unregisterCallInProgress() {
+        sInstance.mCallInProgress = null;
+    }
+
+    public static String getSelectedTopicName() {
+        return sInstance.mTopicSelected;
+    }
+
+    // Save the new topic name. If the old topic is not null, unsubscribe.
+    public static void setSelectedTopicName(String topicName) {
+        String oldTopic = sInstance.mTopicSelected;
+        sInstance.mTopicSelected = topicName;
+        if (sInstance.mTinode != null && oldTopic != null && !oldTopic.equals(topicName)) {
+            ComTopic topic = (ComTopic) sInstance.mTinode.getTopic(oldTopic);
+            if (topic != null) {
+                topic.leave();
+            }
+        }
+    }
+
+    public static void setServer(String serverHost, boolean useTLS) {
+        getTinode().setServer(serverHost, useTLS);
     }
 
     // Connect to 'me' topic.
