@@ -695,6 +695,8 @@ public class Tinode {
             Topic topic = getTopic(pkt.data.topic);
             if (topic != null) {
                 topic.routeData(pkt.data);
+            } else {
+                Log.i(TAG, "Topic is null " + pkt.data.topic);
             }
 
             mNotifier.onDataMessage(pkt.data);
@@ -733,6 +735,7 @@ public class Tinode {
      * @param keepConnection if <code>true</code> do not terminate new connection.
      */
     public void oobNotification(Map<String, String> data, String authToken, boolean keepConnection) {
+        // This log entry is permanent, not just temporary for debugging.
         Log.d(TAG, "oob: " + data);
 
         String what = data.get("what");
@@ -753,6 +756,7 @@ public class Tinode {
                 }
 
                 if (topic != null && topic.isAttached()) {
+                    Log.i(TAG, "OOB: topic attached, no action needed");
                     // No need to fetch: topic is already subscribed and got data through normal channel.
                     // Assuming that data was available.
                     break;
@@ -781,20 +785,23 @@ public class Tinode {
                     // Check again if topic has attached while we tried to connect. It does not guarantee that there
                     // is no race condition to subscribe.
                     if (!topic.isAttached()) {
-                        // noinspection unchecked
-                        topic.subscribe(null, builder.build());
                         try {
+                            Log.i(TAG, "OOB: NOT attached, attaching");
+                            // noinspection unchecked
+                            topic.subscribe(null, builder.withLaterDel(24).build());
                             // Wait for the messages to download.
-                            topic.getMeta(builder
-                                    .reset()
-                                    .withLaterDel(24)
-                                    .withLaterData(24)
-                                    .build()).getResult();
+                            Log.i(TAG, "OOB: downloading messages");
+                            topic.getMeta(builder.reset().withLaterData(24).build()).getResult();
+                            Log.i(TAG, "OOB: downloading messages -- DONE");
+
                             // Notify the server than the message was received.
                             topic.noteRecv();
+                            Log.i(TAG, "OOB: sent {note - recv}");
                             if (!keepConnection) {
+                                Log.i(TAG, "OOB: leaving");
                                 // Leave the topic before disconnecting.
                                 topic.leave().getResult();
+                                Log.i(TAG, "OOB: left");
                             }
                         } catch (Exception ignored) {}
                     }
@@ -1954,7 +1961,7 @@ public class Tinode {
      * @param name name of the topic to find.
      * @return existing topic or null if no such topic was found
      */
-    public Topic getTopic(String name) {
+    public Topic getTopic(@Nullable String name) {
         if (name == null) {
             return null;
         }
@@ -1965,7 +1972,7 @@ public class Tinode {
     /**
      * Start tracking topic: add it to in-memory cache.
      */
-    void startTrackingTopic(final Topic topic) {
+    void startTrackingTopic(final @NotNull Topic topic) {
         final String name = topic.getName();
         if (mTopics.containsKey(name)) {
             throw new IllegalStateException("Topic '" + name + "' is already registered");
@@ -1977,7 +1984,7 @@ public class Tinode {
     /**
      * Stop tracking the topic: remove it from in-memory cache.
      */
-    void stopTrackingTopic(String topicName) {
+    void stopTrackingTopic(@NotNull String topicName) {
         mTopics.remove(topicName);
     }
 
@@ -1986,7 +1993,7 @@ public class Tinode {
      * @param topicName name of the topic to get message for.
      * @return last cached message or null.
      */
-    public Storage.Message getLastMessage(String topicName) {
+    public Storage.Message getLastMessage(@Nullable String topicName) {
         if (topicName == null) {
             return null;
         }
@@ -1994,7 +2001,7 @@ public class Tinode {
         return p != null? p.second : null;
     }
 
-    void setLastMessage(String topicName, Storage.Message msg) {
+    void setLastMessage(@Nullable String topicName, @Nullable Storage.Message msg) {
         if (topicName == null || msg == null) {
             return;
         }
@@ -2016,7 +2023,7 @@ public class Tinode {
      * @return true if topic was found by the old name
      */
     @SuppressWarnings("UnusedReturnValue")
-    synchronized boolean changeTopicName(Topic topic, String oldName) {
+    synchronized boolean changeTopicName(@NotNull Topic topic, @NotNull String oldName) {
         boolean found = mTopics.remove(oldName) != null;
         mTopics.put(topic.getName(), new Pair<>(topic, null));
         if (mStore != null) {
@@ -2061,7 +2068,7 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    void updateUser(Subscription sub) {
+    void updateUser(@NotNull Subscription sub) {
         User user = mUsers.get(sub.user);
         if (user == null) {
             user = new User(sub);
@@ -2075,7 +2082,7 @@ public class Tinode {
     }
 
     @SuppressWarnings("unchecked")
-    void updateUser(String uid, Description desc) {
+    void updateUser(@NotNull String uid, Description desc) {
         User user = mUsers.get(uid);
         if (user == null) {
             user = new User(uid, desc);
@@ -2172,7 +2179,7 @@ public class Tinode {
      * @param url URL to check.
      * @return true if the URL is trusted, false otherwise.
      */
-    public boolean isTrustedURL(URL url) {
+    public boolean isTrustedURL(@NotNull URL url) {
         return ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
                 && url.getAuthority().equals(mServerURI.getAuthority()));
     }

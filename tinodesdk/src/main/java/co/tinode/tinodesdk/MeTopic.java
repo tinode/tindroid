@@ -116,7 +116,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
      * @param val   value of the credential being deleted, i.e. "alice@example.com".
      */
     public PromisedReply<ServerMessage> delCredential(String meth, String val) {
-        if (mAttached) {
+        if (mAttached > 0) {
             final Credential cred = new Credential(meth, val);
             return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override

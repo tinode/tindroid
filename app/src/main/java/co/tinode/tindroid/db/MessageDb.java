@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteDoneException;
 import android.provider.BaseColumns;
@@ -196,6 +197,9 @@ public class MessageDb implements BaseColumns {
             if (msg.id > 0) {
                 db.setTransactionSuccessful();
             }
+        } catch (SQLiteConstraintException ex) {
+            // This may happen when concurrent {sub} requests are sent.
+            Log.i(TAG, "Duplicate message topic='" + topic.getName() + "' id=" + msg.seq);
         } catch (Exception ex) {
             Log.w(TAG, "Insert failed", ex);
         } finally {

@@ -89,6 +89,7 @@ public class CallActivity extends AppCompatActivity  {
             return;
         }
 
+        Cache.setSelectedTopicName(mTopicName);
         mLoginListener = new EventListener();
         mTinode.addListener(mLoginListener);
 

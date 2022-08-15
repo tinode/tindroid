@@ -63,7 +63,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     // Tags: user and topic discovery
     protected String[] mTags;
     // The topic is subscribed/online.
-    protected boolean mAttached = false;
+    protected int mAttached = 0;
     protected Listener<DP, DR, SP, SR> mListener = null;
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
@@ -707,6 +707,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     /**
      * Check if user has Write (W) permission.
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isWriter() {
         return mDesc.acs != null && mDesc.acs.isWriter();
     }
@@ -788,6 +789,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      *
      * @return true if the topic is persisted in local storage, false otherwise
      */
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     protected boolean isPersisted() {
         return getLocal() != null;
     }
@@ -883,7 +885,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
-        if (mAttached) {
+        if (mAttached > 0) {
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
                 // get any data, just return resolved promise.
@@ -903,11 +905,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         if (msg.ctrl == null || msg.ctrl.code >= 300) {
                             // 3XX response: already subscribed.
-                            mAttached = true;
+                            mAttached ++;
                             return null;
                         }
-                        if (!mAttached) {
-                            mAttached = true;
+
+                        if (mAttached <= 0) {
+                            mAttached = 1;
                             if (msg.ctrl.params != null) {
                                 mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
                                 if (isNew()) {
@@ -928,6 +931,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                                 mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
                             }
 
+                        } else {
+                            mAttached ++;
                         }
                         return null;
                     }
@@ -959,7 +964,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) {
-        if (mAttached) {
+        if (mAttached == 1 || (mAttached >= 1 && unsub)) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
@@ -972,7 +977,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             return null;
                         }
                     });
+        } else if (mAttached >= 1) {
+            // Attached more than once, just decrement count.
+            mAttached --;
+            return new PromisedReply<>((ServerMessage) null);
         } else if (!unsub) {
+            // Detaching (not unsubscribing) while not attached.
             return new PromisedReply<>((ServerMessage) null);
         } else if (mTinode.isConnected()) {
             return new PromisedReply<>(new NotSubscribedException());
@@ -1099,13 +1109,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             msgId = -1;
         }
 
-        if (mAttached) {
+        if (mAttached > 0) {
             return publish(content, head, msgId);
         } else {
             return subscribe()
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            mAttached ++;
                             return publish(content, head, msgId);
                         }
                     })
@@ -1440,7 +1451,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (mStore != null) {
             mStore.msgMarkToDelete(this, fromId, toId, hard);
         }
-        if (mAttached) {
+        if (mAttached > 0) {
             return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1473,7 +1484,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mStore.msgMarkToDelete(this, ranges, hard);
         }
 
-        if (mAttached) {
+        if (mAttached > 0) {
             return mTinode.delMessage(getName(), ranges, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1747,7 +1758,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     // Check if topic is subscribed/online.
     public boolean isAttached() {
-        return mAttached;
+        return mAttached > 0;
     }
 
     // Check if topic is valid;
@@ -1876,8 +1887,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param reason usually "OK"
      */
     protected void topicLeft(boolean unsub, int code, String reason) {
-        if (mAttached) {
-            mAttached = false;
+        if (mAttached > 0) {
+            mAttached = 0;
 
             // Don't change topic online status here. Change it in the 'me' topic
 
@@ -2393,6 +2404,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         public MsgGetMeta build() {
+            if (meta.isEmpty()) {
+                return null;
+            }
             return meta;
         }
     }

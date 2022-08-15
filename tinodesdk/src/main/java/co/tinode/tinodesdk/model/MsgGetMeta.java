@@ -200,6 +200,10 @@ public class MsgGetMeta implements Serializable {
         what = sb.toString();
     }
 
+    public boolean isEmpty() {
+        return mSet == 0;
+    }
+
     public static MsgGetMeta desc() {
         return new MsgGetMeta(DESC);
     }

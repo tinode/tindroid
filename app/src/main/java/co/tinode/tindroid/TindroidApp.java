@@ -205,11 +205,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         Cache.getTinode().addListener(new Tinode.EventListener() {
             @Override
             public void onDataMessage(MsgServerData data) {
+                Log.i(TAG, "Data message for " + data.topic);
                 if (Cache.getTinode().isMe(data.from)) {
                     return;
                 }
                 String webrtc = data.getStringHeader("webrtc");
+                Log.i(TAG, "Data.head.webrtc=" + webrtc);
                 if (MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
+                    Log.i(TAG, "Data.head.webrtc NOT started=" + MsgServerData.parseWebRTC(webrtc));
                     return;
                 }
                 ComTopic topic = (ComTopic) Cache.getTinode().getTopic(data.topic);

@@ -595,7 +595,6 @@ public class CallFragment extends Fragment {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
                 // Send ICE candidate to the peer.
-                Log.d(TAG, iceCandidate.toString());
                 handleIceCandidateEvent(iceCandidate);
             }
 
@@ -621,7 +620,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onSignalingChange(PeerConnection.SignalingState signalingState) {
-                Log.d(TAG, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
+                // Log.d(TAG, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
                 if (signalingState == PeerConnection.SignalingState.CLOSED) {
                     handleCallClose();
                 }
@@ -629,7 +628,7 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
-                Log.d(TAG, "onIceConnectionChange() called with: iceConnectionState = [" + iceConnectionState + "]");
+                // Log.d(TAG, "onIceConnectionChange() called with: iceConnectionState = [" + iceConnectionState + "]");
                 switch (iceConnectionState) {
                     case CLOSED:
                     case FAILED:
@@ -640,33 +639,33 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onIceConnectionReceivingChange(boolean b) {
-                Log.d(TAG, "onIceConnectionReceivingChange() called with: b = [" + b + "]");
+                // Log.d(TAG, "onIceConnectionReceivingChange() called with: b = [" + b + "]");
             }
 
             @Override
             public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
-                Log.d(TAG, "onIceGatheringChange() called with: iceGatheringState = [" + iceGatheringState + "]");
+                // Log.d(TAG, "onIceGatheringChange() called with: iceGatheringState = [" + iceGatheringState + "]");
             }
 
             @Override
             public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
-                Log.d(TAG, "onIceCandidatesRemoved() called with: iceCandidates = [" +
-                        Arrays.toString(iceCandidates) + "]");
+                // Log.d(TAG, "onIceCandidatesRemoved() called with: iceCandidates = [" +
+                //         Arrays.toString(iceCandidates) + "]");
             }
 
             @Override
             public void onRemoveStream(MediaStream mediaStream) {
-                Log.d(TAG, "onRemoveStream() called with: mediaStream = [" + mediaStream + "]");
+                // Log.d(TAG, "onRemoveStream() called with: mediaStream = [" + mediaStream + "]");
             }
 
             @Override
             public void onDataChannel(DataChannel dataChannel) {
-                Log.d(TAG, "onDataChannel() called with: dataChannel = [" + dataChannel + "]");
+                // Log.d(TAG, "onDataChannel() called with: dataChannel = [" + dataChannel + "]");
             }
 
             @Override
             public void onRenegotiationNeeded() {
-                Log.d(TAG, "onRenegotiationNeeded() called");
+                // Log.d(TAG, "onRenegotiationNeeded() called");
 
                 if (CallFragment.this.mCallDirection == CallDirection.INCOMING &&
                         !CallFragment.this.mCallInitialSetupComplete) {
@@ -684,7 +683,7 @@ public class CallFragment extends Fragment {
                     @Override
                     public void onCreateSuccess(SessionDescription sessionDescription) {
                         super.onCreateSuccess(sessionDescription);
-                        Log.d("onCreateSuccess", "setting local desc - setLocalDescription");
+                        // Log.d("onCreateSuccess", "setting local desc - setLocalDescription");
                         mLocalPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"),
                                 sessionDescription);
                         handleSendOffer(sessionDescription);
@@ -694,8 +693,8 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-                Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver +
-                        "], mediaStreams = [" + Arrays.toString(mediaStreams) + "]");
+                //Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver +
+                //        "], mediaStreams = [" + Arrays.toString(mediaStreams) + "]");
             }
         });
 
