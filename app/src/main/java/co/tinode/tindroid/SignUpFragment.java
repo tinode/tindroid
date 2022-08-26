@@ -6,12 +6,14 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import java.util.Map;
 
@@ -39,6 +41,8 @@ import co.tinode.tinodesdk.model.ServerMessage;
  */
 public class SignUpFragment extends Fragment
         implements View.OnClickListener, UiUtils.AvatarPreviewer {
+
+    private static final String TAG ="SignUpFragment";
 
     private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
             UiUtils.avatarPickerLauncher(this, this);
@@ -217,24 +221,30 @@ public class SignUpFragment extends Fragment
                                 if (!SignUpFragment.this.isVisible()) {
                                     return null;
                                 }
-                                final String cause = ((ServerResponseException) err).getReason();
-                                if (cause != null) {
-                                    parent.runOnUiThread(() -> {
-                                        signUp.setEnabled(true);
-                                        switch (cause) {
-                                            case "auth":
-                                                // Invalid login
-                                                ((EditText) parent.findViewById(R.id.newLogin))
-                                                        .setError(getText(R.string.login_rejected));
-                                                break;
-                                            case "email":
-                                                // Duplicate email:
-                                                ((EditText) parent.findViewById(R.id.email))
-                                                        .setError(getText(R.string.email_rejected));
-                                                break;
+                                parent.runOnUiThread(() -> {
+                                    signUp.setEnabled(true);
+                                    if (err instanceof ServerResponseException) {
+                                        final String cause = ((ServerResponseException) err).getReason();
+                                        if (cause != null) {
+                                            switch (cause) {
+                                                case "auth":
+                                                    // Invalid login
+                                                    ((EditText) parent.findViewById(R.id.newLogin))
+                                                            .setError(getText(R.string.login_rejected));
+                                                    break;
+                                                case "email":
+                                                    // Duplicate email:
+                                                    ((EditText) parent.findViewById(R.id.email))
+                                                            .setError(getText(R.string.email_rejected));
+                                                    break;
+                                            }
                                         }
-                                    });
-                                }
+                                    } else {
+                                        Log.w(TAG, "Failed create account", err);
+                                        Toast.makeText(parent, parent.getString(R.string.action_failed),
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                                 parent.reportError(err, signUp, 0, R.string.error_new_account_failed);
                                 return null;
                             }
