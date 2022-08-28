@@ -48,6 +48,10 @@ import co.tinode.tindroid.widgets.OverlaidImageView;
 public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
 
+    // Bitmaps coming from the camera could be way too big.
+    // 1792 is roughly 3MP for square bitmaps.
+    private static final int MAX_BITMAP_DIM = 1792;
+
     // Maximum count of pixels in a zoomed image: width * height * scale^2.
     private static final int MAX_SCALED_PIXELS = 1024 * 1024 * 12;
     // How much bigger any image dimension is allowed to be compare to the screen size.
@@ -242,6 +246,10 @@ public class ImageViewFragment extends Fragment {
         }
 
         if (bmp != null) {
+            // Must ensure the bitmap is not too big (some cameras can produce
+            // bigger bitmaps that the phone can render)
+            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM);
+
             mImageView.enableOverlay(mAvatarUpload);
 
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
