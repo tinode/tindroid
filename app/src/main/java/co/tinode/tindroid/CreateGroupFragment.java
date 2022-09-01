@@ -219,7 +219,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         topic.setComment(subtitle);
         topic.setTags(tags);
         topic.setPub(new VxCard(title));
-        AttachmentHandler.uploadAvatar(topic.getPub(), avatar)
+        AttachmentHandler.uploadAvatar(topic.getPub(), avatar, null)
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {

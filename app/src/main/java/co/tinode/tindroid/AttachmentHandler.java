@@ -499,7 +499,7 @@ public class AttachmentHandler extends Worker {
                     // Upload then send message with a link. This is a long-running blocking call.
                     mUploader = Cache.getTinode().getFileUploader();
                     ServerMessage msg = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
-                            (progress, size) -> setProgressAsync(new Data.Builder()
+                            topicName, (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
                                     .putLong(ARG_PROGRESS, progress)
                                     .putLong(ARG_FILE_SIZE, size)
@@ -615,7 +615,8 @@ public class AttachmentHandler extends Worker {
      * @param bmp new avatar; no action is taken if avatar is null.
      * @return result of the operation.
      */
-    static PromisedReply<ServerMessage> uploadAvatar(@NotNull final VxCard pub, @Nullable Bitmap bmp) {
+    static PromisedReply<ServerMessage> uploadAvatar(@NotNull final VxCard pub, @Nullable Bitmap bmp,
+                                                     @Nullable String topicName) {
         if (bmp == null) {
             // No action needed.
             return new PromisedReply<>((ServerMessage) null);
@@ -652,8 +653,8 @@ public class AttachmentHandler extends Worker {
                 pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getFileUploader();
-                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize, null)
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
+                                topicName, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                                 if (msg != null && msg.ctrl != null && msg.ctrl.code == 200) {

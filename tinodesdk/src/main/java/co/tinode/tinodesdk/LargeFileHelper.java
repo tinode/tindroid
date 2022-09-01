@@ -38,6 +38,8 @@ public class LargeFileHelper {
 
     private boolean mCanceled = false;
 
+    private int mReqId = 1;
+
     public LargeFileHelper(URL urlUpload, String apikey, String authToken, String userAgent) {
         mUrlUpload = urlUpload;
         mHost = mUrlUpload.getHost();
@@ -48,7 +50,7 @@ public class LargeFileHelper {
 
     // Upload file out of band. This should not be called on the UI thread.
     public ServerMessage upload(@NotNull InputStream in, @NotNull String filename, @NotNull String mimetype, long size,
-                                @Nullable FileHelperProgress progress) throws IOException, CancellationException {
+                                @Nullable String topic, @Nullable FileHelperProgress progress) throws IOException, CancellationException {
         mCanceled = false;
         HttpURLConnection conn = null;
         ServerMessage msg;
@@ -60,10 +62,28 @@ public class LargeFileHelper {
             conn.setRequestProperty("User-Agent", mUserAgent);
             conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
             conn.setRequestProperty("X-Tinode-APIKey", mApiKey);
-            conn.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
+            if (mAuthToken != null) {
+                // mAuthToken could be null when uploading avatar on sign up.
+                conn.setRequestProperty("X-Tinode-Auth", "Token " + mAuthToken);
+            }
             conn.setChunkedStreamingMode(0);
 
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(conn.getOutputStream()));
+            // Write req ID.
+            out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
+            out.writeBytes("Content-Disposition: form-data; name=\"id\"" + LINE_END);
+            out.writeBytes(LINE_END);
+            out.writeBytes(++mReqId + LINE_END);
+
+            // Write topic.
+            if (topic != null) {
+                out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
+                out.writeBytes("Content-Disposition: form-data; name=\"topic\"" + LINE_END);
+                out.writeBytes(LINE_END);
+                out.writeBytes(topic + LINE_END);
+            }
+
+            // File section.
             out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
             // Content-Disposition: form-data; name="file"; filename="1519014549699.pdf"
             out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"" + LINE_END);
@@ -73,9 +93,11 @@ public class LargeFileHelper {
             out.writeBytes("Content-Transfer-Encoding: binary" + LINE_END);
             out.writeBytes(LINE_END);
 
+            // File bytes.
             copyStream(in, out, size, progress);
-
             out.writeBytes(LINE_END);
+
+            // End of form boundary.
             out.writeBytes(TWO_HYPHENS + BOUNDARY + TWO_HYPHENS + LINE_END);
             out.flush();
             out.close();
@@ -101,11 +123,12 @@ public class LargeFileHelper {
                                                      final String filename,
                                                      final String mimetype,
                                                      final long size,
+                                                     final String topic,
                                                      final FileHelperProgress progress) {
         final PromisedReply<ServerMessage> result = new PromisedReply<>();
         new Thread(() -> {
             try {
-                ServerMessage msg = upload(in, filename, mimetype, size, progress);
+                ServerMessage msg = upload(in, filename, mimetype, size, topic, progress);
                 if (mCanceled) {
                     throw new CancellationException("Cancelled");
                 }

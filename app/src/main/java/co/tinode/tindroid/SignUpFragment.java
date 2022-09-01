@@ -176,7 +176,7 @@ public class SignUpFragment extends Fragment
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
-                                return AttachmentHandler.uploadAvatar(theCard, bmp);
+                                return AttachmentHandler.uploadAvatar(theCard, bmp, "newacc");
                             }
                         })
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
