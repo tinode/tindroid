@@ -10,6 +10,7 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -537,24 +538,37 @@ public class UiUtils {
             }
         }
 
-        // Option 1: pick image from the gallery.
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "image/gif"});
+        // Option 1: take a photo.
+        List<Intent> cameraIntents = buildIntentList(activity, new Intent(MediaStore.ACTION_IMAGE_CAPTURE));
 
-        // Option 2: take a photo.
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Make sure camera is available.
-        if (cameraIntent.resolveActivity(activity.getPackageManager()) == null) {
-            cameraIntent = null;
-        }
+        // Option 2: pick image from the gallery.
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.setType("image/*");
+        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "image/gif"});
 
         // Pack two intents into a chooser.
         Intent chooserIntent = Intent.createChooser(galleryIntent, activity.getString(R.string.select_image));
-        if (cameraIntent != null) {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
+        if (!cameraIntents.isEmpty()) {
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
         }
 
         return chooserIntent;
+    }
+
+    // Given an intent, find all packages which support this intent and build a list with intent
+    // for each of the found packages.
+    private static List<Intent> buildIntentList(Context context, Intent intent) {
+        List<Intent> list = new ArrayList<>();
+        List<ResolveInfo> resInfo = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL);
+        Log.i(TAG, "Got list<ResolveInfo>.isEmpty=" + resInfo.isEmpty());
+        for (ResolveInfo resolveInfo : resInfo) {
+            String packageName = resolveInfo.activityInfo.packageName;
+            Intent targetedIntent = new Intent(intent);
+            targetedIntent.setPackage(packageName);
+            list.add(targetedIntent);
+            Log.i(TAG, "Camera intent: " + intent.getAction() + " package: " + packageName);
+        }
+        return list;
     }
 
     static ActivityResultLauncher<Intent> avatarPickerLauncher(@NonNull Fragment fragment,
@@ -1068,7 +1082,8 @@ public class UiUtils {
             pub = new VxCard();
         }
 
-        return AttachmentHandler.uploadAvatar(pub, bmp).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        return AttachmentHandler.uploadAvatar(pub, bmp, topic.getName())
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 String[] attachments = null;

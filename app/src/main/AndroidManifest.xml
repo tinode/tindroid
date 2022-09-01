@@ -6,10 +6,10 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-    <!-- Needed for adding an avatar pic when registering new accounts and reading attachments and for video calls. -->
+    <!-- Needed for video calls, adding an avatar pic when registering new accounts reading attachments. -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- To disable installation on devices without the camera -->
-    <uses-feature android:name="android.hardware.camera.any" />
+    <!-- Enable installation on devices without the camera: some features won't be available -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -47,6 +47,9 @@
             <action android:name="android.intent.action.INSERT" />
             <data android:mimeType="vnd.android.cursor.item/contact" />
             <category android:name="android.intent.category.DEFAULT" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
     </queries>
 
