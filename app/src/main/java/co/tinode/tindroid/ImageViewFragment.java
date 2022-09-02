@@ -37,6 +37,7 @@ import java.io.InputStream;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
@@ -187,6 +188,13 @@ public class ImageViewFragment extends Fragment {
         Bundle args = getArguments();
         if (activity == null || args == null) {
             return;
+        }
+
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            toolbar.setTitle(R.string.image_preview);
+            toolbar.setSubtitle(null);
+            toolbar.setLogo(null);
         }
 
         mAvatarUpload = args.getBoolean(AttachmentHandler.ARG_AVATAR);

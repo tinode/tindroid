@@ -24,6 +24,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
@@ -82,6 +83,11 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         if (activity == null) {
             return;
         }
+
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        toolbar.setTitle(R.string.topic_settings);
+        toolbar.setSubtitle(null);
+        toolbar.setLogo(null);
 
         view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
             if (activity.isFinishing() || activity.isDestroyed()) {

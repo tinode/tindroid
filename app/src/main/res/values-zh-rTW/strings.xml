@@ -320,4 +320,5 @@
     <string name="toggle_microphone_button">切換麥克風</string>
     <string name="voice_calls_limited">您將無法接聽某些來電。</string>
     <string name="copied_to_clipboard">拷貝成功</string>
+    <string name="image_preview">圖像預覽</string>
 </resources>

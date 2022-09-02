@@ -16,6 +16,7 @@ import java.util.HashMap;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import co.tinode.tindroid.media.VxCard;
@@ -61,6 +62,11 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
         if (activity == null) {
             return;
         }
+
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        toolbar.setTitle(R.string.topic_settings);
+        toolbar.setSubtitle(null);
+        toolbar.setLogo(null);
 
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 

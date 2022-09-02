@@ -292,6 +292,7 @@ public class MessageActivity extends AppCompatActivity
             changed = true;
 
             if (mTopic == null) {
+                Log.i(TAG, "setupToolbar 2");
                 UiUtils.setupToolbar(this, null, mTopicName, false, null, false);
                 try {
                     //noinspection unchecked
@@ -302,15 +303,15 @@ public class MessageActivity extends AppCompatActivity
                 }
                 showFragment(FRAGMENT_INVALID, null, false);
 
-            } else {
+                // Check if another fragment is already visible. If so, don't change it.
+            } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+                Log.i(TAG, "setupToolbar 1");
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
                         mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
-                // Check if another fragment is already visible. If so, don't change it.
-                if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                    // Reset requested or no fragment is visible. Show default and clear back stack.
-                    getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
-                    showFragment(FRAGMENT_MESSAGES, null, false);
-                }
+
+                // Reset requested or no fragment is visible. Show default and clear back stack.
+                getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                showFragment(FRAGMENT_MESSAGES, null, false);
             }
         }
 
@@ -394,7 +395,7 @@ public class MessageActivity extends AppCompatActivity
         mNoteReadHandler.removeMessages(0);
     }
 
-    private void showMessagesFragmentOnAttach() {
+    private Fragment maybeShowMessagesFragmentOnAttach() {
         FragmentManager fm = getSupportFragmentManager();
         Fragment visible = UiUtils.getVisibleFragment(fm);
         if (visible instanceof InvalidTopicFragment) {
@@ -407,6 +408,7 @@ public class MessageActivity extends AppCompatActivity
                 fragmsg.topicChanged(mTopicName, true);
             }
         }
+        return visible;
     }
 
     private void topicAttach(boolean interactive) {
@@ -432,8 +434,9 @@ public class MessageActivity extends AppCompatActivity
 
         if (mTopic.isDeleted()) {
             setRefreshing(false);
+            Log.i(TAG, "setupToolbar 3");
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, false, null, true);
-            showMessagesFragmentOnAttach();
+            maybeShowMessagesFragmentOnAttach();
             return;
         }
 
@@ -446,10 +449,13 @@ public class MessageActivity extends AppCompatActivity
                             changeTopic(result.ctrl.getStringParam("topic", null), false);
                             return null;
                         }
-                        UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                        Log.i(TAG, "setupToolbar 4");
                         runOnUiThread(() -> {
-                            showMessagesFragmentOnAttach();
+                            Fragment fragment = maybeShowMessagesFragmentOnAttach();
+                            if (fragment instanceof MessagesFragment) {
+                                UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
+                                        mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                            }
                         });
                         // Resume message sender and submit pending messages for processing:
                         // publish queued, delete marked for deletion.
@@ -758,7 +764,7 @@ public class MessageActivity extends AppCompatActivity
             return;
         }
 
-        //noinspection unchecked
+        // noinspection unchecked
         UiUtils.updateAvatar(Cache.getTinode().getTopic(topicName), avatar);
     }
 
@@ -956,13 +962,15 @@ public class MessageActivity extends AppCompatActivity
         @Override
         public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
             runOnUiThread(() -> {
-                UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                        mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment != null) {
                     if (fragment instanceof DataSetChangeListener) {
                         ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
+                        Log.i(TAG, "setupToolbar 5");
+                        UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
+                                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+
                         ((MessagesFragment) fragment).notifyDataSetChanged(true);
                     }
                 }
