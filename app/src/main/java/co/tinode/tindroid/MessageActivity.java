@@ -292,7 +292,6 @@ public class MessageActivity extends AppCompatActivity
             changed = true;
 
             if (mTopic == null) {
-                Log.i(TAG, "setupToolbar 2");
                 UiUtils.setupToolbar(this, null, mTopicName, false, null, false);
                 try {
                     //noinspection unchecked
@@ -305,7 +304,6 @@ public class MessageActivity extends AppCompatActivity
 
                 // Check if another fragment is already visible. If so, don't change it.
             } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
-                Log.i(TAG, "setupToolbar 1");
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
                         mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
 
@@ -434,7 +432,6 @@ public class MessageActivity extends AppCompatActivity
 
         if (mTopic.isDeleted()) {
             setRefreshing(false);
-            Log.i(TAG, "setupToolbar 3");
             UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, false, null, true);
             maybeShowMessagesFragmentOnAttach();
             return;
@@ -449,7 +446,6 @@ public class MessageActivity extends AppCompatActivity
                             changeTopic(result.ctrl.getStringParam("topic", null), false);
                             return null;
                         }
-                        Log.i(TAG, "setupToolbar 4");
                         runOnUiThread(() -> {
                             Fragment fragment = maybeShowMessagesFragmentOnAttach();
                             if (fragment instanceof MessagesFragment) {
@@ -967,7 +963,6 @@ public class MessageActivity extends AppCompatActivity
                     if (fragment instanceof DataSetChangeListener) {
                         ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
-                        Log.i(TAG, "setupToolbar 5");
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
                                 mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
 

@@ -435,8 +435,6 @@ public class UiUtils {
                 Menu menu = toolbar.getMenu();
                 if (menu != null) {
                     menu.setGroupVisible(R.id.offline, !online);
-                } else {
-                    Log.i(TAG, "Toolbar menu is null");
                 }
                 View line = activity.findViewById(R.id.offline_indicator);
                 if (line != null) {
@@ -542,8 +540,7 @@ public class UiUtils {
         List<Intent> cameraIntents = buildIntentList(activity, new Intent(MediaStore.ACTION_IMAGE_CAPTURE));
 
         // Option 2: pick image from the gallery.
-        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        galleryIntent.setType("image/*");
+        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "image/gif"});
 
         // Pack two intents into a chooser.
@@ -560,13 +557,11 @@ public class UiUtils {
     private static List<Intent> buildIntentList(Context context, Intent intent) {
         List<Intent> list = new ArrayList<>();
         List<ResolveInfo> resInfo = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL);
-        Log.i(TAG, "Got list<ResolveInfo>.isEmpty=" + resInfo.isEmpty());
         for (ResolveInfo resolveInfo : resInfo) {
             String packageName = resolveInfo.activityInfo.packageName;
             Intent targetedIntent = new Intent(intent);
             targetedIntent.setPackage(packageName);
             list.add(targetedIntent);
-            Log.i(TAG, "Camera intent: " + intent.getAction() + " package: " + packageName);
         }
         return list;
     }
@@ -584,11 +579,12 @@ public class UiUtils {
             }
 
             final Bundle args = new Bundle();
-            Bitmap photo = data.getParcelableExtra("data");
+            Bitmap thumbnail = data.getParcelableExtra("data");
             Uri uri = data.getData();
-            if (photo != null) {
-                // Image from the camera.
-                args.putParcelable(AttachmentHandler.ARG_SRC_BITMAP, photo);
+            if (thumbnail != null) {
+                // Thumbnail from the camera.
+                // TODO: maybe take the full-size picture and scale it down instead of using the thumbnail.
+                args.putParcelable(AttachmentHandler.ARG_SRC_BITMAP, thumbnail);
             } else if (uri != null){
                 // Image from the gallery.
                 args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, data.getData());

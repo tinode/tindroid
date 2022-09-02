@@ -366,7 +366,7 @@ public class ImageViewFragment extends Fragment {
 
                     @Override
                     public void onError(Exception e) {
-                        Log.i(TAG, "Failed to get image: " + e.getMessage() + " (" + ref + ")");
+                        Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
                     }
                 });
 
