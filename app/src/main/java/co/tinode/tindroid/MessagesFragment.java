@@ -217,26 +217,29 @@ public class MessagesFragment extends Fragment {
                     return;
                 }
 
-                final Intent data = result.getData();
                 final MessageActivity activity = (MessageActivity) getActivity();
-                // Image from the camera， data == null
                 if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
                 final Bundle args = new Bundle();
+                final Intent data = result.getData();
                 if (data == null) {
+                    return;
+                }
+                Uri localUri = data.getData();
+                if (localUri != null) {
+                    // Image from the gallery.
+                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, localUri);
+                } else {
                     // Image from the camera.
                     args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
                     args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
                     mCurrentPhotoFile = null;
                     mCurrentPhotoUri = null;
-                } else {
-                    // Image from the gallery.
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, data.getData());
                 }
 
-                args.putString(AttachmentHandler.ARG_OPERATION,AttachmentHandler.ARG_OPERATION_IMAGE);
+                args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_IMAGE);
                 args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
                 // Show attachment preview.
                 activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
