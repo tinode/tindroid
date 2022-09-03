@@ -225,6 +225,9 @@ public class MessageActivity extends AppCompatActivity
             return;
         }
 
+        // Resume message sender.
+        mMessageSender.resume();
+
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         //noinspection ConstantConditions
         mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
@@ -243,6 +246,7 @@ public class MessageActivity extends AppCompatActivity
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
         }
+        intent.setData(null);
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -385,8 +389,9 @@ public class MessageActivity extends AppCompatActivity
     public void onPause() {
         super.onPause();
 
-        Cache.getTinode().removeListener(mTinodeListener);
+        mMessageSender.pause();
 
+        Cache.getTinode().removeListener(mTinodeListener);
         topicDetach();
 
         // Stop handling read messages
@@ -410,16 +415,13 @@ public class MessageActivity extends AppCompatActivity
     }
 
     private void topicAttach(boolean interactive) {
-        setRefreshing(true);
-
-        Tinode tinode = Cache.getTinode();
-        if (!tinode.isAuthenticated()) {
+        if (!Cache.getTinode().isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
-            Cache.getTinode().reconnectNow(interactive, false, false);
             return;
         }
 
+        setRefreshing(true);
         Topic.MetaGetBuilder builder = mTopic.getMetaGetBuilder()
                 .withDesc()
                 .withSub()
@@ -453,9 +455,8 @@ public class MessageActivity extends AppCompatActivity
                                         mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
                             }
                         });
-                        // Resume message sender and submit pending messages for processing:
-                        // publish queued, delete marked for deletion.
-                        mMessageSender.resume();
+                        // Submit pending messages for processing: publish queued,
+                        // delete marked for deletion.
                         syncAllMessages(true);
                         return null;
                     }
@@ -485,7 +486,6 @@ public class MessageActivity extends AppCompatActivity
 
     // Clean up everything related to the topic being replaced of removed.
     private void topicDetach() {
-        mMessageSender.pause();
         if (mTypingAnimationTimer != null) {
             mTypingAnimationTimer.cancel();
             mTypingAnimationTimer = null;

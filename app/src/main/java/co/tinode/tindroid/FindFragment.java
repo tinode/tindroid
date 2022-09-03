@@ -61,6 +61,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     private FndTopic<VxCard> mFndTopic;
     private FndListener mFndListener;
 
+    private LoginEventListener mLoginListener;
+
     private String mSearchTerm; // Stores the current search query term
     private FindAdapter mAdapter = null;
 
@@ -135,6 +137,20 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return;
         }
 
+        final Tinode tinode = Cache.getTinode();
+        mLoginListener = new LoginEventListener(tinode.isConnected());
+        tinode.addListener(mLoginListener);
+
+        if (!tinode.isAuthenticated()) {
+            // If connection is not ready, wait for completion. This method will be called again
+            // from the onLogin callback;
+            return;
+        }
+
+        topicAttach();
+    }
+
+    private void topicAttach() {
         Cache.attachFndTopic(mFndListener)
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
@@ -172,6 +188,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         if (mFndTopic != null) {
             mFndTopic.setListener(null);
         }
+
+        Cache.getTinode().removeListener(mLoginListener);
     }
 
     @Override
@@ -438,6 +456,18 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             launcher.putExtra("topic", topicName);
             startActivity(launcher);
             activity.finish();
+        }
+    }
+
+    private class LoginEventListener extends UiUtils.EventListener {
+        LoginEventListener(boolean online) {
+            super(getActivity(), online);
+        }
+
+        @Override
+        public void onLogin(int code, String txt) {
+            super.onLogin(code, txt);
+            topicAttach();
         }
     }
 }

@@ -141,7 +141,6 @@
 
         <activity
             android:name=".SendToActivity"
-            android:label="@string/send_to"
             android:theme="@style/AppTheme"
             android:exported="true">
             <intent-filter>

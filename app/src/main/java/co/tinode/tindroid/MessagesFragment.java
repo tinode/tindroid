@@ -61,6 +61,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ContentInfoCompat;
 import androidx.core.view.OnReceiveContentListener;
@@ -70,6 +72,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.work.Data;
+import androidx.work.Operation;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -947,7 +950,7 @@ public class MessagesFragment extends Fragment {
             mAudioRecorder.prepare();
             mAudioSampler = new AudioSampler();
         } catch (IOException ex) {
-            Log.i(TAG, "Failed to initialize audio recording", ex);
+            Log.w(TAG, "Failed to initialize audio recording", ex);
             Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
             mAudioRecorder.release();
             mAudioRecorder = null;
@@ -1376,18 +1379,34 @@ public class MessagesFragment extends Fragment {
         return mMessagesAdapter.findItemPositionById(id, first, last);
     }
 
-    private static class StickerReceiver implements OnReceiveContentListener {
+    private class StickerReceiver implements OnReceiveContentListener {
         @Nullable
         @Override
         public ContentInfoCompat onReceiveContent(@NonNull View view, @NonNull ContentInfoCompat payload) {
             Pair<ContentInfoCompat, ContentInfoCompat> split = payload.partition(item -> item.getUri() != null);
 
-            if (split.first != null) {
+            final MessageActivity activity = (MessageActivity) getActivity();
+            if (split.first != null && activity != null) {
                 // Handle posted URIs.
                 ClipData data = split.first.getClip();
                 if (data.getItemCount() > 0) {
-                    Uri uri = data.getItemAt(0).getUri();
-                    Log.i(TAG, "Uri from IME: " + uri.toString() + "; total=" + data.getItemCount());
+                    Uri stickerUri = data.getItemAt(0).getUri();
+                    Bundle args = new Bundle();
+                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, stickerUri);
+                    args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_IMAGE);
+                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+
+                    Operation op = AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity,
+                            AttachmentHandler.ARG_OPERATION_IMAGE, args);
+                    if (op != null) {
+                        op.getResult().addListener((Runnable) () -> {
+                                    if (activity.isFinishing() || activity.isDestroyed()) {
+                                        return;
+                                    }
+                                    activity.syncAllMessages(true);
+                                    notifyDataSetChanged(false);
+                            }, ContextCompat.getMainExecutor(activity));
+                    }
                 }
             }
 

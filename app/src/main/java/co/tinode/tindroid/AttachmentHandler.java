@@ -47,6 +47,7 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.Operation;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -172,7 +173,7 @@ public class AttachmentHandler extends Worker {
         return result;
     }
 
-    static void enqueueMsgAttachmentUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
+    static Operation enqueueMsgAttachmentUploadRequest(AppCompatActivity activity, String operation, Bundle args) {
         String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
         // Create a new message which will be updated with upload progress.
         Drafty content = new Drafty();
@@ -210,8 +211,11 @@ public class AttachmentHandler extends Worker {
                     .addTag(TAG_UPLOAD_WORK)
                     .build();
 
-            WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()), ExistingWorkPolicy.REPLACE, upload);
+            return WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()),
+                    ExistingWorkPolicy.REPLACE, upload);
         }
+
+        return null;
     }
 
     @SuppressWarnings("UnusedReturnValue")
