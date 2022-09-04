@@ -74,7 +74,6 @@ dependencies {
     implementation "androidx.camera:camera-view:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
 
-    // Don't change to 1.4.0 (requires API 31).
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
@@ -97,7 +96,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
     implementation 'com.google.firebase:firebase-messaging:23.0.8'
-
 
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
