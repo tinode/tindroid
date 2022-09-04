@@ -227,10 +227,7 @@ public class MessagesFragment extends Fragment {
 
                 final Bundle args = new Bundle();
                 final Intent data = result.getData();
-                if (data == null) {
-                    return;
-                }
-                Uri localUri = data.getData();
+                Uri localUri = data != null ? data.getData() : null;
                 if (localUri != null) {
                     // Image from the gallery.
                     args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, localUri);
