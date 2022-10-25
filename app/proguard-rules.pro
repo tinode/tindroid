@@ -36,3 +36,6 @@
 
 # A resource is loaded with a relative path so the package of this class must be preserved.
 -keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+# Apparently it's OK to ignore warnings about missing classes:
+# https://github.com/square/okhttp/issues/3922
+-dontwarn okhttp3.internal.platform.ConscryptPlatform
