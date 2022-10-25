@@ -23,13 +23,21 @@
 
 # Classes which define json wire protocol.
 -keep class co.tinode.tinodesdk.model.** {*;}
+
 -keepattributes *Annotation*,EnclosingMethod,Signature
 -keepattributes SourceFile,LineNumberTable
+
+# JacksonXML.
 -keepnames class com.fasterxml.jackson.** {*;}
 -keepnames interface com.fasterxml.jackson.** {*;}
 -dontwarn com.fasterxml.jackson.databind.**
 -keep class org.codehaus.** {*;}
+
 -keep public class * extends java.lang.Exception
+
+# Keep WebRTC classes as is.
+-keep class org.webrtc.** {*;}
+-keepclasseswithmembernames class * { native <methods>; }
 
 # Don't mangle serializable classes.
 -keep class * implements java.io.Serializable

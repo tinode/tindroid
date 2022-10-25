@@ -9,7 +9,7 @@ def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     signingConfigs {
         release {
@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 24
-        targetSdkVersion 31
+        targetSdkVersion 32
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being setup comment out lines gitVersion*()
@@ -74,12 +74,12 @@ dependencies {
     implementation "androidx.camera:camera-view:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
 
-    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
-    implementation 'androidx.fragment:fragment:1.5.3'
-    implementation 'androidx.exifinterface:exifinterface:1.3.4'
+    implementation 'androidx.fragment:fragment:1.5.4'
+    implementation 'androidx.exifinterface:exifinterface:1.3.5'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.legacy:legacy-support-v13:1.0.0'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
@@ -92,10 +92,10 @@ dependencies {
 
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
-    implementation 'com.google.android.material:material:1.6.1'
+    implementation 'com.google.android.material:material:1.7.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-crashlytics:18.2.13'
-    implementation 'com.google.firebase:firebase-messaging:23.0.8'
+    implementation 'com.google.firebase:firebase-crashlytics:18.3.1'
+    implementation 'com.google.firebase:firebase-messaging:23.1.0'
 
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency

@@ -10,14 +10,22 @@
 # Add any project specific keep options here:
 
 # Classes which define json wire protocol.
--keep class co.tinode.tinodesdk.model.** {*;}
+-keep class co.tinode.tinodesdk.model.** { *; }
+
 -keepattributes *Annotation*,EnclosingMethod,Signature
 -keepattributes SourceFile,LineNumberTable
--keepnames class com.fasterxml.jackson.** {*;}
--keepnames interface com.fasterxml.jackson.** {*;}
+
+# JacksonXML.
+-keepnames class com.fasterxml.jackson.** { *; }
+-keepnames interface com.fasterxml.jackson.** { *; }
 -dontwarn com.fasterxml.jackson.databind.**
--keep class org.codehaus.** {*;}
+-keep class org.codehaus.** { *; }
+
 -keep public class * extends java.lang.Exception
+
+# Keep WebRTC classes as is.
+-keep class org.webrtc.** {*;}
+-keepclasseswithmembernames class * { native <methods>; }
 
 # Don't mangle classes which are saved to DB.
 -keep class * implements java.io.Serializable
