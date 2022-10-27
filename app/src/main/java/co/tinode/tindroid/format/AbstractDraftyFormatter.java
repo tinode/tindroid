@@ -196,6 +196,12 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
             case "missed":
                 comment = incoming ? R.string.missed_call : R.string.cancelled_call;
                 break;
+            case "started":
+                comment = R.string.connecting_call;
+                break;
+            case "accepted":
+                comment = R.string.in_progress_call;
+                break;
             default:
                 comment = R.string.disconnected_call;
                 break;
