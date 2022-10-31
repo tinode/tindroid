@@ -27,6 +27,9 @@
 -keep class org.webrtc.** {*;}
 -keepclasseswithmembernames class * { native <methods>; }
 
+# WebRTC SDP and ICE candidate auxiliary classes serialized into json.
+-keepattributes InnerClasses
+
 # Don't mangle classes which are saved to DB.
 -keep class * implements java.io.Serializable
 
