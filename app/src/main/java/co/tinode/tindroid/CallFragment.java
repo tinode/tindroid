@@ -42,8 +42,8 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -829,7 +829,7 @@ public class CallFragment extends Fragment {
         });
     }
     // Auxiliary class to facilitate serialization of SDP data.
-    static class SDPAux {
+    static class SDPAux implements Serializable {
         public final String type;
         public final String sdp;
 
@@ -840,7 +840,7 @@ public class CallFragment extends Fragment {
     }
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
-    private static class IceCandidateAux {
+    static class IceCandidateAux implements Serializable {
         public String type;
         public int sdpMLineIndex;
         public String sdpMid;
