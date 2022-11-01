@@ -47,12 +47,21 @@ task clean(type: Delete) {
     delete rootProject.buildDir
 }
 
+// Use git revision counter as a version code.
 static def gitVersionCode() {
+    // If you are not compiling in a git directory and getting an error like
+    // [A problem occurred evaluating root project 'master'. For input string: ""]
+    // then just return your manually assigned error code like this:
+    //  return 12345
     def process = "git rev-list --count HEAD".execute()
     return process.text.toInteger()
 }
 
+// Use current git tag as a version name.
+// For example, if the git tag is 'v0.20.0-rc1' then the version name will be '0.20.0-rc1'.
 static def gitVersionName() {
+    // If you are not compiling in a git directory, you should manually assign version name:
+    //  return "MyVersionName"
     def process = "git describe --tags".execute()
     // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
     return process.text.trim().substring(1)
