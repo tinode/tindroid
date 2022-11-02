@@ -24,14 +24,14 @@
 -keep public class * extends java.lang.Exception
 
 # Keep WebRTC classes as is.
--keep class org.webrtc.** {*;}
+-keep class org.webrtc.** { *; }
 -keepclasseswithmembernames class * { native <methods>; }
 
 # WebRTC SDP and ICE candidate auxiliary classes serialized into json.
 -keepattributes InnerClasses
 
 # Don't mangle classes which are saved to DB.
--keep class * implements java.io.Serializable
+-keep class * implements java.io.Serializable { *; }
 
 # As suggested by Crashlytics
 -keep class com.crashlytics.** { *; }

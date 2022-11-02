@@ -33,15 +33,15 @@
 -dontwarn com.fasterxml.jackson.databind.**
 -keep class org.codehaus.** {*;}
 
--keep public class * extends java.lang.Exception
+-keep public class * extends java.lang.Exception {*;}
 
 # Keep WebRTC classes as is.
 -keep class org.webrtc.** {*;}
 -keepclasseswithmembernames class * { native <methods>; }
 
 # Don't mangle serializable classes.
--keep class * implements java.io.Serializable
+-keep class * implements java.io.Serializable {*;}
 
 # Crashlytics
--keep class com.crashlytics.** { *; }
+-keep class com.crashlytics.** {*;}
 -dontwarn com.crashlytics.**
