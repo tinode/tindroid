@@ -234,8 +234,9 @@ public class CallFragment extends Fragment {
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
+    public void onDestroy() {
+        stopSoundEffect();
+        super.onDestroy();
     }
 
     @Override
@@ -807,7 +808,7 @@ public class CallFragment extends Fragment {
         mMediaPlayer.start();
     }
 
-    private void stopSoundEffect() {
+    private synchronized void stopSoundEffect() {
         if (mMediaPlayer != null) {
             mMediaPlayer.stop();
             mMediaPlayer.release();
