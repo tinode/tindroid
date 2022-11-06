@@ -200,6 +200,7 @@ public class MsgGetMeta implements Serializable {
         what = sb.toString();
     }
 
+    @JsonIgnore
     public boolean isEmpty() {
         return mSet == 0;
     }
