@@ -912,7 +912,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                         if (mAttached <= 0) {
                             mAttached = 1;
                             if (msg.ctrl.params != null) {
-                                mDesc.acs = new Acs((Map<String, String>) msg.ctrl.params.get("acs"));
+                                Map<String, String> acs = (Map<String, String>) msg.ctrl.params.get("acs");
+                                if (acs != null) {
+                                    mDesc.acs = new Acs(acs);
+                                }
+
                                 if (isNew()) {
                                     setUpdated(msg.ctrl.ts);
                                     setName(msg.ctrl.topic);
@@ -939,10 +943,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 }, new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
+                        // Clean up if topic creation failed for any reason.
                         if (isNew() && err instanceof ServerResponseException) {
                             ServerResponseException sre = (ServerResponseException) err;
-                            if (sre.getCode() >= ServerMessage.STATUS_BAD_REQUEST &&
-                                    sre.getCode() < ServerMessage.STATUS_INTERNAL_SERVER_ERROR) {
+                            if (sre.getCode() >= ServerMessage.STATUS_BAD_REQUEST) {
                                 mTinode.stopTrackingTopic(topicName);
                                 expunge(true);
                             }
