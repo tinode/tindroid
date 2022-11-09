@@ -272,14 +272,14 @@ public class ChatsActivity extends AppCompatActivity
                     return;
                 }
 
+                Tinode tinode = Cache.getTinode();
                 if (mAccount == null) {
-                    mAccount = Utils.getSavedAccount(AccountManager.get(ChatsActivity.this),
-                            Cache.getTinode().getMyId());
+                    mAccount = Utils.getSavedAccount(AccountManager.get(ChatsActivity.this), tinode.getMyId());
                 }
                 if (Topic.isP2PType(sub.topic)) {
                     ContactsManager.processContact(ChatsActivity.this,
-                            ChatsActivity.this.getContentResolver(),
-                            mAccount, sub.pub, null, sub.getUnique(), sub.deleted != null,
+                            ChatsActivity.this.getContentResolver(), mAccount, tinode,
+                            sub.pub, null, sub.getUnique(), sub.deleted != null,
                             null, false);
                 }
             }

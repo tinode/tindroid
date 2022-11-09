@@ -285,8 +285,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                                 updated.add(sub);
                             }
                         }
-                        newSyncMarker = ContactsManager.updateContacts(mContext, account, updated,
-                                lastSyncMarker, true);
+                        newSyncMarker = ContactsManager.updateContacts(mContext, account, tinode,
+                                updated, lastSyncMarker, true);
                     }
                 }
                 tinode.disconnect(true);

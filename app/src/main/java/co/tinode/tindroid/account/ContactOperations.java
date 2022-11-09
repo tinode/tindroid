@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tinodesdk.Tinode;
 
 /**
  * Helper class for storing data in the platform content providers.
@@ -217,12 +218,12 @@ class ContactOperations {
      * @param avatar avatar image serialized into byte array
      * @return instance of ContactOperations
      */
-    ContactOperations addAvatar(byte[] avatar, final String ref, final String mimeType) {
+    ContactOperations addAvatar(byte[] avatar, final Tinode tinode, final String ref, final String mimeType) {
         mValues.clear();
         if (ref != null) {
             try {
                 avatar = UiUtils.bitmapToBytes(Picasso.get()
-                        .load(Uri.decode(ref))
+                        .load(tinode.toAbsoluteURL(ref).toString())
                         .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE).centerCrop()
                         .get(), mimeType);
             } catch (IOException ex) {

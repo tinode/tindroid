@@ -399,8 +399,9 @@ public class UiUtils {
             if (acc == null) {
                 return;
             }
-            Collection<ComTopic<VxCard>> topics = Cache.getTinode().getFilteredTopics(Topic::isP2PType);
-            ContactsManager.updateContacts(activity, acc, topics);
+            Tinode tinode = Cache.getTinode();
+            Collection<ComTopic<VxCard>> topics = tinode.getFilteredTopics(Topic::isP2PType);
+            ContactsManager.updateContacts(activity, acc, tinode, topics);
             TindroidApp.startWatchingContacts(activity, acc);
         });
     }

@@ -932,7 +932,7 @@ public class MessageActivity extends AppCompatActivity
             if (UiUtils.isPermissionGranted(context, Manifest.permission.WRITE_CONTACTS)) {
                 Account acc = Utils.getSavedAccount(AccountManager.get(context), Cache.getTinode().getMyId());
                 if (acc != null) {
-                    ContactsManager.updateContacts(context, acc, mTopic.getSubscriptions(),
+                    ContactsManager.updateContacts(context, acc, Cache.getTinode(), mTopic.getSubscriptions(),
                             null, false);
                 }
             }
