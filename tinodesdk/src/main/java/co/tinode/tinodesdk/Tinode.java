@@ -42,7 +42,6 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
 import co.tinode.tinodesdk.model.Credential;
@@ -426,10 +425,17 @@ public class Tinode {
      */
     protected PromisedReply<ServerMessage> connect(@NotNull URI serverURI, boolean background) {
         synchronized (mConnLock) {
+            Log.d(TAG, "Connection URI=" + serverURI);
+
             boolean sameHost = serverURI.equals(mServerURI);
             // Connection already exists and connected.
             if (mConnection != null) {
                 if (mConnection.isConnected() && sameHost) {
+                    if (background) {
+                        mBkgConnCounter ++;
+                    } else {
+                        mFgConnection = true;
+                    }
                     // If the connection is live and the server address has not changed, return a resolved promise.
                     return new PromisedReply<>((ServerMessage) null);
                 }
@@ -440,6 +446,8 @@ public class Tinode {
                     // Stop exponential backoff timer if it's running.
                     mConnection.disconnect();
                     mConnection = null;
+                    mBkgConnCounter = 0;
+                    mFgConnection = false;
                 }
             }
 
@@ -471,7 +479,6 @@ public class Tinode {
      */
     public PromisedReply<ServerMessage> connect(@Nullable String hostName, boolean tls, boolean background) {
         URI connectTo = mServerURI;
-        Log.d(TAG, "Connecting to " + hostName + " (" + (tls ? "HTTPS" : "http") + ")");
         if (hostName != null) {
             try {
                 connectTo = createWebsocketURI(hostName, tls);
@@ -479,8 +486,6 @@ public class Tinode {
                 return new PromisedReply<>(ex);
             }
         }
-
-        Log.d(TAG, "Connection URI=" + connectTo.toString());
         return connect(connectTo, background);
     }
 
@@ -508,6 +513,8 @@ public class Tinode {
                 }
                 // Forcing a new connection.
                 mConnection.disconnect();
+                mBkgConnCounter = 0;
+                mFgConnection = false;
                 interactive = true;
             }
 
@@ -516,6 +523,13 @@ public class Tinode {
             if (interactive || !mConnection.isWaitingToReconnect()) {
                 mConnection.connect(true, background);
             }
+        }
+    }
+
+    // Mark connection as foreground-connected.
+    private void pinConnectionToFg() {
+        synchronized (mConnLock) {
+            mFgConnection = true;
         }
     }
 
@@ -528,6 +542,9 @@ public class Tinode {
         synchronized (mConnLock) {
             if (fromBkg) {
                 mBkgConnCounter--;
+                if (mBkgConnCounter < 0) {
+                    mBkgConnCounter = 0;
+                }
             } else {
                 mFgConnection = false;
                 setAutoLogin(null, null);
@@ -588,6 +605,9 @@ public class Tinode {
 
         mServerBuild = null;
         mServerVersion = null;
+
+        mFgConnection = false;
+        mBkgConnCounter = 0;
 
         // Reject all pending promises.
         ServerResponseException ex = new ServerResponseException(503, "disconnected");
@@ -773,7 +793,10 @@ public class Tinode {
                 }
 
                 if (topic.getSeq() < seq) {
-                    boolean newConnection = syncLogin(authToken);
+                    if (!syncLogin(authToken)) {
+                        // Failed to connect or login.
+                        break;
+                    }
 
                     String senderId = data.get("xfrom");
                     if (senderId != null && getUser(senderId) == null) {
@@ -806,9 +829,10 @@ public class Tinode {
                         } catch (Exception ignored) {}
                     }
 
-                    if (newConnection && !keepConnection) {
-                        disconnect(true);
+                    if (keepConnection) {
+                        pinConnectionToFg();
                     }
+                    disconnect(true);
                 }
                 break;
             case "read":
@@ -825,7 +849,10 @@ public class Tinode {
                 break;
             case "sub":
                 if (topic == null) {
-                    boolean newConnection = syncLogin(authToken);
+                    if (!syncLogin(authToken)) {
+                        // Failed to connect or login.
+                        break;
+                    }
                     // New topic subscription, fetch topic description.
                     try {
                         getMeta(topicName, MsgGetMeta.desc()).getResult();
@@ -838,9 +865,10 @@ public class Tinode {
                         getMeta(senderId, MsgGetMeta.desc());
                     }
 
-                    if (newConnection && !keepConnection) {
-                        disconnect(true);
+                    if (keepConnection) {
+                        pinConnectionToFg();
                     }
+                    disconnect(true);
                 }
                 break;
             default:
@@ -849,20 +877,21 @@ public class Tinode {
     }
 
     // Synchronous (blocking) token login using stored parameters.
-    // Returns true if a new connection was established, false if already connected or failed to connect.
+    // Returns true if a connection was established, false if failed to connect.
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean syncLogin(String authToken) {
-        boolean newConnection = false;
-        if (!isAuthenticated() && mStore != null) {
-            try {
-                URI connectTo = new URI(mStore.getServerURI());
-                if (!isConnected()) {
-                    connect(connectTo, true).getResult();
-                    newConnection = true;
-                }
-                loginToken(authToken).getResult();
-            } catch (Exception ignored) {}
+        if (mStore == null) {
+            return false;
         }
-        return newConnection;
+
+        try {
+            URI connectTo = new URI(mStore.getServerURI());
+            connect(connectTo, true).getResult();
+            loginToken(authToken).getResult();
+        } catch (Exception ignored) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -1504,6 +1533,8 @@ public class Tinode {
         setDeviceToken(NULL_VALUE).thenFinally(new PromisedReply.FinalListener() {
             @Override
             public void onFinally() {
+                mFgConnection = false;
+                mBkgConnCounter = 0;
                 disconnect(false);
             }
         });
