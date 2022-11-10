@@ -329,7 +329,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     public void onStop(@NonNull LifecycleOwner owner) {
         // Disconnect now, so the connection does not wait for the timeout.
         if (Cache.getTinode() != null) {
-            Cache.getTinode().disconnect(false);
+            Cache.getTinode().maybeDisconnect(false);
         }
     }
 

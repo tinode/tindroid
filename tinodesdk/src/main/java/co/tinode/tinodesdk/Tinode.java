@@ -534,11 +534,11 @@ public class Tinode {
     }
 
     /**
-     * Disconnect from the server.
+     * Decrement connection counters and disconnect from server if counters permit.
      *
      * @param fromBkg request to disconnect background connection.
      */
-    public void disconnect(boolean fromBkg) {
+    public void maybeDisconnect(boolean fromBkg) {
         synchronized (mConnLock) {
             if (fromBkg) {
                 mBkgConnCounter--;
@@ -832,7 +832,7 @@ public class Tinode {
                     if (keepConnection) {
                         pinConnectionToFg();
                     }
-                    disconnect(true);
+                    maybeDisconnect(true);
                 }
                 break;
             case "read":
@@ -868,7 +868,7 @@ public class Tinode {
                     if (keepConnection) {
                         pinConnectionToFg();
                     }
-                    disconnect(true);
+                    maybeDisconnect(true);
                 }
                 break;
             default:
@@ -1535,7 +1535,7 @@ public class Tinode {
             public void onFinally() {
                 mFgConnection = false;
                 mBkgConnCounter = 0;
-                disconnect(false);
+                maybeDisconnect(false);
             }
         });
     }
@@ -1711,7 +1711,7 @@ public class Tinode {
         return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                disconnect(false);
+                maybeDisconnect(false);
                 if (mStore != null) {
                     mStore.deleteAccount(mMyUid);
                 }
