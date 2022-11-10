@@ -289,7 +289,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                                 updated, lastSyncMarker, true);
                     }
                 }
-                tinode.disconnect(true);
+                tinode.maybeDisconnect(true);
                 setServerSyncMarker(account, newSyncMarker != null ? newSyncMarker : new Date());
                 success = true;
             } catch (IOException e) {
