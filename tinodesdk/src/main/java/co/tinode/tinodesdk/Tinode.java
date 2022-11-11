@@ -2246,17 +2246,6 @@ public class Tinode {
         return Long.toString(((new Date().getTime() - 1414213562373L) << 16) + (mNameCounter & 0xFFFF), 32);
     }
 
-    long getTimeAdjustment() {
-        return mTimeAdjustment;
-    }
-
-    /**
-     * Interface for converting mime type string to Jackson's JavaType.
-     */
-    public interface MimeTypeResolver {
-        JavaType resolve(String mimeType);
-    }
-
     /**
      * Interface to be implemented by those clients which want to fetch topics
      * using {@link Tinode#getFilteredTopics}
@@ -2305,7 +2294,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        default void onMessage(ServerMessage msg) {
+        default void onMessage(@SuppressWarnings("unused") ServerMessage msg) {
         }
 
         /**
@@ -2315,7 +2304,7 @@ public class Tinode {
          *
          * @param msg message to be processed
          */
-        default void onRawMessage(String msg) {
+        default void onRawMessage(@SuppressWarnings("unused") String msg) {
         }
 
         /**
@@ -2323,7 +2312,7 @@ public class Tinode {
          *
          * @param ctrl control message to process
          */
-        default void onCtrlMessage(MsgServerCtrl ctrl) {
+        default void onCtrlMessage(@SuppressWarnings("unused") MsgServerCtrl ctrl) {
         }
 
         /**
@@ -2347,7 +2336,7 @@ public class Tinode {
          *
          * @param meta meta message to process
          */
-        default void onMetaMessage(MsgServerMeta meta) {
+        default void onMetaMessage(@SuppressWarnings("unused") MsgServerMeta meta) {
         }
 
         /**
@@ -2355,7 +2344,7 @@ public class Tinode {
          *
          * @param pres control message to process
          */
-        default void onPresMessage(MsgServerPres pres) {
+        default void onPresMessage(@SuppressWarnings("unused") MsgServerPres pres) {
         }
     }
 
@@ -2502,7 +2491,7 @@ public class Tinode {
     }
 
     // Class which listens for websocket to connect.
-    private class ConnectedWsListener extends Connection.WsListener {
+    private class ConnectedWsListener implements Connection.WsListener {
         final Vector<PromisedReply<ServerMessage>> mCompletionPromises;
 
         ConnectedWsListener() {
@@ -2514,7 +2503,7 @@ public class Tinode {
         }
 
         @Override
-        protected void onConnect(final Connection conn, final boolean background) {
+        public void onConnect(final Connection conn, final boolean background) {
             // Connection established, send handshake, inform listener on success
             hello(background).thenApply(
                     new PromisedReply.SuccessListener<ServerMessage>() {
@@ -2564,7 +2553,7 @@ public class Tinode {
         }
 
         @Override
-        protected void onMessage(Connection conn, String message) {
+        public void onMessage(Connection conn, String message) {
             try {
                 dispatchPacket(message);
             } catch (Exception ex) {
@@ -2573,7 +2562,7 @@ public class Tinode {
         }
 
         @Override
-        protected void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
+        public void onDisconnect(Connection conn, boolean byServer, int code, String reason) {
             handleDisconnect(byServer, -code, reason);
             // Promises may have already been rejected if onError was called first.
             try {
@@ -2584,7 +2573,7 @@ public class Tinode {
         }
 
         @Override
-        protected void onError(Connection conn, Exception err) {
+        public void onError(Connection conn, Exception err) {
             // No need to call handleDisconnect here. It will be called from onDisconnect().
 
             // If the promise is waiting, reject. Otherwise it's not our problem.
