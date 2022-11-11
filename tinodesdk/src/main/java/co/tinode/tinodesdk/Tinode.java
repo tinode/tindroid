@@ -811,7 +811,7 @@ public class Tinode {
                         try {
                             Log.i(TAG, "OOB: NOT attached, attaching");
                             // noinspection unchecked
-                            topic.subscribe(null, builder.withLaterDel(24).build());
+                            topic.subscribe(null, builder.withLaterDel(24).build()).getResult();
                             // Wait for the messages to download.
                             Log.i(TAG, "OOB: downloading messages");
                             topic.getMeta(builder.reset().withLaterData(24).build()).getResult();
