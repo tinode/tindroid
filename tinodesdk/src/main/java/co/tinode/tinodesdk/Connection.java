@@ -13,6 +13,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+
 /**
  * A thinly wrapped websocket connection.
  */
@@ -108,8 +113,19 @@ public class Connection extends WebSocketClient {
                 } else {
                     connectBlocking(CONNECTION_TIMEOUT, TimeUnit.MILLISECONDS);
                 }
+
+                if ("wss".equals(uri.getScheme())) {
+                    // SNI: Verify server host name.
+                    SSLSession sess = ((SSLSocket) getSocket()).getSession();
+                    String hostName = uri.getHost();
+                    if (!HttpsURLConnection.getDefaultHostnameVerifier().verify(hostName, sess)) {
+                        close();
+                        throw new SSLHandshakeException("SNI verification failed. Expected: '" + uri.getHost() +
+                                "', actual: '" + sess.getPeerPrincipal() + "'");
+                    }
+                }
             } catch (Exception ex) {
-                Log.d(TAG, "socketConnectionRunnable exception!", ex);
+                Log.i(TAG, "WS connection failed", ex);
                 if (mListener != null) {
                     mListener.onError(Connection.this, ex);
                 }
