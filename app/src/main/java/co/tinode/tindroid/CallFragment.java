@@ -202,6 +202,8 @@ public class CallFragment extends Fragment {
         mPeerName = view.findViewById(R.id.peerName);
         mPeerName.setText(peerName);
 
+        mRemoteIceCandidatesCache = new ArrayList<>();
+
         // Check permissions.
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
@@ -209,7 +211,6 @@ public class CallFragment extends Fragment {
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
-        mRemoteIceCandidatesCache = new ArrayList<>();
 
         // Got all necessary permissions.
         startMediaAndSignal();
