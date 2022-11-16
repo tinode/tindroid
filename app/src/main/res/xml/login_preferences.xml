@@ -21,16 +21,6 @@
         android:title="@string/settings_use_tls"
         />
 
-    <androidx.preference.ListPreference
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:defaultValue="def"
-        android:entries="@array/wire_transport"
-        android:entryValues="@array/wire_transport_value"
-        android:key="pref_wireTransport"
-        android:summary="@string/settings_wire_explained"
-        android:title="@string/settings_wire_transport"/>
-
     <!-- For keeping last used login -->
     <androidx.preference.EditTextPreference
         android:key="pref_lastLogin"

@@ -11,6 +11,7 @@ import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.account.Utils;
 
 /**
  * A placeholder fragment containing a simple view.
@@ -39,21 +40,26 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         addPreferencesFromResource(R.xml.login_preferences);
 
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        onSharedPreferenceChanged(sharedPreferences, "pref_hostName");
-        onSharedPreferenceChanged(sharedPreferences, "pref_useTLS");
-        onSharedPreferenceChanged(sharedPreferences, "pref_wireTransport");
+        onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_HOST_NAME);
+        onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_USE_TLS);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+        SharedPreferences sp = getPreferenceScreen().getSharedPreferences();
+        if (sp != null) {
+            sp.registerOnSharedPreferenceChangeListener(this);
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        getPreferenceScreen().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this);
+        SharedPreferences sp = getPreferenceScreen().getSharedPreferences();
+        if (sp != null) {
+            sp.unregisterOnSharedPreferenceChangeListener(this);
+        }
     }
 
     @Override
@@ -65,19 +71,11 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         }
 
         switch (preference.getKey()) {
-            case "pref_wireTransport":
-                ListPreference listPreference = (ListPreference) preference;
-                int prefIndex = listPreference.findIndexOfValue(sharedPreferences.getString(key, null));
-                if (prefIndex >= 0) {
-                    preference.setSummary(getString(R.string.settings_wire_explained,
-                            listPreference.getEntries()[prefIndex]));
-                }
+            case Utils.PREFS_USE_TLS:
                 break;
-            case "pref_useTLS":
-                break;
-            case "pref_hostName":
+            case Utils.PREFS_HOST_NAME:
                 preference.setSummary(getString(R.string.settings_host_name_explained,
-                        sharedPreferences.getString("pref_hostName", TindroidApp.getDefaultHostName(context))));
+                        sharedPreferences.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context))));
                 break;
             default:
                 Log.w(TAG, "Unknown preference '" + key + "'");

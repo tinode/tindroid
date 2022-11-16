@@ -425,8 +425,6 @@ public class Tinode {
      */
     protected PromisedReply<ServerMessage> connect(@NotNull URI serverURI, boolean background) {
         synchronized (mConnLock) {
-            Log.d(TAG, "Connection URI=" + serverURI);
-
             boolean sameHost = serverURI.equals(mServerURI);
             // Connection already exists and connected.
             if (mConnection != null) {
@@ -809,22 +807,16 @@ public class Tinode {
                     // is no race condition to subscribe.
                     if (!topic.isAttached()) {
                         try {
-                            Log.i(TAG, "OOB: NOT attached, attaching");
                             // noinspection unchecked
                             topic.subscribe(null, builder.withLaterDel(24).build()).getResult();
                             // Wait for the messages to download.
-                            Log.i(TAG, "OOB: downloading messages");
                             topic.getMeta(builder.reset().withLaterData(24).build()).getResult();
-                            Log.i(TAG, "OOB: downloading messages -- DONE");
 
                             // Notify the server than the message was received.
                             topic.noteRecv();
-                            Log.i(TAG, "OOB: sent {note - recv}");
                             if (!keepConnection) {
-                                Log.i(TAG, "OOB: leaving");
                                 // Leave the topic before disconnecting.
                                 topic.leave().getResult();
-                                Log.i(TAG, "OOB: left");
                             }
                         } catch (Exception ignored) {}
                     }
@@ -965,15 +957,6 @@ public class Tinode {
      */
     public String getServerBuild() {
         return mServerBuild;
-    }
-
-    /**
-     * Set server address and TLS status to be used in subsequent connections.
-     */
-    public void setServer(@NotNull String host, boolean tls) {
-        try {
-            mServerURI = createWebsocketURI(host, tls);
-        } catch (URISyntaxException ignored) {}
     }
 
     /**

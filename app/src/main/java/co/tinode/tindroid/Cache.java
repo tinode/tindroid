@@ -101,10 +101,6 @@ public class Cache {
         }
     }
 
-    public static void setServer(String serverHost, boolean useTLS) {
-        getTinode().setServer(serverHost, useTLS);
-    }
-
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
     public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l) {

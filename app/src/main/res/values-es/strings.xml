@@ -18,10 +18,8 @@
     <string name="action_cancel">Cancelar</string>
     <string name="settings_host_name">Dirección del servidor</string>
     <string name="settings_use_tls">Usar la conexión segura</string>
-    <string name="settings_wire_transport">Transporte de alambre</string>
     <string name="settings_tls_explained">Cifrar la conexión al servidor</string>
     <string name="settings_host_name_explained">Conectando al \'%1$s\'</string>
-    <string name="settings_wire_explained">Usando \'%1$s\'</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">sólo-lectura</string>

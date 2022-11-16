@@ -18,10 +18,8 @@
     <string name="action_cancel">Abbrechen</string>
     <string name="settings_host_name">Server-Adresse</string>
     <string name="settings_use_tls">Gesicherte Verbindung verwenden (TLS)</string>
-    <string name="settings_wire_transport">Übertragung per Kabel</string>
     <string name="settings_tls_explained">Verbindung zum Server verschlüsseln</string>
     <string name="settings_host_name_explained">Verbinden mit \'%1$s\'</string>
-    <string name="settings_wire_explained">Verwende \'%1$s\'</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">schreibgeschützt</string>

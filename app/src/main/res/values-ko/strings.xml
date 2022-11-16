@@ -18,10 +18,8 @@
     <string name="action_cancel">취소</string>
     <string name="settings_host_name">서버 주소</string>
     <string name="settings_use_tls">안전 연결 사용</string>
-    <string name="settings_wire_transport">유선 전송</string>
     <string name="settings_tls_explained">서버연결 암호화</string>
     <string name="settings_host_name_explained">\'%1$s\'에 연결</string>
-    <string name="settings_wire_explained">\'%1$s\' 사용</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">읽기전용</string>

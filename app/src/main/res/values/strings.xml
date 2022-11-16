@@ -28,10 +28,8 @@
     <string name="action_cancel">Cancel</string>
     <string name="settings_host_name">Server address</string>
     <string name="settings_use_tls">Use secure connection</string>
-    <string name="settings_wire_transport">Wire transport</string>
     <string name="settings_tls_explained">Encrypt connection to server</string>
     <string name="settings_host_name_explained">Connecting to \'%1$s\'</string>
-    <string name="settings_wire_explained">Using \'%1$s\'</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">read-only</string>

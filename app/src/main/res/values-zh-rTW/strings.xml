@@ -18,10 +18,8 @@
     <string name="action_cancel">取消</string>
     <string name="settings_host_name">伺服器位址</string>
     <string name="settings_use_tls">使用安全連線</string>
-    <string name="settings_wire_transport">Wire transport</string>
     <string name="settings_tls_explained">加密至伺服器的連線</string>
     <string name="settings_host_name_explained">正在連接至 \'%1$s\'</string>
-    <string name="settings_wire_explained">正在使用 \'%1$s\'</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">唯讀</string>

@@ -18,10 +18,8 @@
     <string name="action_cancel">Annuler</string>
     <string name="settings_host_name">Adresse du serveur</string>
     <string name="settings_use_tls">Utiliser une connxion sécurisée</string>
-    <string name="settings_wire_transport">Wire transport</string>
     <string name="settings_tls_explained">Chiffrer la connexion au serveur</string>
     <string name="settings_host_name_explained">Coonexion à \'%1$s\'</string>
-    <string name="settings_wire_explained">En utilisant \'%1$s\'</string>
 
     <!-- access mode definitions -->
     <string name="modeReadOnly">lecture seule</string>

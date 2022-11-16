@@ -16,10 +16,8 @@
     <string name="action_cancel">Отмена</string>
     <string name="settings_host_name">Адрес сервера</string>
     <string name="settings_use_tls">Защищённое соединение</string>
-    <string name="settings_wire_transport">Тип соединения</string>
     <string name="settings_tls_explained">Использовать защищённое (https) соединение</string>
     <string name="settings_host_name_explained">Соединение с сервером \'%1$s\'</string>
-    <string name="settings_wire_explained">Тип соединение \'%1$s\'</string>
 
     <string name="action_clear_messages">Очистить историю сообщений</string>
     <string name="action_view_contact">Посмотреть</string>

@@ -72,13 +72,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static ContentObserver sContactsObserver = null;
 
     // The Tinode cache is linked from here so it's never garbage collected.
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private static Cache sCache;
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
 
-    private static String sServerHost = null;
-    private static boolean sUseTLS = false;
+    //private static String sServerHost = null;
+    //private static boolean sUseTLS = false;
 
     public TindroidApp() {
         sContext = this;
@@ -108,7 +109,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     public static void retainCache(Cache cache) {
         sCache = cache;
-        Cache.setServer(sServerHost, sUseTLS);
     }
 
     // Detect if the code is running in an emulator.
@@ -189,17 +189,12 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
         // Check if preferences already exist. If not, create them.
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
-        sServerHost = pref.getString("pref_hostName", null);
-        if (TextUtils.isEmpty(sServerHost)) {
+        if (TextUtils.isEmpty(pref.getString(Utils.PREFS_HOST_NAME, null))) {
             // No preferences found. Save default values.
             SharedPreferences.Editor editor = pref.edit();
-            sServerHost = getDefaultHostName(this);
-            sUseTLS = getDefaultTLS();
-            editor.putString("pref_hostName", sServerHost);
-            editor.putBoolean("pref_useTLS", sUseTLS);
+            editor.putString(Utils.PREFS_HOST_NAME, getDefaultHostName(this));
+            editor.putBoolean(Utils.PREFS_USE_TLS, getDefaultTLS());
             editor.apply();
-        } else {
-            sUseTLS = pref.getBoolean("pref_useTLS", false);
         }
         // Event handlers for video calls.
         Cache.getTinode().addListener(new Tinode.EventListener() {
@@ -301,7 +296,10 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             @Override
             public void onAvailable(@NonNull Network network) {
                 super.onAvailable(network);
-                Cache.getTinode().reconnectNow(true, false, false);
+                if (!TextUtils.isEmpty(BaseDb.getInstance().getUid())) {
+                    // Connect right away if UID is available.
+                    Cache.getTinode().reconnectNow(true, false, false);
+                }
             }
         });
     }
@@ -350,7 +348,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
     @SuppressLint("StaticFieldLeak")
     private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
-
         @Override
         protected Void doInBackground(String... uidWrapper) {
             final AccountManager accountManager = AccountManager.get(TindroidApp.this);
@@ -388,8 +385,11 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     tinode.setAutoLoginToken(token);
                     // Connect and login.
                     try {
+                        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
                         // Sync call throws on error.
-                        tinode.connect(sServerHost, sUseTLS, false).getResult();
+                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName(TindroidApp.this)),
+                                pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
+                                false).getResult();
                         if (!tinode.isAuthenticated()) {
                             // The connection may already exist but not yet authenticated.
                             tinode.loginToken(token).getResult();
