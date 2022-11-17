@@ -423,9 +423,13 @@ public class Tinode {
      * @param background    this is a background connection: the server will delay user's online announcement for 5 sec.
      * @return PromisedReply to be resolved or rejected when the connection is completed.
      */
-    protected PromisedReply<ServerMessage> connect(@NotNull URI serverURI, boolean background) {
+    protected PromisedReply<ServerMessage> connect(@Nullable URI serverURI, boolean background) {
         synchronized (mConnLock) {
-            boolean sameHost = serverURI.equals(mServerURI);
+            if (serverURI == null && mServerURI == null) {
+                return new PromisedReply<>(new IllegalArgumentException("No host to connect to"));
+            }
+
+            boolean sameHost = serverURI != null && serverURI.equals(mServerURI);
             // Connection already exists and connected.
             if (mConnection != null) {
                 if (mConnection.isConnected() && sameHost) {
@@ -482,6 +486,12 @@ public class Tinode {
                 connectTo = createWebsocketURI(hostName, tls);
             } catch (URISyntaxException ex) {
                 return new PromisedReply<>(ex);
+            }
+        }
+        if (connectTo == null && mStore != null) {
+            String savedUri = mStore.getServerURI();
+            if (savedUri != null) {
+                connectTo = URI.create(mStore.getServerURI());
             }
         }
         return connect(connectTo, background);
