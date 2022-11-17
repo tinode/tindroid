@@ -583,8 +583,12 @@ public class Tinode {
      * @return Server URL.
      * @throws MalformedURLException thrown if server address is not yet configured.
      */
-    public URL getBaseUrl() throws MalformedURLException {
-        return new URL(getHttpOrigin() + "/v" + PROTOVERSION + "/");
+    public @NotNull URL getBaseUrl() throws MalformedURLException {
+        String base = getHttpOrigin();
+        if (base == null) {
+            throw new MalformedURLException("server URL not configured");
+        }
+        return new URL(base + "/v" + PROTOVERSION + "/");
     }
 
     /**
@@ -592,7 +596,11 @@ public class Tinode {
      *
      * @return server internet address
      */
-    public String getHttpOrigin() {
+    public @Nullable String getHttpOrigin() {
+        if (mServerURI == null) {
+            return null;
+        }
+
         boolean tls = mServerURI.getScheme().equals("wss");
         try {
             return new URL(tls ? "https" : "http", mServerURI.getHost(), mServerURI.getPort(), "").toString();
