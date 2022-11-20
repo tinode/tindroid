@@ -294,7 +294,8 @@ public class SqlStore implements Storage {
         return msg;
     }
 
-    private Storage.Message insertMessage(Topic topic, Drafty data, Map<String, Object> head, BaseDb.Status initialStatus) {
+    private Storage.Message insertMessage(Topic topic, Drafty data, Map<String, Object> head,
+                                          BaseDb.Status initialStatus) {
         StoredMessage msg = new StoredMessage();
         SQLiteDatabase db = mDbh.getWritableDatabase();
 

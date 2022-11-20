@@ -77,6 +77,7 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.SqlStore;
 import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
@@ -85,6 +86,7 @@ import co.tinode.tindroid.widgets.MovableActionButton;
 import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
@@ -454,7 +456,13 @@ public class MessagesFragment extends Fragment {
                                 }
                                 if (topicName.equals(mTopicName)) {
                                     long msgId = failure.getLong(AttachmentHandler.ARG_MSG_ID, -1L);
-                                    if (BaseDb.getInstance().getStore().getMessageById(msgId) != null) {
+                                    boolean fatal = failure.getBoolean(AttachmentHandler.ARG_FATAL, false);
+                                    SqlStore store = BaseDb.getInstance().getStore();
+                                    Storage.Message msg = store.getMessageById(msgId);
+                                    if (fatal && msg != null) {
+                                        store.msgDiscard(mTopic, msgId);
+                                    }
+                                    if (msg != null) {
                                         runMessagesLoader(mTopicName);
                                         String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();

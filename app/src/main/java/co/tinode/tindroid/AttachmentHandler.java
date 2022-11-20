@@ -82,6 +82,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_PROGRESS = "progress";
     final static String ARG_FILE_SIZE = "fileSize";
     final static String ARG_ERROR = "error";
+    final static String ARG_FATAL = "fatal";
     final static String ARG_MIME_TYPE = "mime";
     final static String ARG_AVATAR = "square_img";
     final static String ARG_IMAGE_WIDTH = "width";
@@ -426,9 +427,9 @@ public class AttachmentHandler extends Worker {
 
             if (uploadDetails.fileSize == 0) {
                 Log.w(TAG, "File size is zero; uri=" + uri + "; file=" + filePath);
-                store.msgDiscard(topic, msgId);
                 return ListenableWorker.Result.failure(
-                        result.putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
+                        result.putBoolean(ARG_FATAL, true)
+                                .putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
             }
 
             if (fname == null) {
@@ -457,6 +458,7 @@ public class AttachmentHandler extends Worker {
                                         R.string.attachment_too_large,
                                         UiUtils.bytesToHumanSize(uploadDetails.fileSize),
                                         UiUtils.bytesToHumanSize(maxFileUploadSize)))
+                                .putBoolean(ARG_FATAL, true)
                                 .build());
             } else {
                 if (is == null) {
