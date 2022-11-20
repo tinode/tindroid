@@ -227,6 +227,7 @@ public class MessageDb implements BaseColumns {
         BaseDb.Status status;
         if (msg.seq == 0) {
             msg.seq = TopicDb.getNextUnsentSeq(db, topic);
+            withEffSeq = msg.seq;
             status = msg.status == BaseDb.Status.UNDEFINED ? BaseDb.Status.QUEUED : msg.status;
         } else {
             status = BaseDb.Status.SYNCED;
@@ -288,6 +289,10 @@ public class MessageDb implements BaseColumns {
     }
 
     private static int getOriginalSeqFor(SQLiteDatabase db, long topicId, int effSeq) {
+        if (effSeq <= 0) {
+            return -1;
+        }
+
         try {
             return (int) db.compileStatement("SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
                     " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
