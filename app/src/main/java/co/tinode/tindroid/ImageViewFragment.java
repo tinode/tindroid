@@ -429,7 +429,10 @@ public class ImageViewFragment extends Fragment {
                 filename = getResources().getString(R.string.tinode_image);
             }
             Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-            MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp, filename, null);
+            String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,
+                    filename, null);
+            Toast.makeText(activity, savedAt != null ? R.string.image_download_success :
+                    R.string.failed_to_save_download, Toast.LENGTH_LONG).show();
         } else {
             return super.onOptionsItemSelected(item);
         }

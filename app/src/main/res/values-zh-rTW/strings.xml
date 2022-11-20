@@ -319,4 +319,7 @@
     <string name="voice_calls_limited">您將無法接聽某些來電。</string>
     <string name="copied_to_clipboard">拷貝成功</string>
     <string name="image_preview">圖像預覽</string>
+    <string name="image_download_success">圖片已保存到圖庫</string>
+    <string name="in_progress_call">通話中</string>
+    <string name="connecting_call">連接</string>
 </resources>

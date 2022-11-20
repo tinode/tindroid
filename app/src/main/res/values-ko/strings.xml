@@ -318,4 +318,7 @@
     <string name="voice_calls_limited">일부 수신 음성 전화를 받을 수 없습니다.</string>
     <string name="copied_to_clipboard">클립보드에 복사 되었습니다</string>
     <string name="image_preview">이미지 미리보기</string>
+    <string name="image_download_success">갤러리에 저장된 이미지</string>
+    <string name="in_progress_call">통화 중</string>
+    <string name="connecting_call">연결 호출</string>
 </resources>

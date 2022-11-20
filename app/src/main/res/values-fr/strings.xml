@@ -319,4 +319,7 @@
     <string name="voice_calls_limited">Vous ne pourrez pas recevoir certains appels vocaux entrants.</string>
     <string name="copied_to_clipboard">Copié dans le presse-papiers</string>
     <string name="image_preview">Aperçu de l\'image</string>
+    <string name="image_download_success">Image enregistrée dans la galerie</string>
+    <string name="in_progress_call">en cours</string>
+    <string name="connecting_call">de connexion</string>
 </resources>

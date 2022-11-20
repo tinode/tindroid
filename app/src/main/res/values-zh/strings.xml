@@ -320,4 +320,7 @@
     <string name="voice_calls_limited">您将无法接听某些来电。</string>
     <string name="copied_to_clipboard">复制成功</string>
     <string name="image_preview">图像预览</string>
+    <string name="image_download_success">图片已保存到画廊</string>
+    <string name="in_progress_call">通话中</string>
+    <string name="connecting_call">连接</string>
 </resources>
