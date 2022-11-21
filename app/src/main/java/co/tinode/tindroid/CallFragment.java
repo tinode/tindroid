@@ -784,7 +784,12 @@ public class CallFragment extends Fragment {
         String sdpMid = (String) m.getOrDefault("sdpMid", "");
         //noinspection ConstantConditions
         int sdpMLineIndex = (int) m.getOrDefault("sdpMLineIndex", 0);
-        String sdp = (String) m.getOrDefault("sdp", "");
+        String sdp = (String) m.getOrDefault("candidate", "");
+        if (sdp.isEmpty()) {
+            // Skip.
+            Log.e(TAG, "Invalid ICE candidate with an empty candidate SDP" + info.toString());
+            return;
+        }
 
         IceCandidate candidate = new IceCandidate(sdpMid, sdpMLineIndex, sdp);
         if (mCallInitialSetupComplete) {
