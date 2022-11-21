@@ -64,8 +64,8 @@ import okhttp3.Request;
 public class TindroidApp extends Application implements DefaultLifecycleObserver {
     private static final String TAG = "TindroidApp";
 
-    // 32 MB.
-    private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 32;
+    // 256 MB.
+    private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
 
     private static TindroidApp sContext;
 
