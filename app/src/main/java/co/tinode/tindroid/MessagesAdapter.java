@@ -1189,35 +1189,31 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                 case "EX":
                     // Attachment
-                    if (verifyStoragePermissions()) {
-                        String fname = null;
-                        String mimeType = null;
-                        try {
-                            fname = (String) data.get("name");
-                            mimeType = (String) data.get("mime");
-                        } catch (ClassCastException ignored) {
-                        }
+                    String fname = null;
+                    String mimeType = null;
+                    try {
+                        fname = (String) data.get("name");
+                        mimeType = (String) data.get("mime");
+                    } catch (ClassCastException ignored) {
+                    }
 
-                        // Try to extract file name from reference.
-                        if (TextUtils.isEmpty(fname)) {
-                            Object ref = data.get("ref");
-                            if (ref instanceof String) {
-                                try {
-                                    URL url = new URL((String) ref);
-                                    fname = url.getFile();
-                                } catch (MalformedURLException ignored) {
-                                }
+                    // Try to extract file name from reference.
+                    if (TextUtils.isEmpty(fname)) {
+                        Object ref = data.get("ref");
+                        if (ref instanceof String) {
+                            try {
+                                URL url = new URL((String) ref);
+                                fname = url.getFile();
+                            } catch (MalformedURLException ignored) {
                             }
                         }
-
-                        if (TextUtils.isEmpty(fname)) {
-                            fname = mActivity.getString(R.string.default_attachment_name);
-                        }
-
-                        AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
-                    } else {
-                        Toast.makeText(mActivity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
                     }
+
+                    if (TextUtils.isEmpty(fname)) {
+                        fname = mActivity.getString(R.string.default_attachment_name);
+                    }
+
+                    AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
                     break;
 
                 case "BN":
