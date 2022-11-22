@@ -85,7 +85,6 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -358,7 +357,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             if (!toDelete.isEmpty()) {
-                topic.delMessages(MsgRange.listToRanges(toDelete), true)
+                topic.delMessages(toDelete, true)
                         .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -899,15 +898,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
      * <p>
      * If the app does not has permission then the user will be prompted to grant permission.
      */
-    private boolean verifyStoragePermissions() {
+    private void verifyStoragePermissions() {
         // Check if we have write permission
         if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
             Log.d(TAG, "No permission to write to storage");
             ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
-            return false;
         }
-        return true;
     }
 
     // Run loader on UI thread
