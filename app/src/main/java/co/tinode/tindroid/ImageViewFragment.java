@@ -49,6 +49,13 @@ import co.tinode.tindroid.widgets.OverlaidImageView;
 public class ImageViewFragment extends Fragment {
     private static final String TAG = "ImageViewFragment";
 
+    private enum RemoteState {
+        NONE,
+        LOADING,
+        SUCCESS,
+        FAILED
+    }
+
     // Bitmaps coming from the camera could be way too big.
     // 1792 is roughly 3MP for square bitmaps.
     private static final int MAX_BITMAP_DIM = 1792;
@@ -77,6 +84,9 @@ public class ImageViewFragment extends Fragment {
     private OverlaidImageView mImageView;
     // This is an avatar preview before upload.
     private boolean mAvatarUpload;
+
+    // State of the remote image.
+    private RemoteState mRemoteState;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -185,7 +195,7 @@ public class ImageViewFragment extends Fragment {
         super.onResume();
 
         final Activity activity = getActivity();
-        Bundle args = getArguments();
+        final Bundle args = getArguments();
         if (activity == null || args == null) {
             return;
         }
@@ -198,14 +208,37 @@ public class ImageViewFragment extends Fragment {
         }
 
         mAvatarUpload = args.getBoolean(AttachmentHandler.ARG_AVATAR);
+        mRemoteState = RemoteState.NONE;
 
         mMatrix.reset();
 
-        String fileName = args.getString(AttachmentHandler.ARG_FILE_NAME);
-        if (TextUtils.isEmpty(fileName)) {
-            fileName = getResources().getString(R.string.tinode_image);
-        }
+        // ImageView is not laid out at this time. Must add an observer to get the size of the view.
+        mImageView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                // Ensure we call it only once.
+                mImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                mScreenRect = new RectF(0, 0, mImageView.getWidth(), mImageView.getHeight());
+                mCutOutRect = new RectF();
+                if (mScreenRect.width() > mScreenRect.height()) {
+                    mCutOutRect.left = (mScreenRect.width() - mScreenRect.height()) * 0.5f;
+                    mCutOutRect.right = mCutOutRect.left + mScreenRect.height();
+                    mCutOutRect.top = 0f;
+                    mCutOutRect.bottom = mScreenRect.height();
+                } else {
+                    mCutOutRect.top = (mScreenRect.height() - mScreenRect.width()) * 0.5f;
+                    mCutOutRect.bottom = mCutOutRect.top + mScreenRect.width();
+                    mCutOutRect.left = 0f;
+                    mCutOutRect.right = mScreenRect.width();
+                }
 
+                // Load bitmap into ImageView.
+                loadImage(activity, args);
+            }
+        });
+    }
+
+    private void loadImage(final Activity activity, final Bundle args) {
         // Check if the bitmap is directly attached.
         int length = 0;
         Bitmap bmp = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
@@ -222,6 +255,7 @@ public class ImageViewFragment extends Fragment {
             // Preview large image before sending.
             Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
             if (uri != null) {
+                // Local image.
                 final ContentResolver resolver = activity.getContentResolver();
                 // Resize image to ensure it's under the maximum in-band size.
                 try {
@@ -245,10 +279,45 @@ public class ImageViewFragment extends Fragment {
                     Log.i(TAG, "Failed to read image from " + uri, ex);
                 }
             } else {
+                // Remote image.
                 final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
                 if (ref != null) {
-                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    loadImage(ref, fileName, args);
+                    mRemoteState = RemoteState.LOADING;
+                    Picasso.get().load(ref)
+                            .error(R.drawable.ic_broken_image)
+                            .into(mImageView, new Callback() {
+                                @Override
+                                public void onSuccess() {
+                                    mRemoteState = RemoteState.SUCCESS;
+
+                                    Activity activity = getActivity();
+                                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                                        return;
+                                    }
+
+                                    Log.i(TAG, "Image loaded");
+
+                                    final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+                                    mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
+                                    mWorkingRect = new RectF(mInitialRect);
+                                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                                    mWorkingMatrix = new Matrix(mMatrix);
+                                    mImageView.setImageMatrix(mMatrix);
+                                    mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                                    mImageView.enableOverlay(false);
+
+                                    activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+                                    setupImagePostview(activity, args, bmp.getByteCount());
+                                }
+
+                                @Override
+                                public void onError(Exception e) {
+                                    mRemoteState = RemoteState.FAILED;
+                                    Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
+                                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                    setHasOptionsMenu(false);
+                                }
+                            });
                 }
             }
         }
@@ -269,107 +338,46 @@ public class ImageViewFragment extends Fragment {
                 setupImagePreview(activity);
             } else {
                 // The image is downloaded.
-                setupImagePostview(activity, args, fileName, length);
+                setupImagePostview(activity, args, length);
             }
 
             mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
-        } else {
-            // Show broken image.
-            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(),
-                    R.drawable.ic_broken_image, null));
-            activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
 
+            // Scale image appropriately.
+            if (mAvatarUpload) {
+                // Scale to fill mCutOutRect.
+                float scaling = 1f;
+                if (mInitialRect.width() < mCutOutRect.width()) {
+                    scaling = mCutOutRect.width() / mInitialRect.width();
+                }
+                if (mInitialRect.height() < mCutOutRect.height()) {
+                    scaling = Math.max(scaling, mCutOutRect.height() / mInitialRect.height());
+                }
+                if (scaling > 1f) {
+                    mMatrix.postScale(scaling, scaling, 0, 0);
+                }
+
+                // Center scaled image within the mCutOutRect.
+                mMatrix.mapRect(mWorkingRect, mInitialRect);
+                mMatrix.postTranslate(mCutOutRect.left + (mCutOutRect.width() - mWorkingRect.width()) * 0.5f,
+                        mCutOutRect.top + (mCutOutRect.height() - mWorkingRect.height()) * 0.5f);
+            } else {
+                mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+            }
+        } else if (mRemoteState != RemoteState.SUCCESS) {
+            // Show placeholder or a broken image.
+                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                mImageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                        mRemoteState == RemoteState.LOADING ?
+                                R.drawable.ic_image :
+                                R.drawable.ic_broken_image,
+                        null));
+            activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
             setHasOptionsMenu(false);
         }
 
-        // ImageView size is set later. Must add an observer to get the size.
-        mImageView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-            @Override
-            public void onGlobalLayout() {
-                // Ensure we call it only once.
-                mImageView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                mScreenRect = new RectF(0, 0, mImageView.getWidth(), mImageView.getHeight());
-                mCutOutRect = new RectF();
-                if (mScreenRect.width() > mScreenRect.height()) {
-                    mCutOutRect.left = (mScreenRect.width() - mScreenRect.height()) * 0.5f;
-                    mCutOutRect.right = mCutOutRect.left + mScreenRect.height();
-                    mCutOutRect.top = 0f;
-                    mCutOutRect.bottom = mScreenRect.height();
-                } else {
-                    mCutOutRect.top = (mScreenRect.height() - mScreenRect.width()) * 0.5f;
-                    mCutOutRect.bottom = mCutOutRect.top + mScreenRect.width();
-                    mCutOutRect.left = 0f;
-                    mCutOutRect.right = mScreenRect.width();
-                }
-
-                if (mAvatarUpload) {
-                    // Scale to fill mCutOutRect.
-                    float scaling = 1f;
-                    if (mInitialRect.width() < mCutOutRect.width()) {
-                        scaling = mCutOutRect.width() / mInitialRect.width();
-                    }
-                    if (mInitialRect.height() < mCutOutRect.height()) {
-                        scaling = Math.max(scaling, mCutOutRect.height() / mInitialRect.height());
-                    }
-                    if (scaling > 1f) {
-                        mMatrix.postScale(scaling, scaling, 0, 0);
-                    }
-
-                    // Center scaled image within the mCutOutRect.
-                    mMatrix.mapRect(mWorkingRect, mInitialRect);
-                    mMatrix.postTranslate(mCutOutRect.left + (mCutOutRect.width() - mWorkingRect.width()) * 0.5f,
-                            mCutOutRect.top + (mCutOutRect.height() - mWorkingRect.height()) * 0.5f);
-                } else if (mInitialRect != null) {
-                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
-                }
-                mWorkingMatrix = new Matrix(mMatrix);
-
-                mImageView.setImageMatrix(mMatrix);
-            }
-        });
-    }
-
-    private void loadImage(final Uri ref, final String fn, final Bundle args) {
-        Picasso.get().load(ref)
-                .placeholder(R.drawable.ic_image)
-                .error(R.drawable.ic_broken_image)
-                .centerInside().fit().into(mImageView, new Callback() {
-                    @Override
-                    public void onSuccess() {
-                        Activity activity = getActivity();
-                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                            return;
-                        }
-
-                        if (mScreenRect == null) {
-                            Log.e(TAG, "Image loaded before ImageView is ready");
-                            return;
-                        }
-
-                        Drawable drw = mImageView.getDrawable();
-                        if (drw instanceof BitmapDrawable) {
-                            Bitmap bmp = ((BitmapDrawable) drw).getBitmap();
-                            if (bmp != null) {
-                                mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
-                                mWorkingRect = new RectF(mInitialRect);
-                                mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
-                                mWorkingMatrix = new Matrix(mMatrix);
-                                mImageView.setImageMatrix(mMatrix);
-                                mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-                                mImageView.enableOverlay(false);
-                                activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
-                                setupImagePostview(activity, args, fn, bmp.getByteCount());
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onError(Exception e) {
-                        Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
-                    }
-                });
-
+        mWorkingMatrix = new Matrix(mMatrix);
+        mImageView.setImageMatrix(mMatrix);
     }
 
     @Override
@@ -379,7 +387,7 @@ public class ImageViewFragment extends Fragment {
         Picasso.get().cancelRequest(mImageView);
     }
 
-    // Setup fields for image preview
+    // Setup fields for image preview.
     private void setupImagePreview(final Activity activity) {
         if (mAvatarUpload) {
             activity.findViewById(R.id.acceptAvatar).setVisibility(View.VISIBLE);
@@ -393,7 +401,12 @@ public class ImageViewFragment extends Fragment {
     }
 
     // Setup fields for viewing downloaded image
-    private void setupImagePostview(final Activity activity, Bundle args, String fileName, long length) {
+    private void setupImagePostview(final Activity activity, Bundle args, long length) {
+        String fileName = args.getString(AttachmentHandler.ARG_FILE_NAME);
+        if (TextUtils.isEmpty(fileName)) {
+            fileName = getResources().getString(R.string.tinode_image);
+        }
+
         // The received image is viewed.
         String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
         activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);

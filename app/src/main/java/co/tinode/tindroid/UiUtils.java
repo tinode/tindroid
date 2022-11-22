@@ -1332,7 +1332,8 @@ public class UiUtils {
 
     static String bytesToHumanSize(long bytes) {
         if (bytes <= 0) {
-            return "0 Bytes";
+            // 0x202F - narrow non-breaking space.
+            return "0\u202FBytes";
         }
 
         String[] sizes = new String[]{"Bytes", "KB", "MB", "GB", "TB"};
@@ -1341,7 +1342,7 @@ public class UiUtils {
         int roundTo = bucket > 0 ? (count < 3 ? 2 : (count < 30 ? 1 : 0)) : 0;
         NumberFormat fmt = DecimalFormat.getInstance();
         fmt.setMaximumFractionDigits(roundTo);
-        return fmt.format(count) + " " + sizes[bucket];
+        return fmt.format(count) + "\u202F" + sizes[bucket];
     }
 
     @Nullable
