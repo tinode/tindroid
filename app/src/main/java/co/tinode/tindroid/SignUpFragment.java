@@ -184,7 +184,7 @@ public class SignUpFragment extends Fragment
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                 // Try to create a new account.
                                 MetaSetDesc<VxCard, String> meta = new MetaSetDesc<>(theCard, null);
-                                meta.attachments = theCard.getPhotoAttachment();
+                                meta.attachments = theCard.getPhotoRefs();
                                 return tinode.createAccountBasic(
                                         login, password, true, null, meta,
                                         Credential.append(null, new Credential("email", email)));

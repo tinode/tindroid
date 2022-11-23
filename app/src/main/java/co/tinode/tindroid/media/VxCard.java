@@ -91,18 +91,6 @@ public class VxCard extends TheCard {
         }
     }
 
-    /**
-     * If Photo is an external reference, return it as a string array with one element.
-     * @return photo URL or null of photo does not exist or is not a reference.
-     */
-    @JsonIgnore
-    public String[] getPhotoAttachment() {
-       if (photo != null && photo.ref != null) {
-           return new String[] { photo.ref };
-       }
-       return null;
-    }
-
     private static Photo serializeBitmap(Bitmap bmp) {
         if (bmp != null) {
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();

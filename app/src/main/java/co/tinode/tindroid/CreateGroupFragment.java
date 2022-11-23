@@ -42,8 +42,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for adding/editing a group topic
  */
 public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPreviewer {
-
-    private static final String TAG = "CreateGroupFragment";
     private static final int LOADER_ID = 102;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -222,10 +220,10 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         AttachmentHandler.uploadAvatar(topic.getPub(), avatar, null)
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                         return topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                                 for (String user : members) {
                                     topic.invite(user, null /* use default */);
                                 }
