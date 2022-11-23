@@ -188,7 +188,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
         final View uploadAvatar = activity.findViewById(R.id.uploadAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView comment = activity.findViewById(R.id.topicComment);
         final TextView description = activity.findViewById(R.id.topicDescription);
         final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
@@ -214,7 +214,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
         PrivateType priv = mTopic.getPriv();
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
-            subtitle.setText(priv.getComment());
+            comment.setText(priv.getComment());
         }
     }
 
@@ -234,10 +234,10 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             }
 
             final String newTitle = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
-            final String newSubtitle = ((TextView) activity.findViewById(R.id.topicSubtitle)).getText().toString().trim();
+            final String newComment = ((TextView) activity.findViewById(R.id.topicComment)).getText().toString().trim();
             final String newDescription = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
 
-            UiUtils.updateTopicDesc(mTopic, newTitle, newSubtitle, newDescription)
+            UiUtils.updateTopicDesc(mTopic, newTitle, newComment, newDescription)
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {

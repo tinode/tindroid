@@ -348,7 +348,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         String topicName = mTopic.getName();
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = activity.findViewById(R.id.topicSubtitle);
+        final TextView subtitle = activity.findViewById(R.id.topicComment);
         final TextView description = activity.findViewById(R.id.topicDescription);
 
         VxCard pub = mTopic.getPub();
