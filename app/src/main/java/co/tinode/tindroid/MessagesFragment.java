@@ -935,8 +935,8 @@ public class MessagesFragment extends Fragment {
         mAudioRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mAudioRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mAudioRecorder.setMaxDuration(MAX_DURATION); // 10 minutes.
-        mAudioRecorder.setAudioEncodingBitRate(16);
-        mAudioRecorder.setAudioSamplingRate(16000);
+        mAudioRecorder.setAudioEncodingBitRate(24_000);
+        mAudioRecorder.setAudioSamplingRate(16_000);
         mAudioRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
 
         if (AcousticEchoCanceler.isAvailable()) {
