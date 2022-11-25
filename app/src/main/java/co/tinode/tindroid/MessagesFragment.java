@@ -814,6 +814,7 @@ public class MessagesFragment extends Fragment {
         String draft = input.getText().toString().trim();
         Bundle args = getArguments();
         if (args != null) {
+            args.putString("topic", mTopicName);
             args.putString(MESSAGE_TO_SEND, draft);
             args.putInt(MESSAGE_REPLY_ID, mReplySeqID);
             args.putSerializable(MESSAGE_REPLY, mReply);
@@ -1363,7 +1364,6 @@ public class MessagesFragment extends Fragment {
                 mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
                 mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
                 mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
-                Log.i(TAG, "topicChanged " + mContentToForward, new Exception("stacktrace"));
 
                 // Clear used arguments.
                 args.remove(MESSAGE_TO_SEND);
