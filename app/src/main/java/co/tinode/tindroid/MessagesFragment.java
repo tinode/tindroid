@@ -61,7 +61,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.core.view.ContentInfoCompat;
@@ -499,7 +498,7 @@ public class MessagesFragment extends Fragment {
 
         mRefresher.setRefreshing(false);
 
-        updateFormValues(args);
+        updateFormValues();
         activity.sendNoteRead(0);
     }
 
@@ -726,7 +725,7 @@ public class MessagesFragment extends Fragment {
         return audio;
     }
 
-    private void updateFormValues(Bundle args) {
+    private void updateFormValues() {
         if (!isAdded()) {
             return;
         }
@@ -760,20 +759,6 @@ public class MessagesFragment extends Fragment {
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(
                     acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
-        }
-
-        if (args != null) {
-            mMessageToSend = args.getString(MESSAGE_TO_SEND);
-            mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
-            mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
-            mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
-            mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
-            // Clear used arguments.
-            args.remove(MESSAGE_TO_SEND);
-            args.remove(MESSAGE_REPLY_ID);
-            args.remove(MESSAGE_REPLY);
-            args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
-            args.remove(ForwardToFragment.FORWARDING_FROM_USER);
         }
 
         if (!mTopic.isWriter() || mTopic.isBlocked() || mTopic.isDeleted()) {
@@ -1138,7 +1123,7 @@ public class MessagesFragment extends Fragment {
                         intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
                         startActivity(intent);
                     } else {
-                        activity.runOnUiThread(() -> updateFormValues(null));
+                        activity.runOnUiThread(() -> updateFormValues());
                     }
                     return null;
                 }
@@ -1155,7 +1140,7 @@ public class MessagesFragment extends Fragment {
     @SuppressLint("NotifyDataSetChanged")
     void notifyDataSetChanged(boolean meta) {
         if (meta) {
-            updateFormValues(null);
+            updateFormValues();
         } else {
             mMessagesAdapter.notifyDataSetChanged();
         }
@@ -1361,6 +1346,7 @@ public class MessagesFragment extends Fragment {
     }
 
     void topicChanged(String topicName, boolean reset) {
+        boolean changed = (mTopicName == null || !mTopicName.equals(topicName));
         mTopicName = topicName;
         if (mTopicName != null) {
             //noinspection unchecked
@@ -1368,7 +1354,27 @@ public class MessagesFragment extends Fragment {
         } else {
             mTopic = null;
         }
-        updateFormValues(getArguments());
+
+        if (changed) {
+            Bundle args = getArguments();
+            if (args != null) {
+                mMessageToSend = args.getString(MESSAGE_TO_SEND);
+                mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
+                mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
+                mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
+                mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
+                Log.i(TAG, "topicChanged " + mContentToForward, new Exception("stacktrace"));
+
+                // Clear used arguments.
+                args.remove(MESSAGE_TO_SEND);
+                args.remove(MESSAGE_REPLY_ID);
+                args.remove(MESSAGE_REPLY);
+                args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
+                args.remove(ForwardToFragment.FORWARDING_FROM_USER);
+            }
+        }
+
+        updateFormValues();
         if (reset) {
             runMessagesLoader(mTopicName);
         }
@@ -1404,7 +1410,7 @@ public class MessagesFragment extends Fragment {
                     Operation op = AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity,
                             AttachmentHandler.ARG_OPERATION_IMAGE, args);
                     if (op != null) {
-                        op.getResult().addListener((Runnable) () -> {
+                        op.getResult().addListener(() -> {
                                     if (activity.isFinishing() || activity.isDestroyed()) {
                                         return;
                                     }
