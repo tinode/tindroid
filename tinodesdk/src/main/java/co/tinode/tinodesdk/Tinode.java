@@ -101,6 +101,9 @@ public class Tinode {
             MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT, MAX_TAG_LENGTH, MIN_TAG_LENGTH,
             MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE};
 
+    private static final String UPLOAD_PATH = "/file/u/";
+    private static final String DOWNLOAD_PATH = "/file/s/";
+
     // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
 
@@ -1125,10 +1128,10 @@ public class Tinode {
      *
      * @return LargeFileHelper object.
      */
-    public LargeFileHelper getFileUploader() {
+    public LargeFileHelper getLargeFileHelper() {
         URL url = null;
         try {
-            url = new URL(getBaseUrl(), "./file/u/");
+            url = new URL(getBaseUrl(), "." + UPLOAD_PATH);
         } catch (MalformedURLException ignored) {
         }
         return new LargeFileHelper(url, getApiKey(), getAuthToken(), makeUserAgent());
