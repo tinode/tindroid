@@ -42,8 +42,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for adding/editing a group topic
  */
 public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPreviewer {
-
-    private static final String TAG = "CreateGroupFragment";
     private static final int LOADER_ID = 102;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -179,9 +177,15 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 topicTitle = topicTitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
             }
 
-            String subtitle = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
-            if (subtitle.length() > UiUtils.MAX_TITLE_LENGTH) {
-                subtitle = subtitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+            String description = ((EditText) activity.findViewById(R.id.topicDescription)).getText().toString();
+            if (description.length() > UiUtils.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, UiUtils.MAX_DESCRIPTION_LENGTH);
+            }
+
+            // Private comment.
+            String pcomment = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
+            if (pcomment.length() > UiUtils.MAX_TITLE_LENGTH) {
+                pcomment = pcomment.substring(0, UiUtils.MAX_TITLE_LENGTH);
             }
 
             final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
@@ -201,7 +205,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 // If image is not loaded, the drawable is a vector. Ignore it.
             }
 
-            createTopic(activity, topicTitle, bmp, subtitle, isChannel, UiUtils.parseTags(tags), members);
+            createTopic(activity, topicTitle, bmp, description, pcomment, isChannel, UiUtils.parseTags(tags), members);
         });
     }
 
@@ -213,19 +217,20 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
         restartLoader((StartChatActivity) getActivity());
     }
 
-    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String subtitle,
-                             final boolean isChannel, final String[] tags, final String[] members) {
+    private void createTopic(final Activity activity, final String title, final Bitmap avatar, final String description,
+                             final String pcomment, final boolean isChannel, final String[] tags,
+                             final String[] members) {
         final ComTopic<VxCard> topic = new ComTopic<>(Cache.getTinode(), null, isChannel);
-        topic.setComment(subtitle);
+        topic.setComment(pcomment);
         topic.setTags(tags);
-        topic.setPub(new VxCard(title));
+        topic.setPub(new VxCard(title, description));
         AttachmentHandler.uploadAvatar(topic.getPub(), avatar, null)
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                         return topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                                 for (String user : members) {
                                     topic.invite(user, null /* use default */);
                                 }

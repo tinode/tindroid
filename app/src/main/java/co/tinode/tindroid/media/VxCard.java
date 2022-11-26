@@ -24,21 +24,13 @@ public class VxCard extends TheCard {
     public VxCard() {
     }
 
-    public VxCard(String fullName, byte[] avatar, String avatarImageType) {
-        super(fullName, avatar, avatarImageType);
-        constructBitmap();
-    }
-
-    public VxCard(String fullName, Bitmap bmp) {
-        fn = fullName;
-        if (bmp != null) {
-            mImage = bmp;
-            photo = serializeBitmap(bmp);
-        }
-    }
-
     public VxCard(String fullName) {
         fn = fullName;
+    }
+
+    public VxCard(String fullName, String note) {
+        this.fn = fullName;
+        this.note = note;
     }
 
     @Override
@@ -89,18 +81,6 @@ public class VxCard extends TheCard {
                 mImage = null;
             }
         }
-    }
-
-    /**
-     * If Photo is an external reference, return it as a string array with one element.
-     * @return photo URL or null of photo does not exist or is not a reference.
-     */
-    @JsonIgnore
-    public String[] getPhotoAttachment() {
-       if (photo != null && photo.ref != null) {
-           return new String[] { photo.ref };
-       }
-       return null;
     }
 
     private static Photo serializeBitmap(Bitmap bmp) {

@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -154,6 +155,15 @@ public class SignUpFragment extends Fragment
             fullName = fn;
         }
 
+        String description = ((EditText) parent.findViewById(R.id.userDescription)).getText().toString().trim();
+        if (!TextUtils.isEmpty(description)) {
+            if (description.length() > UiUtils.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, UiUtils.MAX_DESCRIPTION_LENGTH);
+            }
+        } else {
+            description = null;
+        }
+
         final Button signUp = parent.findViewById(R.id.signUp);
         signUp.setEnabled(false);
 
@@ -163,7 +173,7 @@ public class SignUpFragment extends Fragment
 
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
-        final VxCard theCard = new VxCard(fullName);
+        final VxCard theCard = new VxCard(fullName, description);
         Drawable dr = avatar.getDrawable();
         final Bitmap bmp;
         if (dr instanceof BitmapDrawable) {
@@ -184,7 +194,7 @@ public class SignUpFragment extends Fragment
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                 // Try to create a new account.
                                 MetaSetDesc<VxCard, String> meta = new MetaSetDesc<>(theCard, null);
-                                meta.attachments = theCard.getPhotoAttachment();
+                                meta.attachments = theCard.getPhotoRefs();
                                 return tinode.createAccountBasic(
                                         login, password, true, null, meta,
                                         Credential.append(null, new Credential("email", email)));

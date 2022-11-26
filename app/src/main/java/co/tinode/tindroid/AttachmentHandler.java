@@ -3,15 +3,18 @@ package co.tinode.tindroid;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
@@ -223,80 +226,102 @@ public class AttachmentHandler extends Worker {
     static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String, Object> data,
                                           String fname, String mimeType) {
         long downloadId = -1;
-        // Create file in a downloads directory by default.
-        File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File file = new File(path, fname);
-        Uri fileUri = Uri.fromFile(file);
-
-        if (TextUtils.isEmpty(mimeType)) {
-            mimeType = UiUtils.getMimeType(fileUri);
-            if (mimeType == null) {
-                mimeType = "*/*";
-            }
-        }
-
-        FileOutputStream fos = null;
-        try {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                Log.w(TAG, "External storage not mounted: " + path);
-            } else if (!(path.mkdirs() || path.isDirectory())) {
-                Log.w(TAG, "Path is not a directory - " + path);
-            }
-
-            Object ref = data.get("ref");
-            if (ref instanceof String) {
+        Object ref = data.get("ref");
+        if (ref instanceof String) {
+            try {
                 URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
                 String scheme = url.getProtocol();
                 // Make sure the file is downloaded over http or https protocols.
                 if (scheme.equals("http") || scheme.equals("https")) {
-                    LargeFileHelper lfh = Cache.getTinode().getFileUploader();
-                    downloadId = startDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
+                    LargeFileHelper lfh = Cache.getTinode().getLargeFileHelper();
+                    downloadId = remoteDownload(activity, Uri.parse(url.toString()), fname, mimeType, lfh.headers());
                 } else {
                     Log.w(TAG, "Unsupported transport protocol '" + scheme + "'");
                     Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                 }
-            } else {
-                Object val = data.get("val");
-                if (val != null) {
-                    fos = new FileOutputStream(file);
-                    fos.write(val instanceof String ?
-                            Base64.decode((String) val, Base64.DEFAULT) :
-                            (byte[]) val);
+            } catch (MalformedURLException ex) {
+                Log.w(TAG, "Server address is not yet configured", ex);
+                Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Object val = data.get("val");
+            byte[] bits = val instanceof String ? Base64.decode((String) val, Base64.DEFAULT) :
+                    val instanceof byte[] ? (byte[]) val : null;
+            if (bits == null) {
+                Log.w(TAG, "Invalid or missing attachment");
+                Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+                return downloadId;
+            }
 
-                    Intent intent = new Intent();
-                    intent.setAction(android.content.Intent.ACTION_VIEW);
-                    intent.setDataAndType(FileProvider.getUriForFile(activity,
-                            "co.tinode.tindroid.provider", file), mimeType);
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    try {
-                        activity.startActivity(intent);
-                    } catch (ActivityNotFoundException ignored) {
-                        activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
-                    }
-                } else {
-                    Log.w(TAG, "Invalid or missing attachment");
-                    Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
+            // Create file in a downloads directory by default.
+            File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            // Make sure Downloads folder exists.
+            path.mkdirs();
+
+            File file = new File(path, fname);
+
+            if (TextUtils.isEmpty(mimeType)) {
+                mimeType = UiUtils.getMimeType(Uri.fromFile(file));
+                if (mimeType == null) {
+                    mimeType = "*/*";
                 }
             }
 
-        } catch (NullPointerException | ClassCastException | IOException ex) {
-            Log.w(TAG, "Failed to save attachment to storage", ex);
-            Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
-        } catch (ActivityNotFoundException ex) {
-            Log.w(TAG, "No application can handle downloaded file");
-            Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (Exception ignored) {
+            Uri result;
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    // Save file to local storage.
+                    fos.write(bits);
+                    result = FileProvider.getUriForFile(activity, "co.tinode.tindroid.provider", file);
+                } catch (IOException ex) {
+                    Log.w(TAG, "Failed to save attachment to storage", ex);
+                    Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
+                    return downloadId;
                 }
+            } else {
+                ContentValues cv = new ContentValues();
+                cv.put(MediaStore.Downloads.DISPLAY_NAME, fname);
+                cv.put(MediaStore.Downloads.MIME_TYPE, mimeType);
+                cv.put(MediaStore.Downloads.IS_PENDING, 1);
+                ContentResolver resolver = activity.getContentResolver();
+                Uri dst = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                result = resolver.insert(dst, cv);
+                if (result != null) {
+                    try {
+                        new ParcelFileDescriptor.
+                                AutoCloseOutputStream(resolver.openFileDescriptor(result, "w")).write(bits);
+                    } catch (IOException ex) {
+                        Log.w(TAG, "Failed to save attachment to media storage", ex);
+                        Toast.makeText(activity, R.string.failed_to_save_download, Toast.LENGTH_SHORT).show();
+                        return downloadId;
+                    }
+                    cv.clear();
+                    cv.put(MediaStore.Downloads.IS_PENDING, 0);
+                    resolver.update(result, cv, null, null);
+                }
+            }
+
+            // Make the downloaded file is visible.
+            MediaScannerConnection.scanFile(activity,
+                    new String[]{file.toString()}, null, null);
+
+            // Open downloaded file.
+            Intent intent = new Intent();
+            intent.setAction(Intent.ACTION_VIEW);
+            intent.setDataAndType(result, mimeType);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            try {
+                activity.startActivity(intent);
+            } catch (ActivityNotFoundException ex) {
+                Log.w(TAG, "No application can handle downloaded file", ex);
+                Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
+                activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
             }
         }
         return downloadId;
     }
 
-    private static long startDownload(AppCompatActivity activity, final Uri uri, final String fname, final String mime,
+    private static long remoteDownload(AppCompatActivity activity, final Uri uri, final String fname, final String mime,
                                       final Map<String, String> headers) {
 
         DownloadManager dm = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -503,7 +528,7 @@ public class AttachmentHandler extends Worker {
                             .putLong(ARG_FILE_SIZE, uploadDetails.fileSize).build());
 
                     // Upload then send message with a link. This is a long-running blocking call.
-                    mUploader = Cache.getTinode().getFileUploader();
+                    mUploader = Cache.getTinode().getLargeFileHelper();
                     ServerMessage msg = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
                             topicName, (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
@@ -658,7 +683,7 @@ public class AttachmentHandler extends Worker {
                 // Generate small avatar preview.
                 pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
-                LargeFileHelper uploader = Cache.getTinode().getFileUploader();
+                LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
                 result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
                                 topicName, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override

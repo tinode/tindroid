@@ -49,7 +49,7 @@
             tools:text="Travel or flowers" />
 
         <TextView
-            android:id="@+id/topicSubtitle"
+            android:id="@+id/topicComment"
             style="@style/textSecondary"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

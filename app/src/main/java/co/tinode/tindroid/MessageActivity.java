@@ -218,8 +218,13 @@ public class MessageActivity extends AppCompatActivity
         mTinodeListener = new MessageEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
 
-        // Get the topic name from intent, internal or external.
-        if (!changeTopic(readTopicNameFromIntent(intent), false)) {
+        // If topic name is not saved, get it from intent, internal or external.
+        String topicName = mTopicName;
+        if (TextUtils.isEmpty(mTopicName)) {
+            topicName = readTopicNameFromIntent(intent);
+        }
+
+        if (!changeTopic(topicName, false)) {
             Cache.setSelectedTopicName(null);
             finish();
             return;

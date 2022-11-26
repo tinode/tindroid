@@ -40,7 +40,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
     public PromisedReply<ServerMessage> subscribe() {
         if (isNew()) {
             MetaSetDesc<DP, PrivateType> desc = new MetaSetDesc<>(mDesc.pub, mDesc.priv);
-            if (mDesc.pub != null && mDesc.pub.isPhotoRef()) {
+            if (mDesc.pub != null) {
                 desc.attachments = mDesc.pub.getPhotoRefs();
             }
             return subscribe(new MsgSetMeta<>(desc, null, mTags, null), null);
