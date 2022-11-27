@@ -556,7 +556,16 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
                     fname.substring(fname.length() - MAX_FILE_LENGTH/2);
         }
+
         result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        try {
+            //noinspection ConstantConditions
+            String size = UiUtils.bytesToHumanSize((int) data.get("size"));
+            if (!TextUtils.isEmpty(size)) {
+                result.append("\u2009(" + size +")", new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        } catch (NullPointerException | ClassCastException ignored) {
+        }
 
         if (mClicker == null) {
             return result;

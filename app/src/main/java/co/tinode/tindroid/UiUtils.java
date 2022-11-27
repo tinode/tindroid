@@ -1330,7 +1330,7 @@ public class UiUtils {
         return null;
     }
 
-    static String bytesToHumanSize(long bytes) {
+    public static String bytesToHumanSize(long bytes) {
         if (bytes <= 0) {
             // 0x202F - narrow non-breaking space.
             return "0\u202FBytes";
