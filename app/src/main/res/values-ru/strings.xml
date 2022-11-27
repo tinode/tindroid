@@ -168,7 +168,7 @@
     <string name="peers_messaging_disabled">Чат заблокирован у корреспондента</string>
     <string name="action_enable">Разблокировать</string>
     <string name="find">Найти</string>
-    <string name="by_id">По адресу</string>
+    <string name="by_id">По ID</string>
     <string name="group">Группа</string>
     <string name="id_required">адрес обязателен</string>
     <string name="settings">Настройки</string>
