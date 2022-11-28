@@ -1087,180 +1087,208 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             switch (type) {
                 case "AU":
-                    // Audio play/pause.
-                    if (data != null) {
-                        try {
-                            FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
-                            if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                                String url = getPayloadUrl(data);
-                                if (url != null) {
-                                    if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                                        initAudioPlayer(mSeqId, url, aca.control);
-                                    }
-                                    mAudioPlayer.start();
-                                }
-                            } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
-                                if (mAudioPlayer != null) {
-                                    mAudioPlayer.pause();
-                                }
-                            } else if (aca.seekTo != null) {
-                                if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                                    String url = getPayloadUrl(data);
-                                    if (url != null) {
-                                        initAudioPlayer(mSeqId, url, aca.control);
-                                    }
-                                }
-                                if (mAudioPlayer != null) {
-                                    long duration = mAudioPlayer.getDuration();
-                                    if (duration > 0) {
-                                        mAudioPlayer.seekTo((int) (aca.seekTo * duration));
-                                    } else {
-                                        Log.i(TAG, "Audio has no duration");
-                                    }
-                                }
-                            }
-                        } catch (IOException | ClassCastException ignored) {
-                            Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                        }
-                    }
+                    // Pause/resume audio.
+                    clickAudio(data, params);
                     break;
 
                 case "LN":
                     // Click on an URL
-                    try {
-                        if (data != null) {
-                            URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
-                            String scheme = url.getProtocol();
-                            if (!scheme.equals("http") && !scheme.equals("https")) {
-                                // As a security measure refuse to follow URLs with non-http(s) protocols.
-                                break;
-                            }
-                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
-                        }
-                    } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
-                    }
+                    clickLink(data);
                     break;
 
                 case "IM":
                     // Image
-                    Bundle args = null;
-                    if (data != null) {
-                        Object val;
-                        if ((val = data.get("ref")) instanceof String) {
-                            URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                            // URL is null when the image is not sent yet.
-                            if (url != null) {
-                                args = new Bundle();
-                                args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                            }
-                        }
-
-                        if (args == null && (val = data.get("val")) != null) {
-                            byte[] bytes = val instanceof String ?
-                                    Base64.decode((String) val, Base64.DEFAULT) :
-                                    val instanceof byte[] ? (byte[]) val : null;
-                            if (bytes != null) {
-                                args = new Bundle();
-                                args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                            }
-                        }
-
-                        if (args != null) {
-                            try {
-                                args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                                args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                                //noinspection ConstantConditions
-                                args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                                //noinspection ConstantConditions
-                                args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                            } catch (NullPointerException | ClassCastException ex) {
-                                Log.i(TAG, "Invalid type of image parameters", ex);
-                            }
-                        }
-                    }
-
-                    if (args != null) {
-                        mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-                    } else {
-                        Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-                    }
-
+                    clickImage(data);
                     break;
 
                 case "EX":
                     // Attachment
-                    String fname = null;
-                    String mimeType = null;
-                    try {
-                        fname = (String) data.get("name");
-                        mimeType = (String) data.get("mime");
-                    } catch (ClassCastException ignored) {
-                    }
-
-                    // Try to extract file name from reference.
-                    if (TextUtils.isEmpty(fname)) {
-                        Object ref = data.get("ref");
-                        if (ref instanceof String) {
-                            try {
-                                URL url = new URL((String) ref);
-                                fname = url.getFile();
-                            } catch (MalformedURLException ignored) {
-                            }
-                        }
-                    }
-
-                    if (TextUtils.isEmpty(fname)) {
-                        fname = mActivity.getString(R.string.default_attachment_name);
-                    }
-
-                    AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+                    clickAttachment(data);
                     break;
 
                 case "BN":
                     // Button
-                    if (data != null) {
-                        try {
-                            String actionType = (String) data.get("act");
-                            String actionValue = (String) data.get("val");
-                            String name = (String) data.get("name");
-                            // StoredMessage msg = getMessage(mPosition);
-                            if ("pub".equals(actionType)) {
-                                Drafty newMsg = new Drafty((String) data.get("title"));
-                                Map<String, Object> json = new HashMap<>();
-                                // {"seq":6,"resp":{"yes":1}}
-                                if (!TextUtils.isEmpty(name)) {
-                                    Map<String, Object> resp = new HashMap<>();
-                                    // noinspection
-                                    resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
-                                    json.put("resp", resp);
-                                }
+                    clickButton(data);
+                    break;
+            }
+        }
 
-                                json.put("seq", "" + mSeqId);
-                                newMsg.attachJSON(json);
-                                mActivity.sendMessage(newMsg, -1);
+        private void clickAttachment(Map<String, Object> data) {
+            if (data == null) {
+                return;
+            }
 
-                            } else if ("url".equals(actionType)) {
-                                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
-                                String scheme = url.getProtocol();
-                                if (!scheme.equals("http") && !scheme.equals("https")) {
-                                    // As a security measure refuse to follow URLs with non-http(s) protocols.
-                                    break;
-                                }
-                                Uri uri = Uri.parse(url.toString());
-                                Uri.Builder builder = uri.buildUpon();
-                                if (!TextUtils.isEmpty(name)) {
-                                    builder = builder.appendQueryParameter(name,
-                                            TextUtils.isEmpty(actionValue) ? "1" : actionValue);
-                                }
-                                builder = builder
-                                        .appendQueryParameter("seq", "" + mSeqId)
-                                        .appendQueryParameter("uid", Cache.getTinode().getMyId());
-                                mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
-                            }
-                        } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            String fname = null;
+            String mimeType = null;
+            try {
+                fname = (String) data.get("name");
+                mimeType = (String) data.get("mime");
+            } catch (ClassCastException ignored) {
+            }
+
+            // Try to extract file name from reference.
+            if (TextUtils.isEmpty(fname)) {
+                Object ref = data.get("ref");
+                if (ref instanceof String) {
+                    try {
+                        URL url = new URL((String) ref);
+                        fname = url.getFile();
+                    } catch (MalformedURLException ignored) {
+                    }
+                }
+            }
+
+            if (TextUtils.isEmpty(fname)) {
+                fname = mActivity.getString(R.string.default_attachment_name);
+            }
+
+            AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+        }
+
+        // Audio play/pause.
+        private void clickAudio(Map<String, Object> data, Object params) {
+            if (data == null) {
+                return;
+            }
+            try {
+                FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
+                if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
+                    String url = getPayloadUrl(data);
+                    if (url != null) {
+                        if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
+                            initAudioPlayer(mSeqId, url, aca.control);
+                        }
+                        mAudioPlayer.start();
+                    }
+                } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
+                    if (mAudioPlayer != null) {
+                        mAudioPlayer.pause();
+                    }
+                } else if (aca.seekTo != null) {
+                    if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
+                        String url = getPayloadUrl(data);
+                        if (url != null) {
+                            initAudioPlayer(mSeqId, url, aca.control);
                         }
                     }
-                    break;
+                    if (mAudioPlayer != null) {
+                        long duration = mAudioPlayer.getDuration();
+                        if (duration > 0) {
+                            mAudioPlayer.seekTo((int) (aca.seekTo * duration));
+                        } else {
+                            Log.i(TAG, "Audio has no duration");
+                        }
+                    }
+                }
+            } catch (IOException | ClassCastException ignored) {
+                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            }
+        }
+
+        // Button click.
+        private void clickButton(Map<String, Object> data) {
+            if (data == null) {
+                return;
+            }
+
+            try {
+                String actionType = (String) data.get("act");
+                String actionValue = (String) data.get("val");
+                String name = (String) data.get("name");
+                // StoredMessage msg = getMessage(mPosition);
+                if ("pub".equals(actionType)) {
+                    Drafty newMsg = new Drafty((String) data.get("title"));
+                    Map<String, Object> json = new HashMap<>();
+                    // {"seq":6,"resp":{"yes":1}}
+                    if (!TextUtils.isEmpty(name)) {
+                        Map<String, Object> resp = new HashMap<>();
+                        // noinspection
+                        resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
+                        json.put("resp", resp);
+                    }
+
+                    json.put("seq", "" + mSeqId);
+                    newMsg.attachJSON(json);
+                    mActivity.sendMessage(newMsg, -1);
+
+                } else if ("url".equals(actionType)) {
+                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
+                    String scheme = url.getProtocol();
+                    // As a security measure refuse to follow URLs with non-http(s) protocols.
+                    if ("http".equals(scheme) || "https".equals(scheme)) {
+                        Uri uri = Uri.parse(url.toString());
+                        Uri.Builder builder = uri.buildUpon();
+                        if (!TextUtils.isEmpty(name)) {
+                            builder = builder.appendQueryParameter(name,
+                                    TextUtils.isEmpty(actionValue) ? "1" : actionValue);
+                        }
+                        builder = builder
+                                .appendQueryParameter("seq", "" + mSeqId)
+                                .appendQueryParameter("uid", Cache.getTinode().getMyId());
+                        mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
+                    }
+                }
+            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            }
+        }
+
+        private void clickLink(Map<String, Object> data) {
+            if (data == null) {
+                return;
+            }
+
+            try {
+                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
+                String scheme = url.getProtocol();
+                if ("http".equals(scheme) || "https".equals(scheme)) {
+                    // As a security measure refuse to follow URLs with non-http(s) protocols.
+                    mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
+                }
+            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            }
+        }
+
+        private void clickImage(Map<String, Object> data) {
+            Bundle args = null;
+            if (data != null) {
+                Object val;
+                if ((val = data.get("ref")) instanceof String) {
+                    URL url = Cache.getTinode().toAbsoluteURL((String) val);
+                    // URL is null when the image is not sent yet.
+                    if (url != null) {
+                        args = new Bundle();
+                        args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
+                    }
+                }
+
+                if (args == null && (val = data.get("val")) != null) {
+                    byte[] bytes = val instanceof String ?
+                            Base64.decode((String) val, Base64.DEFAULT) :
+                            val instanceof byte[] ? (byte[]) val : null;
+                    if (bytes != null) {
+                        args = new Bundle();
+                        args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
+                    }
+                }
+
+                if (args != null) {
+                    try {
+                        args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                        args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
+                        //noinspection ConstantConditions
+                        args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
+                        //noinspection ConstantConditions
+                        args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
+                    } catch (NullPointerException | ClassCastException ex) {
+                        Log.i(TAG, "Invalid type of image parameters", ex);
+                    }
+                }
+            }
+
+            if (args != null) {
+                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+            } else {
+                Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
             }
         }
 
