@@ -169,10 +169,14 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         Member(int position, String unique, String displayName, String avatar, boolean removable) {
             this.position = position;
             this.unique = unique;
+            this.removable = removable;
             this.displayName = displayName;
             this.avatarBitmap = null;
-            this.avatarUri = avatar != null ? Uri.parse(avatar) : null;
-            this.removable = removable;
+            if (avatar != null) {
+                this.avatarUri = Uri.parse(avatar);
+            } else {
+                this.avatarUri = null;
+            }
         }
 
         Member(int position, String unique, VxCard pub, boolean removable) {

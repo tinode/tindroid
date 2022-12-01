@@ -22,6 +22,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
@@ -36,6 +37,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Date;
 import java.util.Map;
 
@@ -55,6 +57,7 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
+
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -267,10 +270,11 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         OkHttpClient client = new OkHttpClient.Builder()
                 .cache(new okhttp3.Cache(createDefaultCacheDir(this), PICASSO_CACHE_SIZE))
                 .addInterceptor(chain -> {
+                    Tinode tinode = Cache.getTinode();
                     Request picassoReq = chain.request();
                     Map<String, String> headers;
-                    if (Cache.getTinode().isTrustedURL(picassoReq.url().url()) &&
-                            (headers = Cache.getTinode().getRequestHeaders()) != null) {
+                    if (tinode.isTrustedURL(picassoReq.url().url())) {
+                        headers = tinode.getRequestHeaders();
                         Request.Builder builder = picassoReq.newBuilder();
                         for (Map.Entry<String, String> el : headers.entrySet()) {
                             builder = builder.addHeader(el.getKey(), el.getValue());
@@ -282,6 +286,16 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 })
                 .build();
         Picasso.setSingletonInstance(new Picasso.Builder(this)
+                .requestTransformer(request -> {
+                    // Rewrite relative URIs to absolute.
+                    if (request.uri != null && Tinode.isUrlRelative(request.uri.toString())) {
+                        URL url = Cache.getTinode().toAbsoluteURL(request.uri.toString());
+                        if (url != null) {
+                            return request.buildUpon().setUri(Uri.parse(url.toString())).build();
+                        }
+                    }
+                    return Picasso.RequestTransformer.IDENTITY.transformRequest(request);
+                })
                 .downloader(new OkHttp3Downloader(client))
                 .build());
 

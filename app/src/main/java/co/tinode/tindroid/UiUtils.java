@@ -239,8 +239,8 @@ public class UiUtils {
             Drawable placeholder = bmp != null ?
                     (new RoundImageDrawable(res, bmp)) :
                     ResourcesCompat.getDrawable(res, R.drawable.disk, null);
-            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, Cache.getTinode().toAbsoluteURL(ref).toString(),
-                placeholder, R.drawable.ic_broken_image_round);
+            layers.setUrlByLayerId(res, LOGO_LAYER_AVATAR, ref, placeholder,
+                    R.drawable.ic_broken_image_round);
         }
 
         if (online != null) {
@@ -732,19 +732,19 @@ public class UiUtils {
     // Construct avatar from VxCard and set it to the provided ImageView.
     static void setAvatar(ImageView avatarView, VxCard pub, String address, boolean disabled) {
         Bitmap avatar = null;
-        URL ref = null;
+        String ref = null;
         String fullName = null;
         if (pub != null) {
             avatar = pub.getBitmap();
             fullName = pub.fn;
-            ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
+            ref = pub.getPhotoRef();
         }
 
         Drawable local = avatarDrawable(avatarView.getContext(), avatar, fullName, address, disabled);
         if (ref != null) {
             Picasso
                     .get()
-                    .load(ref.toString())
+                    .load(ref)
                     .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
                     .placeholder(local)
                     .error(R.drawable.ic_broken_image_round)
@@ -837,11 +837,11 @@ public class UiUtils {
         String fullName = null;
         if (pub != null) {
             fullName = pub.fn;
-            URL ref = Cache.getTinode().toAbsoluteURL(pub.getPhotoRef());
+            String ref = pub.getPhotoRef();
             if (ref != null) {
                 try {
                     bitmap = Picasso.get()
-                            .load(ref.toString())
+                            .load(ref)
                             .resize(size, size).get();
                 } catch (IOException ex) {
                     Log.w(TAG, "Failed to load avatar", ex);

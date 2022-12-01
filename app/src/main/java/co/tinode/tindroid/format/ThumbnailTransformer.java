@@ -60,7 +60,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 components = new LinkedList<>();
             }
             components.add(done);
-            Picasso.get().load(Cache.getTinode().toAbsoluteURL((String) val).toString()).into(new Target() {
+            Picasso.get().load((String) val).into(new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bmp, Picasso.LoadedFrom from) {
                     bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.REPLY_THUMBNAIL_DIM);
