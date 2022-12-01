@@ -294,7 +294,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                             return request.buildUpon().setUri(Uri.parse(url.toString())).build();
                         }
                     }
-                    return Picasso.RequestTransformer.IDENTITY.transformRequest(request);
+                    return request;
                 })
                 .downloader(new OkHttp3Downloader(client))
                 .build());
