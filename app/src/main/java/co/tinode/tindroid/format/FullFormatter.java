@@ -303,6 +303,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
+                    Log.i(TAG, "Click");
                     int[] state = play.getState();
                     AudioClickAction.Action action;
                     if (state.length > 0 && state[0] == android.R.attr.state_checked) {
@@ -318,8 +319,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                             waveDrawable.start();
                         }
                     }
-                    mContainer.postInvalidate();
                     mClicker.onClick("AU", data, new AudioClickAction(action, aControl));
+                    mContainer.postInvalidate();
                 }
                 // Ignored.
                 @Override public void updateDrawState(@NonNull TextPaint ds) {}
@@ -778,7 +779,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     public interface ClickListener {
-        void onClick(String type, Map<String, Object> data, Object params);
+        boolean onClick(String type, Map<String, Object> data, Object params);
     }
 
     public interface AudioControlCallback {
@@ -788,7 +789,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     public static class AudioClickAction {
-        public enum Action {PLAY, PAUSE}
+        public enum Action {PLAY, PAUSE, SEEK}
 
         public Float seekTo;
         public Action action;
@@ -806,7 +807,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         public AudioClickAction(float seekTo) {
-            action = null;
+            action = Action.SEEK;
             this.seekTo = seekTo;
         }
     }

@@ -16,9 +16,12 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.MediaDataSource;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -899,6 +902,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
      * <p>
      * If the app does not has permission then the user will be prompted to grant permission.
      */
+    @SuppressWarnings("UnusedReturnValue")
     private boolean verifyStoragePermissions() {
         // Check if we have write permission
         if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
@@ -959,6 +963,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         if (state == null || !state.isFinished()) {
             wm.cancelUniqueWork(uniqueID);
+        }
+    }
+
+    void releaseAudio() {
+        if (mAudioPlayer != null) {
+            mAudioPlayer.stop();
+            mAudioPlayer.reset();
+            mAudioPlayer.release();
+            mAudioPlayer = null;
         }
     }
 
@@ -1080,42 +1093,38 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         @Override
-        public void onClick(String type, Map<String, Object> data, Object params) {
+        public boolean onClick(String type, Map<String, Object> data, Object params) {
             if (mSelectedItems != null) {
-                return;
+                return false;
             }
 
             switch (type) {
                 case "AU":
                     // Pause/resume audio.
-                    clickAudio(data, params);
-                    break;
+                    return clickAudio(data, params);
 
                 case "LN":
                     // Click on an URL
-                    clickLink(data);
-                    break;
+                    return clickLink(data);
 
                 case "IM":
                     // Image
-                    clickImage(data);
-                    break;
+                    return clickImage(data);
 
                 case "EX":
                     // Attachment
-                    clickAttachment(data);
-                    break;
+                    return clickAttachment(data);
 
                 case "BN":
                     // Button
-                    clickButton(data);
-                    break;
+                    return clickButton(data);
             }
+            return false;
         }
 
-        private void clickAttachment(Map<String, Object> data) {
+        private boolean clickAttachment(Map<String, Object> data) {
             if (data == null) {
-                return;
+                return false;
             }
 
             String fname = null;
@@ -1143,52 +1152,59 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+            return true;
         }
 
         // Audio play/pause.
-        private void clickAudio(Map<String, Object> data, Object params) {
+        private boolean clickAudio(Map<String, Object> data, Object params) {
             if (data == null) {
-                return;
+                return false;
             }
+
             try {
                 FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                 if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                    String url = getPayloadUrl(data);
-                    if (url != null) {
-                        if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                            initAudioPlayer(mSeqId, url, aca.control);
-                        }
-                        mAudioPlayer.start();
+                    Log.i(TAG, "PLAY");
+                    if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
+                        initAudioPlayer(mSeqId, data, aca.control);
                     }
+                    mAudioPlayer.start();
                 } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
+                    Log.i(TAG, "PAUSE");
                     if (mAudioPlayer != null) {
                         mAudioPlayer.pause();
                     }
                 } else if (aca.seekTo != null) {
+                    Log.i(TAG, "SEEK");
                     if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                        String url = getPayloadUrl(data);
-                        if (url != null) {
-                            initAudioPlayer(mSeqId, url, aca.control);
-                        }
+                        Log.i(TAG, "SEEK init");
+                        initAudioPlayer(mSeqId, data, aca.control);
                     }
                     if (mAudioPlayer != null) {
                         long duration = mAudioPlayer.getDuration();
                         if (duration > 0) {
+                            Log.i(TAG, "SEEK, duration " + duration + " to " + (int) (aca.seekTo * duration) +
+                                    "; playing " + mAudioPlayer.isPlaying());
                             mAudioPlayer.seekTo((int) (aca.seekTo * duration));
+                            Log.i(TAG, "SEEK, duration " + duration + " at " + mAudioPlayer.getCurrentPosition() +
+                                    "; playing " + mAudioPlayer.isPlaying());
                         } else {
-                            Log.i(TAG, "Audio has no duration");
+                            Log.w(TAG, "Audio has no duration");
                         }
                     }
                 }
             } catch (IOException | ClassCastException ignored) {
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                return false;
             }
+
+            return true;
         }
 
         // Button click.
-        private void clickButton(Map<String, Object> data) {
+        private boolean clickButton(Map<String, Object> data) {
             if (data == null) {
-                return;
+                return false;
             }
 
             try {
@@ -1229,12 +1245,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                 }
             } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                return false;
             }
+
+            return true;
         }
 
-        private void clickLink(Map<String, Object> data) {
+        private boolean clickLink(Map<String, Object> data) {
             if (data == null) {
-                return;
+                return false;
             }
 
             try {
@@ -1245,43 +1264,46 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
                 }
             } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                return false;
             }
+            return true;
         }
 
-        private void clickImage(Map<String, Object> data) {
+        private boolean clickImage(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
             Bundle args = null;
-            if (data != null) {
-                Object val;
-                if ((val = data.get("ref")) instanceof String) {
-                    URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                    // URL is null when the image is not sent yet.
-                    if (url != null) {
-                        args = new Bundle();
-                        args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                    }
+            Object val;
+            if ((val = data.get("ref")) instanceof String) {
+                URL url = Cache.getTinode().toAbsoluteURL((String) val);
+                // URL is null when the image is not sent yet.
+                if (url != null) {
+                    args = new Bundle();
+                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
                 }
+            }
 
-                if (args == null && (val = data.get("val")) != null) {
-                    byte[] bytes = val instanceof String ?
-                            Base64.decode((String) val, Base64.DEFAULT) :
-                            val instanceof byte[] ? (byte[]) val : null;
-                    if (bytes != null) {
-                        args = new Bundle();
-                        args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                    }
+            if (args == null && (val = data.get("val")) != null) {
+                byte[] bytes = val instanceof String ?
+                        Base64.decode((String) val, Base64.DEFAULT) :
+                        val instanceof byte[] ? (byte[]) val : null;
+                if (bytes != null) {
+                    args = new Bundle();
+                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
                 }
+            }
 
-                if (args != null) {
-                    try {
-                        args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                        args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                        //noinspection ConstantConditions
-                        args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                        //noinspection ConstantConditions
-                        args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                    } catch (NullPointerException | ClassCastException ex) {
-                        Log.i(TAG, "Invalid type of image parameters", ex);
-                    }
+            if (args != null) {
+                try {
+                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
+                } catch (NullPointerException | ClassCastException ex) {
+                    Log.i(TAG, "Invalid type of image parameters", ex);
                 }
             }
 
@@ -1290,22 +1312,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
             }
+
+            return true;
         }
 
-        private String getPayloadUrl(Map<String, Object> data) {
-            Object val;
-            String url = null;
-            if ((val = data.get("ref")) instanceof String) {
-                url = (String) val;
-            } else if ((val = data.get("val")) instanceof String) {
-                String mime = (String) data.get("mime");
-                url = "data:" + mime + ";base64," + val;
-            }
-
-            return url;
-        }
-
-        private void initAudioPlayer(int seq, String sourceUrl,
+        private void initAudioPlayer(int seq, Map<String, Object> data,
                                      FullFormatter.AudioControlCallback control) throws IOException {
             mPlayingAudioSeq = seq;
             if (mAudioPlayer != null) {
@@ -1329,11 +1340,66 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     mAudioControlCallback.reset();
                 }
             });
+            mAudioPlayer.setOnErrorListener((mediaPlayer, what, extra) -> {
+                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                Log.w(TAG, "Playback error " + what + "/" + extra);
+                return false;
+            });
             mAudioPlayer.setAudioAttributes(
                     new AudioAttributes.Builder()
                             .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
-            mAudioPlayer.setDataSource(sourceUrl);
+
+            Object val;
+            if ((val = data.get("ref")) instanceof String) {
+                Tinode tinode = Cache.getTinode();
+                URL url = tinode.toAbsoluteURL((String) val);
+                if (url != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        mAudioPlayer.setDataSource(mActivity, Uri.parse(url.toString()),
+                                tinode.getRequestHeaders(), null);
+                    } else {
+                        Uri uri = Uri.parse(url.toString()).buildUpon()
+                                .appendQueryParameter("apikey", tinode.getApiKey())
+                                .appendQueryParameter("auth", "token")
+                                .appendQueryParameter("secret", tinode.getAuthToken())
+                                .build();
+                        mAudioPlayer.setDataSource(mActivity, uri);
+                    }
+                }
+            } else if ((val = data.get("val")) instanceof String) {
+                byte[] source = Base64.decode((String) val, Base64.DEFAULT);
+                mAudioPlayer.setDataSource(new MemoryAudioSource(source));
+            } else {
+                Log.w(TAG, "Unable to play audio: missing data");
+            }
+
             mAudioPlayer.prepare();
+        }
+    }
+
+    // Wrap in-band audio into MediaDataSource to make it playable by MediaPlayer.
+    private static class MemoryAudioSource extends MediaDataSource {
+        private final byte[] mData;
+
+        MemoryAudioSource(byte[] source) {
+            mData = source;
+        }
+
+        @Override
+        public int readAt(long position, byte[] destination, int offset, int size) throws IOException {
+            size = Math.min(mData.length - (int) position, size);
+            System.arraycopy(mData, (int) position, destination, offset, size);
+            return size;
+        }
+
+        @Override
+        public long getSize() throws IOException {
+            return mData.length;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // Do nothing.
         }
     }
 }
