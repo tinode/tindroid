@@ -228,6 +228,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (val instanceof String) {
             preview = Base64.decode((String) val, Base64.DEFAULT);
         }
+
         if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
             DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
             float width = mViewport * 0.8f - bounds.width() - 4 * IMAGE_H_PADDING * metrics.density;
@@ -238,6 +239,37 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 waveDrawable.setDuration(duration.intValue());
             }
             waveDrawable.put(preview);
+        } else {
+            waveDrawable = null;
+            result.append(res.getText(R.string.unavailable));
+        }
+
+        final AudioControlCallback aControl = new AudioControlCallback() {
+            @Override
+            public void reset() {
+                if (waveDrawable != null) {
+                    waveDrawable.reset();
+                }
+            }
+
+            @Override
+            public void pause() {
+                play.setState(new int[]{});
+                mContainer.postInvalidate();
+                if (waveDrawable != null) {
+                    waveDrawable.stop();
+                }
+            }
+
+            @Override
+            public void resume() {
+                if (waveDrawable != null) {
+                    waveDrawable.start();
+                }
+            }
+        };
+
+        if (waveDrawable != null) {
             ImageSpan wave = new ImageSpan(waveDrawable, ImageSpan.ALIGN_BASELINE);
             result.append(new SpannableStringBuilder().append(" ", wave, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE),
                     new ClickableSpan() {
@@ -259,46 +291,21 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                             waveDrawable.seekTo(seekPosition);
                             mContainer.postInvalidate();
                             if (mClicker != null) {
-                                mClicker.onClick("AU", data, new AudioClickAction(seekPosition));
+                                mClicker.onClick("AU", data, new AudioClickAction(seekPosition, aControl));
                             }
                         }
                         @Override
                         public void updateDrawState(@NonNull TextPaint ds) {}
                     }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        } else {
-            waveDrawable = null;
-            result.append(res.getText(R.string.unavailable));
+
+            waveDrawable.seekTo(0);
+            waveDrawable.setOnCompletionListener(() -> {
+                play.setState(new int[]{});
+                mContainer.postInvalidate();
+            });
         }
 
         if (mClicker != null) {
-            final AudioControlCallback aControl;
-
-            if (waveDrawable != null) {
-                waveDrawable.seekTo(0);
-                waveDrawable.setOnCompletionListener(() -> {
-                    play.setState(new int[]{});
-                    mContainer.postInvalidate();
-                });
-
-                aControl = new AudioControlCallback() {
-                    @Override
-                    public void reset() {
-                        waveDrawable.reset();
-                    }
-
-                    @Override
-                    public void pause() {
-                        waveDrawable.stop();
-                    }
-
-                    @Override
-                    public void resume() {
-                        waveDrawable.start();
-                    }
-                };
-            } else {
-                aControl = null;
-            }
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result.setSpan(new ClickableSpan() {
                 @Override
@@ -453,7 +460,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
 
                 span = new RemoteImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
-                ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL(ref));
+                ((RemoteImageSpan) span).load(url);
             }
         }
 
@@ -796,7 +803,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         public AudioControlCallback control;
 
-        public AudioClickAction(Action action) {
+        private AudioClickAction(Action action) {
             this.action = action;
             seekTo = null;
         }
@@ -806,9 +813,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             control = callback;
         }
 
-        public AudioClickAction(float seekTo) {
+        public AudioClickAction(float seekTo, AudioControlCallback callback) {
             action = Action.SEEK;
             this.seekTo = seekTo;
+            control = callback;
         }
     }
 }
