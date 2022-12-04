@@ -1151,14 +1151,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             try {
                 FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                 if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                    Log.i(TAG, "PLAY " + mSeqId);
                     mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
                     mMediaControl.playWhenReady();
                 } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
-                    Log.i(TAG, "PAUSE " + mSeqId);
                     mMediaControl.pause();
                 } else if (aca.seekTo != null) {
-                    Log.i(TAG, "SEEK " + mSeqId);
                     mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
                     mMediaControl.seekToWhenReady(aca.seekTo);
                 }
@@ -1272,7 +1269,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     //noinspection ConstantConditions
                     args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
                 } catch (NullPointerException | ClassCastException ex) {
-                    Log.i(TAG, "Invalid type of image parameters", ex);
+                    Log.w(TAG, "Invalid type of image parameters", ex);
                 }
             }
 
@@ -1310,15 +1307,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         synchronized void ensurePlayerReady(int seq, Map<String, Object> data,
                                        FullFormatter.AudioControlCallback control) throws IOException {
-            Log.i(TAG, "ensurePlayerReady " + seq);
-
             if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
                 mAudioControlCallback = control;
-                Log.i(TAG, "Player already prepared " + mPlayingAudioSeq);
                 return;
             }
-
-            Log.i(TAG, "Cleaning up " + mPlayingAudioSeq + " control=" + mAudioControlCallback);
 
             if (mPlayingAudioSeq > 0 && mAudioControlCallback != null) {
                 mAudioControlCallback.reset();
@@ -1343,10 +1335,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mAudioControlCallback = control;
             mAudioPlayer.setOnPreparedListener(mp -> {
                 mPlayingAudioSeq = seq;
-                Log.i(TAG, "Prepared " + mPlayingAudioSeq +
-                        " at " + mp.getCurrentPosition() +
-                        "; playing " + mp.isPlaying());
-
                 if (mReadyAction == PlayerReadyAction.PLAY) {
                     mReadyAction = PlayerReadyAction.NOOP;
                     mp.start();
@@ -1357,26 +1345,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 mSeekTo = -1f;
             });
             mAudioPlayer.setOnCompletionListener(mp -> {
-                try {
-                    int pos = mp.getCurrentPosition();
-                    if (pos > 0) {
-                        int duration = mp.getDuration();
-                        Log.i(TAG, "Playback completed at " + mp.getCurrentPosition() +
-                                "; duration " + mp.getDuration() +
-                                "; playing " + mp.isPlaying());
-                        if (duration > pos - 1) {
-                            mAudioControlCallback.pause();
-                            // mp.seekTo(mp.getCurrentPosition());
-                            // SystemClock.sleep(200);
-                            // Log.i(TAG, "Should restarting playback!");
-                            // mp.start();
-                        } else if (mAudioControlCallback != null) {
-                            mAudioControlCallback.reset();
-                        }
+                int pos = mp.getCurrentPosition();
+                if (pos > 0) {
+                    if (mAudioControlCallback != null) {
+                        mAudioControlCallback.reset();
                     }
-                } catch (IllegalStateException ex) {
-                    // try .. catch prevent infinite loop complete -> error -> complete.
-                    Log.w(TAG, "setOnCompletionListener", ex);
                 }
             });
             mAudioPlayer.setOnErrorListener((mp, what, extra) -> {
@@ -1389,12 +1362,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     mReadyAction = PlayerReadyAction.NOOP;
                     mp.start();
                 }
-                Log.i(TAG, "Seek complete at " + mp.getCurrentPosition() +
-                        "; playing " + mp.isPlaying());
             });
-            mAudioPlayer.setOnBufferingUpdateListener((mp, percent) ->
-                    Log.i(TAG, "Buffered to " + percent + " pos=" + mp.getCurrentPosition()));
-
             mAudioPlayer.setAudioAttributes(
                     new AudioAttributes.Builder()
                             .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
@@ -1431,7 +1399,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return;
             }
 
-            Log.i(TAG, "Releasing " + mPlayingAudioSeq);
             mPlayingAudioSeq = -1;
             mReadyAction = PlayerReadyAction.NOOP;
             mSeekTo = -1f;
@@ -1488,8 +1455,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else {
                     mAudioPlayer.seekTo(pos);
                 }
-            } else {
-                Log.i(TAG, "Player not ready to seek " + pos);
             }
         }
 

@@ -310,7 +310,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             result.setSpan(new ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
-                    Log.i(TAG, "Click");
                     int[] state = play.getState();
                     AudioClickAction.Action action;
                     if (state.length > 0 && state[0] == android.R.attr.state_checked) {
