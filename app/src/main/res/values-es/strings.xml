@@ -188,7 +188,6 @@
     <string name="new_chat_block">Bloquear</string>
     <string name="new_chat">Nuevo chat</string>
     <string name="messages_not_readable">Sin acceso a nuevos mensajes</string>
-    <string name="content_deleted">este mensaje fue eliminado</string>
     <string name="peers_messaging_disabled">La mensajería Peer está deshabilitada</string>
     <string name="action_enable">Habilitar</string>
     <string name="find">Buscar</string>

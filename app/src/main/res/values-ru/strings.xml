@@ -216,7 +216,6 @@
     <string name="permission_missing">Нет прав доступа</string>
     <string name="enter_search_query">Введите происковый запрос</string>
 
-    <string name="content_deleted">сообщения удалены</string>
     <string name="image_caption_hint">Название изображения</string>
     <string name="action_download">Сохранить</string>
     <string name="invalid_content">не читается</string>

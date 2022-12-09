@@ -187,7 +187,6 @@
     <string name="new_chat_block">屏蔽</string>
     <string name="new_chat">新聊天</string>
     <string name="messages_not_readable">无法访问新消息</string>
-    <string name="content_deleted">内容已删除</string>
     <string name="peers_messaging_disabled">对方消息已禁用</string>
     <string name="action_enable">启用</string>
     <string name="find">查找</string>

@@ -188,7 +188,6 @@
     <string name="new_chat_block">차단</string>
     <string name="new_chat">새로운 대화</string>
     <string name="messages_not_readable">새 메시지에 접근할 수 없습니다.</string>
-    <string name="content_deleted">삭제된 내용</string>
     <string name="peers_messaging_disabled">상대방의 메시지가 비활성화되었습니다.</string>
     <string name="action_enable">사용가능</string>
     <string name="find">찾기</string>

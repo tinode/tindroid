@@ -187,7 +187,6 @@
     <string name="new_chat_block">Bloquer</string>
     <string name="new_chat">Nouvelle conversation</string>
     <string name="messages_not_readable">Pas d\'acces aux nouveaux messages</string>
-    <string name="content_deleted">Contenu effacé</string>
     <string name="peers_messaging_disabled">La messagerie entre pairs est désactivée</string>
     <string name="action_enable">Activer</string>
     <string name="find">Chercher</string>

@@ -188,7 +188,6 @@
     <string name="new_chat_block">Blockieren</string>
     <string name="new_chat">Neue Unterhaltung</string>
     <string name="messages_not_readable">Neue Nachrichten können nicht gelesen werden</string>
-    <string name="content_deleted">dieser Inhalt wurde gelöscht</string>
     <string name="peers_messaging_disabled">Gruppennachrichten sind deaktiviert</string>
     <string name="action_enable">Aktivieren</string>
     <string name="find">Suchen</string>

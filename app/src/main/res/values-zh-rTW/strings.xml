@@ -188,7 +188,6 @@
     <string name="new_chat_block">封鎖</string>
     <string name="new_chat">新對話</string>
     <string name="messages_not_readable">沒有存取新訊息的權限</string>
-    <string name="content_deleted">內容已被刪除</string>
     <string name="peers_messaging_disabled">Peer 的訊息已被停用</string>
     <string name="action_enable">啟用</string>
     <string name="find">尋找</string>

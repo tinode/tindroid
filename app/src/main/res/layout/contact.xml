@@ -42,7 +42,7 @@
             android:visibility="gone"
             android:layout_alignParentEnd="true"
             android:layout_alignParentBottom="true"
-            android:contentDescription="@string/content_deleted"
+            android:contentDescription="@string/unavailable"
             android:background="@color/design_default_color_background"
             app:shapeAppearanceOverlay="@style/roundImageView"
             app:srcCompat="@drawable/ic_cancel_grey"
