@@ -223,7 +223,7 @@ class ContactOperations {
         if (ref != null) {
             try {
                 avatar = UiUtils.bitmapToBytes(Picasso.get()
-                        .load(tinode.toAbsoluteURL(ref).toString())
+                        .load(ref)
                         .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE).centerCrop()
                         .get(), mimeType);
             } catch (IOException ex) {

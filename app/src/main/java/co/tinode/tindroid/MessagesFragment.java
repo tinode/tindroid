@@ -827,8 +827,9 @@ public class MessagesFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
-        // Close cursor.
+        // Close cursor and release MediaPlayer.
         if (mMessagesAdapter != null) {
+            mMessagesAdapter.releaseAudio();
             mMessagesAdapter.resetContent(null);
         }
     }

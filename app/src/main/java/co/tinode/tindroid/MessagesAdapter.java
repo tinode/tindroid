@@ -16,8 +16,10 @@ import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.MediaDataSource;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -137,10 +139,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
 
-    private AudioManager mAudioManager = null;
-    private MediaPlayer mAudioPlayer = null;
-    private int mPlayingAudioSeq = -1;
-    private FullFormatter.AudioControlCallback mAudioControlCallback = null;
+    private final MediaControl mMediaControl = new MediaControl();
 
     MessagesAdapter(@NonNull MessageActivity context, @NonNull SwipeRefreshLayout refresher) {
         super();
@@ -751,13 +750,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     public void onViewRecycled(final @NonNull ViewHolder vh) {
         // Stop playing audio and release mAudioPlayer.
         if (vh.seqId > 0) {
-            if (mAudioPlayer != null) {
-                mAudioPlayer.stop();
-                mAudioPlayer.release();
-                mAudioPlayer = null;
-                mPlayingAudioSeq = -1;
-                vh.seqId = -1;
-            }
+            mMediaControl.releasePlayer(vh.seqId);
+            vh.seqId = -1;
         }
     }
 
@@ -959,6 +953,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
+    void releaseAudio() {
+        mMediaControl.releasePlayer(0);
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mIcon;
@@ -1077,212 +1075,250 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         @Override
-        public void onClick(String type, Map<String, Object> data, Object params) {
+        public boolean onClick(String type, Map<String, Object> data, Object params) {
             if (mSelectedItems != null) {
-                return;
+                return false;
             }
 
             switch (type) {
                 case "AU":
-                    // Audio play/pause.
-                    if (data != null) {
-                        try {
-                            FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
-                            if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                                String url = getPayloadUrl(data);
-                                if (url != null) {
-                                    if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                                        initAudioPlayer(mSeqId, url, aca.control);
-                                    }
-                                    mAudioPlayer.start();
-                                }
-                            } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
-                                if (mAudioPlayer != null) {
-                                    mAudioPlayer.pause();
-                                }
-                            } else if (aca.seekTo != null) {
-                                if (mAudioPlayer == null || mPlayingAudioSeq != mSeqId) {
-                                    String url = getPayloadUrl(data);
-                                    if (url != null) {
-                                        initAudioPlayer(mSeqId, url, aca.control);
-                                    }
-                                }
-                                if (mAudioPlayer != null) {
-                                    long duration = mAudioPlayer.getDuration();
-                                    if (duration > 0) {
-                                        mAudioPlayer.seekTo((int) (aca.seekTo * duration));
-                                    } else {
-                                        Log.i(TAG, "Audio has no duration");
-                                    }
-                                }
-                            }
-                        } catch (IOException | ClassCastException ignored) {
-                            Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                    break;
+                    // Pause/resume audio.
+                    return clickAudio(data, params);
 
                 case "LN":
                     // Click on an URL
-                    try {
-                        if (data != null) {
-                            URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
-                            String scheme = url.getProtocol();
-                            if (!scheme.equals("http") && !scheme.equals("https")) {
-                                // As a security measure refuse to follow URLs with non-http(s) protocols.
-                                break;
-                            }
-                            mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
-                        }
-                    } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
-                    }
-                    break;
+                    return clickLink(data);
 
                 case "IM":
                     // Image
-                    Bundle args = null;
-                    if (data != null) {
-                        Object val;
-                        if ((val = data.get("ref")) instanceof String) {
-                            URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                            // URL is null when the image is not sent yet.
-                            if (url != null) {
-                                args = new Bundle();
-                                args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                            }
-                        }
-
-                        if (args == null && (val = data.get("val")) != null) {
-                            byte[] bytes = val instanceof String ?
-                                    Base64.decode((String) val, Base64.DEFAULT) :
-                                    val instanceof byte[] ? (byte[]) val : null;
-                            if (bytes != null) {
-                                args = new Bundle();
-                                args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                            }
-                        }
-
-                        if (args != null) {
-                            try {
-                                args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                                args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                                //noinspection ConstantConditions
-                                args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                                //noinspection ConstantConditions
-                                args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                            } catch (NullPointerException | ClassCastException ex) {
-                                Log.i(TAG, "Invalid type of image parameters", ex);
-                            }
-                        }
-                    }
-
-                    if (args != null) {
-                        mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-                    } else {
-                        Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-                    }
-
-                    break;
+                    return clickImage(data);
 
                 case "EX":
                     // Attachment
-                    String fname = null;
-                    String mimeType = null;
-                    try {
-                        fname = (String) data.get("name");
-                        mimeType = (String) data.get("mime");
-                    } catch (ClassCastException ignored) {
-                    }
-
-                    // Try to extract file name from reference.
-                    if (TextUtils.isEmpty(fname)) {
-                        Object ref = data.get("ref");
-                        if (ref instanceof String) {
-                            try {
-                                URL url = new URL((String) ref);
-                                fname = url.getFile();
-                            } catch (MalformedURLException ignored) {
-                            }
-                        }
-                    }
-
-                    if (TextUtils.isEmpty(fname)) {
-                        fname = mActivity.getString(R.string.default_attachment_name);
-                    }
-
-                    AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
-                    break;
+                    return clickAttachment(data);
 
                 case "BN":
                     // Button
-                    if (data != null) {
-                        try {
-                            String actionType = (String) data.get("act");
-                            String actionValue = (String) data.get("val");
-                            String name = (String) data.get("name");
-                            // StoredMessage msg = getMessage(mPosition);
-                            if ("pub".equals(actionType)) {
-                                Drafty newMsg = new Drafty((String) data.get("title"));
-                                Map<String, Object> json = new HashMap<>();
-                                // {"seq":6,"resp":{"yes":1}}
-                                if (!TextUtils.isEmpty(name)) {
-                                    Map<String, Object> resp = new HashMap<>();
-                                    // noinspection
-                                    resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
-                                    json.put("resp", resp);
-                                }
+                    return clickButton(data);
+            }
+            return false;
+        }
 
-                                json.put("seq", "" + mSeqId);
-                                newMsg.attachJSON(json);
-                                mActivity.sendMessage(newMsg, -1);
+        private boolean clickAttachment(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
 
-                            } else if ("url".equals(actionType)) {
-                                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
-                                String scheme = url.getProtocol();
-                                if (!scheme.equals("http") && !scheme.equals("https")) {
-                                    // As a security measure refuse to follow URLs with non-http(s) protocols.
-                                    break;
-                                }
-                                Uri uri = Uri.parse(url.toString());
-                                Uri.Builder builder = uri.buildUpon();
-                                if (!TextUtils.isEmpty(name)) {
-                                    builder = builder.appendQueryParameter(name,
-                                            TextUtils.isEmpty(actionValue) ? "1" : actionValue);
-                                }
-                                builder = builder
-                                        .appendQueryParameter("seq", "" + mSeqId)
-                                        .appendQueryParameter("uid", Cache.getTinode().getMyId());
-                                mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
-                            }
-                        } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
-                        }
+            String fname = null;
+            String mimeType = null;
+            try {
+                fname = (String) data.get("name");
+                mimeType = (String) data.get("mime");
+            } catch (ClassCastException ignored) {
+            }
+
+            // Try to extract file name from reference.
+            if (TextUtils.isEmpty(fname)) {
+                Object ref = data.get("ref");
+                if (ref instanceof String) {
+                    try {
+                        URL url = new URL((String) ref);
+                        fname = url.getFile();
+                    } catch (MalformedURLException ignored) {
                     }
-                    break;
-            }
-        }
-
-        private String getPayloadUrl(Map<String, Object> data) {
-            Object val;
-            String url = null;
-            if ((val = data.get("ref")) instanceof String) {
-                url = (String) val;
-            } else if ((val = data.get("val")) instanceof String) {
-                String mime = (String) data.get("mime");
-                url = "data:" + mime + ";base64," + val;
-            }
-
-            return url;
-        }
-
-        private void initAudioPlayer(int seq, String sourceUrl,
-                                     FullFormatter.AudioControlCallback control) throws IOException {
-            mPlayingAudioSeq = seq;
-            if (mAudioPlayer != null) {
-                mAudioPlayer.reset();
-                mAudioPlayer.release();
-                if (mAudioControlCallback != null) {
-                    mAudioControlCallback.reset();
                 }
+            }
+
+            if (TextUtils.isEmpty(fname)) {
+                fname = mActivity.getString(R.string.default_attachment_name);
+            }
+
+            AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+            return true;
+        }
+
+        // Audio play/pause.
+        private boolean clickAudio(Map<String, Object> data, Object params) {
+            if (data == null) {
+                return false;
+            }
+
+            try {
+                FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
+                if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
+                    mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
+                    mMediaControl.playWhenReady();
+                } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
+                    mMediaControl.pause();
+                } else if (aca.seekTo != null) {
+                    mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
+                    mMediaControl.seekToWhenReady(aca.seekTo);
+                }
+            } catch (IOException | ClassCastException ignored) {
+                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            return true;
+        }
+
+        // Button click.
+        private boolean clickButton(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
+
+            try {
+                String actionType = (String) data.get("act");
+                String actionValue = (String) data.get("val");
+                String name = (String) data.get("name");
+                // StoredMessage msg = getMessage(mPosition);
+                if ("pub".equals(actionType)) {
+                    Drafty newMsg = new Drafty((String) data.get("title"));
+                    Map<String, Object> json = new HashMap<>();
+                    // {"seq":6,"resp":{"yes":1}}
+                    if (!TextUtils.isEmpty(name)) {
+                        Map<String, Object> resp = new HashMap<>();
+                        // noinspection
+                        resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
+                        json.put("resp", resp);
+                    }
+
+                    json.put("seq", "" + mSeqId);
+                    newMsg.attachJSON(json);
+                    mActivity.sendMessage(newMsg, -1);
+
+                } else if ("url".equals(actionType)) {
+                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
+                    String scheme = url.getProtocol();
+                    // As a security measure refuse to follow URLs with non-http(s) protocols.
+                    if ("http".equals(scheme) || "https".equals(scheme)) {
+                        Uri uri = Uri.parse(url.toString());
+                        Uri.Builder builder = uri.buildUpon();
+                        if (!TextUtils.isEmpty(name)) {
+                            builder = builder.appendQueryParameter(name,
+                                    TextUtils.isEmpty(actionValue) ? "1" : actionValue);
+                        }
+                        builder = builder
+                                .appendQueryParameter("seq", "" + mSeqId)
+                                .appendQueryParameter("uid", Cache.getTinode().getMyId());
+                        mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
+                    }
+                }
+            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                return false;
+            }
+
+            return true;
+        }
+
+        private boolean clickLink(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
+
+            try {
+                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
+                String scheme = url.getProtocol();
+                if ("http".equals(scheme) || "https".equals(scheme)) {
+                    // As a security measure refuse to follow URLs with non-http(s) protocols.
+                    mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
+                }
+            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+                return false;
+            }
+            return true;
+        }
+
+        private boolean clickImage(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
+            Bundle args = null;
+            Object val;
+            if ((val = data.get("ref")) instanceof String) {
+                URL url = Cache.getTinode().toAbsoluteURL((String) val);
+                // URL is null when the image is not sent yet.
+                if (url != null) {
+                    args = new Bundle();
+                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
+                }
+            }
+
+            if (args == null && (val = data.get("val")) != null) {
+                byte[] bytes = val instanceof String ?
+                        Base64.decode((String) val, Base64.DEFAULT) :
+                        val instanceof byte[] ? (byte[]) val : null;
+                if (bytes != null) {
+                    args = new Bundle();
+                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
+                }
+            }
+
+            if (args != null) {
+                try {
+                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
+                } catch (NullPointerException | ClassCastException ex) {
+                    Log.w(TAG, "Invalid type of image parameters", ex);
+                }
+            }
+
+            if (args != null) {
+                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+            } else {
+                Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
+            }
+
+            return true;
+        }
+    }
+
+    // Actions to take in setOnPreparedListener, when the player is ready.
+    private enum PlayerReadyAction {
+        // Do nothing.
+        NOOP,
+        // Start playing.
+        PLAY,
+        // Seek without changing player state.
+        SEEK,
+        // Seek, then play when seek finishes.
+        SEEKNPLAY
+    }
+
+    private class MediaControl {
+        private AudioManager mAudioManager = null;
+        private MediaPlayer mAudioPlayer = null;
+        private int mPlayingAudioSeq = -1;
+        private FullFormatter.AudioControlCallback mAudioControlCallback = null;
+        // Action to take when the player becomes ready.
+        private PlayerReadyAction mReadyAction = PlayerReadyAction.NOOP;
+        // Playback fraction to seek to when the player is ready.
+        private float mSeekTo = -1f;
+
+        synchronized void ensurePlayerReady(int seq, Map<String, Object> data,
+                                       FullFormatter.AudioControlCallback control) throws IOException {
+            if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
+                mAudioControlCallback = control;
+                return;
+            }
+
+            if (mPlayingAudioSeq > 0 && mAudioControlCallback != null) {
+                mAudioControlCallback.reset();
+            }
+
+            // Declare current player un-prepared.
+            mPlayingAudioSeq = -1;
+
+            if (mAudioPlayer != null) {
+                mAudioPlayer.stop();
+                mAudioPlayer.reset();
+            } else {
+                mAudioPlayer = new MediaPlayer();
             }
 
             if (mAudioManager == null) {
@@ -1292,17 +1328,171 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             mAudioControlCallback = control;
-            mAudioPlayer = new MediaPlayer();
+            mAudioPlayer.setOnPreparedListener(mp -> {
+                mPlayingAudioSeq = seq;
+                if (mReadyAction == PlayerReadyAction.PLAY) {
+                    mReadyAction = PlayerReadyAction.NOOP;
+                    mp.start();
+                } else if (mReadyAction == PlayerReadyAction.SEEK ||
+                        mReadyAction == PlayerReadyAction.SEEKNPLAY) {
+                    seekTo(fractionToPos(mSeekTo));
+                }
+                mSeekTo = -1f;
+            });
             mAudioPlayer.setOnCompletionListener(mp -> {
-                if (mAudioControlCallback != null) {
-                    mAudioControlCallback.reset();
+                int pos = mp.getCurrentPosition();
+                if (pos > 0) {
+                    if (mAudioControlCallback != null) {
+                        mAudioControlCallback.reset();
+                    }
+                }
+            });
+            mAudioPlayer.setOnErrorListener((mp, what, extra) -> {
+                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                Log.w(TAG, "Playback error " + what + "/" + extra);
+                return false;
+            });
+            mAudioPlayer.setOnSeekCompleteListener(mp -> {
+                if (mReadyAction == PlayerReadyAction.SEEKNPLAY) {
+                    mReadyAction = PlayerReadyAction.NOOP;
+                    mp.start();
                 }
             });
             mAudioPlayer.setAudioAttributes(
                     new AudioAttributes.Builder()
                             .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
-            mAudioPlayer.setDataSource(sourceUrl);
-            mAudioPlayer.prepare();
+
+            Object val;
+            if ((val = data.get("ref")) instanceof String) {
+                Tinode tinode = Cache.getTinode();
+                URL url = tinode.toAbsoluteURL((String) val);
+                if (url != null) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        mAudioPlayer.setDataSource(mActivity, Uri.parse(url.toString()),
+                                tinode.getRequestHeaders(), null);
+                    } else {
+                        Uri uri = Uri.parse(url.toString()).buildUpon()
+                                .appendQueryParameter("apikey", tinode.getApiKey())
+                                .appendQueryParameter("auth", "token")
+                                .appendQueryParameter("secret", tinode.getAuthToken())
+                                .build();
+                        mAudioPlayer.setDataSource(mActivity, uri);
+                    }
+                }
+            } else if ((val = data.get("val")) instanceof String) {
+                byte[] source = Base64.decode((String) val, Base64.DEFAULT);
+                mAudioPlayer.setDataSource(new MemoryAudioSource(source));
+            } else {
+                Log.w(TAG, "Unable to play audio: missing data");
+            }
+
+            mAudioPlayer.prepareAsync();
+        }
+
+        synchronized void releasePlayer(int seq) {
+            if ((seq != 0 && mPlayingAudioSeq != seq) || mPlayingAudioSeq == -1) {
+                return;
+            }
+
+            mPlayingAudioSeq = -1;
+            mReadyAction = PlayerReadyAction.NOOP;
+            mSeekTo = -1f;
+            if (mAudioPlayer != null) {
+                mAudioPlayer.stop();
+                mAudioPlayer.reset();
+                mAudioPlayer.release();
+                mAudioPlayer = null;
+            }
+            if (mAudioControlCallback != null) {
+                mAudioControlCallback.reset();
+            }
+        }
+
+        // Start playing at the current position.
+        void playWhenReady() {
+            if (mPlayingAudioSeq > 0) {
+                mAudioPlayer.start();
+            } else {
+                mReadyAction = PlayerReadyAction.PLAY;
+            }
+        }
+
+        synchronized void pause() {
+            if (mAudioPlayer != null && mAudioPlayer.isPlaying()) {
+                mAudioPlayer.pause();
+            }
+            mReadyAction = PlayerReadyAction.NOOP;
+            mSeekTo = -1f;
+        }
+
+        synchronized void seekToWhenReady(float fraction) {
+            if (mPlayingAudioSeq > 0) {
+                // Already prepared.
+                int pos = fractionToPos(fraction);
+                if (mAudioPlayer.getCurrentPosition() != pos) {
+                    // Need to seek.
+                    mReadyAction = PlayerReadyAction.NOOP;
+                    seekTo(pos);
+                } else {
+                    // Already prepared & at the right position.
+                    mAudioPlayer.start();
+                }
+            } else {
+                mReadyAction = PlayerReadyAction.SEEK;
+                mSeekTo = fraction;
+            }
+        }
+
+        void seekTo(int pos) {
+            if (mAudioPlayer != null && mPlayingAudioSeq > 0) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    mAudioPlayer.seekTo(pos, MediaPlayer.SEEK_CLOSEST);
+                } else {
+                    mAudioPlayer.seekTo(pos);
+                }
+            }
+        }
+
+        private int fractionToPos(float fraction) {
+            try {
+                if (mAudioPlayer != null && mPlayingAudioSeq > 0) {
+                    long duration = mAudioPlayer.getDuration();
+                    if (duration > 0) {
+                        return ((int) (fraction * duration));
+                    } else {
+                        Log.w(TAG, "Audio has no duration");
+                    }
+                }
+            } catch (IllegalStateException ex) {
+                Log.w(TAG, "Not ready " + mPlayingAudioSeq, ex);
+            }
+            return -1;
+        }
+    }
+
+    // Wrap in-band audio into MediaDataSource to make it playable by MediaPlayer.
+    private static class MemoryAudioSource extends MediaDataSource {
+        private final byte[] mData;
+
+        MemoryAudioSource(byte[] source) {
+            mData = source;
+        }
+
+        @Override
+        public int readAt(long position, byte[] destination, int offset, int size) throws IOException {
+            size = Math.min(mData.length - (int) position, size);
+            System.arraycopy(mData, (int) position, destination, offset, size);
+            return size;
+        }
+
+        @Override
+        public long getSize() throws IOException {
+            return mData.length;
+        }
+
+        @Override
+        public void close() throws IOException {
+            // Do nothing.
         }
     }
 }

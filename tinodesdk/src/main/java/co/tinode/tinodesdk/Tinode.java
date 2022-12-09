@@ -41,6 +41,7 @@ import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Pattern;
 
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
@@ -2191,6 +2192,21 @@ public class Tinode {
         return msg.isValid() ? msg : null;
     }
 
+
+    /**
+     * Checks if URL is a relative url, i.e. has no 'scheme://', including the case of missing scheme '//'.
+     * The scheme is expected to be RFC-compliant, e.g. [a-z][a-z0-9+.-]*
+     * example.html - ok
+     * https:example.com - not ok.
+     * http:/example.com - not ok.
+     * ↲ https://example.com' - not ok. (↲ means carriage return)
+     */
+    public static boolean isUrlRelative(@NotNull String url) {
+        Pattern re = Pattern.compile("^\\s*([a-z][a-z0-9+.-]*:|//)",
+                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+        return !re.matcher(url).matches();
+    }
+
     /**
      * Convert relative URL to absolute URL using Tinode server address as base.
      * If the URL is already absolute it's left unchanged.
@@ -2198,13 +2214,12 @@ public class Tinode {
      * @param origUrl possibly relative URL to convert to absolute.
      * @return absolute URL or {@code null} if origUrl is invalid.
      */
-    public URL toAbsoluteURL(String origUrl) {
+    public @Nullable URL toAbsoluteURL(@NotNull String origUrl) {
         URL url = null;
         try {
             url = new URL(getBaseUrl(), origUrl);
         } catch (MalformedURLException ignored) {
         }
-
         return url;
     }
 
@@ -2224,7 +2239,7 @@ public class Tinode {
      *
      * @return Map with API key, authentication headers and User agent.
      */
-    public Map<String, String> getRequestHeaders() {
+    public @NotNull Map<String, String> getRequestHeaders() {
         HashMap<String, String> headers = new HashMap<>();
         if (mApiKey != null) {
             headers.put("X-Tinode-APIKey", mApiKey);
