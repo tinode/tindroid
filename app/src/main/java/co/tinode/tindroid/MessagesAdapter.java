@@ -109,7 +109,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     // _TIP_ == "single", i.e. has a bubble tip.
     // _SIMPLE_ == no bubble tip, just a rounded rectangle.
     // _DATE == the date bubble is visible.
-    private static final int VIEWTYPE_SIDE_CENTER = 0b000001;
     private static final int VIEWTYPE_SIDE_LEFT   = 0b000010;
     private static final int VIEWTYPE_SIDE_RIGHT  = 0b000100;
     private static final int VIEWTYPE_TIP         = 0b001000;
@@ -461,30 +460,26 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         StoredMessage m = getMessage(position);
 
         if (m != null) {
-            if (m.delId > 0) {
-                itemType = packViewType(VIEWTYPE_SIDE_CENTER, false, false, false);
-            } else {
-                long nextFrom = -2;
-                Date nextDate = null;
-                if (position > 0) {
-                    StoredMessage m2 = getMessage(position - 1);
-                    if (m2 != null) {
-                        nextFrom = m2.userId;
-                        nextDate = m2.ts;
-                    }
+            long nextFrom = -2;
+            Date nextDate = null;
+            if (position > 0) {
+                StoredMessage m2 = getMessage(position - 1);
+                if (m2 != null) {
+                    nextFrom = m2.userId;
+                    nextDate = m2.ts;
                 }
-                Date prevDate = null;
-                if (position < getItemCount() - 1) {
-                    StoredMessage m2 = getMessage(position + 1);
-                    if (m2 != null) {
-                        prevDate = m2.ts;
-                    }
-                }
-                itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
-                        m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
-                        Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
-                        !UiUtils.isSameDate(prevDate, m.ts));
             }
+            Date prevDate = null;
+            if (position < getItemCount() - 1) {
+                StoredMessage m2 = getMessage(position + 1);
+                if (m2 != null) {
+                    prevDate = m2.ts;
+                }
+            }
+            itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
+                    m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
+                    Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
+                    !UiUtils.isSameDate(prevDate, m.ts));
         }
 
         return itemType;
@@ -496,9 +491,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Create a new message bubble view.
 
         int layoutId = -1;
-        if ((viewType & VIEWTYPE_SIDE_CENTER) != 0) {
-            layoutId = R.layout.meta_message;
-        } else if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
+        if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
             if ((viewType & VIEWTYPE_AVATAR) != 0 && (viewType & VIEWTYPE_TIP) != 0) {
                 layoutId = R.layout.message_left_single_avatar;
             } else if ((viewType & VIEWTYPE_TIP) != 0) {
@@ -551,13 +544,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         holder.seqId = m.seq;
-
-        if (holder.mIcon != null) {
-            // Meta bubble in the center of the screen
-            holder.mIcon.setVisibility(View.VISIBLE);
-            holder.mText.setText(R.string.content_deleted);
-            return;
-        }
 
         if (mCursor == null) {
             return;
@@ -959,7 +945,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
-        final ImageView mIcon;
         final ImageView mAvatar;
         final View mMessageBubble;
         final AppCompatImageView mDeliveredIcon;
@@ -981,7 +966,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             super(itemView);
 
             mViewType = viewType;
-            mIcon = itemView.findViewById(R.id.icon);
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
