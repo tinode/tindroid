@@ -847,7 +847,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
                 Menu menu = mSelectionMode.getMenu();
-                menu.findItem(R.id.action_edit).setVisible(selected == 1);
+                if (selected == 1) {
+                    StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
+                    if (msg != null && msg.content != null) {
+                        boolean mutable = true;
+                        String[] types = new String[]{"AU", "EX", "FM", "IM", "VC"};
+                        Drafty.Entity[] ents = msg.content.getEntities();
+                        if (ents != null) {
+                            for (Drafty.Entity ent : ents) {
+                                if (Arrays.binarySearch(types, ent.tp) >= 0) {
+                                    mutable = false;
+                                    break;
+                                }
+                            }
+                        }
+                        menu.findItem(R.id.action_edit).setVisible(mutable);
+                    }
+                } else {
+                    menu.findItem(R.id.action_edit).setVisible(false);
+                }
                 menu.findItem(R.id.action_reply).setVisible(selected == 1);
                 menu.findItem(R.id.action_forward).setVisible(selected == 1);
             }
