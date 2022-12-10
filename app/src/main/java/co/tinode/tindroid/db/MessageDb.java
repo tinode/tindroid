@@ -176,24 +176,23 @@ public class MessageDb implements BaseColumns {
         }
 
         int effSeq = msg.getReplacementSeqId();
-        if (effSeq <= 0) {
-            Log.i(TAG, "No replacement ID");
-            effSeq = msg.seq;
-        } else {
-            Log.i(TAG, "GOT replacement ID " + effSeq);
-        }
         db.beginTransaction();
         try {
             int origSeq = getOriginalSeqFor(db, msg.topicId, effSeq);
             if (origSeq > 0) {
-                if (origSeq < msg.seq) {
-                    // Newer message version. Invalidate the old effective message record.
+                // Original message found.
+                if (msg.seq == 0 || origSeq < msg.seq) {
+                    // Newer message version. Clear the effective_seq (invalidate) of
+                    // the old effective message record.
                     invalidateMessage(db, msg.topicId, origSeq);
                 } else {
                     // The already existing message version is newer than this one.
                     // Do not set effective seq.
                     effSeq = -1;
                 }
+            } else {
+                // Not a replacement or original is not found.
+                effSeq = msg.seq;
             }
 
             msg.id = insertRaw(db, topic, msg, effSeq);
@@ -230,7 +229,9 @@ public class MessageDb implements BaseColumns {
         BaseDb.Status status;
         if (msg.seq == 0) {
             msg.seq = TopicDb.getNextUnsentSeq(db, topic);
-            withEffSeq = msg.seq;
+            if (withEffSeq <= 0) {
+                withEffSeq = msg.seq;
+            }
             status = msg.status == BaseDb.Status.UNDEFINED ? BaseDb.Status.QUEUED : msg.status;
         } else {
             status = BaseDb.Status.SYNCED;
@@ -272,14 +273,16 @@ public class MessageDb implements BaseColumns {
         return false;
     }
 
-    static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_STATUS, BaseDb.Status.SYNCED.value);
-        values.put(COLUMN_NAME_TS, timestamp.getTime());
-        values.put(COLUMN_NAME_SEQ, seq);
-        values.put(COLUMN_NAME_EFFECTIVE_SEQ, seq);
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
-        return updated > 0;
+    static void delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
+        String sql = "UPDATE " + TABLE_NAME + " SET " +
+                COLUMN_NAME_STATUS + "=" + BaseDb.Status.SYNCED.value + "," +
+                COLUMN_NAME_TS + "=" + timestamp.getTime() + "," +
+                COLUMN_NAME_SEQ + "=" + seq + "," +
+                COLUMN_NAME_EFFECTIVE_SEQ +
+                    "=CASE WHEN " + COLUMN_NAME_REPLACES_SEQ + " IS NOT NULL THEN " + COLUMN_NAME_REPLACES_SEQ +
+                        " ELSE " + seq + " END" +
+                " WHERE " + _ID + "=" + msgId;
+        db.execSQL(sql);
     }
 
     private static void invalidateMessage(SQLiteDatabase db, long topicId, int seqId) {
@@ -291,6 +294,7 @@ public class MessageDb implements BaseColumns {
                 null);
     }
 
+    // Get the unique seqId for the given effective seqId.
     private static int getOriginalSeqFor(SQLiteDatabase db, long topicId, int effSeq) {
         if (effSeq <= 0) {
             return -1;
@@ -304,6 +308,25 @@ public class MessageDb implements BaseColumns {
             // Message not found
             return -1;
         }
+    }
+
+    // Find all version of an edited message (if any). The versions are sorted from newest to oldest.
+    // Does not return the original message id (seq).
+    public static int[] getAllVersions(SQLiteDatabase db, long topicId, int seq, int limit) {
+        Cursor cursor = db.rawQuery("SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
+                COLUMN_NAME_REPLACES_SEQ + "=" + seq +
+                " ORDER BY " + COLUMN_NAME_SEQ + " DESC" +
+                (limit > 0 ? " LIMIT " + limit : ""), null);
+        ArrayList<Integer> ids = new ArrayList<>();
+        if (cursor.moveToFirst()) {
+            do {
+                int repl = cursor.getInt(0);
+                ids.add(repl);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return ids.stream().mapToInt(i->i).toArray();
     }
 
     /**
@@ -691,6 +714,19 @@ public class MessageDb implements BaseColumns {
      */
     static boolean delete(SQLiteDatabase db, long msgId) {
         return db.delete(TABLE_NAME, _ID + "=" + msgId, null) > 0;
+    }
+
+    /**
+     * Delete single message by topic ID and seq.
+     *
+     * @param db    Database to use.
+     * @param topicId Database ID of the topic with the message.
+     * @param seq Seq ID of the message to delete.
+     * @return true on success, false on failure.
+     */
+    static boolean delete(SQLiteDatabase db, long topicId, int seq) {
+        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_SEQ + "=" + seq, null) > 0;
     }
 
     /**

@@ -567,6 +567,10 @@ public class TopicDb implements BaseColumns {
         throw new IllegalArgumentException("Stored topic undefined " + topic.getName());
     }
 
+    public static boolean isUnsentSeq(int seq) {
+        return seq >= UNSENT_ID_START;
+    }
+
     @SuppressWarnings("WeakerAccess")
     public static boolean updateRead(SQLiteDatabase db, long topicId, int read) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_READ, topicId, read);

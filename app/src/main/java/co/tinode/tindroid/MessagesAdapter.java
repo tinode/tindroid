@@ -75,6 +75,7 @@ import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tindroid.format.CopyFormatter;
 import co.tinode.tindroid.format.FullFormatter;
 import co.tinode.tindroid.format.QuoteFormatter;
@@ -348,28 +349,26 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             while (i < positions.length) {
                 int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
-                int replSeq = 0;
                 if (msg != null) {
-                    replSeq = msg.getReplacementSeqId();
+                    int replSeq = msg.getReplacementSeqId();
+                    if (replSeq > 0) {
+                        // Deleting all version of an edited message.
+                        int[] ids = store.getAllMsgVersions(topic, replSeq, -1);
+                        for (int id : ids) {
+                            if (TopicDb.isUnsentSeq(id)) {
+                                store.msgDiscardSeq(topic, id);
+                                discarded++;
+                            } else {
+                                toDelete.add(id);
+                            }
+                        }
+                    }
+
                     if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getDbId());
                         discarded++;
-                    }
-                }
-
-                // If the message being deleted is a replacement message,
-                // delete the original one too.
-                if (replSeq > 0) {
-                    msg = getMessage(replSeq);
-                    if (msg != null) {
-                        if (msg.status == BaseDb.Status.SYNCED) {
-                            toDelete.add(msg.seq);
-                        } else {
-                            store.msgDiscard(topic, msg.getDbId());
-                            discarded++;
-                        }
                     }
                 }
             }
