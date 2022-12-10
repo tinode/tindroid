@@ -52,6 +52,19 @@
                 android:layout_gravity="end">
 
                 <TextView
+                    android:id="@+id/messageEdited"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="4sp"
+                    android:paddingRight="4sp"
+                    android:text="@string/edited"
+                    android:textColor="?android:textColorSecondary"
+                    android:textSize="11sp"
+                    android:textStyle="italic"
+                    android:visibility="gone"
+                    tools:ignore="SmallSp" />
+
+                <TextView
                     android:id="@+id/messageMeta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

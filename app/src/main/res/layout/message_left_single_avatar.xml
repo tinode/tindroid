@@ -59,19 +59,37 @@
                     tools:ignore="RtlSymmetry"
                     tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
 
-                <TextView
-                    android:id="@+id/messageMeta"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="end"
-                    android:clickable="false"
-                    android:focusable="false"
-                    android:paddingLeft="4dp"
-                    android:paddingRight="4dp"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="11sp"
-                    tools:ignore="SmallSp"
-                    tools:text="Jun 11 22:17" />
+                    android:layout_gravity="end">
+                    <TextView
+                        android:id="@+id/messageEdited"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:paddingLeft="4sp"
+                        android:paddingRight="4sp"
+                        android:text="@string/edited"
+                        android:textColor="?android:textColorSecondary"
+                        android:textSize="11sp"
+                        android:textStyle="italic"
+                        android:visibility="gone"
+                        tools:ignore="SmallSp" />
+
+                    <TextView
+                        android:id="@+id/messageMeta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end"
+                        android:clickable="false"
+                        android:focusable="false"
+                        android:paddingLeft="4dp"
+                        android:paddingRight="4dp"
+                        android:textColor="?android:attr/textColorSecondary"
+                        android:textSize="11sp"
+                        tools:ignore="SmallSp"
+                        tools:text="Jun 11 22:17" />
+                </LinearLayout>
 
             </LinearLayout>
 
