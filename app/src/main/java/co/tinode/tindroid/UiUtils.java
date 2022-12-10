@@ -117,8 +117,10 @@ public class UiUtils {
     static final int MAX_TITLE_LENGTH = 60;
     // Maximum length of topic description.
     static final int MAX_DESCRIPTION_LENGTH = 360;
-    // Length of quoted text.
+    // Length of quoted text when replying.
     public static final int QUOTED_REPLY_LENGTH = 64;
+    // Length of quoted text when altering a message.
+    public static final int EDIT_PREVIEW_LENGTH = 64;
 
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
@@ -148,6 +150,10 @@ public class UiUtils {
     private static final int LOGO_LAYER_TYPING = 2;
     // If StoredMessage activity is visible, this is the current topic in that activity.
     private static String sVisibleTopic = null;
+
+    public enum MsgAction {
+        NONE, REPLY, FORWARD, EDIT
+    }
 
     static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online, final Date lastSeen, boolean deleted) {

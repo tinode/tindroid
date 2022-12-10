@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
       xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <group android:visible="false">
@@ -8,34 +9,42 @@
             android:icon="@drawable/ic_retry"
             android:orderInCategory="100"
             android:title="@string/action_send_now"
-            app:showAsAction="always"/>
+            app:showAsAction="always"
+            tools:ignore="AlwaysShowAction" />
     </group>
+
+    <item
+        android:id="@+id/action_edit"
+        android:icon="@drawable/ic_edit"
+        android:orderInCategory="101"
+        android:title="@string/action_reply"
+        app:showAsAction="always"/>
 
     <item
         android:id="@+id/action_reply"
         android:icon="@drawable/ic_reply"
-        android:orderInCategory="101"
+        android:orderInCategory="102"
         android:title="@string/action_reply"
         app:showAsAction="always"/>
 
     <item
         android:id="@+id/action_delete"
         android:icon="@drawable/ic_delete"
-        android:orderInCategory="102"
+        android:orderInCategory="103"
         android:title="@string/action_delete"
         app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/action_forward"
         android:icon="@drawable/ic_forward"
-        android:orderInCategory="103"
+        android:orderInCategory="104"
         android:title="@string/action_forward"
         app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/action_copy"
         android:icon="@drawable/ic_copy"
-        android:orderInCategory="104"
+        android:orderInCategory="105"
         android:title="@string/action_copy"
         app:showAsAction="ifRoom"/>
 

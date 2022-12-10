@@ -97,7 +97,6 @@ public class FilePreviewFragment extends Fragment {
             accessGranted = false;
             mRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
         } else {
-            Log.i(TAG, "Can read external storage");
             accessGranted = true;
         }
 

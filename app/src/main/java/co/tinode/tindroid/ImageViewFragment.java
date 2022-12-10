@@ -295,8 +295,6 @@ public class ImageViewFragment extends Fragment {
                                         return;
                                     }
 
-                                    Log.i(TAG, "Image loaded");
-
                                     final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
                                     mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
                                     mWorkingRect = new RectF(mInitialRect);

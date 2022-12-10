@@ -307,7 +307,7 @@ public class SqlStore implements Storage {
         msg.topic = topic.getName();
         msg.from = getMyUid();
         msg.ts = new Date(new Date().getTime() + mTimeAdjustment);
-        // Set seq to zero. MessageDb will assign a unique temporary (very large int, >= 2E9) seq.
+        // Set seq to zero. MessageDb will assign a unique temporary (very large int, >= 2e9) seq.
         // The temp seq will be updated later, when the message is received by the server.
         msg.seq = 0;
         msg.status = initialStatus;

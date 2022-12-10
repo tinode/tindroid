@@ -354,11 +354,23 @@ public class Tinode {
      * Headers for a reply message.
      *
      * @param seq message ID being replied to.
-     * @return headers in as map "header key : header value"
+     * @return headers as map "key : value"
      */
     public static Map<String, Object> headersForReply(final int seq) {
         Map<String, Object> head = new HashMap<>();
         head.put("reply", "" + seq);
+        return head;
+    }
+
+    /**
+     * Headers for a replacement message.
+     *
+     * @param seq message ID being replaced.
+     * @return headers as map "key : value"
+     */
+    public static Map<String, Object> headersForReplacement(final int seq) {
+        Map<String, Object> head = new HashMap<>();
+        head.put("replace", ":" + seq);
         return head;
     }
 
@@ -796,7 +808,6 @@ public class Tinode {
                 }
 
                 if (topic != null && topic.isAttached()) {
-                    Log.i(TAG, "OOB: topic attached, no action needed");
                     // No need to fetch: topic is already subscribed and got data through normal channel.
                     // Assuming that data was available.
                     break;

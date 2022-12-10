@@ -33,7 +33,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxWidth="280dp"
-                android:minWidth="100dp"
+                android:minWidth="112dp"
                 android:paddingStart="18dp"
                 android:paddingEnd="4dp"
                 android:textColor="?android:textColorPrimary"

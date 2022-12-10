@@ -59,8 +59,6 @@ public class CallActivity extends AppCompatActivity  {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.i(TAG, "CREATED");
-
         super.onCreate(savedInstanceState);
 
         final Intent intent = getIntent();

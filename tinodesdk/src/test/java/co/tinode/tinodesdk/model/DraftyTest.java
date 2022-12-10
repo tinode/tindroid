@@ -555,7 +555,7 @@ public class DraftyTest {
                 new Drafty.Entity("MN")
                         .putData("val", "usr123abcDE")
         };
-        String actual = src.toMarkdown();
+        String actual = src.toMarkdown(false);
         String expected = "*@Alice Johnson\nThis is a reply to reply*This is a Reply -> Forward -> Reply.";
         assertEquals("Format 1 has failed", expected, actual);
 
@@ -573,7 +573,7 @@ public class DraftyTest {
                 new Drafty.Entity("LN")
                         .putData("url", "http://www.tinode.co")
         };
-        actual = src.toMarkdown();
+        actual = src.toMarkdown(false);
         expected = "an url: [https://www.example.com/abc#fragment](https://www.example.com/abc#fragment) "+
                 "and another _[www.tinode.co](http://www.tinode.co)_";
         assertEquals("Format 2 has failed", expected, actual);
@@ -587,7 +587,7 @@ public class DraftyTest {
                 null,
                 new Drafty.Style("EM", 5,5)
         };
-        String actual = src.toMarkdown();
+        String actual = src.toMarkdown(false);
         String expected = "Null _style_ element";
         assertEquals("Invalid 1 has failed", expected, actual);
 
@@ -596,7 +596,7 @@ public class DraftyTest {
         src.fmt = new Drafty.Style[]{
                 new Drafty.Style(8,4, 0)
         };
-        actual = src.toMarkdown();
+        actual = src.toMarkdown(false);
         expected = "Missing entity";
         assertEquals("Invalid 2 has failed", expected, actual);
 
@@ -611,7 +611,7 @@ public class DraftyTest {
                 new Drafty.Entity("LN")
                         .putData("url", "http://www.tinode.co")
         };
-        actual = src.toMarkdown();
+        actual = src.toMarkdown(false);
         expected = "Missing entity [in](http://www.tinode.co) the middle";
         assertEquals("Invalid 3 has failed", expected, actual);
     }

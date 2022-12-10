@@ -106,8 +106,9 @@ public class MessagesFragment extends Fragment {
     private static final String[] SUPPORTED_MIME_TYPES = new String[]{"image/*"};
 
     static final String MESSAGE_TO_SEND = "messageText";
-    static final String MESSAGE_REPLY = "reply";
-    static final String MESSAGE_REPLY_ID = "replyID";
+    static final String MESSAGE_TEXT_ACTION = "messageTextAction";
+    static final String MESSAGE_QUOTED = "quotedDrafty";
+    static final String MESSAGE_QUOTED_SEQ_ID = "quotedSeqID";
 
     static final int ZONE_CANCEL = 0;
     static final int ZONE_LOCK = 1;
@@ -135,8 +136,9 @@ public class MessagesFragment extends Fragment {
     private String mCurrentPhotoFile;
     private Uri mCurrentPhotoUri;
 
-    private int mReplySeqID = -1;
-    private Drafty mReply = null;
+    private UiUtils.MsgAction mTextAction = UiUtils.MsgAction.NONE;
+    private int mQuotedSeqID = -1;
+    private Drafty mQuote = null;
     private Drafty mContentToForward = null;
     private Drafty mForwardSender = null;
 
@@ -346,6 +348,8 @@ public class MessagesFragment extends Fragment {
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
+        AppCompatImageButton doneEditing = view.findViewById(R.id.chatEditDoneButton);
+        doneEditing.setOnClickListener(v -> sendText(activity));
 
         // Send image button
         view.findViewById(R.id.attachImage).setOnClickListener(v -> openImageSelector(activity));
@@ -372,11 +376,17 @@ public class MessagesFragment extends Fragment {
                     activity.sendKeyPress();
                 }
 
-                // Show either [send] or [record audio] button.
-                if (charSequence.length() > 0) {
+                // Show either [send] or [record audio] or [done editing] button.
+                if (mTextAction == UiUtils.MsgAction.EDIT) {
+                    doneEditing.setVisibility(View.VISIBLE);
+                    audio.setVisibility(View.INVISIBLE);
+                    send.setVisibility(View.INVISIBLE);
+                } else if (charSequence.length() > 0) {
+                    doneEditing.setVisibility(View.INVISIBLE);
                     audio.setVisibility(View.INVISIBLE);
                     send.setVisibility(View.VISIBLE);
                 } else {
+                    doneEditing.setVisibility(View.INVISIBLE);
                     audio.setVisibility(View.VISIBLE);
                     send.setVisibility(View.INVISIBLE);
                 }
@@ -774,7 +784,7 @@ public class MessagesFragment extends Fragment {
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
-                    input.setText(mMessageToSend);
+                    input.append(mMessageToSend);
                     mMessageToSend = null;
                 }
                 setSendPanelVisible(activity, R.id.sendMessagePanel);
@@ -809,15 +819,15 @@ public class MessagesFragment extends Fragment {
         audioManager.setMode(AudioManager.MODE_NORMAL);
         audioManager.setSpeakerphoneOn(false);
 
-        // Save the text in the send field.
-        EditText input = activity.findViewById(R.id.editMessage);
-        String draft = input.getText().toString().trim();
         Bundle args = getArguments();
         if (args != null) {
             args.putString("topic", mTopicName);
+            // Save the text in the send field.
+            String draft = ((EditText) activity.findViewById(R.id.editMessage)).getText().toString().trim();
             args.putString(MESSAGE_TO_SEND, draft);
-            args.putInt(MESSAGE_REPLY_ID, mReplySeqID);
-            args.putSerializable(MESSAGE_REPLY, mReply);
+            args.putString(MESSAGE_TEXT_ACTION, mTextAction.name());
+            args.putInt(MESSAGE_QUOTED_SEQ_ID, mQuotedSeqID);
+            args.putSerializable(MESSAGE_QUOTED, mQuote);
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContentToForward);
             args.putSerializable(ForwardToFragment.FORWARDING_FROM_USER, mForwardSender);
         }
@@ -1235,10 +1245,10 @@ public class MessagesFragment extends Fragment {
         return imageFile;
     }
 
-    private boolean sendMessage(Drafty content, int replyTo) {
+    private boolean sendMessage(Drafty content, int seqId, boolean isReplacement) {
         MessageActivity activity = (MessageActivity) getActivity();
         if (activity != null) {
-            boolean done = activity.sendMessage(content, replyTo);
+            boolean done = activity.sendMessage(content, seqId, isReplacement);
             if (done) {
                 scrollToBottom(false);
             }
@@ -1257,7 +1267,7 @@ public class MessagesFragment extends Fragment {
         }
 
         if (mContentToForward != null) {
-            if (sendMessage(mForwardSender.appendLineBreak().append(mContentToForward), -1)) {
+            if (sendMessage(mForwardSender.appendLineBreak().append(mContentToForward), -1, false)) {
                 mForwardSender = null;
                 mContentToForward = null;
             }
@@ -1269,15 +1279,19 @@ public class MessagesFragment extends Fragment {
         String message = inputField.getText().toString().trim();
         if (!message.equals("")) {
             Drafty msg = Drafty.parse(message);
-            if (mReply != null) {
-                msg = mReply.append(msg);
+            boolean isReplacement = false;
+            if (mTextAction == UiUtils.MsgAction.EDIT) {
+                isReplacement = true;
+            } else if (mQuote != null) {
+                msg = mQuote.append(msg);
             }
-            if (sendMessage(msg, mReplySeqID)) {
+            if (sendMessage(msg, mQuotedSeqID, isReplacement)) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.getText().clear();
-                if (mReplySeqID > 0) {
-                    mReplySeqID = -1;
-                    mReply = null;
+                if (mQuotedSeqID > 0) {
+                    mTextAction = UiUtils.MsgAction.NONE;
+                    mQuotedSeqID = -1;
+                    mQuote = null;
                     activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
                 }
             }
@@ -1313,32 +1327,67 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        mReplySeqID = -1;
-        mReply = null;
+        mQuotedSeqID = -1;
+        mQuote = null;
         mContentToForward = null;
         mForwardSender = null;
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+        if (mTextAction == UiUtils.MsgAction.EDIT) {
+            ((EditText) activity.findViewById(R.id.editMessage)).setText("");
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
+        }
+
+        mTextAction = UiUtils.MsgAction.NONE;
     }
 
-    void showReply(Activity activity, Drafty reply, int seq) {
-        mReply = reply;
-        mReplySeqID = seq;
+    void startEditing(Activity activity, String original, Drafty quote, int seq) {
+        handleQuotedText(activity, UiUtils.MsgAction.EDIT, original, quote, seq);
+    }
+
+    void showReply(Activity activity, Drafty quote, int seq) {
+        handleQuotedText(activity, UiUtils.MsgAction.REPLY, null, quote, seq);
+    }
+
+    private void handleQuotedText(Activity activity, UiUtils.MsgAction action,
+                                  String original, Drafty quote, int seq) {
+        mQuotedSeqID = seq;
+        mQuote = quote;
         mContentToForward = null;
         mForwardSender = null;
 
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
-        TextView replyHolder = activity.findViewById(R.id.contentPreview);
-        replyHolder.setText(reply.format(new SendReplyFormatter(replyHolder)));
+        if (!TextUtils.isEmpty(original)) {
+            EditText editText = activity.findViewById(R.id.editMessage);
+            // Two steps: clear field, then append to move cursor to the end.
+            editText.setText("");
+            editText.append(original);
+            editText.requestFocus();
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.VISIBLE);
+        } else {
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
+            if (mTextAction == UiUtils.MsgAction.EDIT) {
+                ((EditText)activity.findViewById(R.id.editMessage)).setText("");
+            }
+        }
+        TextView previewHolder = activity.findViewById(R.id.contentPreview);
+        previewHolder.setText(quote.format(new SendReplyFormatter(previewHolder)));
+        mTextAction = action;
     }
 
     private void showContentToForward(Activity activity, Drafty sender, Drafty content) {
-        mReplySeqID = -1;
-        mReply = null;
+        mTextAction = UiUtils.MsgAction.FORWARD;
+        mQuotedSeqID = -1;
+        mQuote = null;
 
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
@@ -1361,15 +1410,17 @@ public class MessagesFragment extends Fragment {
             Bundle args = getArguments();
             if (args != null) {
                 mMessageToSend = args.getString(MESSAGE_TO_SEND);
-                mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
-                mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
+                mTextAction = UiUtils.MsgAction.valueOf(args.getString(MESSAGE_TEXT_ACTION));
+                mQuotedSeqID = args.getInt(MESSAGE_QUOTED_SEQ_ID);
+                mQuote = (Drafty) args.getSerializable(MESSAGE_QUOTED);
                 mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
                 mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
 
                 // Clear used arguments.
                 args.remove(MESSAGE_TO_SEND);
-                args.remove(MESSAGE_REPLY_ID);
-                args.remove(MESSAGE_REPLY);
+                args.remove(MESSAGE_TEXT_ACTION);
+                args.remove(MESSAGE_QUOTED_SEQ_ID);
+                args.remove(MESSAGE_QUOTED);
                 args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
                 args.remove(ForwardToFragment.FORWARDING_FROM_USER);
             }

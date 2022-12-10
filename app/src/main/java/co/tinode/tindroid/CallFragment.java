@@ -311,10 +311,6 @@ public class CallFragment extends Fragment {
                 track.setEnabled(!disabled);
             }
         }
-
-        if (disabled) {
-            Log.i(TAG, "Audio enabled=" + mLocalAudioTrack.enabled());
-        }
     }
 
     private void toggleSpeakerphone(FloatingActionButton b) {

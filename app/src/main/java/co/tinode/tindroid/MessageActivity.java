@@ -681,9 +681,12 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
-    boolean sendMessage(Drafty content, int seq) {
+    boolean sendMessage(Drafty content, int seq, boolean isReplacement) {
         if (mTopic != null) {
-            Map<String,Object> head = seq > 0 ? Tinode.headersForReply(seq) : null;
+            Map<String,Object> head = seq > 0 ?
+                    (isReplacement ? Tinode.headersForReplacement(seq) :
+                            Tinode.headersForReply(seq)) :
+                    null;
             PromisedReply<ServerMessage> done = mTopic.publish(content, head);
             BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
             runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
@@ -715,6 +718,15 @@ public class MessageActivity extends AppCompatActivity
             MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
             if (mf != null) {
                 mf.showReply(this, reply, seq);
+            }
+        }
+    }
+
+    void startEditing(String original, Drafty quote, int seq) {
+        if (isFragmentVisible(FRAGMENT_MESSAGES)) {
+            MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
+            if (mf != null) {
+                mf.startEditing(this, original, quote, seq);
             }
         }
     }

@@ -188,24 +188,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
                 // Don't convert to switch: Android does not like it.
                 int id = menuItem.getItemId();
-                if (id == R.id.action_delete) {
-                    sendDeleteMessages(getSelectedArray());
+                int[] selected = getSelectedArray();
+                if (id == R.id.action_edit) {
+                    if (selected != null) {
+                        showMessageQuote(UiUtils.MsgAction.EDIT, selected[0], UiUtils.EDIT_PREVIEW_LENGTH);
+                    }
+                    return true;
+                } else if (id == R.id.action_delete) {
+                    sendDeleteMessages(selected);
                     return true;
                 } else if (id == R.id.action_copy) {
-                    copyMessageText(getSelectedArray());
+                    copyMessageText(selected);
                     return true;
                 } else if (id == R.id.action_send_now) {
                     // FIXME: implement resending now.
                     Log.d(TAG, "Try re-sending selected item");
                     return true;
                 } else if (id == R.id.action_reply) {
-                    int[] selected = getSelectedArray();
                     if (selected != null) {
-                        showReplyPreview(selected[0]);
+                        showMessageQuote(UiUtils.MsgAction.REPLY, selected[0], UiUtils.QUOTED_REPLY_LENGTH);
                     }
                     return true;
                 } else if (id == R.id.action_forward) {
-                    int[] selected = getSelectedArray();
                     if (selected != null) {
                         showMessageForwardSelector(selected[0]);
                     }
@@ -344,12 +348,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             while (i < positions.length) {
                 int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
+                int replSeq = 0;
                 if (msg != null) {
+                    replSeq = msg.getReplacementSeqId();
                     if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
                         store.msgDiscard(topic, msg.getDbId());
                         discarded++;
+                    }
+                }
+
+                // If the message being deleted is a replacement message,
+                // delete the original one too.
+                if (replSeq > 0) {
+                    msg = getMessage(replSeq);
+                    if (msg != null) {
+                        if (msg.status == BaseDb.Status.SYNCED) {
+                            toDelete.add(msg.seq);
+                        } else {
+                            store.msgDiscard(topic, msg.getDbId());
+                            discarded++;
+                        }
                     }
                 }
             }
@@ -398,20 +418,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return uname;
     }
 
-    private void showReplyPreview(int pos) {
+    private void showMessageQuote(UiUtils.MsgAction action, int pos, int quoteLength) {
         StoredMessage msg = getMessage(pos);
         if (msg != null && msg.status == BaseDb.Status.SYNCED) {
             toggleSelectionAt(pos);
             notifyItemChanged(pos);
             updateSelectionMode();
             ThumbnailTransformer tr = new ThumbnailTransformer();
-            Drafty replyContent = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1).transform(tr);
+            final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
             tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void>() {
                 @Override
                 public PromisedReply<Void> onSuccess(Void result) {
                     mActivity.runOnUiThread(() -> {
-                        Drafty reply = Drafty.quote(messageFrom(msg), msg.from, replyContent);
-                        mActivity.showReply(reply, msg.seq);
+                        if (action == UiUtils.MsgAction.REPLY) {
+                            Drafty reply = Drafty.quote(messageFrom(msg), msg.from, content);
+                            mActivity.showReply(reply, msg.seq);
+                        } else {
+                            // If the message being edited is a replacement message, use the original seqID.
+                            int seq = msg.getReplacementSeqId();
+                            if (seq <= 0) {
+                                seq = msg.seq;
+                            }
+                            String markdown = msg.content.toMarkdown(false);
+                            mActivity.startEditing(markdown, content.wrapInto("QQ"), seq);
+                        }
                     });
                     return null;
                 }
@@ -551,6 +581,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         final long msgId = m.getDbId();
 
+        boolean isEdited = m.isReplacement() && m.getHeader("webrtc") == null;
         boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
         boolean uploadingAttachment = hasAttachment && m.isPending();
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
@@ -659,6 +690,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         DateUtils.DAY_IN_MILLIS,
                         DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
                 holder.mDateDivider.setText(date);
+            }
+
+            if (holder.mEdited != null) {
+                holder.mEdited.setVisibility(isEdited ? View.VISIBLE : View.GONE);
             }
             if (holder.mMeta != null) {
                 holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
@@ -813,6 +848,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
                 Menu menu = mSelectionMode.getMenu();
+                menu.findItem(R.id.action_edit).setVisible(selected == 1);
                 menu.findItem(R.id.action_reply).setVisible(selected == 1);
                 menu.findItem(R.id.action_forward).setVisible(selected == 1);
             }
@@ -950,6 +986,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final AppCompatImageView mDeliveredIcon;
         final TextView mDateDivider;
         final TextView mText;
+        final TextView mEdited;
         final TextView mMeta;
         final TextView mUserName;
         final View mSelected;
@@ -972,6 +1009,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mDateDivider = itemView.findViewById(R.id.dateDivider);
             mText = itemView.findViewById(R.id.messageText);
             mMeta = itemView.findViewById(R.id.messageMeta);
+            mEdited = itemView.findViewById(R.id.messageEdited);
             mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mRippleOverlay = itemView.findViewById(R.id.overlay);
@@ -1170,7 +1208,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
                     json.put("seq", "" + mSeqId);
                     newMsg.attachJSON(json);
-                    mActivity.sendMessage(newMsg, -1);
+                    mActivity.sendMessage(newMsg, -1, false);
 
                 } else if ("url".equals(actionType)) {
                     URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));

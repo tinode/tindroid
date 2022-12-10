@@ -34,7 +34,7 @@
                 android:clickable="false"
                 android:focusable="false"
                 android:maxWidth="280dp"
-                android:minWidth="100dp"
+                android:minWidth="112dp"
                 android:paddingStart="18dp"
                 android:paddingEnd="4dp"
                 android:textColor="?android:textColorPrimary"

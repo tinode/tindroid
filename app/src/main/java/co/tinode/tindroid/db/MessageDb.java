@@ -177,7 +177,10 @@ public class MessageDb implements BaseColumns {
 
         int effSeq = msg.getReplacementSeqId();
         if (effSeq <= 0) {
+            Log.i(TAG, "No replacement ID");
             effSeq = msg.seq;
+        } else {
+            Log.i(TAG, "GOT replacement ID " + effSeq);
         }
         db.beginTransaction();
         try {
@@ -421,7 +424,8 @@ public class MessageDb implements BaseColumns {
      */
     static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
         int high = 0;
-        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS missing" +
+        // Find the greatest seq present in the DB.
+        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS highest" +
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
                 " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +

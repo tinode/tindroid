@@ -948,10 +948,13 @@ public class Drafty implements Serializable {
     }
 
     /**
-     Mostly for testing: convert Drafty to a markdown string.
+     * Mostly for testing: convert Drafty to a markdown string.
+     * @param plainLink links should be written as plain text, without any formatting.
+     * @return Drafty as markdown-formatted string; elements not representable as markdown are converted to plain text.
      */
-    public String toMarkdown() {
+    public String toMarkdown(boolean plainLink) {
         return format(new Formatter<String>() {
+            final boolean usePlainLink = plainLink;
             @Override
             public String wrapText(CharSequence text) {
                 return text.toString();
@@ -998,7 +1001,9 @@ public class Drafty implements Serializable {
                         res = "`" + res + "`";
                         break;
                     case "LN":
-                        res = "[" + res + "](" + attr.get("url") + ")";
+                        if (!usePlainLink) {
+                            res = "[" + res + "](" + attr.get("url") + ")";
+                        }
                         break;
                 }
 
