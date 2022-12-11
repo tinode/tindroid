@@ -317,7 +317,6 @@ public class WaveDrawable extends Drawable implements Runnable {
             // stopY
             mBars[i * 4 + 3] = (height + y) * 0.5f;
         }
-
     }
 
     // Get thumb position for level.
