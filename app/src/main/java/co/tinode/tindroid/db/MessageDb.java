@@ -184,6 +184,7 @@ public class MessageDb implements BaseColumns {
         db.beginTransaction();
         try {
             int effSeq = msg.getReplacementSeqId();
+            long effTs = msg.ts != null ? msg.ts.getTime() : -1;
             StoredMessage origMsg = null;
             Cursor c = getMessageBySeq(db, msg.topicId, effSeq);
             if(c.moveToFirst()) {
@@ -196,6 +197,7 @@ public class MessageDb implements BaseColumns {
                     // Newer message version. Clear the effective_seq (invalidate) of
                     // the old effective message record.
                     invalidateMessage(db, msg.topicId, origMsg.seq);
+                    effTs = origMsg.ts.getTime();
                 } else {
                     // The already existing message version is newer than this one.
                     // Do not set effective seq.
@@ -206,7 +208,7 @@ public class MessageDb implements BaseColumns {
                 effSeq = msg.seq;
             }
 
-            msg.id = insertRaw(db, topic, msg, effSeq, origMsg != null ? origMsg.ts.getTime() : -1);
+            msg.id = insertRaw(db, topic, msg, effSeq, effTs);
             if (msg.id > 0) {
                 db.setTransactionSuccessful();
             }
@@ -256,7 +258,7 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_SENDER, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
         if (withEffTs > 0) {
-            values.put(COLUMN_NAME_EFFECTIVE_TS, withEffSeq);
+            values.put(COLUMN_NAME_EFFECTIVE_TS, withEffTs);
         }
         values.put(COLUMN_NAME_SEQ, msg.seq);
         int replacesSeq = msg.getReplacementSeqId();

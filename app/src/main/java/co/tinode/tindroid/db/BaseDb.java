@@ -25,7 +25,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 19;
+    private static final int DATABASE_VERSION = 18;
 
     /**
      * Filename for SQLite file.
