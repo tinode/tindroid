@@ -575,6 +575,7 @@ public class MessagesFragment extends Fragment {
                         timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
                     }
                     mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
+                    ((MessageActivity) activity).sendRecordingProgress(true);
                 }
             }
         };

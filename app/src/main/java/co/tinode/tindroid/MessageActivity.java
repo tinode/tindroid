@@ -737,6 +737,12 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
+    void sendRecordingProgress(boolean audioOnly) {
+        if (mTopic != null && mSendTypingNotifications) {
+            mTopic.noteRecording(audioOnly);
+        }
+    }
+
     void runMessagesLoader() {
         final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                 findFragmentByTag(FRAGMENT_MESSAGES);

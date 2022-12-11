@@ -1637,6 +1637,20 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Send a recording notification to server. Ensure we do not sent too many.
+     */
+    public void noteRecording(boolean audioOnly) {
+        long now = System.currentTimeMillis();
+        if (now - mLastKeyPress > Tinode.getKeyPressDelay()) {
+            try {
+                mTinode.noteRecording(getName(), audioOnly);
+                mLastKeyPress = now;
+            } catch (NotConnectedException ignored) {
+            }
+        }
+    }
+
+    /**
      * Send a key press notification to server. Ensure we do not sent too many.
      */
     public void noteKeyPress() {
