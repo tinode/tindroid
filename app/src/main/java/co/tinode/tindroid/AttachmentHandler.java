@@ -553,7 +553,7 @@ public class AttachmentHandler extends Worker {
                                 break;
                             case ARG_OPERATION_AUDIO:
                                 content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
-                                        null, ref, uploadDetails.duration, fname, uploadDetails.fileSize);
+                                        null, url, uploadDetails.duration, fname, uploadDetails.fileSize);
                                 break;
                         }
                     }

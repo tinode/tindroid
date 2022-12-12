@@ -36,6 +36,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -637,7 +638,7 @@ public class MessagesFragment extends Fragment {
             }
         });
         GestureDetector gd = new GestureDetector(getContext(), new GestureDetector.SimpleOnGestureListener() {
-            public void onLongPress(MotionEvent e) {
+            public void onLongPress(@NonNull MotionEvent e) {
                 if (!UiUtils.isPermissionGranted(activity, Manifest.permission.RECORD_AUDIO)) {
                     mAudioRecorderPermissionLauncher.launch(new String[] {
                             Manifest.permission.RECORD_AUDIO, Manifest.permission.MODIFY_AUDIO_SETTINGS
@@ -947,12 +948,14 @@ public class MessagesFragment extends Fragment {
             mGainControl = AutomaticGainControl.create(MediaRecorder.AudioSource.MIC);
         }
 
+        activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         try {
             mAudioRecord = File.createTempFile("audio", ".m4a", activity.getCacheDir());
             mAudioRecorder.setOutputFile(mAudioRecord.getAbsolutePath());
             mAudioRecorder.prepare();
             mAudioSampler = new AudioSampler();
         } catch (IOException ex) {
+            activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
             Log.w(TAG, "Failed to initialize audio recording", ex);
             Toast.makeText(activity, R.string.audio_recording_failed, Toast.LENGTH_SHORT).show();
             mAudioRecorder.release();
@@ -1005,6 +1008,8 @@ public class MessagesFragment extends Fragment {
         if (activity == null) {
             return;
         }
+
+        activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         if (!keepRecord && mAudioRecord != null) {
             mAudioRecord.delete();
