@@ -1038,25 +1038,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mGestureDetector = new GestureDetector(itemView.getContext(),
                     new GestureDetector.SimpleOnGestureListener() {
                         @Override
-                        public void onLongPress(MotionEvent ev) {
+                        public void onLongPress(@NonNull MotionEvent ev) {
                             itemView.performLongClick();
                         }
 
                         @Override
-                        public boolean onSingleTapConfirmed(MotionEvent ev) {
+                        public boolean onSingleTapConfirmed(@NonNull MotionEvent ev) {
                             itemView.performClick();
                             return super.onSingleTapConfirmed(ev);
                         }
 
                         @Override
-                        public void onShowPress(MotionEvent ev) {
+                        public void onShowPress(@NonNull MotionEvent ev) {
                             if (mRippleOverlay != null) {
                                 mRippleOverlay.setPressed(true);
                                 mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
                             }
                         }
                         @Override
-                        public boolean onDown(MotionEvent ev) {
+                        public boolean onDown(@NonNull MotionEvent ev) {
                             // Convert click coordinates in itemView to TexView.
                             int[] item = new int[2];
                             int[] text = new int[2];
