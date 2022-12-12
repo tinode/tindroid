@@ -21,7 +21,6 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.SystemClock;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -1004,25 +1003,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mGestureDetector = new GestureDetector(itemView.getContext(),
                     new GestureDetector.SimpleOnGestureListener() {
                         @Override
-                        public void onLongPress(MotionEvent ev) {
+                        public void onLongPress(@NonNull MotionEvent ev) {
                             itemView.performLongClick();
                         }
 
                         @Override
-                        public boolean onSingleTapConfirmed(MotionEvent ev) {
+                        public boolean onSingleTapConfirmed(@NonNull MotionEvent ev) {
                             itemView.performClick();
                             return super.onSingleTapConfirmed(ev);
                         }
 
                         @Override
-                        public void onShowPress(MotionEvent ev) {
+                        public void onShowPress(@NonNull MotionEvent ev) {
                             if (mRippleOverlay != null) {
                                 mRippleOverlay.setPressed(true);
                                 mRippleOverlay.postDelayed(() -> mRippleOverlay.setPressed(false), 250);
                             }
                         }
                         @Override
-                        public boolean onDown(MotionEvent ev) {
+                        public boolean onDown(@NonNull MotionEvent ev) {
                             // Convert click coordinates in itemView to TexView.
                             int[] item = new int[2];
                             int[] text = new int[2];
@@ -1151,13 +1150,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             try {
                 FullFormatter.AudioClickAction aca = (FullFormatter.AudioClickAction) params;
                 if (aca.action == FullFormatter.AudioClickAction.Action.PLAY) {
-                    mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
-                    mMediaControl.playWhenReady();
+                    if (mMediaControl.ensurePlayerReady(mSeqId, data, aca.control)) {
+                        mMediaControl.playWhenReady();
+                    }
                 } else if (aca.action == FullFormatter.AudioClickAction.Action.PAUSE) {
                     mMediaControl.pause();
                 } else if (aca.seekTo != null) {
-                    mMediaControl.ensurePlayerReady(mSeqId, data, aca.control);
-                    mMediaControl.seekToWhenReady(aca.seekTo);
+                    if (mMediaControl.ensurePlayerReady(mSeqId, data, aca.control)) {
+                        mMediaControl.seekToWhenReady(aca.seekTo);
+                    }
                 }
             } catch (IOException | ClassCastException ignored) {
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
@@ -1305,11 +1306,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Playback fraction to seek to when the player is ready.
         private float mSeekTo = -1f;
 
-        synchronized void ensurePlayerReady(int seq, Map<String, Object> data,
+        synchronized boolean ensurePlayerReady(int seq, Map<String, Object> data,
                                        FullFormatter.AudioControlCallback control) throws IOException {
             if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
                 mAudioControlCallback = control;
-                return;
+                return true;
             }
 
             if (mPlayingAudioSeq > 0 && mAudioControlCallback != null) {
@@ -1383,15 +1384,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 .build();
                         mAudioPlayer.setDataSource(mActivity, uri);
                     }
+                } else {
+                    mAudioControlCallback.reset();
+                    Log.w(TAG, "Invalid ref URL " + val);
+                    Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                    return false;
                 }
             } else if ((val = data.get("val")) instanceof String) {
                 byte[] source = Base64.decode((String) val, Base64.DEFAULT);
                 mAudioPlayer.setDataSource(new MemoryAudioSource(source));
             } else {
+                mAudioControlCallback.reset();
                 Log.w(TAG, "Unable to play audio: missing data");
+                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+                return false;
             }
 
             mAudioPlayer.prepareAsync();
+            return true;
         }
 
         synchronized void releasePlayer(int seq) {
