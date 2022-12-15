@@ -322,4 +322,5 @@
     <string name="image_download_success">Image enregistrée dans la galerie</string>
     <string name="in_progress_call">en cours</string>
     <string name="connecting_call">de connexion</string>
+    <string name="tags_not_found">Aucune étiquette définie. Ajoutez en.</string>
 </resources>

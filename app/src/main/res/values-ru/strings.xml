@@ -302,4 +302,5 @@
     <string name="image_download_success">Изображение сохранено в галерее</string>
     <string name="in_progress_call">в процессе</string>
     <string name="connecting_call">соединяемся</string>
+    <string name="tags_not_found">Тегов нет. Добавьте.</string>
 </resources>

@@ -322,4 +322,5 @@
     <string name="image_download_success">圖片已保存到圖庫</string>
     <string name="in_progress_call">通話中</string>
     <string name="connecting_call">連接</string>
+    <string name="tags_not_found">未定義任何標籤。請新增一些標籤。</string>
 </resources>

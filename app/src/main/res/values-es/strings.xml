@@ -322,4 +322,5 @@
     <string name="image_download_success">Imagen guardada en la galería</string>
     <string name="in_progress_call">en progreso</string>
     <string name="connecting_call">de conexión</string>
+    <string name="tags_not_found">No hay etiquetas definidas. Añade unas.</string>
 </resources>

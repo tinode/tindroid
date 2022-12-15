@@ -321,4 +321,5 @@
     <string name="image_download_success">갤러리에 저장된 이미지</string>
     <string name="in_progress_call">통화 중</string>
     <string name="connecting_call">연결 호출</string>
+    <string name="tags_not_found">태그가정의되지않았습니다.일부를추가하십시오.</string>
 </resources>

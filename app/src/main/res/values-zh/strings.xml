@@ -323,4 +323,5 @@
     <string name="image_download_success">图片已保存到画廊</string>
     <string name="in_progress_call">通话中</string>
     <string name="connecting_call">连接</string>
+    <string name="tags_not_found">尚未定义标签。添加一些。</string>
 </resources>
