@@ -27,6 +27,22 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
 
     public MsgSetMeta() {}
 
+    public boolean isDescSet() {
+        return desc != null || nulls[NULL_DESC];
+    }
+
+    public boolean isSubSet() {
+        return sub != null || nulls[NULL_SUB];
+    }
+
+    public boolean isTagsSet() {
+        return tags != null || nulls[NULL_TAGS];
+
+    }
+    public boolean isCredSet() {
+        return cred != null || nulls[NULL_CRED];
+    }
+
     public static class Builder<Pu,Pr> {
         private final MsgSetMeta<Pu,Pr> msm;
 

@@ -149,11 +149,16 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             tagsView.removeAllViews();
 
             if (tags != null) {
+                tagsView.setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.noTagsFound).setVisibility(View.GONE);
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
                 }
+            } else {
+                tagsView.setVisibility(View.GONE);
+                activity.findViewById(R.id.noTagsFound).setVisibility(View.VISIBLE);
             }
         } else {
             // P2P topic
