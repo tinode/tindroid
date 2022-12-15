@@ -52,10 +52,10 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         toolbar.setTitle(R.string.account_settings);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
-        fragment.findViewById(R.id.copy_iv).setOnClickListener(v -> {
+        fragment.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboard != null) {
-                clipboard.setPrimaryClip(ClipData.newPlainText("message text", Cache.getTinode().getMyId()));
+                clipboard.setPrimaryClip(ClipData.newPlainText("account ID", Cache.getTinode().getMyId()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
         });

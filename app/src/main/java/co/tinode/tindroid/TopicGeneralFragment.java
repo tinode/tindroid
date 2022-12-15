@@ -2,6 +2,9 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -14,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.flexbox.FlexboxLayout;
 
@@ -96,6 +100,13 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
             if (launcher != null) {
                 mAvatarPickerLauncher.launch(launcher);
+            }
+        });
+        view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null && mTopic != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
+                Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
         });
     }
