@@ -103,7 +103,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             }
         });
         view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
-            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboard != null && mTopic != null) {
                 clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
@@ -213,12 +213,14 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         VxCard pub = mTopic.getPub();
         if (pub != null) {
             title.setText(pub.fn);
-            if (!editable && TextUtils.isEmpty(pub.note)) {
+            if (!editable || TextUtils.isEmpty(pub.note)) {
                 descriptionWrapper.setVisibility(View.GONE);
             } else {
                 description.setText(pub.note);
                 descriptionWrapper.setVisibility(View.VISIBLE);
             }
+        } else {
+            descriptionWrapper.setVisibility(View.GONE);
         }
 
         UiUtils.setAvatar(avatar, pub, mTopic.getName(), false);
