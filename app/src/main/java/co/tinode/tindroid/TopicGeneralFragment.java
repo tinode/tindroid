@@ -132,6 +132,11 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
+        notifyDataSetChanged();
+        super.onResume();
+    }
+
+    private void refreshTags(Activity activity, String[] tags) {
         final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
         if (mTopic.isGrpType() && mTopic.isOwner()) {
             // Group topic
@@ -143,7 +148,6 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
             tagsView.removeAllViews();
 
-            String[] tags = mTopic.getTags();
             if (tags != null) {
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
@@ -155,9 +159,6 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             // P2P topic
             tagManager.setVisibility(View.GONE);
         }
-
-        notifyDataSetChanged();
-        super.onResume();
     }
 
     // Dialog for editing tags.
@@ -183,6 +184,13 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                     String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
                     mTopic.setMeta(new MsgSetMeta(tags1))
+                            .thenApply(new PromisedReply.SuccessListener() {
+                                @Override
+                                public PromisedReply onSuccess(Object result) {
+                                    activity.runOnUiThread(() -> refreshTags(activity, mTopic.getTags()));
+                                    return null;
+                                }
+                            })
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -229,6 +237,8 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
             comment.setText(priv.getComment());
         }
+
+        refreshTags(activity, mTopic.getTags());
     }
 
     @Override
@@ -248,7 +258,8 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
             final String newTitle = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             final String newComment = ((TextView) activity.findViewById(R.id.topicComment)).getText().toString().trim();
-            final String newDescription = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
+            final String newDescription = mTopic.isGrpType() && mTopic.isOwner() ?
+                    ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim() : null;
 
             UiUtils.updateTopicDesc(mTopic, newTitle, newComment, newDescription)
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
