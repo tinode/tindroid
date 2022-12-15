@@ -274,8 +274,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                 if (lastSyncMarker == null) {
                     // Send contacts list to the server only if it has changed since last update, i.e. a full
                     // update is performed.
-                    tinode.setMeta(Tinode.TOPIC_FND,
-                            new MsgSetMeta(new MetaSetDesc(null, contacts))).getResult();
+                    tinode.setMeta(Tinode.TOPIC_FND, new MsgSetMeta.Builder()
+                            .with(new MetaSetDesc(null, contacts)).build()).getResult();
                 }
 
                 final MsgGetMeta meta = new MsgGetMeta(new MetaGetSub(lastSyncMarker, null));

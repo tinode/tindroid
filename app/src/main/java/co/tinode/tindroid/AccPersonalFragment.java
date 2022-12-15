@@ -213,7 +213,7 @@ public class AccPersonalFragment extends Fragment
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
-                    me.setMeta(new MsgSetMeta(tags1))
+                    me.setMeta(new MsgSetMeta.Builder().with(tags1).build())
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -291,7 +291,7 @@ public class AccPersonalFragment extends Fragment
                     if (parsed != null) {
                         final MeTopic me = Cache.getTinode().getMeTopic();
                         // noinspection unchecked
-                        me.setMeta(new MsgSetMeta(parsed))
+                        me.setMeta(new MsgSetMeta.Builder().with(parsed).build())
                                 .thenCatch(new UiUtils.ToastFailureListener(activity));
 
                         // Dismiss once everything is OK.

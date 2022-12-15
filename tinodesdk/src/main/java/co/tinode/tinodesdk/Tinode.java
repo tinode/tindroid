@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,7 @@ import co.tinode.tinodesdk.model.MsgClientLogin;
 import co.tinode.tinodesdk.model.MsgClientNote;
 import co.tinode.tinodesdk.model.MsgClientPub;
 import co.tinode.tinodesdk.model.MsgClientSet;
+import co.tinode.tinodesdk.model.MsgClientSetSerializer;
 import co.tinode.tinodesdk.model.MsgClientSub;
 import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgRange;
@@ -67,6 +69,7 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.MsgSetMetaSerializer;
 import co.tinode.tinodesdk.model.Pair;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -141,6 +144,12 @@ public class Tinode {
         sJsonMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         sDateFormat = new RFC3339Format();
         sJsonMapper.setDateFormat(sDateFormat);
+
+        // Add custom serializer for MsgSetMeta.
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(new MsgSetMetaSerializer());
+        module.addSerializer(new MsgClientSetSerializer());
+        sJsonMapper.registerModule(module);
 
         sTypeFactory = sJsonMapper.getTypeFactory();
     }

@@ -183,7 +183,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
-                    mTopic.setMeta(new MsgSetMeta(tags1))
+                    mTopic.setMeta(new MsgSetMeta.Builder().with(tags1).build())
                             .thenApply(new PromisedReply.SuccessListener() {
                                 @Override
                                 public PromisedReply onSuccess(Object result) {

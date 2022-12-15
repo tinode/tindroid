@@ -151,7 +151,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     public PromisedReply<ServerMessage> confirmCred(final String meth, final String resp) {
-        return setMeta(new MsgSetMeta<>(new Credential(meth, null, resp, null)));
+        return setMeta(new MsgSetMeta.Builder<DP,PrivateType>()
+                .with(new Credential(meth, null, resp, null)).build());
     }
 
     @Override

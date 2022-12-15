@@ -358,8 +358,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             return query;
         }
 
-        mFndTopic.setMeta(new MsgSetMeta<>(
-                new MetaSetDesc<>(query == null ? Tinode.NULL_VALUE : query, null)));
+        mFndTopic.setMeta(new MsgSetMeta.Builder<String,String>().with(
+                new MetaSetDesc<>(query == null ? Tinode.NULL_VALUE : query, null)).build());
         if (query != null) {
             toggleProgressIndicator(true);
             mFndTopic.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
