@@ -246,6 +246,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         ImageView online;
         ImageView deleted;
         ImageView channel;
+        ImageView group;
         ImageView verified;
         ImageView staff;
         ImageView danger;
@@ -269,6 +270,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 online = item.findViewById(R.id.online);
                 deleted = item.findViewById(R.id.deleted);
                 channel = item.findViewById(R.id.icon_channel);
+                group = item.findViewById(R.id.icon_group);
                 verified = item.findViewById(R.id.icon_verified);
                 staff = item.findViewById(R.id.icon_staff);
                 danger = item.findViewById(R.id.icon_danger);
@@ -333,6 +335,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 channel.setVisibility(View.VISIBLE);
             } else {
                 channel.setVisibility(View.GONE);
+                if (topic.isGrpType()) {
+                   group.setVisibility(View.VISIBLE);
+                } else {
+                    group.setVisibility(View.GONE);
+                }
                 if (topic.isDeleted()) {
                     online.setVisibility(View.GONE);
                 } else {

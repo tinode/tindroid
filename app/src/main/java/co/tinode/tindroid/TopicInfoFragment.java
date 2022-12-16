@@ -379,17 +379,22 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
             title.setTextIsSelectable(false);
-            avatar.setImageResource(Topic.isP2PType(topicName) ?
+            avatar.setImageResource(mTopic.isP2PType() ?
                     R.drawable.ic_person_circle : R.drawable.ic_group_grey);
             descriptionWrapper.setVisibility(View.GONE);
         }
 
+        Drawable icon = null;
+
         if (mTopic.hasChannelAccess()) {
-            Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
-            if (icon != null) {
-                icon.setBounds(0, 0, 64, 64);
-                title.setCompoundDrawables(null, null, icon, null);
-            }
+            icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
+        } else if (mTopic.isGrpType()) {
+            icon = AppCompatResources.getDrawable(activity, R.drawable.ic_group_2);
+        }
+
+        if (icon != null) {
+            icon.setBounds(0, 0, 64, 64);
+            title.setCompoundDrawables(null, null, icon, null);
         } else {
             title.setCompoundDrawables(null, null, null, null);
         }

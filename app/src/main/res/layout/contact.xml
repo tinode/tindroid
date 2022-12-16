@@ -74,6 +74,17 @@
                 tools:text="Contact title" />
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/icon_group"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:alpha="0.75"
+                android:baseline="-2dp"
+                android:contentDescription="@string/group"
+                android:visibility="gone"
+                app:srcCompat="@drawable/ic_group_2"
+                app:tint="?android:attr/textColorSecondary" />
+
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/icon_channel"
                 android:layout_width="20dp"
                 android:layout_height="20dp"
