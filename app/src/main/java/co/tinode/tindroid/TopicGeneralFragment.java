@@ -2,6 +2,9 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -14,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.flexbox.FlexboxLayout;
 
@@ -98,6 +102,13 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                 mAvatarPickerLauncher.launch(launcher);
             }
         });
+        view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null && mTopic != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
+                Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -121,6 +132,11 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
+        notifyDataSetChanged();
+        super.onResume();
+    }
+
+    private void refreshTags(Activity activity, String[] tags) {
         final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
         if (mTopic.isGrpType() && mTopic.isOwner()) {
             // Group topic
@@ -132,21 +148,22 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
             tagsView.removeAllViews();
 
-            String[] tags = mTopic.getTags();
             if (tags != null) {
+                tagsView.setVisibility(View.VISIBLE);
+                activity.findViewById(R.id.noTagsFound).setVisibility(View.GONE);
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
                 }
+            } else {
+                tagsView.setVisibility(View.GONE);
+                activity.findViewById(R.id.noTagsFound).setVisibility(View.VISIBLE);
             }
         } else {
             // P2P topic
             tagManager.setVisibility(View.GONE);
         }
-
-        notifyDataSetChanged();
-        super.onResume();
     }
 
     // Dialog for editing tags.
@@ -171,7 +188,14 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
                     String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
-                    mTopic.setMeta(new MsgSetMeta(tags1))
+                    mTopic.setMeta(new MsgSetMeta.Builder().with(tags1).build())
+                            .thenApply(new PromisedReply.SuccessListener() {
+                                @Override
+                                public PromisedReply onSuccess(Object result) {
+                                    activity.runOnUiThread(() -> refreshTags(activity, mTopic.getTags()));
+                                    return null;
+                                }
+                            })
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
@@ -202,12 +226,14 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         VxCard pub = mTopic.getPub();
         if (pub != null) {
             title.setText(pub.fn);
-            if (!editable && TextUtils.isEmpty(pub.note)) {
+            if (!editable || TextUtils.isEmpty(pub.note)) {
                 descriptionWrapper.setVisibility(View.GONE);
             } else {
                 description.setText(pub.note);
                 descriptionWrapper.setVisibility(View.VISIBLE);
             }
+        } else {
+            descriptionWrapper.setVisibility(View.GONE);
         }
 
         UiUtils.setAvatar(avatar, pub, mTopic.getName(), false);
@@ -216,6 +242,8 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
         if (priv != null && !TextUtils.isEmpty(priv.getComment())) {
             comment.setText(priv.getComment());
         }
+
+        refreshTags(activity, mTopic.getTags());
     }
 
     @Override
@@ -235,7 +263,8 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
 
             final String newTitle = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             final String newComment = ((TextView) activity.findViewById(R.id.topicComment)).getText().toString().trim();
-            final String newDescription = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
+            final String newDescription = mTopic.isGrpType() && mTopic.isOwner() ?
+                    ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim() : null;
 
             UiUtils.updateTopicDesc(mTopic, newTitle, newComment, newDescription)
                     .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {

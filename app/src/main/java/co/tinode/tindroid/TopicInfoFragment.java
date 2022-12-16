@@ -1,6 +1,10 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -128,6 +132,14 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                         return null;
                     }
                 }));
+
+        view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null && mTopic != null) {
+                clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
+                Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         view.findViewById(R.id.permissions).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null,
@@ -349,6 +361,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicComment);
+        final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
         final TextView description = activity.findViewById(R.id.topicDescription);
 
         VxCard pub = mTopic.getPub();
@@ -356,21 +369,32 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             title.setText(pub.fn);
             title.setTypeface(null, Typeface.NORMAL);
             title.setTextIsSelectable(true);
-            description.setText(pub.note);
+            if (!TextUtils.isEmpty(pub.note)) {
+                description.setText(pub.note);
+                descriptionWrapper.setVisibility(View.VISIBLE);
+            } else {
+                descriptionWrapper.setVisibility(View.GONE);
+            }
         } else {
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
             title.setTextIsSelectable(false);
-            avatar.setImageResource(Topic.isP2PType(topicName) ?
+            avatar.setImageResource(mTopic.isP2PType() ?
                     R.drawable.ic_person_circle : R.drawable.ic_group_grey);
+            descriptionWrapper.setVisibility(View.GONE);
         }
 
+        Drawable icon = null;
+
         if (mTopic.hasChannelAccess()) {
-            Drawable icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
-            if (icon != null) {
-                icon.setBounds(0, 0, 64, 64);
-                title.setCompoundDrawables(null, null, icon, null);
-            }
+            icon = AppCompatResources.getDrawable(activity, R.drawable.ic_channel);
+        } else if (mTopic.isGrpType()) {
+            icon = AppCompatResources.getDrawable(activity, R.drawable.ic_group_2);
+        }
+
+        if (icon != null) {
+            icon.setBounds(0, 0, 64, 64);
+            title.setCompoundDrawables(null, null, icon, null);
         } else {
             title.setCompoundDrawables(null, null, null, null);
         }

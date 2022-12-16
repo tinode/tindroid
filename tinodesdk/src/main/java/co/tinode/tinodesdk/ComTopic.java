@@ -43,7 +43,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
             if (mDesc.pub != null) {
                 desc.attachments = mDesc.pub.getPhotoRefs();
             }
-            return subscribe(new MsgSetMeta<>(desc, null, mTags, null), null);
+            return subscribe(new MsgSetMeta.Builder<DP, PrivateType>().with(desc).with(mTags).build(), null);
         }
         return super.subscribe();
     }
@@ -132,7 +132,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
     public PromisedReply<ServerMessage> updateArchived(final boolean arch) {
         PrivateType priv = new PrivateType();
         priv.setArchived(arch);
-        return setMeta(new MsgSetMeta<>(new MetaSetDesc<>(null, priv)));
+        return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(new MetaSetDesc<>(null, priv)).build());
     }
 
     public static class ComListener<DP> implements Listener<DP,PrivateType,DP,PrivateType> {

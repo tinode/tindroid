@@ -58,12 +58,15 @@
             android:typeface="monospace"
             tools:text="usrfv2qrUr6vAd" />
 
-        <ImageView
-            android:id="@+id/copy_iv"
-            app:tint="@color/colorAccent"
-            android:src="@drawable/ic_copy"
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/buttonCopyID"
+            style="?attr/buttonBarButtonStyle"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/action_copy"
+            android:drawablePadding="4sp"
+            app:drawableStartCompat="@drawable/ic_copy"
+            app:drawableTint="?android:textColorPrimary" />
     </LinearLayout>
 
     <TextView

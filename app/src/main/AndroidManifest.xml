@@ -62,7 +62,7 @@
         android:supportsRtl="true"
         android:allowBackup="false"
         android:requestLegacyExternalStorage="true"
-        tools:ignore="AllowBackup"
+        tools:ignore="AllowBackup,DataExtractionRules"
         tools:targetApi="q">
 
         <meta-data

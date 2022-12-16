@@ -339,5 +339,5 @@
     <string name="image_preview">Image preview</string>
     <string name="image_download_success">Image saved to gallery</string>
     <string name="edited">edited</string>
-
+    <string name="tags_not_found">No tags defined. Add some.</string>
 </resources>

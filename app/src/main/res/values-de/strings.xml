@@ -322,4 +322,5 @@
     <string name="image_download_success">Bild in Galerie gespeichert</string>
     <string name="in_progress_call">in Arbeit</string>
     <string name="connecting_call">verbinden</string>
+    <string name="tags_not_found">Keine Schlagworte definiert. Erstellen Sie welche.</string>
 </resources>

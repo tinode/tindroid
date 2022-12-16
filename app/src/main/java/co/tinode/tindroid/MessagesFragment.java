@@ -94,6 +94,7 @@ import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -402,7 +403,8 @@ public class MessagesFragment extends Fragment {
             // Enable peer.
             Acs am = new Acs(mTopic.getAccessMode());
             am.update(new AccessChange(null, "+RW"));
-            mTopic.setMeta(new MsgSetMeta<>(new MetaSetSub(mTopic.getName(), am.getGiven())))
+            mTopic.setMeta(new MsgSetMeta.Builder<VxCard, PrivateType>()
+                            .with(new MetaSetSub(mTopic.getName(), am.getGiven())).build())
                     .thenCatch(new UiUtils.ToastFailureListener(activity));
         });
 
@@ -1097,15 +1099,16 @@ public class MessagesFragment extends Fragment {
             int id = view1.getId();
             if (id == R.id.buttonAccept) {
                 final String mode = mTopic.getAccessMode().getGiven();
-                response = mTopic.setMeta(new MsgSetMeta<>(new MetaSetSub(mode)));
+                response = mTopic.setMeta(new MsgSetMeta.Builder<VxCard,PrivateType>()
+                        .with(new MetaSetSub(mode)).build());
                 if (mTopic.isP2PType()) {
                     // For P2P topics change 'given' permission of the peer too.
                     // In p2p topics the other user has the same name as the topic.
                     response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            return mTopic.setMeta(
-                                    new MsgSetMeta<>(new MetaSetSub(mTopic.getName(), mode)));
+                            return mTopic.setMeta(new MsgSetMeta.Builder<VxCard,PrivateType>()
+                                    .with(new MetaSetSub(mTopic.getName(), mode)).build());
                         }
                     });
                 }

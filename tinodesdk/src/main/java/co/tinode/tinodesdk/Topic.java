@@ -376,14 +376,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param meta original {meta} packet updated topic parameters
      */
     protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP, DR> meta) {
-        if (meta.desc != null) {
+        if (meta.isDescSet()) {
             update(meta.desc);
             if (mListener != null) {
                 mListener.onMetaDesc(mDesc);
             }
         }
 
-        if (meta.sub != null) {
+        if (meta.isSubSet()) {
             update(ctrl.params, meta.sub);
             if (mListener != null) {
                 if (meta.sub.user == null) {
@@ -393,7 +393,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
         }
 
-        if (meta.tags != null) {
+        if (meta.isTagsSet()) {
             update(meta.tags);
             if (mListener != null) {
                 mListener.onMetaTags(mTags);
@@ -1265,7 +1265,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setDescription(final MetaSetDesc<DP, DR> desc) {
-        return setMeta(new MsgSetMeta<>(desc));
+        return setMeta(new MsgSetMeta.Builder<DP, DR>().with(desc).build());
     }
 
     /**
@@ -1302,7 +1302,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @throws NotConnectedException  if there is no connection to the server
      */
     protected PromisedReply<ServerMessage> setSubscription(final MetaSetSub sub) {
-        return setMeta(new MsgSetMeta<>(sub));
+        return setMeta(new MsgSetMeta.Builder<DP, DR>().with(sub).build());
     }
 
     /**
