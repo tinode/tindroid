@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Typeface;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +32,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Handling active chats, i.e. 'me' topic.
@@ -44,14 +47,17 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     private HashMap<String, Integer> mTopicIndex;
     private SelectionTracker<String> mSelectionTracker;
     private final Filter mTopicFilter;
+    // Optional filter to find topics by name.
+    private Filter mTextFilter = null;
 
-    ChatsAdapter(Context context, ClickListener clickListener, Filter filter) {
+    ChatsAdapter(Context context, ClickListener clickListener, @Nullable Filter filter) {
         super();
 
         mClickListener = clickListener;
-        mTopicFilter = filter;
+        mTopicFilter = filter != null ? filter : topic -> true;
 
         setHasStableIds(true);
+        setTextFilter(null);
 
         sColorOffline = ResourcesCompat.getColor(context.getResources(),
                 R.color.offline, context.getTheme());
@@ -65,7 +71,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         }
 
         final Collection<ComTopic<VxCard>> newTopics = Cache.getTinode().getFilteredTopics(t ->
-                t.getTopicType().match(ComTopic.TopicType.USER) && mTopicFilter.filter((ComTopic) t));
+                t.getTopicType().match(ComTopic.TopicType.USER) &&
+                        mTopicFilter.filter((ComTopic) t) &&
+                        mTextFilter.filter((ComTopic) t));
 
         final HashMap<String, Integer> newTopicIndex = new HashMap<>(newTopics.size());
         for (ComTopic t : newTopics) {
@@ -138,6 +146,30 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
 
     void setSelectionTracker(SelectionTracker<String> selectionTracker) {
         mSelectionTracker = selectionTracker;
+    }
+
+    void setTextFilter(@Nullable String text) {
+        mTextFilter = new Filter() {
+            private final String mQuery = text;
+            @Override
+            public boolean filter(ComTopic topic) {
+                if (TextUtils.isEmpty(mQuery)) {
+                    return true;
+                }
+
+                ArrayList<String> hayStack = new ArrayList<>();
+                TheCard pub = (TheCard) topic.getPub();
+                if (pub != null) {
+                    hayStack.add(pub.fn);
+                    hayStack.add(pub.note);
+                }
+                hayStack.add(topic.getComment());
+                return hayStack.stream()
+                        .filter(token -> token != null && token.toLowerCase(Locale.getDefault()).contains(mQuery))
+                        .findAny()
+                        .orElse(null) != null;
+            }
+        };
     }
 
     interface ClickListener {
