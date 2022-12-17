@@ -95,9 +95,11 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
                      @IntRange(from = 0) int start, @IntRange(from = 0) int end, float x,
                      int top, int y, int bottom, @NonNull Paint paint) {
         Drawable b = mDrawable;
-        canvas.save();
-        canvas.translate(x, bottom - b.getBounds().bottom);
-        b.draw(canvas);
-        canvas.restore();
+        if (b != null) {
+            canvas.save();
+            canvas.translate(x, bottom - b.getBounds().bottom);
+            b.draw(canvas);
+            canvas.restore();
+        }
     }
 }

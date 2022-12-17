@@ -340,4 +340,6 @@
     <string name="image_download_success">Image saved to gallery</string>
     <string name="edited">edited</string>
     <string name="tags_not_found">No tags defined. Add some.</string>
+    <string name="video">Video</string>
+    <string name="video_caption_hint">Title of the video</string>
 </resources>

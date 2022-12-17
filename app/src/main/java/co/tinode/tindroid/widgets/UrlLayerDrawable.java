@@ -26,6 +26,7 @@ public class UrlLayerDrawable extends LayerDrawable {
     private static final int INTRINSIC_SIZE = 128;
 
     HashMap<Integer,Target> mTargets = null;
+
     public UrlLayerDrawable(@NonNull Drawable[] layers) {
         super(layers);
     }

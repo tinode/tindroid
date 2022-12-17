@@ -603,7 +603,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setText(text);
         }
 
-        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
+        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "VD"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -851,7 +851,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
                     if (msg != null && msg.content != null) {
                         boolean mutable = true;
-                        String[] types = new String[]{"AU", "EX", "FM", "IM", "VC"};
+                        String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
                         Drafty.Entity[] ents = msg.content.getEntities();
                         if (ents != null) {
                             for (Drafty.Entity ent : ents) {
@@ -1139,6 +1139,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 case "BN":
                     // Button
                     return clickButton(data);
+
+                case "VD":
+                    // Pay video.
+                    return clickVideo(data);
             }
             return false;
         }
@@ -1315,6 +1319,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
             }
 
+            return true;
+        }
+
+        private boolean clickVideo(Map<String, Object> data) {
+            if (data == null) {
+                return false;
+            }
+            Log.i(TAG, "Play video!");
             return true;
         }
     }

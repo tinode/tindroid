@@ -70,6 +70,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION_IMAGE = "image";
     final static String ARG_OPERATION_FILE = "file";
     final static String ARG_OPERATION_AUDIO = "audio";
+    final static String ARG_OPERATION_VIDEO = "video";
 
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = "topic";
@@ -90,8 +91,8 @@ public class AttachmentHandler extends Worker {
     final static String ARG_AVATAR = "square_img";
     final static String ARG_IMAGE_WIDTH = "width";
     final static String ARG_IMAGE_HEIGHT = "height";
-    final static String ARG_AUDIO_DURATION = "duration";
-    final static String ARG_AUDIO_PREVIEW = "preview";
+    final static String ARG_DURATION = "duration";
+    final static String ARG_PREVIEW = "preview";
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
@@ -194,16 +195,16 @@ public class AttachmentHandler extends Worker {
                     .putString(ARG_LOCAL_URI, uri.toString())
                     .putLong(ARG_MSG_ID, msg.getDbId())
                     .putString(ARG_TOPIC_NAME, topicName)
-                    .putInt(ARG_AUDIO_DURATION, args.getInt(ARG_AUDIO_DURATION))
+                    .putInt(ARG_DURATION, args.getInt(ARG_DURATION))
                     .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
                     .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
                     .putString(ARG_MIME_TYPE, args.getString(ARG_MIME_TYPE))
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
                     .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
             if (ARG_OPERATION_AUDIO.equals(operation)) {
-                byte[] preview = args.getByteArray(ARG_AUDIO_PREVIEW);
+                byte[] preview = args.getByteArray(ARG_PREVIEW);
                 if (preview != null) {
-                    data.putByteArray(ARG_AUDIO_PREVIEW, preview);
+                    data.putByteArray(ARG_PREVIEW, preview);
                 }
             }
             Constraints constraints = new Constraints.Builder()
@@ -504,15 +505,16 @@ public class AttachmentHandler extends Worker {
                         // Create a tiny preview bitmap.
                         if (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM || bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM) {
                             previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
-                                    UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
+                                    UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM, false),
+                                    "image/jpeg");
                         }
                         msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, previewBits,
                                 ref, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, uploadDetails.fileSize);
                     } else if (ARG_OPERATION_AUDIO.equals(operation)) {
-                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
+                        uploadDetails.duration = args.getInt(ARG_DURATION, 0);
                         uploadDetails.mimeType = uploadDetails.mimeType == null ?
                                 args.getString(ARG_MIME_TYPE) : "audio/aac";
-                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW), null,
+                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW), null,
                                 ref, uploadDetails.duration, fname, uploadDetails.fileSize);
                     }
 
@@ -552,7 +554,7 @@ public class AttachmentHandler extends Worker {
                                         fname, uploadDetails.fileSize);
                                 break;
                             case ARG_OPERATION_AUDIO:
-                                content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
+                                content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW),
                                         null, url, uploadDetails.duration, fname, uploadDetails.fileSize);
                                 break;
                         }
@@ -584,9 +586,9 @@ public class AttachmentHandler extends Worker {
                         msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, bits,
                                 null, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, len);
                     } else if (ARG_OPERATION_AUDIO.equals(operation)) {
-                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
+                        uploadDetails.duration = args.getInt(ARG_DURATION, 0);
                         uploadDetails.mimeType = uploadDetails.mimeType == null ? args.getString(ARG_MIME_TYPE) : "audio/aac";
-                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
+                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW),
                                 bits, null, uploadDetails.duration, fname, bits.length);
                     }
 
@@ -722,7 +724,7 @@ public class AttachmentHandler extends Worker {
 
         // Make sure the image dimensions are not too large.
         if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-            bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE);
+            bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE, false);
 
             byte[] bits = UiUtils.bitmapToBytes(bmp, uploadDetails.mimeType);
             uploadDetails.fileSize = bits.length;

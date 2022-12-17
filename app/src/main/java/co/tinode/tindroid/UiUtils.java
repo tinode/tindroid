@@ -127,6 +127,9 @@ public class UiUtils {
     public static final int AVATAR_THUMBNAIL_DIM = 36; // dip
     // Image thumbnail in quoted replies and reply/forward previews.
     public static final int REPLY_THUMBNAIL_DIM = 36;
+    // Width of video thumbnail in quoted replies and reply/forward previews.
+    public static final int REPLY_VIDEO_WIDTH = 48;
+
     // Image preview size in messages.
     public static final int IMAGE_PREVIEW_DIM = 64;
     public static final int MIN_AVATAR_SIZE = 8;
@@ -647,30 +650,26 @@ public class UiUtils {
     }
 
     /**
-     * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
+     * Scale bitmap down to be under certain liner dimensions.
      *
      * @param bmp       bitmap to scale.
      * @param maxWidth  maximum allowed bitmap width.
      * @param maxHeight maximum allowed bitmap height.
-     * @return scaled bitmap or original, it it does not need ot be scaled.
+     * @param upscale enable increasing size of the image (up to 10x).
+     * @return scaled bitmap or original, it it does not need to be scaled.
      */
     @NonNull
-    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight) {
+    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight,
+                                     final boolean upscale) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        float factor = 1.0f;
-        // Calculate scaling factor due to large linear dimensions.
-        if (width >= height) {
-            if (width > maxWidth) {
-                factor = (float) width / maxWidth;
-            }
-        } else {
-            if (height > maxHeight) {
-                factor = (float) height / maxHeight;
-            }
-        }
+
+        // Calculate scaling factor.
+        float factor = Math.max((float) width / maxWidth, upscale ? 0.1f : 1.0f);
+        factor = Math.max((float) height / maxHeight, factor);
+
         // Scale down.
-        if (factor > 1.0) {
+        if (upscale || factor > 1.0) {
             height /= factor;
             width /= factor;
             return Bitmap.createScaledBitmap(bmp, width, height, true);

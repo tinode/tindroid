@@ -50,6 +50,9 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     // Embedded image.
     protected abstract T handleImage(final Context ctx, List<T> content, final Map<String, Object> data);
 
+    // Embedded image.
+    protected abstract T handleVideo(final Context ctx, List<T> content, final Map<String, Object> data);
+
     // File attachment.
     protected abstract T handleAttachment(final Context ctx, final Map<String, Object> data);
 
@@ -115,8 +118,10 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                     span = handleAudio(mContext, content, data);
                     break;
                 case "IM":
-                    // Additional processing for images
                     span = handleImage(mContext, content, data);
+                    break;
+                case "VD":
+                    span = handleVideo(mContext, content, data);
                     break;
                 case "EX":
                     // Attachments; attachments cannot have sub-elements.
@@ -207,5 +212,29 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 break;
         }
         return comment;
+    }
+
+    protected static int getIntVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Number) {
+            return ((Number) tmp).intValue();
+        }
+        return 0;
+    }
+
+    protected static String getStringVal(String name, Map<String, Object> data, String def) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof CharSequence) {
+            return tmp.toString();
+        }
+        return def;
+    }
+
+    protected static boolean getBooleanVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Boolean) {
+            return (boolean) tmp;
+        }
+        return false;
     }
 }

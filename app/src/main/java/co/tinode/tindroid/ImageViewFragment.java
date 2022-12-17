@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -93,6 +92,9 @@ public class ImageViewFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return null;
+        }
 
         View view = inflater.inflate(R.layout.fragment_view_image, container, false);
         mMatrix = new Matrix();
@@ -101,7 +103,7 @@ public class ImageViewFragment extends Fragment {
 
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float dX, float dY) {
+            public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -125,7 +127,7 @@ public class ImageViewFragment extends Fragment {
 
         ScaleGestureDetector.OnScaleGestureListener scaleListener = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
-            public boolean onScale(ScaleGestureDetector scaleDetector) {
+            public boolean onScale(@NonNull ScaleGestureDetector scaleDetector) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -323,7 +325,7 @@ public class ImageViewFragment extends Fragment {
         if (bmp != null) {
             // Must ensure the bitmap is not too big (some cameras can produce
             // bigger bitmaps that the phone can render)
-            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM);
+            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM, false);
 
             mImageView.enableOverlay(mAvatarUpload);
 
