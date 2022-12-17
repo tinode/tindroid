@@ -603,7 +603,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setText(text);
         }
 
-        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "VD"))) {
+        if (m.content != null && m.content.hasEntities(
+                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "VD"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -1327,6 +1328,47 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return false;
             }
             Log.i(TAG, "Play video!");
+
+            Bundle args = null;
+            Object val;
+            if ((val = data.get("ref")) instanceof String) {
+                URL url = Cache.getTinode().toAbsoluteURL((String) val);
+                // URL is null when the image is not sent yet.
+                if (url != null) {
+                    args = new Bundle();
+                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
+                }
+            }
+
+            if (args == null && (val = data.get("val")) != null) {
+                byte[] bytes = val instanceof String ?
+                        Base64.decode((String) val, Base64.DEFAULT) :
+                        val instanceof byte[] ? (byte[]) val : null;
+                if (bytes != null) {
+                    args = new Bundle();
+                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
+                }
+            }
+
+            if (args != null) {
+                try {
+                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
+                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
+                    //noinspection ConstantConditions
+                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
+                } catch (NullPointerException | ClassCastException ex) {
+                    Log.w(TAG, "Invalid type of image parameters", ex);
+                }
+            }
+
+            if (args != null) {
+                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_VIDEO, args, true);
+            } else {
+                Toast.makeText(mActivity, R.string.broken_video, Toast.LENGTH_SHORT).show();
+            }
+
             return true;
         }
     }

@@ -8,6 +8,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -15,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -30,16 +33,16 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.MenuProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 
 /**
  * Fragment for viewing a video: before being attached or received.
  */
-public class VideoViewFragment extends Fragment {
+public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final String TAG = "VideoViewFragment";
 
     private enum RemoteState {
@@ -49,6 +52,7 @@ public class VideoViewFragment extends Fragment {
         FAILED
     }
 
+    private ImageView mPosterView;
     private VideoView mVideoView;
     private MediaController mMediaControls;
 
@@ -70,6 +74,8 @@ public class VideoViewFragment extends Fragment {
         mMediaControls = new MediaController(activity);
         mMediaControls.setAnchorView(mVideoView);
         mVideoView.setMediaController(mMediaControls);
+
+        mPosterView = view.findViewById(R.id.poster);
 
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
@@ -103,7 +109,45 @@ public class VideoViewFragment extends Fragment {
         mRemoteState = RemoteState.NONE;
     }
 
-    private void loadImage(final Activity activity, final Bundle args) {
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menuInflater.inflate(R.menu.menu_download, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
+        final Activity activity = getActivity();
+        if (activity == null) {
+            return false;
+        }
+
+        if (item.getItemId() == R.id.action_download) {
+            // https://stackoverflow.com/questions/57923329/save-and-insert-video-to-gallery-on-android-10
+            // Save video to Gallery.
+            Bundle args = getArguments();
+            String filename = null;
+            if (args != null) {
+                filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
+            }
+            if (TextUtils.isEmpty(filename)) {
+                filename = getResources().getString(R.string.tinode_video);
+                filename += "" + (System.currentTimeMillis() % 10000);
+            }
+
+            /*
+            Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+            String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,
+                    filename, null);
+            Toast.makeText(activity, savedAt != null ? R.string.image_download_success :
+                    R.string.failed_to_save_download, Toast.LENGTH_LONG).show();
+            */
+            return true;
+        }
+
+        return false;
+    }
+
+    private void loadPreviewImage(final Activity activity, final Bundle args) {
         // Check if the bitmap is directly attached.
         int length = 0;
         Bitmap bmp = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
@@ -149,8 +193,8 @@ public class VideoViewFragment extends Fragment {
                 if (ref != null) {
                     mRemoteState = RemoteState.LOADING;
                     Picasso.get().load(ref)
-                            .error(R.drawable.ic_broken_image)
-                            .into(mImageView, new Callback() {
+                            .error(R.drawable.ic_video_broken)
+                            .into(mPosterView, new Callback() {
                                 @Override
                                 public void onSuccess() {
                                     mRemoteState = RemoteState.SUCCESS;
@@ -160,11 +204,7 @@ public class VideoViewFragment extends Fragment {
                                         return;
                                     }
 
-                                    final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-                                    mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-                                    mImageView.enableOverlay(false);
-
-                                    activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+                                    final Bitmap bmp = ((BitmapDrawable) mPosterView.getDrawable()).getBitmap();
                                     setupImagePostview(activity, args, bmp.getByteCount());
                                 }
 
@@ -172,7 +212,7 @@ public class VideoViewFragment extends Fragment {
                                 public void onError(Exception e) {
                                     mRemoteState = RemoteState.FAILED;
                                     Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
-                                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                    mPosterView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                     setHasOptionsMenu(false);
                                 }
                             });
@@ -183,9 +223,6 @@ public class VideoViewFragment extends Fragment {
         if (bmp != null) {
             // Must ensure the bitmap is not too big (some cameras can produce
             // bigger bitmaps that the phone can render)
-
-            activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
-
             if (length == 0) {
                 // The image is being previewed before sending or uploading.
                 setupImagePreview(activity);
@@ -194,14 +231,14 @@ public class VideoViewFragment extends Fragment {
                 setupImagePostview(activity, args, length);
             }
 
-            mImageView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
+            mPosterView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
         } else if (mRemoteState != RemoteState.SUCCESS) {
             // Show placeholder or a broken image.
-                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                mImageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+            mPosterView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            mPosterView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
                         mRemoteState == RemoteState.LOADING ?
-                                R.drawable.ic_image :
-                                R.drawable.ic_broken_image,
+                                R.drawable.ic_video :
+                                R.drawable.ic_video_broken,
                         null));
             setHasOptionsMenu(false);
         }
@@ -211,6 +248,7 @@ public class VideoViewFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
 
+        Picasso.get().cancelRequest(mPosterView);
     }
 
     // Setup fields for image preview.
@@ -224,40 +262,6 @@ public class VideoViewFragment extends Fragment {
         // The received video is viewed.
         activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
         setHasOptionsMenu(true);
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_image, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return false;
-        }
-
-        if (item.getItemId() == R.id.action_download) {
-            // Save image to Gallery.
-            Bundle args = getArguments();
-            String filename = null;
-            if (args != null) {
-                filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
-            }
-            if (TextUtils.isEmpty(filename)) {
-                filename = getResources().getString(R.string.tinode_image);
-            }
-            Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-            String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,
-                    filename, null);
-            Toast.makeText(activity, savedAt != null ? R.string.image_download_success :
-                    R.string.failed_to_save_download, Toast.LENGTH_LONG).show();
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
     }
 
     private void sendVideo() {
@@ -284,27 +288,28 @@ public class VideoViewFragment extends Fragment {
         activity.getSupportFragmentManager().popBackStack();
     }
 
-    private void acceptAvatar() {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
-        Bundle args = getArguments();
-        if (args == null) {
-            return;
-        }
-
-        // Get dimensions and position of the scaled image:
-        // convert cutOut from screen coordinates to bitmap coordinates.
-
-        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
-        ((AvatarCompletionHandler) activity).onAcceptAvatar(topicName, bmp);
-
-        activity.getSupportFragmentManager().popBackStack();
+    interface BitmapReady {
+        void done(Bitmap bmp);
     }
 
-    public interface AvatarCompletionHandler {
-        void onAcceptAvatar(String topicName, Bitmap avatar);
+    // Take screenshot of the VideoView to use as poster.
+    private static void videoFrameCapture(VideoView videoView, BitmapReady callback) {
+        Bitmap bitmap  = Bitmap.createBitmap(videoView.getWidth(), videoView.getHeight(), Bitmap.Config.ARGB_8888);
+        try {
+            HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
+            handlerThread.start();
+            PixelCopy.request(videoView, bitmap, result -> {
+                if (result == PixelCopy.SUCCESS) {
+                    callback.done(bitmap);
+                } else {
+                    Log.w(TAG, "Failed to capture frame: " + result);
+                    callback.done(null);
+                }
+                handlerThread.quitSafely();
+            }, new Handler(handlerThread.getLooper()));
+        } catch (IllegalArgumentException ex) {
+            callback.done(null);
+            Log.w(TAG, "Failed to capture frame", ex);
+        }
     }
 }

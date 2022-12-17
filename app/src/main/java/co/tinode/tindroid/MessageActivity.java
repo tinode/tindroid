@@ -82,6 +82,7 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_PERMISSIONS = "permissions";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
+    static final String FRAGMENT_VIEW_VIDEO = "view_video";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_FORWARD_TO = "forward_to";
@@ -234,7 +235,6 @@ public class MessageActivity extends AppCompatActivity
         mMessageSender.resume();
 
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        //noinspection ConstantConditions
         mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
         intent.putExtra(Intent.EXTRA_TEXT, (String) null);
         Uri attachment = intent.getData();
@@ -247,6 +247,9 @@ public class MessageActivity extends AppCompatActivity
             if (type.startsWith("image/")) {
                 args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
                 showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+            } else if (type.startsWith("video/")) {
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                showFragment(FRAGMENT_VIEW_VIDEO, args, true);
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
@@ -620,6 +623,9 @@ public class MessageActivity extends AppCompatActivity
                     break;
                 case FRAGMENT_VIEW_IMAGE:
                     fragment = new ImageViewFragment();
+                    break;
+                case FRAGMENT_VIEW_VIDEO:
+                    fragment = new VideoViewFragment();
                     break;
                 case FRAGMENT_FILE_PREVIEW:
                     fragment = new FilePreviewFragment();

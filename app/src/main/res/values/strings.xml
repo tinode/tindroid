@@ -342,4 +342,7 @@
     <string name="tags_not_found">No tags defined. Add some.</string>
     <string name="video">Video</string>
     <string name="video_caption_hint">Title of the video</string>
+    <string name="video_preview">Video</string>
+    <string name="tinode_video">tinode_video</string>
+    <string name="broken_video">Invalid or unknown video format</string>
 </resources>

@@ -873,7 +873,8 @@ public class UiUtils {
 
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
     // Used in chat bubbled to generate placeholder and error images for Picasso.
-    public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {
+    public static Drawable getPlaceholder(@NonNull Context ctx, @Nullable Drawable fg, @Nullable Drawable bkg,
+                                          int width, int height) {
         Drawable filter;
         if (bkg == null) {
             // Uniformly gray background with rounded corners.
@@ -885,14 +886,23 @@ public class UiUtils {
             filter = new ColorDrawable(0xCCCCCCCC);
         }
 
-        final int fgWidth = fg.getIntrinsicWidth();
-        final int fgHeight = fg.getIntrinsicHeight();
+        if (fg == null) {
+            // Transparent drawable.
+            fg = new ColorDrawable(0x00000000);
+        }
+
         final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
         result.setBounds(0, 0, width, height);
+
         // Move foreground to the center of the drawable.
-        int dx = Math.max((width - fgWidth) / 2, 0);
-        int dy = Math.max((height - fgHeight) / 2, 0);
-        fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
+        final int fgWidth = fg.getIntrinsicWidth();
+        final int fgHeight = fg.getIntrinsicHeight();
+        if (fgWidth > 0 && fgHeight > 0) {
+            int dx = Math.max((width - fgWidth) / 2, 0);
+            int dy = Math.max((height - fgHeight) / 2, 0);
+            fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
+        }
+
         return result;
     }
 

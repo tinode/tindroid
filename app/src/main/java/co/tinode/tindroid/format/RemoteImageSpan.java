@@ -5,8 +5,8 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
-import android.text.style.DynamicDrawableSpan;
 import android.text.style.ReplacementSpan;
 import android.util.Log;
 import android.view.View;
@@ -20,8 +20,12 @@ import java.net.URL;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-/* Spannable which updates associated image as it's loaded from the given URL */
+/**
+ * Spannable which updates associated image as it's loaded from the given URL.
+ * An optional drawable overlay can be shown on top of the loaded bitmap.
+ */
 public class RemoteImageSpan extends ReplacementSpan implements Target {
     private static final String TAG = "RemoteImageSpan";
 
@@ -32,14 +36,17 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
     private final boolean mCropCenter;
     private URL mSource = null;
     private Drawable mDrawable;
+    private Drawable mOverlay;
 
-    public RemoteImageSpan(View parent, int width, int height, boolean cropCenter, Drawable placeholder, Drawable onError) {
+    public RemoteImageSpan(View parent, int width, int height, boolean cropCenter,
+                           Drawable placeholder, Drawable onError) {
         mParentRef = new WeakReference<>(parent);
         mWidth = width;
         mHeight = height;
         mCropCenter = cropCenter;
         mOnError = onError;
         mDrawable = placeholder;
+        mOverlay = null;
     }
 
     public void load(URL from) {
@@ -56,6 +63,9 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = new BitmapDrawable(parent.getResources(), bitmap);
+            if (mOverlay != null) {
+                mDrawable = new LayerDrawable(new Drawable[]{mDrawable, mOverlay});
+            }
             mDrawable.setBounds(0, 0, bitmap.getWidth(), bitmap.getHeight());
             parent.postInvalidate();
         }
@@ -67,6 +77,14 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = mOnError;
+            if (mOverlay != null) {
+                if (mDrawable == null) {
+                    mDrawable = mOverlay;
+                } else {
+                    mDrawable = new LayerDrawable(new Drawable[]{mDrawable, mOverlay});
+                }
+                mDrawable.setBounds(0, 0, mWidth, mHeight);
+            }
             parent.postInvalidate();
         }
     }
@@ -100,6 +118,15 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
             canvas.translate(x, bottom - b.getBounds().bottom);
             b.draw(canvas);
             canvas.restore();
+        }
+    }
+
+    // Add optional overlay which will be displayed over the loaded bitmap drawable.
+    public void setOverlay(@Nullable Drawable overlay) {
+        mOverlay = overlay;
+        View parent = mParentRef.get();
+        if (parent != null) {
+            parent.postInvalidate();
         }
     }
 }

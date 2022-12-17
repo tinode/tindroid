@@ -176,15 +176,22 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return ssb;
     }
 
-    // Convert milliseconds to '00:00' format.
+    // Convert milliseconds to '[00:0]0:00' or '[00:]00:00' (fixedMin) format.
     protected static StringBuilder millisToTime(@NonNull Number millis, boolean fixedMin) {
         StringBuilder sb = new StringBuilder();
         float duration = millis.floatValue() / 1000;
+
+        int hours = (int) Math.floor(duration / 3600f);
+        if (hours > 0) {
+            sb.append(hours).append(":");
+        }
+
         int min = (int) Math.floor(duration / 60f);
-        if (fixedMin && min < 10) {
+        if (hours > 0 || (fixedMin && min < 10)) {
             sb.append("0");
         }
-        sb.append(min).append(":");
+        sb.append(min % 60).append(":");
+
         int sec = (int) (duration % 60f);
         if (sec < 10) {
             sb.append("0");

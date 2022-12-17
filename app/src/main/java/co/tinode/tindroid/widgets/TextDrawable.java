@@ -5,9 +5,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
-import android.graphics.Paint.Align;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.text.TextPaint;
 import android.util.TypedValue;
 
 import androidx.annotation.ColorInt;
@@ -17,25 +17,27 @@ public class TextDrawable extends Drawable {
     private static final int DEFAULT_COLOR = Color.WHITE;
     private static final int DEFAULT_TEXT_SIZE = 15;
 
-    private final Paint mPaint;
+    private final TextPaint mPaint;
     private CharSequence mText;
     private int mIntrinsicWidth;
     private int mIntrinsicHeight;
     private int mTextSize;
 
     public TextDrawable(Resources res, CharSequence text) {
-        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
         mTextSize = DEFAULT_TEXT_SIZE;
         mPaint.setColor(DEFAULT_COLOR);
-        mPaint.setTextAlign(Align.CENTER);
-
+        mPaint.density = res.getDisplayMetrics().density;
         setText(res, text);
     }
 
     @Override
     public void draw(Canvas canvas) {
         Rect bounds = getBounds();
-        canvas.drawText(mText, 0, mText.length(), bounds.left, bounds.centerY(), mPaint);
+        canvas.drawText(mText, 0, mText.length(),
+                bounds.centerX() - mIntrinsicWidth / 2f,
+                bounds.centerY() - mPaint.getFontMetrics().ascent / 2f, // ascent is negative.
+                mPaint);
     }
 
     @Override
@@ -76,7 +78,7 @@ public class TextDrawable extends Drawable {
         mIntrinsicHeight = mPaint.getFontMetricsInt(null);
     }
 
-    public void setColor(@ColorInt int color) {
+    public void setTextColor(@ColorInt int color) {
         mPaint.setColor(color);
     }
 }

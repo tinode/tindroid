@@ -421,7 +421,7 @@ public class ImageViewFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_image, menu);
+        inflater.inflate(R.menu.menu_download, menu);
     }
 
     @Override
@@ -440,6 +440,7 @@ public class ImageViewFragment extends Fragment {
             }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
+                filename += "" + (System.currentTimeMillis() % 10000);
             }
             Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
             String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,

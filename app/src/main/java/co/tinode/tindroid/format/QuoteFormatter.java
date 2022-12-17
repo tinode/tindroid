@@ -101,7 +101,6 @@ public class QuoteFormatter extends PreviewFormatter {
                         thumbnail.setBounds(0, 0,
                                 (int) (dim.squareSize * density), (int) (dim.squareSize * density));
                     } else {
-                        Log.i(TAG, "Width=" + bmp.getWidth() + "; height=" + bmp.getHeight());
                         thumbnail = new BitmapDrawable(res, UiUtils.scaleBitmap(bmp,
                                         (int) (dim.width * density), (int) (dim.height * density), true));
                         thumbnail.setBounds(0, 0, thumbnail.getBitmap().getWidth(),

@@ -45,10 +45,12 @@ import java.util.Stack;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.widgets.TextDrawable;
 import co.tinode.tindroid.widgets.WaveDrawable;
 
 /**
@@ -359,7 +361,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     private CharacterStyle createImageSpan(final Context ctx, final Object val, final String ref,
                                            final ImageDim dim, final float density,
-                                           final Drawable overlay,
+                                           @Nullable final Drawable overlay,
                                            @DrawableRes int id_placeholder, @DrawableRes int id_error) {
         CharacterStyle span = null;
         Bitmap bmpPreview = null;
@@ -417,7 +419,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 }
 
                 if (bmpPreview != null && !isPreviewOnly) {
-                    span = new ImageSpan(ctx, bmpPreview);
+                    Drawable drawable = new BitmapDrawable(ctx.getResources(), bmpPreview);
+                    if (overlay != null) {
+                        drawable = new LayerDrawable(new Drawable[]{drawable, overlay});
+                        drawable.setBounds(0, 0, dim.scaledWidth, dim.scaledHeight);
+                    }
+                    span = new ImageSpan(drawable);
                 }
             } catch (Exception ex) {
                 Log.w(TAG, "Broken image preview", ex);
@@ -452,6 +459,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, dim.scaledWidth, dim.scaledHeight);
                 span = new RemoteImageSpan(mContainer, dim.scaledWidth, dim.scaledHeight,
                         false, placeholder, onError);
+                ((RemoteImageSpan) span).setOverlay(overlay);
                 ((RemoteImageSpan) span).load(url);
             }
         }
@@ -511,43 +519,47 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         ImageDim dim = new ImageDim();
-
-        // Bitmap dimensions specified by the sender.
+        // Video dimensions specified by the sender.
         dim.width = getIntVal("width", data);
         dim.height = getIntVal("height", data);
 
-        // Play ( > ) icon over the image.
         DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-        int playSize = (int) (PLAY_CONTROL_SIZE * metrics.density);
-        int playButtonSize = (int) (PLAY_CONTROL_SIZE * metrics.density / 1.5f);
-        Drawable playBg = AppCompatResources.getDrawable(ctx, R.drawable.disk);
-        //noinspection ConstantConditions
-        playBg.setBounds(0, 0, playSize, playSize);
-        playBg.setAlpha(127);
-        playBg.setTint(0xFF000000);
-        Drawable playFg = AppCompatResources.getDrawable(ctx, R.drawable.ic_play);
-        //noinspection ConstantConditions
-        playFg.setTint(0xFFFFFFFF);
-        LayerDrawable overlay = new LayerDrawable(new Drawable[]{playBg, playFg});
-        overlay.setBounds(0, 0, playSize, playSize);
-        playFg.setBounds((playSize - playButtonSize) / 2, (playSize - playButtonSize) / 2,
-                (playSize + playButtonSize) / 2, (playSize + playButtonSize) / 2);
+
+        // Play ( > ) icon + [00:00] over the image.
+        Resources res = ctx.getResources();
+        LayerDrawable overlay;
+        if (mClicker != null) {
+            //noinspection ConstantConditions
+            overlay = (LayerDrawable) (AppCompatResources.getDrawable(ctx, R.drawable.video_overlay).mutate());
+            TextDrawable duration = new TextDrawable(res,
+                    millisToTime(getIntVal("duration", data), false).toString());
+            duration.setTextSize(res, 12);
+            // Do not need to use Theme color because the background here is a video frame.
+            duration.setTextColor(0xFF666666);
+            overlay.setDrawableByLayerId(R.id.duration, duration);
+        } else {
+            overlay = null;
+        }
 
         CharacterStyle span = createImageSpan(ctx, data.get("preview"),
                 getStringVal("preref", data, null), dim, metrics.density,
                 overlay,
-                R.drawable.ic_video, R.drawable.ic_video_broken);
+                R.drawable.ic_video, R.drawable.ic_video);
 
-        SpannableStringBuilder result = null;
+        SpannableStringBuilder result;
         if (span == null) {
-            // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-            Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_video_broken);
-            if (broken != null) {
-                broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-                span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, dim.scaledWidth, dim.scaledHeight));
-                result = assignStyle(span, content);
+            // If the poster cannot be decoded for whatever reason, just show show a uniform gray background
+            // with play control on top.
+            Drawable drawable = UiUtils.getPlaceholder(ctx, null, null, dim.scaledWidth, dim.scaledHeight);
+            if (overlay != null) {
+                Rect bounds = drawable.copyBounds();
+                drawable = new LayerDrawable(new Drawable[]{drawable, overlay});
+                drawable.setBounds(bounds);
             }
-        } else if (mClicker != null) {
+            span = new ImageSpan(drawable);
+        }
+
+        if (mClicker != null) {
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result = assignStyle(span, content);
             result.setSpan(new ClickableSpan() {

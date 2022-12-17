@@ -17,6 +17,16 @@
         android:layout_above="@id/metaPanel"
         android:contentDescription="" />
 
+    <ImageView
+        android:id="@+id/poster"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentTop="true"
+        android:layout_above="@id/metaPanel"
+        android:foregroundGravity="center"
+        tools:src="@drawable/logo_src"
+        tools:ignore="ContentDescription" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/metaPanel"
         android:layout_height="wrap_content"
