@@ -182,7 +182,7 @@ public class MessagesFragment extends Fragment {
                     }
                 }
                 // Try to open the image selector again.
-                openImageSelector(getActivity());
+                openMediaSelector(getActivity());
             });
 
     private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
@@ -354,7 +354,7 @@ public class MessagesFragment extends Fragment {
         doneEditing.setOnClickListener(v -> sendText(activity));
 
         // Send image button
-        view.findViewById(R.id.attachImage).setOnClickListener(v -> openImageSelector(activity));
+        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity));
 
         // Send file button
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
@@ -1180,7 +1180,7 @@ public class MessagesFragment extends Fragment {
         mFilePickerLauncher.launch("*/*");
     }
 
-    private void openImageSelector(@Nullable final Activity activity) {
+    private void openMediaSelector(@Nullable final Activity activity) {
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
@@ -1193,8 +1193,17 @@ public class MessagesFragment extends Fragment {
         }
 
         // Pick image from gallery.
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
+        //Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        //galleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "*/*");
+        //galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
+        // galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "video/*"});
+        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        galleryIntent.addCategory(Intent.CATEGORY_OPENABLE);
+        galleryIntent.setType("image/* video/*");
+        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
+        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
+
+        Intent videoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
         Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         // Make sure camera is available.
         if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
@@ -1227,9 +1236,9 @@ public class MessagesFragment extends Fragment {
         }
 
         // Pack two intents into a chooser.
-        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image));
+        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image_or_video));
         if (cameraIntent != null) {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
+            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent, videoIntent});
         }
         mImagePickerLauncher.launch(chooserIntent);
     }

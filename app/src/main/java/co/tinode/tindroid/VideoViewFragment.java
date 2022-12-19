@@ -2,17 +2,18 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -23,21 +24,26 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.MediaController;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.OutputStream;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
-import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 
 /**
  * Fragment for viewing a video: before being attached or received.
@@ -45,19 +51,15 @@ import androidx.fragment.app.Fragment;
 public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final String TAG = "VideoViewFragment";
 
-    private enum RemoteState {
-        NONE,
-        LOADING,
-        SUCCESS,
-        FAILED
-    }
+    // Placeholder dimensions when the sender has not provided dimensions.
+    private static final int DEFAULT_WIDTH = 640;
+    private static final int DEFAULT_HEIGHT = 480;
 
     private ImageView mPosterView;
+    private ProgressBar mProgressView;
     private VideoView mVideoView;
-    private MediaController mMediaControls;
 
-    // State of the remote image.
-    private RemoteState mRemoteState;
+    private MenuItem mDownloadMenuItem;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -69,13 +71,48 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         }
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
+        mPosterView = view.findViewById(R.id.poster);
+        mProgressView = view.findViewById(R.id.loading);
 
         mVideoView = view.findViewById(R.id.video);
-        mMediaControls = new MediaController(activity);
-        mMediaControls.setAnchorView(mVideoView);
-        mVideoView.setMediaController(mMediaControls);
-
-        mPosterView = view.findViewById(R.id.poster);
+        MediaController mediaControls = new MediaController(activity);
+        mediaControls.setAnchorView(mVideoView);
+        mediaControls.setMediaPlayer(mVideoView);
+        mVideoView.setMediaController(mediaControls);
+        mVideoView.setOnPreparedListener(mp -> {
+            mProgressView.setVisibility(View.GONE);
+            mPosterView.setVisibility(View.GONE);
+            mVideoView.setVisibility(View.VISIBLE);
+            if (mDownloadMenuItem != null) {
+                // Local video may be ready before menu is ready.
+                mDownloadMenuItem.setEnabled(true);
+            }
+        });
+        mVideoView.setOnInfoListener((mp, what, extra) -> {
+            switch(what) {
+                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
+                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
+                    mProgressView.setVisibility(View.VISIBLE);
+                    break;
+                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
+                    mProgressView.setVisibility(View.GONE);
+            }
+            return false;
+        });
+        mVideoView.setOnErrorListener((mp, what, extra) -> {
+            Log.w(TAG, "Playback error " + what + "/" + extra);
+            mProgressView.setVisibility(View.GONE);
+            Bundle args = getArguments();
+            if (args != null) {
+                int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
+                int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
+                mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
+                        ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
+                        null, width, height));
+            }
+            Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
+            return true;
+        });
 
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
@@ -87,6 +124,13 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 });
 
         return view;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this,
+                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -106,7 +150,53 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             toolbar.setLogo(null);
         }
 
-        mRemoteState = RemoteState.NONE;
+        boolean initialized = false;
+        final Uri localUri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
+        if (localUri != null) {
+            // Outgoing video preview.
+            activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+            mVideoView.setVideoURI(localUri);
+            mVideoView.start();
+            initialized = true;
+        } else {
+            // Viewing received video.
+            activity.findViewById(R.id.metaPanel).setVisibility(View.GONE);
+            final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
+            if (ref != null) {
+                mVideoView.setVideoURI(ref, Cache.getTinode().getLargeFileHelper().headers());
+                mVideoView.start();
+                initialized = true;
+            } else {
+                final byte[] bits = args.getByteArray("val");
+                if (bits != null) {
+                    try {
+                        File temp = File.createTempFile("VID_" + System.currentTimeMillis(),
+                                ".extension", activity.getCacheDir());
+                        temp.deleteOnExit();
+                        OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
+                        out.write(bits);
+                        out.close();
+                        mVideoView.setVideoURI(Uri.fromFile(temp));
+                        mVideoView.start();
+                        initialized = true;
+                    } catch (IOException ex) {
+                        Log.w(TAG, "Failed to save video to temp file", ex);
+                    }
+                }
+            }
+        }
+
+        if (!initialized) {
+            mProgressView.setVisibility(View.GONE);
+        }
+
+        loadPoster(activity, args, initialized);
+    }
+
+    @Override
+    public void onPrepareMenu(@NonNull Menu menu) {
+        mDownloadMenuItem = menu.getItem(0);
+        mDownloadMenuItem.setEnabled(false);
     }
 
     @Override
@@ -116,152 +206,67 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     @Override
     public boolean onMenuItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
-        if (activity == null) {
+        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        final Bundle args = getArguments();
+        if (activity == null || args == null) {
             return false;
         }
 
         if (item.getItemId() == R.id.action_download) {
-            // https://stackoverflow.com/questions/57923329/save-and-insert-video-to-gallery-on-android-10
-            // Save video to Gallery.
-            Bundle args = getArguments();
-            String filename = null;
-            if (args != null) {
-                filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
-            }
+            String filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
+            String mime = args.getString(AttachmentHandler.ARG_MIME_TYPE);
+
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_video);
                 filename += "" + (System.currentTimeMillis() % 10000);
             }
 
-            /*
-            Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-            String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,
-                    filename, null);
-            Toast.makeText(activity, savedAt != null ? R.string.image_download_success :
-                    R.string.failed_to_save_download, Toast.LENGTH_LONG).show();
-            */
+            Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
+            byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
+            AttachmentHandler.enqueueDownloadAttachment(activity,
+                    ref != null ? ref.toString() : null, bits, filename, mime);
             return true;
         }
 
         return false;
     }
 
-    private void loadPreviewImage(final Activity activity, final Bundle args) {
-        // Check if the bitmap is directly attached.
-        int length = 0;
-        Bitmap bmp = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
-        if (bmp == null) {
-            // Check if bitmap is attached as an array of bytes (received).
-            byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
-            if (bits != null) {
-                bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                length = bits.length;
-            }
-        }
-
-        if (bmp == null) {
-            // Preview large image before sending.
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
-            if (uri != null) {
-                // Local image.
-                final ContentResolver resolver = activity.getContentResolver();
-                // Resize image to ensure it's under the maximum in-band size.
-                try {
-                    InputStream is = resolver.openInputStream(uri);
-                    if (is != null) {
-                        bmp = BitmapFactory.decodeStream(is, null, null);
-                        is.close();
-                    }
-                    // Make sure the bitmap is properly oriented in preview.
-                    is = resolver.openInputStream(uri);
-                    if (is != null) {
-                        ExifInterface exif = new ExifInterface(is);
-                        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                                ExifInterface.ORIENTATION_UNDEFINED);
-                        if (bmp != null) {
-                            bmp = UiUtils.rotateBitmap(bmp, orientation);
-                        }
-                        is.close();
-                    }
-                } catch (IOException ex) {
-                    Log.i(TAG, "Failed to read image from " + uri, ex);
-                }
-            } else {
-                // Remote image.
-                final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
-                if (ref != null) {
-                    mRemoteState = RemoteState.LOADING;
-                    Picasso.get().load(ref)
-                            .error(R.drawable.ic_video_broken)
-                            .into(mPosterView, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    mRemoteState = RemoteState.SUCCESS;
-
-                                    Activity activity = getActivity();
-                                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                                        return;
-                                    }
-
-                                    final Bitmap bmp = ((BitmapDrawable) mPosterView.getDrawable()).getBitmap();
-                                    setupImagePostview(activity, args, bmp.getByteCount());
-                                }
-
-                                @Override
-                                public void onError(Exception e) {
-                                    mRemoteState = RemoteState.FAILED;
-                                    Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
-                                    mPosterView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                    setHasOptionsMenu(false);
-                                }
-                            });
-                }
-            }
-        }
-
-        if (bmp != null) {
-            // Must ensure the bitmap is not too big (some cameras can produce
-            // bigger bitmaps that the phone can render)
-            if (length == 0) {
-                // The image is being previewed before sending or uploading.
-                setupImagePreview(activity);
-            } else {
-                // The image is downloaded.
-                setupImagePostview(activity, args, length);
-            }
-
+    private void loadPoster(Activity activity, final Bundle args, boolean initialized) {
+        // Check if bitmap is attached as an array of bytes (received).
+        byte[] bits = args.getByteArray(AttachmentHandler.ARG_PREVIEW);
+        if (bits != null) {
+            Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
             mPosterView.setImageDrawable(new BitmapDrawable(getResources(), bmp));
-        } else if (mRemoteState != RemoteState.SUCCESS) {
-            // Show placeholder or a broken image.
-            mPosterView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            mPosterView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
-                        mRemoteState == RemoteState.LOADING ?
-                                R.drawable.ic_video :
-                                R.drawable.ic_video_broken,
-                        null));
-            setHasOptionsMenu(false);
+            return;
         }
+
+        int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
+        int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
+
+        int placeholder_id = initialized ? R.drawable.ic_video : R.drawable.ic_video_broken;
+        Drawable placeholder = UiUtils.getPlaceholder(activity,
+                ResourcesCompat.getDrawable(getResources(), placeholder_id, null),
+                null, width, height);
+
+        // Poster is included as a reference.
+        final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_REMOTE_URI);
+        if (ref != null) {
+            Picasso.get().load(ref)
+                    .placeholder(placeholder)
+                    .error(placeholder)
+                    .into(mPosterView);
+            return;
+        }
+
+        // No poster included at all. Show gray background with an icon in the middle.
+        mPosterView.setForegroundGravity(Gravity.CENTER);
+        mPosterView.setImageDrawable(placeholder);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         Picasso.get().cancelRequest(mPosterView);
-    }
-
-    // Setup fields for image preview.
-    private void setupImagePreview(final Activity activity) {
-        activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
-        setHasOptionsMenu(false);
-    }
-
-    // Setup fields for viewing downloaded image
-    private void setupImagePostview(final Activity activity, Bundle args, long length) {
-        // The received video is viewed.
-        activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
-        setHasOptionsMenu(true);
     }
 
     private void sendVideo() {

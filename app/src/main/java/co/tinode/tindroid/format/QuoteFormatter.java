@@ -185,7 +185,7 @@ public class QuoteFormatter extends PreviewFormatter {
         dim.height = UiUtils.REPLY_THUMBNAIL_DIM;
 
         CharacterStyle span = createImageSpan(ctx, data.get("preview"), getStringVal("preref", data, null),
-                dim, metrics.density, R.drawable.ic_video, R.drawable.ic_video_broken);
+                dim, metrics.density, R.drawable.ic_video, R.drawable.ic_video);
 
         SpannableStringBuilder node = new SpannableStringBuilder();
         node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

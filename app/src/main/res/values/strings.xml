@@ -254,6 +254,7 @@
     <string name="image_caption_hint">Image caption</string>
     <string name="action_download">Download</string>
     <string name="tinode_image" translatable="false">tinode_image</string>
+    <string name="tinode_video" translatable="false">tinode_video</string>
     <string name="invalid_content">invalid content</string>
     <string name="failed">failed</string>
     <string name="processing">processing …</string>
@@ -338,11 +339,12 @@
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="image_preview">Image preview</string>
     <string name="image_download_success">Image saved to gallery</string>
-    <string name="edited">edited</string>
     <string name="tags_not_found">No tags defined. Add some.</string>
+    <string name="edited">edited</string>
     <string name="video">Video</string>
     <string name="video_caption_hint">Title of the video</string>
     <string name="video_preview">Video</string>
-    <string name="tinode_video">tinode_video</string>
-    <string name="broken_video">Invalid or unknown video format</string>
+    <string name="broken_video">Invalid or unknown video format.</string>
+    <string name="unable_to_play_video">Unable to play this video.</string>
+    <string name="select_image_or_video">Choose image or video</string>
 </resources>

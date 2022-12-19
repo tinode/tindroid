@@ -1153,23 +1153,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return false;
             }
 
-            String fname = null;
-            String mimeType = null;
-            try {
-                fname = (String) data.get("name");
-                mimeType = (String) data.get("mime");
-            } catch (ClassCastException ignored) {
-            }
+            String fname = UiUtils.getStringVal("name", data, null);
+            String mimeType = UiUtils.getStringVal("mime", data, null);
 
             // Try to extract file name from reference.
             if (TextUtils.isEmpty(fname)) {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    try {
-                        URL url = new URL((String) ref);
-                        fname = url.getFile();
-                    } catch (MalformedURLException ignored) {
-                    }
+                String ref = UiUtils.getStringVal("ref", data, "");
+                try {
+                    URL url = new URL(ref);
+                    fname = url.getFile();
+                } catch (MalformedURLException ignored) {
                 }
             }
 
@@ -1177,7 +1170,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 fname = mActivity.getString(R.string.default_attachment_name);
             }
 
-            AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+            AttachmentHandler.enqueueDownloadAttachment(mActivity,
+                    UiUtils.getStringVal("ref", data, null),
+                    UiUtils.getByteArray("val", data), fname, mimeType);
+
             return true;
         }
 
@@ -1215,17 +1211,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             try {
-                String actionType = (String) data.get("act");
-                String actionValue = (String) data.get("val");
-                String name = (String) data.get("name");
+                String actionType = UiUtils.getStringVal("act", data, null);
+                String actionValue = UiUtils.getStringVal("val", data, null);
+                String name = UiUtils.getStringVal("name", data, null);
                 // StoredMessage msg = getMessage(mPosition);
                 if ("pub".equals(actionType)) {
-                    Drafty newMsg = new Drafty((String) data.get("title"));
+                    Drafty newMsg = new Drafty(UiUtils.getStringVal("title", data, null));
                     Map<String, Object> json = new HashMap<>();
                     // {"seq":6,"resp":{"yes":1}}
                     if (!TextUtils.isEmpty(name)) {
                         Map<String, Object> resp = new HashMap<>();
-                        // noinspection
                         resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                         json.put("resp", resp);
                     }
@@ -1235,7 +1230,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     mActivity.sendMessage(newMsg, -1, false);
 
                 } else if ("url".equals(actionType)) {
-                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
+                    URL url = new URL(Cache.getTinode().getBaseUrl(),
+                            UiUtils.getStringVal("ref", data, ""));
                     String scheme = url.getProtocol();
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                     if ("http".equals(scheme) || "https".equals(scheme)) {
@@ -1251,7 +1247,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
                     }
                 }
-            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            } catch (MalformedURLException ignored) {
                 return false;
             }
 
@@ -1264,110 +1260,81 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             try {
-                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
+                URL url = new URL(Cache.getTinode().getBaseUrl(), UiUtils.getStringVal("url", data, ""));
                 String scheme = url.getProtocol();
                 if ("http".equals(scheme) || "https".equals(scheme)) {
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                     mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
                 }
-            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            } catch (MalformedURLException ignored) {
                 return false;
             }
             return true;
         }
 
-        private boolean clickImage(Map<String, Object> data) {
+        // Code common to image & video click.
+        private Bundle mediaClick(Map<String, Object> data) {
             if (data == null) {
+                return null;
+            }
+
+            Bundle args = null;
+            Uri ref =  UiUtils.getUriVal("ref", data);
+            if (ref != null) {
+                args = new Bundle();
+                args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, ref);
+            }
+
+            byte[] bytes = UiUtils.getByteArray("val", data);
+            if (bytes != null) {
+                args = args == null ? new Bundle() : args;
+                args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
+            }
+
+            if (args == null) {
+                return null;
+            }
+
+            args.putString(AttachmentHandler.ARG_MIME_TYPE, UiUtils.getStringVal("mime", data, null));
+            args.putString(AttachmentHandler.ARG_FILE_NAME, UiUtils.getStringVal("name", data, null));
+            args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, UiUtils.getIntVal("width", data));
+            args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, UiUtils.getIntVal("height", data));
+
+            return args;
+        }
+        private boolean clickImage(Map<String, Object> data) {
+            Bundle args = mediaClick(data);
+
+            if (args == null) {
+                Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
                 return false;
             }
-            Bundle args = null;
-            Object val;
-            if ((val = data.get("ref")) instanceof String) {
-                URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                // URL is null when the image is not sent yet.
-                if (url != null) {
-                    args = new Bundle();
-                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                }
-            }
 
-            if (args == null && (val = data.get("val")) != null) {
-                byte[] bytes = val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        val instanceof byte[] ? (byte[]) val : null;
-                if (bytes != null) {
-                    args = new Bundle();
-                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                }
-            }
-
-            if (args != null) {
-                try {
-                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                } catch (NullPointerException | ClassCastException ex) {
-                    Log.w(TAG, "Invalid type of image parameters", ex);
-                }
-            }
-
-            if (args != null) {
-                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-            } else {
-                Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-            }
-
+            mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             return true;
         }
 
         private boolean clickVideo(Map<String, Object> data) {
-            if (data == null) {
-                return false;
-            }
             Log.i(TAG, "Play video!");
 
-            Bundle args = null;
-            Object val;
-            if ((val = data.get("ref")) instanceof String) {
-                URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                // URL is null when the image is not sent yet.
-                if (url != null) {
-                    args = new Bundle();
-                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                }
-            }
+            Bundle args = mediaClick(data);
 
-            if (args == null && (val = data.get("val")) != null) {
-                byte[] bytes = val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        val instanceof byte[] ? (byte[]) val : null;
-                if (bytes != null) {
-                    args = new Bundle();
-                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                }
-            }
-
-            if (args != null) {
-                try {
-                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                } catch (NullPointerException | ClassCastException ex) {
-                    Log.w(TAG, "Invalid type of image parameters", ex);
-                }
-            }
-
-            if (args != null) {
-                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_VIDEO, args, true);
-            } else {
+            if (args == null) {
                 Toast.makeText(mActivity, R.string.broken_video, Toast.LENGTH_SHORT).show();
+                return false;
             }
+
+            Uri preref = UiUtils.getUriVal("preref", data);
+            if (preref != null) {
+                args.putParcelable(AttachmentHandler.ARG_PRE_REMOTE_URI, preref);
+            }
+            byte[] bytes = UiUtils.getByteArray("preview", data);
+            if (bytes != null) {
+                args.putByteArray(AttachmentHandler.ARG_PREVIEW, bytes);
+            }
+            args.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, UiUtils.getStringVal("premime", data, null));
+
+            mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_VIDEO, args, true);
 
             return true;
         }

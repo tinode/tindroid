@@ -23,6 +23,7 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,6 +33,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -77,7 +79,6 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -886,23 +887,32 @@ public class UiUtils {
             filter = new ColorDrawable(0xCCCCCCCC);
         }
 
+
+        // Move foreground to the center of the drawable.
         if (fg == null) {
             // Transparent drawable.
             fg = new ColorDrawable(0x00000000);
+        } else {
+            int fgWidth = fg.getIntrinsicWidth();
+            int fgHeight = fg.getIntrinsicHeight();
+            int dx = Math.max((width - fgWidth) / 2, 0);
+            int dy = Math.max((height - fgHeight) / 2, 0);
+            // fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
+            fg = new InsetDrawable(fg, dx, dy, dx, dy);
         }
 
         final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
+        bkg.setBounds(0, 0, width, height);
         result.setBounds(0, 0, width, height);
 
-        // Move foreground to the center of the drawable.
-        final int fgWidth = fg.getIntrinsicWidth();
-        final int fgHeight = fg.getIntrinsicHeight();
+        /*
         if (fgWidth > 0 && fgHeight > 0) {
+            // Drawable iconWithPadding = new InsetDrawable(icon, paddingSize);
             int dx = Math.max((width - fgWidth) / 2, 0);
             int dy = Math.max((height - fgHeight) / 2, 0);
             fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
         }
-
+*/
         return result;
     }
 
@@ -1440,6 +1450,38 @@ public class UiUtils {
             return b.length() == 0;
         }
         return a.length() == 0;
+    }
+
+    static public int getIntVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Number) {
+            return ((Number) tmp).intValue();
+        }
+        return 0;
+    }
+
+    static public String getStringVal(String name, Map<String, Object> data, String def) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof CharSequence) {
+            return tmp.toString();
+        }
+        return def;
+    }
+
+    static public Uri getUriVal(String name, Map<String, Object> data) {
+        String str = getStringVal(name, data, null);
+        if (str == null) {
+            return null;
+        }
+        URL url = Cache.getTinode().toAbsoluteURL(str);
+        return url != null ? Uri.parse(url.toString()) : null;
+    }
+
+    static public byte[] getByteArray(String name, Map<String, Object> data) {
+        Object val = data.get(name);
+        return val instanceof String ?
+                Base64.decode((String) val, Base64.DEFAULT) :
+                val instanceof byte[] ? (byte[]) val : null;
     }
 
     interface ProgressIndicator {

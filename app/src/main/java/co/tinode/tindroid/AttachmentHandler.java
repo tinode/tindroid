@@ -78,25 +78,28 @@ public class AttachmentHandler extends Worker {
     final static String ARG_REMOTE_URI = "remote_uri";
     final static String ARG_SRC_BYTES = "bytes";
     final static String ARG_SRC_BITMAP = "bitmap";
+    final static String ARG_PREVIEW = "preview";
+    final static String ARG_MIME_TYPE = "mime";
+    final static String ARG_PRE_MIME_TYPE = "pre_mime";
+    final static String ARG_PRE_REMOTE_URI = "pre_rem_uri";
+    final static String ARG_IMAGE_WIDTH = "width";
+    final static String ARG_IMAGE_HEIGHT = "height";
+    final static String ARG_DURATION = "duration";
+    final static String ARG_FILE_SIZE = "fileSize";
 
     final static String ARG_FILE_PATH = "filePath";
     final static String ARG_FILE_NAME = "fileName";
     final static String ARG_MSG_ID = "msgId";
     final static String ARG_IMAGE_CAPTION = "caption";
     final static String ARG_PROGRESS = "progress";
-    final static String ARG_FILE_SIZE = "fileSize";
     final static String ARG_ERROR = "error";
     final static String ARG_FATAL = "fatal";
-    final static String ARG_MIME_TYPE = "mime";
     final static String ARG_AVATAR = "square_img";
-    final static String ARG_IMAGE_WIDTH = "width";
-    final static String ARG_IMAGE_HEIGHT = "height";
-    final static String ARG_DURATION = "duration";
-    final static String ARG_PREVIEW = "preview";
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
     private static final String TAG = "AttachmentHandler";
+
     private LargeFileHelper mUploader = null;
 
     public AttachmentHandler(@NonNull Context context, @NonNull WorkerParameters params) {
@@ -224,13 +227,12 @@ public class AttachmentHandler extends Worker {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String, Object> data,
+    static long enqueueDownloadAttachment(AppCompatActivity activity, String ref, byte[] bits,
                                           String fname, String mimeType) {
         long downloadId = -1;
-        Object ref = data.get("ref");
-        if (ref instanceof String) {
+        if (ref != null) {
             try {
-                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                URL url = new URL(Cache.getTinode().getBaseUrl(), ref);
                 String scheme = url.getProtocol();
                 // Make sure the file is downloaded over http or https protocols.
                 if (scheme.equals("http") || scheme.equals("https")) {
@@ -244,16 +246,7 @@ public class AttachmentHandler extends Worker {
                 Log.w(TAG, "Server address is not yet configured", ex);
                 Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
             }
-        } else {
-            Object val = data.get("val");
-            byte[] bits = val instanceof String ? Base64.decode((String) val, Base64.DEFAULT) :
-                    val instanceof byte[] ? (byte[]) val : null;
-            if (bits == null) {
-                Log.w(TAG, "Invalid or missing attachment");
-                Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                return downloadId;
-            }
-
+        } else if (bits != null) {
             // Create file in a downloads directory by default.
             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             // Make sure Downloads folder exists.
@@ -318,7 +311,11 @@ public class AttachmentHandler extends Worker {
                 Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
                 activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
             }
+        } else {
+            Log.w(TAG, "Invalid or missing attachment");
+            Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
         }
+
         return downloadId;
     }
 
@@ -400,6 +397,21 @@ public class AttachmentHandler extends Worker {
     private static Drafty draftyAttachment(String mimeType, String fname, String refUrl, long size) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, fname, refUrl, size);
+        return content;
+    }
+
+    // Send image.
+    private static Drafty draftyVideo(String caption, String mimeType, byte[] bits, String refUrl,
+                                      int width, int height,
+                                      int duration, byte[] preview, String preref, String premime,
+                                      String fname, long size) {
+        Drafty content = new Drafty();
+        content.insertVideo(0, mimeType, bits, width, height, preview, wrapRefUrl(preref), premime,
+                duration, fname, wrapRefUrl(refUrl), size);
+        if (!TextUtils.isEmpty(caption)) {
+            content.appendLineBreak()
+                    .append(Drafty.fromPlainText(caption));
+        }
         return content;
     }
 
@@ -516,11 +528,18 @@ public class AttachmentHandler extends Worker {
                                 args.getString(ARG_MIME_TYPE) : "audio/aac";
                         msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW), null,
                                 ref, uploadDetails.duration, fname, uploadDetails.fileSize);
+                    } else if (ARG_OPERATION_VIDEO.equals(operation)) {
+                        uploadDetails.duration = args.getInt(ARG_DURATION, 0);
+                        uploadDetails.mimeType = uploadDetails.mimeType == null ?
+                                args.getString(ARG_MIME_TYPE) : "video/mpeg";
+                        msgDraft = draftyVideo(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW), null,
+                                ref, uploadDetails.duration, fname, uploadDetails.fileSize);
                     }
 
                     if (msgDraft != null) {
                         store.msgDraftUpdate(topic, msgId, msgDraft);
                     } else {
+                        store.msgDiscard(topic, msgId);
                         throw new IllegalArgumentException("Unknown operation " + operation);
                     }
 
@@ -557,6 +576,13 @@ public class AttachmentHandler extends Worker {
                                 content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW),
                                         null, url, uploadDetails.duration, fname, uploadDetails.fileSize);
                                 break;
+                            case ARG_OPERATION_VIDEO:
+                                content = draftyVideo(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
+                                        previewBits, url, uploadDetails.imageWidth, uploadDetails.imageHeight,
+                                        uploadDetails.duration, args.getByteArray(ARG_PREVIEW),
+                                        args.getString(ARG_PRE_REMOTE_URI), args.getString(ARG_PRE_MIME_TYPE),
+                                        fname, uploadDetails.fileSize);
+                                break;
                         }
                     }
                 } else {
@@ -590,11 +616,15 @@ public class AttachmentHandler extends Worker {
                         uploadDetails.mimeType = uploadDetails.mimeType == null ? args.getString(ARG_MIME_TYPE) : "audio/aac";
                         msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_PREVIEW),
                                 bits, null, uploadDetails.duration, fname, bits.length);
+                    } else if (ARG_OPERATION_VIDEO.equals(operation)) {
+                        12345
+                        // do something.
                     }
 
                     if (msgDraft != null) {
                         store.msgDraftUpdate(topic, msgId, msgDraft);
                     } else {
+                        store.msgDiscard(topic, msgId);
                         throw new IllegalArgumentException("Unknown operation " + operation);
                     }
 
