@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,9 +31,9 @@ public class FilePreviewFragment extends Fragment {
 
     static {
         sMime2Icon = new HashMap<>();
-        sMime2Icon.put("image", R.drawable.ic_image);
-        sMime2Icon.put("text", R.drawable.ic_text_file);
-        sMime2Icon.put("video", R.drawable.ic_movie);
+        sMime2Icon.put("image", R.drawable.ic_file_image);
+        sMime2Icon.put("text", R.drawable.ic_file_text);
+        sMime2Icon.put("video", R.drawable.ic_video);
     }
 
     private ImageView mImageView;

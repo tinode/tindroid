@@ -125,6 +125,8 @@ public class UiUtils {
 
     // Maximum linear dimensions of images.
     static final int MAX_BITMAP_SIZE = 1024;
+    // Maximum linear dimensions of video poster.
+    static final int MAX_POSTER_SIZE = 640;
     public static final int AVATAR_THUMBNAIL_DIM = 36; // dip
     // Image thumbnail in quoted replies and reply/forward previews.
     public static final int REPLY_THUMBNAIL_DIM = 36;

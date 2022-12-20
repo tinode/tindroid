@@ -11,7 +11,6 @@ import com.squareup.picasso.Target;
 import java.util.LinkedList;
 import java.util.List;
 
-import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;
@@ -20,10 +19,12 @@ import co.tinode.tinodesdk.model.Drafty;
 public class ThumbnailTransformer implements Drafty.Transformer {
     protected List<PromisedReply<Void>> components = null;
 
-    public PromisedReply<Void> completionPromise() {
+    public PromisedReply<Void[]> completionPromise() {
         if (components == null) {
-            return new PromisedReply<>((Void) null);
+            return new PromisedReply<>(null);
         }
+
+        // noinspection unchecked
         return PromisedReply.allOf(components.toArray(new PromisedReply[]{}));
     }
 

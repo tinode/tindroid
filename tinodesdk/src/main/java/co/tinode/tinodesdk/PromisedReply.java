@@ -2,6 +2,8 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 
 /**
@@ -99,22 +101,47 @@ public class PromisedReply<T> {
 
     /**
      * Returns a new PromisedReply that is completed when all of the given PromisedReply complete.
+     * It is rejected if any one is rejected. If resolved, the result is an array or values returned by each input promise.
+     * If rejected, the result if the exception which rejected one of the input promises.
+     *
      * @param waitFor promises to wait for.
-     * @return new PromisedReply that is completed when all of the given PromisedReply complete.
+     * @return PromisedReply which is resolved when all inputs are resolved or rejected when any one is rejected.
      */
-    public static PromisedReply<Void> allOf(PromisedReply[] waitFor) {
-        final PromisedReply<Void> done = new PromisedReply<>();
+    public static <T> PromisedReply<T[]> allOf(PromisedReply<T>[] waitFor) {
+        final PromisedReply<T[]> done = new PromisedReply<>();
         // Create a separate thread and wait for all promises to resolve.
         new Thread(() -> {
             for (PromisedReply p : waitFor) {
-                try {
-                    p.mDoneSignal.await();
-                } catch (InterruptedException ignored) {}
+                if (p != null) {
+                    try {
+                        p.mDoneSignal.await();
+                        if (p.mState == State.REJECTED) {
+                            done.reject(p.mException);
+                        }
+                    } catch (InterruptedException ex) {
+                        try {
+                            done.reject(ex);
+                        } catch (Exception ignored) {}
+                        return;
+                    } catch (Exception ignored) {
+                        return;
+                    }
+                }
             }
 
+            ArrayList<T> result = new ArrayList<>();
+            for (PromisedReply<T> p : waitFor) {
+                if (p != null) {
+                    result.add(p.mResult);
+                } else {
+                    result.add(null);
+                }
+            }
+
+            // If it throws then nothing we can do about it.
             try {
-                // If it throws then nothing we can do about it.
-                done.resolve(null);
+                // noinspection unchecked
+                done.resolve((T[]) result.toArray());
             } catch (Exception ignored) {}
         }).start();
         return done;

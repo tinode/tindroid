@@ -425,9 +425,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             updateSelectionMode();
             ThumbnailTransformer tr = new ThumbnailTransformer();
             final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
-            tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void>() {
+            tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void[]>() {
                 @Override
-                public PromisedReply<Void> onSuccess(Void result) {
+                public PromisedReply<Void[]> onSuccess(Void[] result) {
                     mActivity.runOnUiThread(() -> {
                         if (action == UiUtils.MsgAction.REPLY) {
                             Drafty reply = Drafty.quote(messageFrom(msg), msg.from, content);

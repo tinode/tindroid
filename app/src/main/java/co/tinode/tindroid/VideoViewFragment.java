@@ -59,6 +59,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private ProgressBar mProgressView;
     private VideoView mVideoView;
 
+    private int mVideoWidth;
+    private int mVideoHeight;
+
     private MenuItem mDownloadMenuItem;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -87,6 +90,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 // Local video may be ready before menu is ready.
                 mDownloadMenuItem.setEnabled(true);
             }
+            mVideoWidth = mp.getVideoWidth();
+            mVideoHeight = mp.getVideoHeight();
         });
         mVideoView.setOnInfoListener((mp, what, extra) -> {
             switch(what) {
@@ -155,8 +160,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         if (localUri != null) {
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.editMessage).requestFocus();
             mVideoView.setVideoURI(localUri);
-            mVideoView.start();
+            // Do not start automatic playback.
             initialized = true;
         } else {
             // Viewing received video.
@@ -288,9 +294,22 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             }
         }
 
-        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_VIDEO, args);
+        args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
+        args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
 
-        activity.getSupportFragmentManager().popBackStack();
+        // Capture current video frame for use as a poster (video preview).
+        videoFrameCapture(bmp -> {
+            if (bmp != null) {
+                if (mVideoWidth > UiUtils.MAX_POSTER_SIZE ||  mVideoHeight > UiUtils.MAX_POSTER_SIZE) {
+                    bmp = UiUtils.scaleBitmap(bmp,UiUtils.MAX_POSTER_SIZE, UiUtils.MAX_POSTER_SIZE, false);
+                }
+                args.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                args.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
+            }
+
+            AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_VIDEO, args);
+            activity.getSupportFragmentManager().popBackStack();
+        });
     }
 
     interface BitmapReady {
@@ -298,12 +317,12 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     }
 
     // Take screenshot of the VideoView to use as poster.
-    private static void videoFrameCapture(VideoView videoView, BitmapReady callback) {
-        Bitmap bitmap  = Bitmap.createBitmap(videoView.getWidth(), videoView.getHeight(), Bitmap.Config.ARGB_8888);
+    private void videoFrameCapture(BitmapReady callback) {
+        Bitmap bitmap  = Bitmap.createBitmap(mVideoWidth, mVideoHeight, Bitmap.Config.ARGB_8888);
         try {
             HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
             handlerThread.start();
-            PixelCopy.request(videoView, bitmap, result -> {
+            PixelCopy.request(mVideoView, bitmap, result -> {
                 if (result == PixelCopy.SUCCESS) {
                     callback.done(bitmap);
                 } else {
