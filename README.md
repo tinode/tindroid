@@ -30,6 +30,8 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 
 * One-on-one conversations and group chats.
 * Channels with unlimited number of read-only subscribers.
+* Video calling.
+* Attachments and inline images, voice messages.
 * Unread message counters.
 * Push notifications and in-app presence notifications.
 * Message status notifications: message delivery to server; received and read notifications; typing notifications.
@@ -37,7 +39,6 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 * Replying and forwarding messages.
 * Trusted account badges: verified account, staff, etc.
 * Form messages suitable for chatbots.
-* Attachments and inline images, voice messages.
 * Muting/un-muting conversations and other granular permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
@@ -47,8 +48,10 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 ## Not done yet:
 
 * End-to-end encryption.
-* No video messages. No video or audio calling.
+* No video messages.
+* No audio-only calling.
 * No support for switching between multiple backends.
+* No support for multiple accounts.
 * Mentions, hashtags.
 * Previews not generated for videos, audio, links or docs.
 
