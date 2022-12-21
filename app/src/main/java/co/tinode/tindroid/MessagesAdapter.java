@@ -1306,7 +1306,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Playback fraction to seek to when the player is ready.
         private float mSeekTo = -1f;
 
-        synchronized boolean ensurePlayerReady(int seq, Map<String, Object> data,
+        synchronized boolean ensurePlayerReady(final int seq, Map<String, Object> data,
                                        FullFormatter.AudioControlCallback control) throws IOException {
             if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
                 mAudioControlCallback = control;
@@ -1334,18 +1334,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             mAudioControlCallback = control;
-            mAudioPlayer.setOnPreparedListener(mp -> {
-                mPlayingAudioSeq = seq;
-                if (mReadyAction == PlayerReadyAction.PLAY) {
-                    mReadyAction = PlayerReadyAction.NOOP;
-                    mp.start();
-                } else if (mReadyAction == PlayerReadyAction.SEEK ||
-                        mReadyAction == PlayerReadyAction.SEEKNPLAY) {
-                    seekTo(fractionToPos(mSeekTo));
-                }
-                mSeekTo = -1f;
-            });
+            mAudioPlayer.setOnPreparedListener(mp -> playerReady(mp, seq));
             mAudioPlayer.setOnCompletionListener(mp -> {
+                if (mPlayingAudioSeq != seq) {
+                    return;
+                }
                 int pos = mp.getCurrentPosition();
                 if (pos > 0) {
                     if (mAudioControlCallback != null) {
@@ -1354,11 +1347,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             });
             mAudioPlayer.setOnErrorListener((mp, what, extra) -> {
+                if (mPlayingAudioSeq != seq) {
+                    return true;
+                }
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Playback error " + what + "/" + extra);
                 return false;
             });
             mAudioPlayer.setOnSeekCompleteListener(mp -> {
+                if (mPlayingAudioSeq != seq) {
+                    return;
+                }
                 if (mReadyAction == PlayerReadyAction.SEEKNPLAY) {
                     mReadyAction = PlayerReadyAction.NOOP;
                     mp.start();
@@ -1402,6 +1401,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             mAudioPlayer.prepareAsync();
             return true;
+        }
+
+        synchronized void playerReady(MediaPlayer mp, int seq) {
+            if (mPlayingAudioSeq > 0) {
+                // Another media have already been started while we waited for this media to become ready.
+                mp.release();
+                return;
+            }
+
+            mPlayingAudioSeq = seq;
+            if (mReadyAction == PlayerReadyAction.PLAY) {
+                mReadyAction = PlayerReadyAction.NOOP;
+                mp.start();
+            } else if (mReadyAction == PlayerReadyAction.SEEK ||
+                    mReadyAction == PlayerReadyAction.SEEKNPLAY) {
+                seekTo(fractionToPos(mSeekTo));
+            }
+            mSeekTo = -1f;
         }
 
         synchronized void releasePlayer(int seq) {
