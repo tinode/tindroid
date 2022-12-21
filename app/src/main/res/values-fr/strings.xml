@@ -322,4 +322,13 @@
     <string name="in_progress_call">en cours</string>
     <string name="connecting_call">de connexion</string>
     <string name="tags_not_found">Aucune étiquette définie. Ajoutez en.</string>
+
+    <string name="edited">modifié</string>
+    <string name="video">Vidéo</string>
+    <string name="video_caption_hint">Titre de la vidéo</string>
+    <string name="video_preview">Vidéo</string>
+    <string name="broken_video">Format vidéo non valide ou inconnu.</string>
+    <string name="unable_to_play_video">Impossible de lire cette vidéo.</string>
+    <string name="select_image_or_video">Choisir une image ou une vidéo</string>
+    <string name="tap_to_select">Appuyer pour sélectionner</string>
 </resources>

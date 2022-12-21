@@ -323,4 +323,13 @@
     <string name="in_progress_call">通话中</string>
     <string name="connecting_call">连接</string>
     <string name="tags_not_found">尚未定义标签。添加一些。</string>
+
+    <string name="edited">已编辑</string>
+    <string name="video">视频</string>
+    <string name="video_caption_hint">视频标题</string>
+    <string name="video_preview">视频</string>
+    <string name="broken_video">无效或未知的视频格式。</string>
+    <string name="unable_to_play_video">无法播放此视频。</string>
+    <string name="select_image_or_video">选择图片或视频</string>
+    <string name="tap_to_select">点击选择</string>
 </resources>

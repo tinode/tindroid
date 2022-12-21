@@ -302,4 +302,13 @@
     <string name="in_progress_call">в процессе</string>
     <string name="connecting_call">соединяемся</string>
     <string name="tags_not_found">Тегов нет. Добавьте.</string>
+
+    <string name="edited">изменено</string>
+    <string name="video">Видео</string>
+    <string name="video_caption_hint">Название видео</string>
+    <string name="video_preview">Видео</string>
+    <string name="broken_video">Неизвестный формат видео</string>
+    <string name="unable_to_play_video">Невозможно показать это видео</string>
+    <string name="select_image_or_video">Выбрать фото или видео</string>
+    <string name="tap_to_select">Нажмите чтобы выбрать</string>
 </resources>

@@ -321,4 +321,13 @@
     <string name="in_progress_call">통화 중</string>
     <string name="connecting_call">연결 호출</string>
     <string name="tags_not_found">태그가정의되지않았습니다.일부를추가하십시오.</string>
+
+    <string name="edited">수정됨</string>
+    <string name="video">동영상</string>
+    <string name="video_caption_hint">동영상 제목</string>
+    <string name="video_preview">동영상</string>
+    <string name="broken_video">유효하지 않거나 알 수 없는 동영상 형식입니다.</string>
+    <string name="unable_to_play_video">이 동영상을 재생할 수 없습니다.</string>
+    <string name="select_image_or_video">이미지 또는 동영상 선택</string>
+    <string name="tap_to_select">탭하여 선택</string>
 </resources>

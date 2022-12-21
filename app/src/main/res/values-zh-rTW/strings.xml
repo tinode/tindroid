@@ -322,4 +322,13 @@
     <string name="in_progress_call">通話中</string>
     <string name="connecting_call">連接</string>
     <string name="tags_not_found">未定義任何標籤。請新增一些標籤。</string>
+
+    <string name="edited">已編輯</string>
+    <string name="video">視頻</string>
+    <string name="video_caption_hint">視頻標題</string>
+    <string name="video_preview">視頻</string>
+    <string name="broken_video">無效或未知的視頻格式。</string>
+    <string name="unable_to_play_video">無法播放此視頻。</string>
+    <string name="select_image_or_video">選擇圖片或視頻</string>
+    <string name="tap_to_select">點擊選擇</string>
 </resources>
