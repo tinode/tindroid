@@ -39,10 +39,7 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 * Editing sent messages, replying and forwarding messages.
 * Trusted account badges: verified account, staff, etc.
 * Form messages suitable for chatbots.
-<<<<<<< HEAD
-* File attachments, inline images, videos, voice messages.
-=======
->>>>>>> master
+* File attachments, inline images and videos, voice messages.
 * Muting/un-muting conversations and other granular permission management.
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
