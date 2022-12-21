@@ -19,14 +19,13 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcelable;
 import android.os.SystemClock;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
+import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -41,6 +40,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.esafirm.imagepicker.features.ImagePickerConfig;
+import com.esafirm.imagepicker.features.ImagePickerLauncher;
+import com.esafirm.imagepicker.features.ImagePickerLauncherKt;
+import com.esafirm.imagepicker.features.ImagePickerMode;
+import com.esafirm.imagepicker.features.ReturnMode;
+import com.esafirm.imagepicker.helper.ImagePickerUtils;
+import com.esafirm.imagepicker.model.Image;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -63,7 +70,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
+import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ContentInfoCompat;
 import androidx.core.view.OnReceiveContentListener;
 import androidx.core.view.ViewCompat;
@@ -134,9 +141,6 @@ public class MessagesFragment extends Fragment {
     private String mTopicName = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
-
-    private String mCurrentPhotoFile;
-    private Uri mCurrentPhotoUri;
 
     private UiUtils.MsgAction mTextAction = UiUtils.MsgAction.NONE;
     private int mQuotedSeqID = -1;
@@ -219,36 +223,41 @@ public class MessagesFragment extends Fragment {
                 activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
             });
 
-    private final ActivityResultLauncher<Intent> mImagePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result == null || result.getResultCode() != Activity.RESULT_OK) {
-                    return;
-                }
+    private ImagePickerLauncher mImagePickerLauncher;
 
-                final MessageActivity activity = (MessageActivity) getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                    return;
-                }
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-                final Bundle args = new Bundle();
-                final Intent data = result.getData();
-                Uri localUri = data != null ? data.getData() : null;
-                if (localUri != null) {
-                    // Image from the gallery.
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, localUri);
-                } else {
-                    // Image from the camera.
-                    args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
-                    mCurrentPhotoFile = null;
-                    mCurrentPhotoUri = null;
-                }
+        mImagePickerLauncher = ImagePickerLauncherKt.registerImagePicker(this,
+                this::getActivity, media -> {
+                    if (media == null || media.isEmpty()) {
+                        return null;
+                    }
+                    final MessageActivity activity = (MessageActivity) requireActivity();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        return null;
+                    }
 
-                args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_IMAGE);
-                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
-                // Show attachment preview.
-                activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-            });
+                    Image item = media.get(0);
+                    boolean isVideo = ImagePickerUtils.INSTANCE.isVideoFormat(item);
+
+                    final Bundle args = new Bundle();
+                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, item.getUri());
+                    args.putString(AttachmentHandler.ARG_FILE_NAME, item.getName());
+                    args.putString(AttachmentHandler.ARG_FILE_PATH, item.getPath());
+                    args.putString(AttachmentHandler.ARG_OPERATION,
+                            isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO : AttachmentHandler.ARG_OPERATION_IMAGE);
+                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+
+                    // Show attachment preview.
+                    activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
+                            MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+
+                    return null;
+                });
+
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -1192,55 +1201,18 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        // Pick image from gallery.
-        //Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        //galleryIntent.setDataAndType(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, "*/*");
-        //galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
-        // galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "video/*"});
-        Intent galleryIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        galleryIntent.addCategory(Intent.CATEGORY_OPENABLE);
-        galleryIntent.setType("image/* video/*");
-        galleryIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
-        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
+        ImagePickerConfig config = new ImagePickerConfig();
+        TypedValue val = new TypedValue();
+        activity.getTheme().resolveAttribute(android.R.attr.textColorPrimary, val, true);
+        int color = ResourcesCompat.getColor(getResources(), val.resourceId, activity.getTheme());
+        config.setArrowColor(color);
 
-        Intent videoIntent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Make sure camera is available.
-        if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
-            // Create temp file for storing the photo.
-            File photoFile = null;
-            try {
-                photoFile = createImageFile(activity);
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-                Log.w(TAG, "Unable to create temp file for storing camera photo", ex);
-            }
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoUri = FileProvider.getUriForFile(activity,
-                        "co.tinode.tindroid.provider", photoFile);
-
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
-                cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
-                cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                mCurrentPhotoFile = photoFile.getAbsolutePath();
-                mCurrentPhotoUri = photoUri;
-
-            } else {
-                cameraIntent = null;
-            }
-        } else {
-            cameraIntent = null;
-        }
-
-        // Pack two intents into a chooser.
-        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image_or_video));
-        if (cameraIntent != null) {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent, videoIntent});
-        }
-        mImagePickerLauncher.launch(chooserIntent);
+        // R.style.ImagePickerTheme;
+        config.setMode(ImagePickerMode.SINGLE);
+        config.setIncludeVideo(true);
+        config.setReturnMode(ReturnMode.ALL);
+        config.setImageTitle(getString(R.string.tap_to_select));
+        mImagePickerLauncher.launch(config);
     }
 
     private File createImageFile(Activity activity) throws IOException {

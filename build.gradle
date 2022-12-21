@@ -4,7 +4,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-
         maven { url 'https://maven.google.com/' }
     }
     dependencies {
@@ -35,7 +34,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
-
+        maven { url 'https://jitpack.io' }
         maven { url 'https://maven.google.com/' }
         flatDir {
             dirs 'src/main/libs'

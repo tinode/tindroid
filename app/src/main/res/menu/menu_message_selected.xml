@@ -25,7 +25,7 @@
         android:icon="@drawable/ic_reply"
         android:orderInCategory="102"
         android:title="@string/action_reply"
-        app:showAsAction="always"/>
+        app:showAsAction="ifRoom"/>
 
     <item
         android:id="@+id/action_delete"

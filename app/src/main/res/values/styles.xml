@@ -108,4 +108,18 @@
         <item name="cornerSizeBottomRight">0dp</item>
         <item name="cornerSizeBottomLeft">0dp</item>
     </style>
+
+    <style name="ef_BaseTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="windowActionModeOverlay">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="ef_AppTheme" parent="ef_BaseTheme">
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <style name="ef_CustomToolbarTheme" parent="Base.ThemeOverlay.AppCompat.ActionBar">
+        <item name="actionMenuTextColor">?android:textColorPrimary</item>
+    </style>
 </resources>

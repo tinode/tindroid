@@ -47,12 +47,13 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 ## Not done yet:
 
 * End-to-end encryption.
-* No video messages. No video or audio calling.
+* No video messages. No audio-only calling.
 * No support for switching between multiple backends.
+* No support for multiple accounts.
 * Mentions, hashtags.
 * Previews not generated for videos, audio, links or docs.
 
-## Dependencies
+## Direct Dependencies
 
 ### SDK:
 
@@ -66,6 +67,7 @@ SDK contains no Android-specific dependencies.
 * [Google-Services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
 * [Crashlytics](https://firebase.google.com/docs/android/setup) for crash reporting.
 * [Picasso](https://square.github.io/picasso/) for image downloading and caching.
+* [Android Image Picker](https://github.com/esafirm/android-image-picker) for picking images or videos.
 * [OSS Licenses Plugin](https://github.com/google/play-services-plugins/tree/master/oss-licenses-plugin) for legal compliance with OSS licenses.
 * Standard Android dependencies.
 

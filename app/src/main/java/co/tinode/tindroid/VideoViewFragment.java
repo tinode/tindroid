@@ -55,6 +55,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final int DEFAULT_WIDTH = 640;
     private static final int DEFAULT_HEIGHT = 480;
 
+    // Max size of the poster bitmap to be sent as byte array. Otherwise write to temp file.
+    private static final int MAX_POSTER_BYTES = 6144; // 6K.
+
     private ImageView mPosterView;
     private ProgressBar mProgressView;
     private VideoView mVideoView;
@@ -63,6 +66,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private int mVideoHeight;
 
     private MenuItem mDownloadMenuItem;
+    private boolean isPreview = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -92,6 +96,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             }
             mVideoWidth = mp.getVideoWidth();
             mVideoHeight = mp.getVideoHeight();
+            if (isPreview) {
+                mVideoView.pause();
+            }
         });
         mVideoView.setOnInfoListener((mp, what, extra) -> {
             switch(what) {
@@ -156,13 +163,15 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         }
 
         boolean initialized = false;
+        isPreview = false;
         final Uri localUri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         if (localUri != null) {
+            isPreview = true;
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.editMessage).requestFocus();
             mVideoView.setVideoURI(localUri);
-            // Do not start automatic playback.
+            mVideoView.start();
             initialized = true;
         } else {
             // Viewing received video.
@@ -255,7 +264,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 null, width, height);
 
         // Poster is included as a reference.
-        final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_REMOTE_URI);
+        final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
         if (ref != null) {
             Picasso.get().load(ref)
                     .placeholder(placeholder)
@@ -276,8 +285,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     }
 
     private void sendVideo() {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -296,6 +305,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
         args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
         args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
+        args.putInt(AttachmentHandler.ARG_DURATION, mVideoView.getDuration());
 
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
@@ -303,7 +313,21 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 if (mVideoWidth > UiUtils.MAX_POSTER_SIZE ||  mVideoHeight > UiUtils.MAX_POSTER_SIZE) {
                     bmp = UiUtils.scaleBitmap(bmp,UiUtils.MAX_POSTER_SIZE, UiUtils.MAX_POSTER_SIZE, false);
                 }
-                args.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                byte[] bitmapBits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                if (bitmapBits.length > MAX_POSTER_BYTES) {
+                    try {
+                        File temp = File.createTempFile("POSTER_", ".jpeg", activity.getCacheDir());
+                        temp.deleteOnExit();
+                        args.putParcelable(AttachmentHandler.ARG_PRE_URI, Uri.fromFile(temp));
+                        OutputStream os = new FileOutputStream(temp);
+                        os.write(bitmapBits);
+                        os.close();
+                    } catch (IOException ex) {
+                        Log.i(TAG, "Unable to create temp file for video poster", ex);
+                    }
+                } else {
+                    args.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                }
                 args.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
             }
 

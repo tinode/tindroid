@@ -23,7 +23,7 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 24
-        targetSdkVersion 32
+        targetSdkVersion 33
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being setup comment out lines gitVersion*()
@@ -100,6 +100,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics:18.3.2'
     implementation 'com.google.firebase:firebase-messaging:23.1.1'
 
+    implementation 'com.github.esafirm:android-image-picker:3.0.0'
+
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
     implementation 'com.squareup.picasso:picasso:2.8'
@@ -107,7 +109,7 @@ dependencies {
 
     annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.5.1'
 
-    // noinspection GradleDependency: does not compile with 2.x.
+    // noinspection GradleDependency: does not compile with 2.x (even for API 33).
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.0'
 }
 

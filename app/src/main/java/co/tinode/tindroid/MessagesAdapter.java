@@ -1326,7 +1326,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             Uri preref = UiUtils.getUriVal("preref", data);
             if (preref != null) {
-                args.putParcelable(AttachmentHandler.ARG_PRE_REMOTE_URI, preref);
+                args.putParcelable(AttachmentHandler.ARG_PRE_URI, preref);
             }
             byte[] bytes = UiUtils.getByteArray("preview", data);
             if (bytes != null) {

@@ -83,7 +83,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_PREVIEW = "preview";
     final static String ARG_MIME_TYPE = "mime";
     final static String ARG_PRE_MIME_TYPE = "pre_mime";
-    final static String ARG_PRE_REMOTE_URI = "pre_rem_uri";
+    final static String ARG_PRE_URI = "pre_rem_uri";
     final static String ARG_IMAGE_WIDTH = "width";
     final static String ARG_IMAGE_HEIGHT = "height";
     final static String ARG_DURATION = "duration";
@@ -234,6 +234,10 @@ public class AttachmentHandler extends Worker {
                     data.putByteArray(ARG_PREVIEW, preview);
                 }
                 data.putInt(ARG_DURATION, args.getInt(ARG_DURATION));
+                Uri preUri = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
+                if (preUri != null) {
+                    data.putString(ARG_PRE_URI, preUri.toString());
+                }
                 if (type == UploadType.VIDEO && preview != null) {
                     data.putString(ARG_PRE_MIME_TYPE, args.getString(ARG_PRE_MIME_TYPE));
                 }
@@ -532,8 +536,19 @@ public class AttachmentHandler extends Worker {
                 }
             } else {
                 uploadDetails.duration = args.getInt(ARG_DURATION, 0);
+                // Poster could be provided as a byte array.
                 uploadDetails.previewBits = args.getByteArray(ARG_PREVIEW);
-
+                if (uploadDetails.previewBits == null) {
+                    // Check if poster is provided as a local URI.
+                    String preUriStr = args.getString(ARG_PRE_URI);
+                    if (preUriStr != null) {
+                        InputStream posterIs = resolver.openInputStream(Uri.parse(preUriStr));
+                        if (posterIs != null) {
+                            uploadDetails.previewBits = readAll(posterIs);
+                            posterIs.close();
+                        }
+                    }
+                }
                 if (operation == UploadType.VIDEO) {
                     uploadDetails.previewMime = args.getString(ARG_PRE_MIME_TYPE);
                     uploadDetails.previewSize = uploadDetails.previewBits != null ? uploadDetails.previewBits.length : 0;
@@ -577,13 +592,7 @@ public class AttachmentHandler extends Worker {
                         uploadDetails.previewRef = "mid:uploading-" + msgId + "/1";
                     }
                 } else {
-                    baos = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[16384];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        baos.write(buffer, 0, len);
-                    }
-                    uploadDetails.valueBits = baos.toByteArray();
+                    uploadDetails.valueBits = readAll(is);
                 }
 
                 Drafty msgDraft = prepareDraft(operation, uploadDetails, args.getString(ARG_IMAGE_CAPTION));
@@ -631,15 +640,21 @@ public class AttachmentHandler extends Worker {
                         uploadResults[1] = null;
                     }
 
-                    ServerMessage[] msgs;
+                    ServerMessage[] msgs = new ServerMessage[2];
                     try {
                         // Wait for uploads to finish. This is a long-running blocking call.
-                        msgs = PromisedReply.allOf(uploadResults).getResult();
+                        Object[] objs = PromisedReply.allOf(uploadResults).getResult();
+                        for (int i = 0; i < objs.length; i++) {
+                            msgs[i] = (ServerMessage) objs[i];
+                        }
                     } catch (Exception ex) {
+                        Log.i(TAG, "PromisedReply.allOf failed", ex);
                         throw new CancellationException();
                     }
 
+                    Log.i(TAG, "Upload result " + msgs[0]);
                     success = msgs[0] != null && msgs[0].ctrl != null && msgs[0].ctrl.code == 200;
+
                     if (success) {
                         String url = msgs[0].ctrl.getStringParam("url", null);
                         result.putString(ARG_REMOTE_URI, url);
@@ -673,6 +688,9 @@ public class AttachmentHandler extends Worker {
                                         uploadDetails.fileName, uploadDetails.fileSize);
                                 break;
                         }
+                    } else {
+                        result.putBoolean(ARG_FATAL, true)
+                                .putString(ARG_ERROR, "Server returned error");
                     }
                 } else {
                     // Send in-band.
@@ -685,6 +703,8 @@ public class AttachmentHandler extends Worker {
                 }
             }
         } catch (CancellationException ignored) {
+            result.putString(ARG_ERROR, context.getString(R.string.canceled));
+            Log.i(TAG, "Upload cancelled");
         } catch (IOException | SecurityException | IllegalArgumentException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
@@ -698,12 +718,6 @@ public class AttachmentHandler extends Worker {
             if (is != null) {
                 try {
                     is.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (baos != null) {
-                try {
-                    baos.close();
                 } catch (IOException ignored) {
                 }
             }
@@ -919,6 +933,18 @@ public class AttachmentHandler extends Worker {
             bais.close();
         } catch (IOException ignored) {}
         return options;
+    }
+
+    private static byte[] readAll(InputStream is) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[16384];
+        int len;
+        while ((len = is.read(buffer)) > 0) {
+            out.write(buffer, 0, len);
+        }
+        // No need to close ByteArrayOutputStream.
+        // ByteArrayOutputStream.close() is a noop.
+        return out.toByteArray();
     }
 
     static class UploadDetails {

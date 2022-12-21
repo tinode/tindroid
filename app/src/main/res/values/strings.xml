@@ -347,4 +347,5 @@
     <string name="broken_video">Invalid or unknown video format.</string>
     <string name="unable_to_play_video">Unable to play this video.</string>
     <string name="select_image_or_video">Choose image or video</string>
+    <string name="tap_to_select">Tap to select</string>
 </resources>
