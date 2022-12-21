@@ -739,6 +739,7 @@ public class Drafty implements Serializable {
      *
      * @return <code>this</code> Drafty document.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty insertVideo(int at,
                               @NotNull String mime,
                               byte[] bits,

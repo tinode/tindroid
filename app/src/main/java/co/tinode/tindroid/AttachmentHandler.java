@@ -238,7 +238,7 @@ public class AttachmentHandler extends Worker {
                 if (preUri != null) {
                     data.putString(ARG_PRE_URI, preUri.toString());
                 }
-                if (type == UploadType.VIDEO && preview != null) {
+                if (type == UploadType.VIDEO && preview != null || preUri != null) {
                     data.putString(ARG_PRE_MIME_TYPE, args.getString(ARG_PRE_MIME_TYPE));
                 }
             }
@@ -550,8 +550,11 @@ public class AttachmentHandler extends Worker {
                     }
                 }
                 if (operation == UploadType.VIDEO) {
+                    uploadDetails.width = args.getInt(ARG_IMAGE_WIDTH, 0);
+                    uploadDetails.height = args.getInt(ARG_IMAGE_HEIGHT, 0);
                     uploadDetails.previewMime = args.getString(ARG_PRE_MIME_TYPE);
-                    uploadDetails.previewSize = uploadDetails.previewBits != null ? uploadDetails.previewBits.length : 0;
+                    uploadDetails.previewSize = uploadDetails.previewBits != null ?
+                            uploadDetails.previewBits.length : 0;
                     if (uploadDetails.previewSize > uploadDetails.fileSize) {
                         // Image poster is greater than video itself. This is not currently supported.
                         Log.w(TAG, "Video poster size " + uploadDetails.previewSize +
@@ -644,11 +647,9 @@ public class AttachmentHandler extends Worker {
                     try {
                         // Wait for uploads to finish. This is a long-running blocking call.
                         Object[] objs = PromisedReply.allOf(uploadResults).getResult();
-                        for (int i = 0; i < objs.length; i++) {
-                            msgs[i] = (ServerMessage) objs[i];
-                        }
+                        msgs[0] = (ServerMessage) objs[0];
+                        msgs[1] = (ServerMessage) objs[1];
                     } catch (Exception ex) {
-                        Log.i(TAG, "PromisedReply.allOf failed", ex);
                         throw new CancellationException();
                     }
 
