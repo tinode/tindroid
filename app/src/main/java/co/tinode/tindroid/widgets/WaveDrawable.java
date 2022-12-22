@@ -211,12 +211,25 @@ public class WaveDrawable extends Drawable implements Runnable {
         unscheduleSelf(this);
     }
 
+    // Stop playing and seek to zero.
     public void reset() {
         stop();
         seekTo(0);
         if (mCompletionListener != null) {
             mCompletionListener.onFinished();
         }
+    }
+
+    // Stop playing and clear all accumulated data making it ready for reuse.
+    public void release() {
+        stop();
+        mSeekPosition = -1;
+        mDuration = 0;
+        mFrameDuration = 0;
+        mContains = 0;
+        mIndex = 0;
+        mBars = null;
+        mOriginal = null;
     }
 
     private void nextFrame() {

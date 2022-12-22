@@ -1428,16 +1428,21 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 Tinode tinode = Cache.getTinode();
                 URL url = tinode.toAbsoluteURL((String) val);
                 if (url != null) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        mAudioPlayer.setDataSource(mActivity, Uri.parse(url.toString()),
-                                tinode.getRequestHeaders(), null);
-                    } else {
-                        Uri uri = Uri.parse(url.toString()).buildUpon()
-                                .appendQueryParameter("apikey", tinode.getApiKey())
-                                .appendQueryParameter("auth", "token")
-                                .appendQueryParameter("secret", tinode.getAuthToken())
-                                .build();
-                        mAudioPlayer.setDataSource(mActivity, uri);
+                    try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            mAudioPlayer.setDataSource(mActivity, Uri.parse(url.toString()),
+                                    tinode.getRequestHeaders(), null);
+                        } else {
+                            Uri uri = Uri.parse(url.toString()).buildUpon()
+                                    .appendQueryParameter("apikey", tinode.getApiKey())
+                                    .appendQueryParameter("auth", "token")
+                                    .appendQueryParameter("secret", tinode.getAuthToken())
+                                    .build();
+                            mAudioPlayer.setDataSource(mActivity, uri);
+                        }
+                    } catch (SecurityException | IOException ex) {
+                        Log.w(TAG, "Failed to add URI data source ", ex);
+                        Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     mAudioControlCallback.reset();
