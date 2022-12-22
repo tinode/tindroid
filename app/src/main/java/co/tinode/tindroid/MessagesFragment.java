@@ -690,7 +690,7 @@ public class MessagesFragment extends Fragment {
 
         view.findViewById(R.id.deleteRecording).setOnClickListener(v -> {
             WaveDrawable wd = (WaveDrawable) wave.getBackground();
-            wd.stop();
+            wd.release();
             releaseAudio(false);
             setSendPanelVisible(activity, R.id.sendMessagePanel);
         });
