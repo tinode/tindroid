@@ -975,7 +975,7 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
+    private synchronized void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
         if (mAudioPlayer != null) {
             return;
         }
@@ -1007,7 +1007,7 @@ public class MessagesFragment extends Fragment {
                     agc.setEnabled(true);
                 }
             }
-        } catch (IOException | IllegalStateException ex) {
+        } catch (SecurityException | IOException | IllegalStateException ex) {
             Log.e(TAG, "Unable to play recording", ex);
             Toast.makeText(getActivity(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
             mAudioPlayer = null;
