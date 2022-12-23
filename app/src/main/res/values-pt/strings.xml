@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_version">Versão</string>
+
+    <string name="login_hint">Usuário</string>
+    <string name="password_hint">Senha</string>
+    <string name="new_message_hint">Nova mensagem</string>
+    <string name="send_message_button_hint">Enviar mensagem</string>
+    <string name="send_image_button_hint">Enviar imagem</string>
+    <string name="send_file_button_hint">Enviar arquivo</string>
+
+    <string name="sign_in">Iniciar sessão</string>
+    <string name="action_signup">Registrar</string>
+    <string name="sign_up">Registrar</string>
+    <string name="login_new">Nome de usuário, Ex. Eric</string>
+    <string name="password_new">Senha</string>
+    <string name="full_name">Nome completo, Ex. Eric Carvalho</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="settings_host_name">Endereço do servidor</string>
+    <string name="settings_use_tls">Usar conexão (TLS)</string>
+    <string name="settings_tls_explained">Conexão encriptada para o servidor</string>
+    <string name="settings_host_name_explained">Conectando com \'%1$s\'</string>
+
+    <!-- access mode definitions -->
+    <string name="modeReadOnly">apenas leitura</string>
+    <string name="modeAdmin">administrador</string>
+    <string name="modeOwner">dono</string>
+    <string name="modeBlocked">bloqueado</string>
+    <!-- mode-like access statuses -->
+    <string name="modeInvited">convidado</string>
+    <string name="modeRequested">requisitado</string>
+    <string name="modeUndefined">anônimo</string>
+    <string name="modePending">pendente</string>
+
+    <!-- Menu actions -->
+    <string name="action_settings">Configurações</string>
+    <string name="action_delete">Deletar</string>
+    <string name="action_mute">Silenciar conversa</string>
+    <string name="action_unmute">Reativar conversa</string>
+    <string name="action_clear_messages">Limpar todas as conversas</string>
+    <string name="action_view_contact">Contatos</string>
+    <string name="action_new_chat">Nova conversa</string>
+    <string name="action_about">Sobre</string>
+    <string name="action_search">Procurar</string>
+    <string name="action_add_contact">Adicionar contato</string>
+    <string name="action_send_now">Enviar agora</string>
+    <string name="action_view_details">Ver detalhes</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_offline">Offline</string>
+    <string name="action_delete_group">Deletar conversa…</string>
+    <string name="action_leave_topic">Sair da conversa…</string>
+
+    <string name="avatar">Foto do perfil</string>
+    <string name="select_image">Selecionar imagem</string>
+    <string name="select_file">Selecionar arquivo</string>
+    <string name="image_is_unavailable">Imagem indisponível</string>
+    <string name="error_login_failed">Falha no login: </string>
+    <string name="error_connection_failed">Falha na conexão: </string>
+    <string name="login_required">Login</string>
+    <string name="password_required">Senha</string>
+    <string name="error_new_account_failed">Falha no registro da conta:</string>
+    <string name="no_chats">Você não tem conversas\n\n¯\\_(ツ)_/¯</string>
+
+    <!-- Used for the AlphabetIndexer in ContactsListFragment to provide quick navigation by
+     alphabet using ListView fast scroll. -->
+    <string name="alphabet">\ ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
+
+    <string name="tinode_invite_subject">Download Tinode Messenger</string>
+    <string name="tinode_invite_body">Baixe o Tinode Messenger em https://tinode.co </string>
+
+    <string name="profile_action">Perfil Tinode</string>
+    <string name="view_profile">Perfil</string>
+    <string name="tinode_message">Envie mensagem Tinode</string>
+    <string name="hint_topic_title">Nome do grupo</string>
+    <string name="group_members">Membro do grupo</string>
+    <string name="name_required">Nome do grupo requerido</string>
+    <string name="no_members">Grupo sem membros</string>
+    <string name="add_one_member">Adicione pelo menos um membro no grupo</string>
+    <string name="add_members">Adicionar membro</string>
+    <string name="leave_group">Sair do grupo</string>
+    <string name="id">ID:</string>
+    <string name="topic_muted">Silenciado</string>
+    <string name="permissions">Permissões</string>
+    <string name="your_permissions">Suas permissões</string>
+
+    <string name="no_connection">Você está offline</string>
+    <string name="action_failed">Falha na operação</string>
+
+    <string name="placeholder_contact_title">Sem nome ou desconhecido</string>
+    <string name="placeholder_topic_title">Sem nome</string>
+    <string name="placeholder_private">Informação privada</string>
+
+    <string name="options_menu">Menu opções</string>
+    <string name="current_user">Você</string>
+    <string name="default_permissions">Permissões padrões</string>
+    <string name="auth_permissions">Usuário autenticado</string>
+    <string name="anon_permissions">Usuário anônimo</string>
+    <string name="topic_private">Tópico privado (visível apenas para você)</string>
+    <string name="edit_topic">Editar grupo</string>
+    <string name="edit_permissions">Editar permissão</string>
+
+    <string name="permission_owner">Controle total (dono)</string>
+    <string name="permission_join">Entrar</string>
+    <string name="permission_read">Ler</string>
+    <string name="permission_write">Escrever</string>
+    <string name="permission_approve">Aprovar novos membros</string>
+    <string name="permission_share">Convidar novos membros</string>
+    <string name="permission_notifications">Receber notificações</string>
+    <string name="permission_delete">Deletar mensagens</string>
+
+    <string name="send_message">Enviar mensagem</string>
+    <string name="change_permissions">Mudar permissão</string>
+    <string name="make_owner">Tornar dono</string>
+    <string name="remove_from_group">Remover do grupo</string>
+    <string name="block">Bloqueado</string>
+
+    <string name="confirm_member_removal">Remover %1$s do \"%2$s\"?</string>
+    <string name="confirm_member_ban">Remover e banir %1$s do \"%2$s\"?</string>
+    <string name="confirm_leave_topic">Deseja realmente sair dessa conversa?</string>
+    <string name="confirm_delete_topic">Deseja realmente remover essa conversa para todos?</string>
+    <string name="confirm_delete_multiple_topics">Deseja realmente remover todos esses tópicos?</string>
+    <string name="modeWriteOnly">Apenas escrever</string>
+    <string name="owner_cannot_unsubscribe">O dono não pode sair</string>
+    <string name="read_receipts_enabled">Enviar confirmação de leitura</string>
+    <string name="typing_notifications_enabled">Mostrar notificação de digitação</string>
+    <string name="logout">Sair</string>
+    <string name="change_password">Mudar senha</string>
+    <string name="account_settings">Configurações da conta</string>
+    <string name="enter_new_password">Entre com a nova senha</string>
+    <string name="confirm_logout">Você tem certeza que deseja sair?</string>
+    <string name="edit_account">Editar nome da conta</string>
+    <string name="invalid_login">Login inválido</string>
+
+    <string name="download_attachment">salvar</string>
+    <string name="broken_image">Formato de imagem inválido</string>
+    <string name="file_manager_not_found">Imagem não encontrada</string>
+    <string name="attachment_too_large">O tamanho do arquivo %1$s excedeu o limite de tamanho %2$s.</string>
+
+    <string name="failed_to_download">Falha para realizar download do arquivo</string>
+    <string name="failed_to_save_download">Falha para salvar o arquivo baixado</string>
+    <string name="failed_to_open_file">Falha para abrir o arquivo desse tipo</string>
+    <string name="failed_empty_password">Sem mudança: senha em branco</string>
+    <string name="failed_credential_confirmation">Código de confirmação incorreto</string>
+    <string name="failed_to_create_topic">Falha para criar conversa</string>
+
+    <string name="contacts_section_contacts">Contatos do telefone</string>
+    <string name="contacts_section_directory">Pasta</string>
+
+    <string name="email">E-Mail</string>
+    <string name="email_required">E-mail requerido</string>
+    <string name="validate_cred">Informe o código de confirmação enviado para você por: %1$s:</string>
+    <string name="validate_cred_title">Confirmar contato</string>
+    <string name="confirm">Confirmar</string>
+    <string name="validation_example">Apenas numeros</string>
+    <string name="enter_confirmation_code">Entre com o código de confirmação</string>
+    <string name="hint_add_by_id">Informe o ID do grupo de usuário</string>
+    <string name="hint_search_tags">Procurar por tags</string>
+    <string name="topic_not_found_or_invalid">Conversa não encontrada ou inválida</string>
+    <string name="sending_disabled">Não disponível</string>
+    <string name="download_title">Tinode download</string>
+    <string name="some_permissions_missing">Por favor atribua todas as permissões requeridas.</string>
+    <string name="unable_to_attach_file">Falha para anexar o arquivo</string>
+    <string name="canceled">Cancelado</string>
+    <string name="login_rejected">Login rejeitado</string>
+    <string name="email_rejected">Email rejeitado</string>
+    <string name="invalid_confirmation_code">Código inválido</string>
+    <string name="notification_channel_name">Nova mensagem</string>
+    <!-- Used in push notifications -->
+    <string name="new_message">Nova mensagem</string>
+    <string name="notification_channel_description">Nova mensagem recebida</string>
+    <string name="request_pass_reset_title">Redefinir senha</string>
+    <string name="request_pass_reset">Código requerido por %1$s:</string>
+    <string name="validated_address_to_use">Validado %1$s para envio do código</string>
+    <string name="request">Solicitar</string>
+    <string name="forgot_password">Esqueceu da senha?</string>
+    <string name="enter_valid_address">Entre com %1$s válido</string>
+    <string name="invalid_or_unknown_credential">Endereço desconhecido ou inválido</string>
+    <string name="password_reset_message_sent">Mensagem com as instruções enviada</string>
+    <string name="user_not_found">Não encontrado</string>
+    <string name="topic_tags">Tags, lista separada por vírgula</string>
+    <string name="sender_unknown">Desconhecido</string>
+    <string name="action_archive">Arquivo</string>
+    <string name="archived_chats">Conversas arquivadas</string>
+    <string name="action_show_archive">Conversas arquivadas</string>
+    <string name="request_new_chat_title">Nova conversa</string>
+    <string name="request_new_chat_message">Você foi convidado para iniciar uma nova conversa. O que gostaria de fazer?</string>
+    <string name="new_chat_accept">Aceitar</string>
+    <string name="new_chat_ignore">Ignorar</string>
+    <string name="new_chat_block">Bloquear</string>
+    <!-- Used in push notifications -->
+    <string name="new_chat">Nova conversa</string>
+    <string name="messages_not_readable">Sem acesso para novas mensagens</string>
+    <string name="content_deleted">conteúdo removido</string>
+    <string name="peers_messaging_disabled">As menságens pares estão desativadas</string>
+    <string name="action_enable">Ativo</string>
+    <string name="find">Procurar</string>
+    <string name="by_id">Por ID</string>
+    <string name="group">Grupo</string>
+    <string name="id_required">ID é requerido</string>
+    <string name="settings">Configurações</string>
+    <string name="no_results">Não encontrado</string>
+    <string name="file_name_label">Nome do arquivo:</string>
+    <string name="content_type_label">Tipo do conteúdo:</string>
+    <string name="image_size_label">Tamanho:</string>
+    <string name="must_subscribe_first">Necessário ser inscrito</string>
+    <string name="topic_blocked">Bloqueado</string>
+    <string name="topic_archived">Arquivado</string>
+    <string name="action_unarchive">Não arquivado</string>
+    <string name="action_invite">Convidar</string>
+    <string name="tags_management">Tags</string>
+    <string name="contacts">Contatos</string>
+    <string name="add_contact">Adicionar outros</string>
+    <string name="manage">Gerenciar</string>
+    <string name="delete">Remover</string>
+    <string name="add_credential">Informe o e-mail ou número de telefone</string>
+    <string name="unrecognized_credential">Método de validação inválido ou desconhecido</string>
+    <string name="add_credential_title">Adicionar contato</string>
+    <string name="delete_credential_title">Deletar contato</string>
+    <string name="delete_credential_confirmation">Deseja realmente remover %1$s:%2$s?</string>
+    <string name="leave_conversation">Sair da conversa</string>
+    <string name="confirm_delete_account">Deseja realmente remover permanentemente sua conta. Essa ação não pode ser desfeita.</string>
+    <string name="block_contact">Contato bloqueado</string>
+    <string name="report_contact">Reportar contato</string>
+    <string name="report_group">Reportar grupo</string>
+    <string name="clear_messages">Limpar mensagens</string>
+    <string name="manage_members">Gerenciar membros</string>
+    <string name="block_and_report">Bloquear e reportar</string>
+    <string name="confirm_contact_ban">Bloquear %1$s?</string>
+    <string name="confirm_report">Bloquear e reportar %1$s?</string>
+    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Nutzungsbedingungen</a>]]></string>
+    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Kontakt</a>]]></string>
+    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Datenschutzerklärung</a>]]></string>
+    <string name="button_hint_start_new_chat">Eine neue Unterhaltung beginnen</string>
+    <string name="app_server">Server</string>
+    <string name="full_name_required">Nome completo requerido</string>
+    <string name="default_contact_name">Usuário Tinode %1$s</string>
+    <string name="permission_missing">Sem permissão</string>
+    <string name="enter_search_query">Entre com a pesquisa</string>
+    <string name="image_caption_hint">Informação da imagem</string>
+    <string name="action_download">Download</string>
+    <string name="invalid_content">Conteúdo inválido</string>
+    <string name="failed">falhou</string>
+    <string name="processing">processando…</string>
+    <string name="incognito_mode_enabled">Modo anônimo</string>
+    <string name="about_the_app">Sobre o app</string>
+    <string name="general">Geral</string>
+    <string name="delete_account">Remover conta</string>
+    <string name="help">Ajuda</string>
+    <string name="security">Segurança</string>
+    <string name="notifications">Notificações</string>
+    <string name="user_tags_description">Outras pessoas podem encontrar você utilizando tags</string>
+    <string name="help_explained">Suporte, legal, Sobre</string>
+    <string name="account_security_explained">Senha, Permissão, deletar conta</string>
+    <string name="topic_tags_description">Outras pessoas podem encontrar grupo utilizando tags</string>
+    <string name="delete_group">Deletar grupo</string>
+
+    <string name="topic_default_permissions_explained">Novos membros automaticamente recebem essas permissões</string>
+    <string name="user_default_permissions_explained">Outros iniciam uma conversa com você com essas permissões</string>
+    <string name="confirm_delmsg_for_all">Deseja realmente remover todas as mensagens para todos os participantes?</string>
+    <string name="confirm_delmsg_for_self">Deseja realmente remover todas as mensagens? Elas serão removidas apenas para você.</string>
+    <string name="licenses">Lizenzen</string>
+
+    <string name="blocked_contacts">Contatos bloqueados</string>
+    <string name="action_restore">Desbloquear</string>
+    <string name="send_to">enviar para…</string>
+    <string name="never">nunca</string>
+    <string name="just_now">agora</string>
+
+    <string name="image_too_small">Imagem muito pequena</string>
+    <string name="this_is_channel">Este é um canal</string>
+    <string name="channel_explained">Um canal permite ilimitados incritos. Essa seleção é permanente</string>
+    <string name="channel">Canal</string>
+    <string name="unavailable">indisponível</string>
+    <string name="picture">Imagem</string>
+    <string name="attachment">Anexo</string>
+    <string name="unknown">Desconhecido</string>
+    <string name="form">Formulário</string>
+    <string name="accept_avatar_button_hint">Utilizar avatar</string>
+    <string name="next_button_hint">Próximo</string>
+    <string name="your_name">Seu nome</string>
+    <string name="description_optional">Descrição (opcional)</string>
+    <string name="description">Descrição</string>
+    <string name="badge_verified">Verificado</string>
+    <string name="badge_staff">Pessoal</string>
+    <string name="badge_danger">Não confiável</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_save">Salvar</string>
+    <string name="online_now">online</string>
+    <string name="action_reply">Responder</string>
+    <string name="action_forward">Encaminhar</string>
+    <string name="forward_to">Encaminhar para…</string>
+    <string name="change_avatar">Mudar avatar</string>
+    <string name="topic_settings">Configurações da conversa</string>
+    <string name="group_security_explained">Permissão, deixar ou reportar a conversa</string>
+    <string name="hint_search_contacts">Procurar contatos</string>
+    <string name="hint_contact_name">Name do contato</string>
+    <string name="report_channel">Reportar canal</string>
+    <string name="cannot_reply">Não é possível responder essa mensagem</string>
+    <string name="lock_recording_for_long_messages">Gravação bloqueada para mensagens longas</string>
+    <string name="deleted">Removido</string>
+    <string name="pause_audio_button_hint">Pausar áudio</string>
+    <string name="play_record_audio_button_hint">Ouvir gravação de áudio</string>
+    <string name="audio_recording_failed">Falha para gravar áudio</string>
+    <string name="delete_recording_hint">Remover gravação</string>
+    <string name="stop_recording_button_hint">Remover gravação</string>
+    <string name="button_hint_start_audio">Iniciar gravação de áudio</string>
+    <string name="unable_to_play_audio">Não foi possívl reproduzir esta mensagem de áudio</string>
+    <string name="audio">Áudio</string>
+    <string name="record_audio_button_hint">Reproduzir audio da gravação</string>
+    <string name="video_calls_unavailable">Chamada de vídeo indisponível</string>
+    <string name="action_video_call">Chamada de vídeo</string>
+    <string name="outgoing_call">Chamada de saída</string>
+    <string name="incoming_call">Recebendo chamada</string>
+    <string name="finish_call_button">Finalizar chamada</string>
+    <string name="cancelled_call">cancelada</string>
+    <string name="missed_call">perdida</string>
+    <string name="declined_call">recusada</string>
+    <string name="disconnected_call">desconectada</string>
+    <string name="toggle_camera_button">Alternar camera</string>
+    <string name="toggle_microphone_button">Chamada Mute/Unmute</string>
+    <string name="voice_calls_limited">Você não está disponível para receber algumas mensagens de voz.</string>
+    <string name="copied_to_clipboard">Copiado para área de transferência</string>
+    <string name="image_preview">Prévia da imagem</string>
+    <string name="image_download_success">Imagem salva para galeria</string>
+    <string name="in_progress_call">em Chamada</string>
+    <string name="connecting_call">conectando</string>
+    <string name="tags_not_found">Sem tags definidas. Adicione algumas.</string>
+</resources>
