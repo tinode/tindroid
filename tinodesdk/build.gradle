@@ -34,6 +34,6 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-annotations:2.14.1'
     api 'org.java-websocket:Java-WebSocket:1.5.3'
 
-    implementation 'org.jetbrains:annotations:23.0.0'
+    implementation 'org.jetbrains:annotations:23.1.0'
     testImplementation 'junit:junit:4.13.2'
 }
