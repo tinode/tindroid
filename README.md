@@ -81,6 +81,7 @@ Demo avatars and some other graphics are from https://www.pexels.com/ under [CC0
 Background patterns from http://subtlepatterns.com/, commercial and non-commercial use allowed with attribution.
 
 The [`contacts.vcf`](./contacts.vcf) contains a list of contacts which can be used for testing. Push it to your emulator using command
+
 ```
 adb push contacts.vcf /sdcard/contacts.vcf
 ```
@@ -97,6 +98,7 @@ If you want to use the app with your own server and want push notification to wo
 ## Translations
 
 The app is currently available in the following languages:
+
 * English
 * Chinese (simplified)
 * Chinese (traditional)
@@ -105,10 +107,11 @@ The app is currently available in the following languages:
 * Korean
 * Russian
 * Spanish
+* Portuguese (Brazil)
 
 More translations are welcome. See [instructions](https://github.com/tinode/chat/blob/devel/docs/translations.md#android).
 
-
 ## Screenshots
+
 <img src="android-contacts.png" alt="App screenshot - chat list" width="250" /> <img src="android-chat.png" alt="App screenshot - chat" width="250" /> <img src="android-topic-info.png" alt="App screenshot - chat settings" width="250" />
 <img src="android-video-call.png" alt="App screenshot - video call" width="250" /> <img src="android-find-people.png" alt="App screenshot - searching for contacts" width="250" /> <img src="android-forward.png" alt="App screenshot - forward message" width="250" />
