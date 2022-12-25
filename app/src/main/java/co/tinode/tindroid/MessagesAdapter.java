@@ -1306,7 +1306,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Playback fraction to seek to when the player is ready.
         private float mSeekTo = -1f;
 
-        synchronized boolean ensurePlayerReady(final int seq, Map<String, Object> data,
+        boolean ensurePlayerReady(final int seq, Map<String, Object> data,
                                        FullFormatter.AudioControlCallback control) throws IOException {
             if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
                 mAudioControlCallback = control;
@@ -1321,7 +1321,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mPlayingAudioSeq = -1;
 
             if (mAudioPlayer != null) {
-                mAudioPlayer.stop();
+                try {
+                    mAudioPlayer.stop();
+                } catch (IllegalStateException ignored) {}
                 mAudioPlayer.reset();
             } else {
                 mAudioPlayer = new MediaPlayer();
@@ -1334,7 +1336,23 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             mAudioControlCallback = control;
-            mAudioPlayer.setOnPreparedListener(mp -> playerReady(mp, seq));
+            mAudioPlayer.setOnPreparedListener(mp -> {
+                if (mPlayingAudioSeq > 0) {
+                    // Another media have already been started while we waited for this media to become ready.
+                    mp.release();
+                    return;
+                }
+
+                mPlayingAudioSeq = seq;
+                if (mReadyAction == PlayerReadyAction.PLAY) {
+                    mReadyAction = PlayerReadyAction.NOOP;
+                    mp.start();
+                } else if (mReadyAction == PlayerReadyAction.SEEK ||
+                        mReadyAction == PlayerReadyAction.SEEKNPLAY) {
+                    seekTo(fractionToPos(mSeekTo));
+                }
+                mSeekTo = -1f;
+            });
             mAudioPlayer.setOnCompletionListener(mp -> {
                 if (mPlayingAudioSeq != seq) {
                     return;
@@ -1347,11 +1365,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             });
             mAudioPlayer.setOnErrorListener((mp, what, extra) -> {
+                Log.w(TAG, "Playback error " + what + "/" + extra);
                 if (mPlayingAudioSeq != seq) {
                     return true;
                 }
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                Log.w(TAG, "Playback error " + what + "/" + extra);
                 return false;
             });
             mAudioPlayer.setOnSeekCompleteListener(mp -> {
@@ -1403,30 +1421,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                 return false;
             }
-
             mAudioPlayer.prepareAsync();
             return true;
         }
 
-        synchronized void playerReady(MediaPlayer mp, int seq) {
-            if (mPlayingAudioSeq > 0) {
-                // Another media have already been started while we waited for this media to become ready.
-                mp.release();
-                return;
-            }
-
-            mPlayingAudioSeq = seq;
-            if (mReadyAction == PlayerReadyAction.PLAY) {
-                mReadyAction = PlayerReadyAction.NOOP;
-                mp.start();
-            } else if (mReadyAction == PlayerReadyAction.SEEK ||
-                    mReadyAction == PlayerReadyAction.SEEKNPLAY) {
-                seekTo(fractionToPos(mSeekTo));
-            }
-            mSeekTo = -1f;
-        }
-
-        synchronized void releasePlayer(int seq) {
+        void releasePlayer(int seq) {
             if ((seq != 0 && mPlayingAudioSeq != seq) || mPlayingAudioSeq == -1) {
                 return;
             }
@@ -1435,7 +1434,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mReadyAction = PlayerReadyAction.NOOP;
             mSeekTo = -1f;
             if (mAudioPlayer != null) {
-                mAudioPlayer.stop();
+                try {
+                    mAudioPlayer.stop();
+                } catch (IllegalStateException ignored) {}
                 mAudioPlayer.reset();
                 mAudioPlayer.release();
                 mAudioPlayer = null;
@@ -1454,7 +1455,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
 
-        synchronized void pause() {
+        void pause() {
             if (mAudioPlayer != null && mAudioPlayer.isPlaying()) {
                 mAudioPlayer.pause();
             }
@@ -1462,7 +1463,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             mSeekTo = -1f;
         }
 
-        synchronized void seekToWhenReady(float fraction) {
+        void seekToWhenReady(float fraction) {
             if (mPlayingAudioSeq > 0) {
                 // Already prepared.
                 int pos = fractionToPos(fraction);
@@ -1501,7 +1502,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                 }
             } catch (IllegalStateException ex) {
-                Log.w(TAG, "Not ready " + mPlayingAudioSeq, ex);
+                Log.w(TAG, "Duration not available yet " + mPlayingAudioSeq, ex);
             }
             return -1;
         }
