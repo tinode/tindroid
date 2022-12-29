@@ -543,8 +543,7 @@ public class MessageActivity extends AppCompatActivity
             }
             return true;
         } else if (id == R.id.action_call) {
-            CallManager cm = new CallManager(this);
-            cm.placeOutgoingCall(mTopicName);
+            CallManager.placeOutgoingCall(mTopicName);
             /*
             Intent intent = new Intent(getApplicationContext(), CallActivity.class);
             intent.setAction(CallActivity.INTENT_ACTION_CALL_START);

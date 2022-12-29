@@ -11,6 +11,7 @@ public class Const {
 
     public static final String INTENT_EXTRA_TOPIC = "co.tinode.tindroid.TOPIC";
     public static final String INTENT_EXTRA_SEQ = "co.tinode.tindroid.SEQ";
+    public static final String INTENT_EXTRA_SENDER_NAME = "co.tinode.tindroid.SENDER_NAME";
     public static final String INTENT_EXTRA_CALL_DIRECTION = "co.tinode.tindroid.CALL_DIRECTION";
     public static final String INTENT_EXTRA_CALL_ACCEPTED = "co.tinode.tindroid.CALL_ACCEPTED";
 

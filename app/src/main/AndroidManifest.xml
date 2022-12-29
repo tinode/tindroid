@@ -48,6 +48,7 @@
     <!-- Telephony API: placing and receiving calls. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <queries>
         <intent>

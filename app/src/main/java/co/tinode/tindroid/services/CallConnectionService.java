@@ -57,7 +57,8 @@ public class CallConnectionService extends ConnectionService {
         conn.setInitializing();
         if (request != null) {
             conn.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
-            conn.setExtras(request.getExtras());
+            Bundle extras = request.getExtras();
+            conn.setExtras(extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
@@ -69,6 +70,7 @@ public class CallConnectionService extends ConnectionService {
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);
         conn.setVideoProvider(new TinodeVideoProvider());
+
         conn.setActive();
 
         return conn;

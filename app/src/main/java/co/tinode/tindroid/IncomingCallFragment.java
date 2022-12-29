@@ -106,7 +106,7 @@ public class IncomingCallFragment extends Fragment
         mSeq = args.getInt(Const.INTENT_EXTRA_SEQ);
         Cache.setCallActive(mTopicName, mSeq);
 
-        // Technically the call is from args.getString("from")
+        // Technically the call is from args.getString(Const.INTENT_EXTRA_SENDER_NAME)
         // but it's the same as "topic" for p2p topics;
         // noinspection unchecked
         ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);

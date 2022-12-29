@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallActivity;
+import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.MessageActivity;
@@ -175,49 +176,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             CharSequence body = null;
             Bitmap avatar = null;
             if (TextUtils.isEmpty(what) || "msg".equals(what)) {
-                // Message notification.
-                String seqStr = data.get("seq");
-                try {
-                    int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
-                    if (webrtc != null && seq > 0) {
-                        // It's a video call.
-                        switch (webrtc) {
-                            case "started":
-                                if (!tinode.isMe(senderId)) {
-                                    // Show UI for accepting/declining the incoming call.
-                                    Intent intent = new Intent(getApplicationContext(), CallActivity.class);
-                                    intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                                    intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
-                                    intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
-                                    intent.putExtra("from", senderName);
-                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                                    startActivity(intent);
-                                }
-                                break;
-                            case "accepted":
-                            case "missed":
-                            case "declined":
-                            case "disconnected":
-                                int origSeq = parseSeqReference(data.get("replace"));
-                                if (origSeq > 0) {
-                                    // Dismiss the call UI.
-                                    LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-                                    Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
-                                    intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
-                                    intent.putExtra(Const.INTENT_EXTRA_SEQ, origSeq);
-                                    lbm.sendBroadcast(intent);
-
-                                    // UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-
-                        return;
-                    }
-                } catch (NumberFormatException ex) {
-                    Log.w(TAG, "Invalid seq value '" + seqStr + "'", ex);
+                if (webrtc != null) {
+                    // It's a video call.
+                    handleCallNotification(webrtc, tinode.isMe(senderId), data);
+                    return;
                 }
 
                 avatar = senderIcon;
@@ -356,6 +318,55 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         nm.notify(topicName, 0, builder.setContentIntent(pendingIntent).build());
     }
 
+    private void handleCallNotification(@NonNull String webrtc, boolean isMe, @NonNull Map<String, String> data) {
+        String seqStr = data.get("seq");
+        String topicName = data.get("topic");
+        try {
+            int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
+            if (seq <= 0) {
+                Log.w(TAG, "Invalid seq value '" + seqStr + "'");
+                return;
+            }
+
+            switch (webrtc) {
+                case "started":
+                    if (!isMe) {
+                        // Show UI for accepting/declining the incoming call.
+                        CallManager.acceptIncomingCall(this, topicName, seq);
+                        /*
+                        Intent intent = new Intent(getApplicationContext(), CallActivity.class);
+                        intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
+                        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+                        intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
+                        intent.putExtra(Const.INTENT_EXTRA_SENDER_NAME, senderName);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(intent);
+                        */
+                    }
+                    break;
+                case "accepted":
+                case "missed":
+                case "declined":
+                case "disconnected":
+                    int origSeq = parseSeqReference(data.get("replace"));
+                    if (origSeq > 0) {
+                        // Dismiss the call UI.
+                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+                        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
+                        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+                        intent.putExtra(Const.INTENT_EXTRA_SEQ, origSeq);
+                        lbm.sendBroadcast(intent);
+                    }
+                    break;
+                default:
+                    Log.w(TAG, "Unknown webrtc action '" + webrtc + "'");
+                    break;
+            }
+        } catch (NumberFormatException ex) {
+            Log.w(TAG, "Invalid seq value '" + seqStr + "'");
+        }
+    }
+
     /**
      * Create and show a simple notification containing the received FCM message.
      *
@@ -366,7 +377,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
         @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, "new_message") :
+                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
                         new NotificationCompat.Builder(this);
 
         return notificationBuilder
@@ -385,7 +396,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private NotificationCompat.Builder composeNotification(@NonNull RemoteMessage.Notification remote) {
         @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, "new_message") :
+                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
                         new NotificationCompat.Builder(this);
 
         final Resources res = getResources();

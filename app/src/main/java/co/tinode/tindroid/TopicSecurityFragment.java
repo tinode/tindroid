@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -241,13 +239,6 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
         ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // inflater.inflate(R.menu.menu_topic_info, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     // Confirmation dialog "Do you really want to do X?"

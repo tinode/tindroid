@@ -22,6 +22,7 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
+import androidx.core.app.NotificationCompat;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.CallBroadcastReceiver;
@@ -49,9 +50,11 @@ public class CallConnection extends Connection {
         NotificationManager nm = mContext.getSystemService(NotificationManager.class);
 
         Notification.Builder builder = new Notification.Builder(mContext);
-        builder.setPriority(Notification.PRIORITY_HIGH);
-        builder.setOngoing(true);
-        builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
+
+        builder.setPriority(Notification.PRIORITY_HIGH)
+                .setOngoing(true)
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
@@ -61,38 +64,37 @@ public class CallConnection extends Connection {
         Bundle args = getExtras();
         int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
 
-        PendingIntent answerIntent = answerIntent(topicName, seq);
-        PendingIntent declineIntent = declineIntent(topicName, seq);
+        PendingIntent askUserIntent = askUserIntent(topicName, seq);
         // Set notification content intent to take user to fullscreen UI if user taps on the
         // notification body.
-        builder.setContentIntent(answerIntent);
+        builder.setContentIntent(askUserIntent);
         // Set full screen intent to trigger display of the fullscreen UI when the notification
         // manager deems it appropriate.
-        builder.setFullScreenIntent(answerIntent, true);
+        builder.setFullScreenIntent(askUserIntent, true);
 
         // Setup notification content.
         ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
         if (topic != null) {
             VxCard pub = (VxCard) topic.getPub();
             int width = (int) mContext.getResources().getDimension(android.R.dimen.notification_large_icon_width);
-            Bitmap avatar = UiUtils.avatarBitmap(mContext, pub, topic.getTopicType(), topic.getName(), width);
-            builder.setLargeIcon(Icon.createWithBitmap(avatar));
+            //Bitmap avatar = UiUtils.avatarBitmap(mContext, pub, topic.getTopicType(), topic.getName(), width);
+            //builder.setLargeIcon(Icon.createWithBitmap(avatar));
             String userName = pub != null && !TextUtils.isEmpty(pub.fn) ? pub.fn : mContext.getString(R.string.unknown);
             builder.setContentTitle(userName);
         }
-        builder.setSmallIcon(R.drawable.ic_icon_push);
-        builder.setContentText(mContext.getString(R.string.tinode_video_call));
-        builder.setUsesChronometer(true);
-        builder.setCategory(Notification.CATEGORY_CALL);
+        builder.setSmallIcon(R.drawable.ic_icon_push)
+                .setContentText(mContext.getString(R.string.tinode_video_call))
+                .setUsesChronometer(true)
+                .setCategory(Notification.CATEGORY_CALL);
         // This will be ignored on O+ and handled by the channel
         builder.setPriority(Notification.PRIORITY_MAX);
 
         builder.addAction(new Notification.Action.Builder(Icon.createWithResource(mContext, R.drawable.ic_call_end),
-                getActionText(mContext, R.string.decline_call, R.color.colorNegativeAction), declineIntent)
+                getActionText(mContext, R.string.decline_call, R.color.colorNegativeAction), declineIntent(topicName, seq))
                 .build());
 
         builder.addAction(new Notification.Action.Builder(Icon.createWithResource(mContext, R.drawable.ic_call_white),
-                getActionText(mContext, R.string.answer_call, R.color.colorPositiveAction), answerIntent)
+                getActionText(mContext, R.string.answer_call, R.color.colorPositiveAction), answerIntent(topicName, seq))
                 .build());
 
         nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, builder.build());
@@ -139,6 +141,18 @@ public class CallConnection extends Connection {
         return spannable;
     }
 
+    private PendingIntent askUserIntent(String topicName, int seq) {
+        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                | Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName)
+                .putExtra(Const.INTENT_EXTRA_SEQ, seq);
+        intent.setClass(mContext, CallActivity.class);
+        return PendingIntent.getActivity(mContext, 101, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
     private PendingIntent answerIntent(String topicName, int seq) {
         Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
         intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
@@ -148,8 +162,8 @@ public class CallConnection extends Connection {
                 .putExtra(Const.INTENT_EXTRA_SEQ, seq)
                 .putExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, true);
         intent.setClass(mContext, CallActivity.class);
-        return PendingIntent.getActivity(mContext, 1, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getActivity(mContext, 102, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     private PendingIntent declineIntent(String topicName, int seq) {
@@ -157,7 +171,7 @@ public class CallConnection extends Connection {
         intent.setAction(CallBroadcastReceiver.ACTION_INCOMING_CALL);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
         intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
-        return PendingIntent.getBroadcast(mContext, 2, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getBroadcast(mContext, 103, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 }

@@ -340,6 +340,7 @@ public class UiUtils {
     }
 
     static void doLogout(Context context) {
+        CallManager.unregisterCallingAccount();
         TindroidApp.stopWatchingContacts();
         Cache.invalidate();
 

@@ -28,18 +28,15 @@ import static android.content.Context.TELECOM_SERVICE;
 public class CallManager {
     private static final String TAG = "CallManager";
 
-    TelecomManager mTelecomManager;
-    PhoneAccountHandle mPhoneAccountHandle;
-    Context mContext;
-    String mMyID;
+    private static CallManager sSharedInstance;
 
-    public CallManager(Context context) {
-        mTelecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
-        mContext = context;
+    private final PhoneAccountHandle mPhoneAccountHandle;
+
+    private CallManager(Context context) {
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
 
         Tinode tinode = Cache.getTinode();
-        mMyID = tinode.getMyId();
-
+        String myID = tinode.getMyId();
         VxCard card = (VxCard) tinode.getMeTopic().getPub();
         String accLabel = null;
         Icon icon = null;
@@ -50,49 +47,65 @@ public class CallManager {
                 icon = Icon.createWithBitmap(avatar);
             }
         }
+
         // Register current user's phone account.
-        mPhoneAccountHandle = new PhoneAccountHandle(new ComponentName(mContext, CallConnectionService.class), mMyID);
+        mPhoneAccountHandle = new PhoneAccountHandle(new ComponentName(context, CallConnectionService.class), myID);
         PhoneAccount.Builder builder = PhoneAccount.builder(mPhoneAccountHandle, accLabel)
                 .addSupportedUriScheme("tinode")
-                .setAddress(Uri.fromParts("tinode", mMyID, null))
+                .setAddress(Uri.fromParts("tinode", myID, null))
                 .setShortDescription(accLabel)
                 .setIcon(icon);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             builder.setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED);
         }
-        mTelecomManager.registerPhoneAccount(builder.build());
+        telecomManager.registerPhoneAccount(builder.build());
     }
 
-    public void unregisterCallingAccount() {
-        // FIXME: this has to be called on logout.
-        mTelecomManager.unregisterPhoneAccount(mPhoneAccountHandle);
+    private static CallManager getShared() {
+        if (sSharedInstance != null) {
+            return sSharedInstance;
+        }
+        sSharedInstance = new CallManager(TindroidApp.getAppContext());
+        return sSharedInstance;
     }
 
-    public void placeOutgoingCall(String callee) {
+    // FIXME: this has to be called on logout.
+    public static void unregisterCallingAccount() {
+        CallManager shared = CallManager.getShared();
+        TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
+        telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
+    }
+
+    public static void placeOutgoingCall(String callee) {
+        CallManager shared = CallManager.getShared();
         Bundle callParams = new Bundle();
-        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, mPhoneAccountHandle);
+        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
         callParams.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_BIDIRECTIONAL);
         callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+
         Bundle extras = new Bundle();
         extras.putString(Const.INTENT_EXTRA_TOPIC, callee);
         callParams.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras);
         try {
-            mTelecomManager.placeCall(Uri.fromParts("tinode", callee, null), callParams);
+            TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
+            telecomManager.placeCall(Uri.fromParts("tinode", callee, null), callParams);
         } catch (SecurityException ex) {
             Log.w(TAG, "Unable to place call", ex);
         }
     }
 
-    public void acceptIncomingCall(String caller, int seq) {
-        if (mContext.checkSelfPermission(Manifest.permission.MANAGE_OWN_CALLS) != PackageManager.PERMISSION_GRANTED) {
+    public static void acceptIncomingCall(Context context, String caller, int seq) {
+        if (context.checkSelfPermission(Manifest.permission.MANAGE_OWN_CALLS) != PackageManager.PERMISSION_GRANTED) {
             Log.i(TAG, "No permission to accept incoming calls");
             return;
         }
 
+        CallManager shared = CallManager.getShared();
+
         Uri uri = Uri.fromParts("tinode", caller, null);
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
-        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, mPhoneAccountHandle);
+        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
 
         callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -105,17 +118,19 @@ public class CallManager {
         Bundle extras = new Bundle();
         extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
         extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
+        callParams.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, extras);
 
         try {
-            mTelecomManager.addNewIncomingCall(mPhoneAccountHandle, callParams);
+            TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
+            telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
         } catch (SecurityException ex) {
             if (Build.MANUFACTURER.equalsIgnoreCase("Samsung")) {
                 Intent intent = new Intent();
                 intent.setComponent(new ComponentName("com.android.server.telecom",
                         "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
-                mContext.startActivity(intent);
+                context.startActivity(intent);
             } else {
-                mContext.startActivity(new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
+                context.startActivity(new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
             }
         } catch (Exception ex) {
             Log.i(TAG, "Failed to accept incoming call", ex);

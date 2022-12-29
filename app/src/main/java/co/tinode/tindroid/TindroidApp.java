@@ -18,6 +18,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
+import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
@@ -229,8 +230,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
                 CallInProgress call = Cache.getCallInProgress();
                 if (call == null) {
-                    CallManager cm = new CallManager(TindroidApp.this);
-                    cm.acceptIncomingCall(data.topic, data.seq);
+                    CallManager.acceptIncomingCall(TindroidApp.this, data.topic, data.seq);
                 } else if (!call.equals(data.topic, data.seq)) {
                     // Another incoming call. Decline.
                     topic.videoCallHangUp(data.seq);
@@ -347,6 +347,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
                     getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
             newMessage.setDescription(getString(R.string.new_message_channel_description));
+            newMessage.enableLights(true);
+            newMessage.setLightColor(Color.WHITE);
 
             NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
                     getString(R.string.video_call_channel_name),
@@ -357,12 +359,13 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                                     .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
                                     .build());
+            videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
+            videoCall.enableVibration(true);
+            videoCall.enableLights(true);
+            videoCall.setLightColor(Color.RED);
 
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null) {
-                nm.deleteNotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID);
-                nm.deleteNotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID);
-
                 nm.createNotificationChannel(newMessage);
                 nm.createNotificationChannel(videoCall);
             }
