@@ -71,10 +71,10 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
         mFailureListener = new UiUtils.ToastFailureListener(activity);
 
         // Set up listeners
-
         fragment.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O"));
+                    UiUtils.ACTION_UPDATE_SELF_SUB,
+                    mTopic.getAccessMode().getGivenHelper().isOwner() ? "" : "O"));
 
         fragment.findViewById(R.id.authPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
