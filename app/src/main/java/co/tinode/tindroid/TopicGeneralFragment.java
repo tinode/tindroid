@@ -115,10 +115,10 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
 
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
