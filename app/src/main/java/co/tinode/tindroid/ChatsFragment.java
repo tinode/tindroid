@@ -39,7 +39,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUtils.ProgressIndicator {
     private static final String TAG = "ChatsFragment";
 
-    private static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 1001;
+    //private static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 1001;
 
     private Boolean mIsArchive;
     private Boolean mIsBanned;
@@ -106,7 +106,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             }
             Intent intent = new Intent(activity, MessageActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            intent.putExtra("topic", topicName);
+            intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
             activity.startActivity(intent);
         }, t -> (t.isArchived() == mIsArchive) && (t.isJoiner() != mIsBanned));
         rv.setAdapter(mAdapter);
@@ -179,6 +179,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
         mAdapter.resetContent(activity);
 
+        /*
         // This is needed in order to accept video calls while the app is in the background.
         // It should be already granted to apps in playstore, but needed when developing.
         if (!Settings.canDrawOverlays(activity)) {
@@ -192,8 +193,10 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 Toast.makeText(activity, R.string.voice_calls_limited, Toast.LENGTH_LONG).show();
             }
         }
+         */
     }
 
+    /*
     // The registerForActivityResult does not work for this permission.
     @SuppressWarnings("deprecation")
     @Override
@@ -211,6 +214,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             }
         }
     }
+
+     */
 
     @Override
     public void onSaveInstanceState(@NonNull Bundle outState) {

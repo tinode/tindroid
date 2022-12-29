@@ -164,9 +164,9 @@
     <string name="login_rejected">El nombre de usuario ha sido rechazado</string>
     <string name="email_rejected">La dirección de correo electrónico ha sido rechazado</string>
     <string name="invalid_confirmation_code">Código inválido</string>
-    <string name="notification_channel_name">Nuevo mensaje</string>
+    <string name="new_message_channel_name">Nuevo mensaje</string>
     <string name="new_message">Nuevo mensaje</string>
-    <string name="notification_channel_description">Has recibido un nuevo mensaje</string>
+    <string name="new_message_channel_description">Has recibido un nuevo mensaje</string>
     <string name="request_pass_reset_title">Restablecer contraseña</string>
     <string name="request_pass_reset">Solicitar código por %1$s:</string>
     <string name="validated_address_to_use">%1$s validado para enviar código</string>

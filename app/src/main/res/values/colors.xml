@@ -4,8 +4,8 @@
     <color name="grey">#9E9E9E</color>
     <color name="transparent">#00000000</color>
 
-    <color name="colorNegativeAction">#B71C1C</color>
-    <color name="colorPositiveAction">#FF40C040</color>
+    <color name="colorNegativeAction">#FF983220</color>
+    <color name="colorPositiveAction">#FF326F3E</color>
     <color name="colorNeutralAction">#FF909090</color>
 
     <color name="colorAccentLight">#E0F2F1</color>

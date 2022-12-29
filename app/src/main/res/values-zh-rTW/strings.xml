@@ -164,9 +164,9 @@
     <string name="login_rejected">登入遭拒</string>
     <string name="email_rejected">電子郵件遭拒</string>
     <string name="invalid_confirmation_code">代碼無效</string>
-    <string name="notification_channel_name">新訊息</string>
+    <string name="new_message_channel_name">新訊息</string>
     <string name="new_message">新訊息</string>
-    <string name="notification_channel_description">收到了新訊息</string>
+    <string name="new_message_channel_description">收到了新訊息</string>
     <string name="request_pass_reset_title">重設密碼</string>
     <string name="request_pass_reset">由 %1$s 要求的代碼：</string>
     <string name="validated_address_to_use">已驗證 %1$s 可用來傳送代碼</string>

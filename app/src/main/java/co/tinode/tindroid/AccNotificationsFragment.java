@@ -91,14 +91,14 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         // Read receipts
         SwitchCompat ctrl = activity.findViewById(R.id.switchReadReceipts);
         ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
-                pref.edit().putBoolean(UiUtils.PREF_READ_RCPT, isChecked).apply());
-        ctrl.setChecked(pref.getBoolean(UiUtils.PREF_READ_RCPT, true));
+                pref.edit().putBoolean(Const.PREF_READ_RCPT, isChecked).apply());
+        ctrl.setChecked(pref.getBoolean(Const.PREF_READ_RCPT, true));
 
         // Typing notifications.
         ctrl = activity.findViewById(R.id.switchTypingNotifications);
         ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
-                pref.edit().putBoolean(UiUtils.PREF_TYPING_NOTIF, isChecked).apply());
-        ctrl.setChecked(pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true));
+                pref.edit().putBoolean(Const.PREF_TYPING_NOTIF, isChecked).apply());
+        ctrl.setChecked(pref.getBoolean(Const.PREF_TYPING_NOTIF, true));
 
         updateFormValues(activity, me);
 

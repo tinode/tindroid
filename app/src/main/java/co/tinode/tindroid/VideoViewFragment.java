@@ -310,8 +310,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
             if (bmp != null) {
-                if (mVideoWidth > UiUtils.MAX_POSTER_SIZE ||  mVideoHeight > UiUtils.MAX_POSTER_SIZE) {
-                    bmp = UiUtils.scaleBitmap(bmp,UiUtils.MAX_POSTER_SIZE, UiUtils.MAX_POSTER_SIZE, false);
+                if (mVideoWidth > Const.MAX_POSTER_SIZE ||  mVideoHeight > Const.MAX_POSTER_SIZE) {
+                    bmp = UiUtils.scaleBitmap(bmp, Const.MAX_POSTER_SIZE, Const.MAX_POSTER_SIZE, false);
                 }
                 byte[] bitmapBits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                 if (bitmapBits.length > MAX_POSTER_BYTES) {

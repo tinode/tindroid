@@ -161,7 +161,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        String name = args.getString("topic");
+        String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicInfo resumed with null topic.");
@@ -296,7 +296,7 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
 
                 } else if (id == R.id.buttonPermissions) {
                     UiUtils.showEditPermissions(activity, mTopic, mode, uid,
-                            UiUtils.ACTION_UPDATE_SUB, "O");
+                            Const.ACTION_UPDATE_SUB, "O");
 
                 } else if (id == R.id.buttonMakeOwner) {
                     mTopic.updateMode(uid, "+O").thenApply(null, mFailureListener);

@@ -164,9 +164,9 @@
     <string name="login_rejected">로그인 거부됨</string>
     <string name="email_rejected">이메일 거부됨</string>
     <string name="invalid_confirmation_code">올바르지 않은 코드</string>
-    <string name="notification_channel_name">새 메세지</string>
+    <string name="new_message_channel_name">새 메세지</string>
     <string name="new_message">새 메세지</string>
-    <string name="notification_channel_description">새로운 메시지가 도착했습니다.</string>
+    <string name="new_message_channel_description">새로운 메시지가 도착했습니다.</string>
     <string name="request_pass_reset_title">비밀번호 초기화</string>
     <string name="request_pass_reset">%1$s: 코드 요청</string>
     <string name="validated_address_to_use">적합한 %1$s에 코드를 보냈습니다.</string>

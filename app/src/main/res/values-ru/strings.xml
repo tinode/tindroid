@@ -47,9 +47,9 @@
     <string name="your_permissions">Ваши</string>
     <string name="canceled">отменено</string>
     <string name="unable_to_attach_file">Невозможно прикрепить этот файл</string>
-    <string name="notification_channel_name">Новое сообщение</string>
+    <string name="new_message_channel_name">Новое сообщение</string>
     <string name="new_message">Новое сообщение</string>
-    <string name="notification_channel_description">Получено новое сообщение</string>
+    <string name="new_message_channel_description">Получено новое сообщение</string>
     <string name="request_pass_reset_title">Сменить пароль</string>
     <string name="request_pass_reset">Запросить код на %1$s</string>
     <string name="validated_address_to_use">Подтвержденный %1$s для получения кода</string>

@@ -43,6 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -258,8 +259,8 @@ public class MessageActivity extends AppCompatActivity
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
-        mSendReadReceipts = pref.getBoolean(UiUtils.PREF_READ_RCPT, true);
-        mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
+        mSendReadReceipts = pref.getBoolean(Const.PREF_READ_RCPT, true);
+        mSendTypingNotifications = pref.getBoolean(Const.PREF_TYPING_NOTIF, true);
 
         BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
     }
@@ -360,7 +361,7 @@ public class MessageActivity extends AppCompatActivity
     // Get topic name from Intent the Activity was launched with (push notification, other app, other activity).
     private String readTopicNameFromIntent(Intent intent) {
         // Check if the activity was launched by internally-generated intent.
-        String name = intent.getStringExtra("topic");
+        String name = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
         if (!TextUtils.isEmpty(name)) {
             return name;
         }
@@ -547,10 +548,9 @@ public class MessageActivity extends AppCompatActivity
             /*
             Intent intent = new Intent(getApplicationContext(), CallActivity.class);
             intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
-            intent.putExtra("topic", mTopicName);
+            intent.putExtra(Const.INTENT_EXTRA_TOPIC, mTopicName);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
-
              */
             return true;
         }

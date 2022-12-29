@@ -176,10 +176,10 @@
     <string name="login_rejected">Login rejected</string>
     <string name="email_rejected">Email rejected</string>
     <string name="invalid_confirmation_code">Invalid code</string>
-    <string name="notification_channel_name">New message</string>
+    <string name="new_message_channel_name">New message</string>
     <!-- Used in push notifications -->
     <string name="new_message">New message</string>
-    <string name="notification_channel_description">New message was received</string>
+    <string name="new_message_channel_description">New message was received</string>
     <string name="request_pass_reset_title">Password reset</string>
     <string name="request_pass_reset">Request code by %1$s:</string>
     <string name="validated_address_to_use">Validated %1$s to send code to</string>
@@ -348,4 +348,9 @@
     <string name="unable_to_play_video">Unable to play this video.</string>
     <string name="select_image_or_video">Choose image or video</string>
     <string name="tap_to_select">Tap to select</string>
+    <string name="video_call_channel_name">Video calls</string>
+    <string name="video_call_channel_description">Video and audio calls</string>
+    <string name="tinode_video_call">Tinode Video Call</string>
+    <string name="answer_call">Answer</string>
+    <string name="decline_call">Decline</string>
 </resources>

@@ -164,10 +164,10 @@
     <string name="login_rejected">Login rejeitado</string>
     <string name="email_rejected">Email rejeitado</string>
     <string name="invalid_confirmation_code">Código inválido</string>
-    <string name="notification_channel_name">Nova mensagem</string>
+    <string name="new_message_channel_name">Nova mensagem</string>
     <!-- Used in push notifications -->
     <string name="new_message">Nova mensagem</string>
-    <string name="notification_channel_description">Nova mensagem recebida</string>
+    <string name="new_message_channel_description">Nova mensagem recebida</string>
     <string name="request_pass_reset_title">Redefinir senha</string>
     <string name="request_pass_reset">Código requerido por %1$s:</string>
     <string name="validated_address_to_use">Validado %1$s para envio do código</string>

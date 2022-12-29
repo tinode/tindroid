@@ -122,7 +122,7 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
             return;
         }
 
-        String name = args.getString("topic");
+        String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicPermissions resumed with null topic.");

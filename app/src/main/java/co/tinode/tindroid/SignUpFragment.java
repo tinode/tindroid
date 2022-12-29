@@ -149,16 +149,16 @@ public class SignUpFragment extends Fragment
         }
         // Make sure user name is not too long.
         final String fullName;
-        if (fn.length() > UiUtils.MAX_TITLE_LENGTH) {
-            fullName = fn.substring(0, UiUtils.MAX_TITLE_LENGTH);
+        if (fn.length() > Const.MAX_TITLE_LENGTH) {
+            fullName = fn.substring(0, Const.MAX_TITLE_LENGTH);
         } else {
             fullName = fn;
         }
 
         String description = ((EditText) parent.findViewById(R.id.userDescription)).getText().toString().trim();
         if (!TextUtils.isEmpty(description)) {
-            if (description.length() > UiUtils.MAX_DESCRIPTION_LENGTH) {
-                description = description.substring(0, UiUtils.MAX_DESCRIPTION_LENGTH);
+            if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
         } else {
             description = null;

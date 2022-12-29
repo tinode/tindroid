@@ -171,13 +171,13 @@ public class CallFragment extends Fragment {
         }
 
         Tinode tinode = Cache.getTinode();
-        String name = args.getString("topic");
+        String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) tinode.getTopic(name);
-        String callStateStr = args.getString("call_direction");
+        String callStateStr = args.getString(Const.INTENT_EXTRA_CALL_DIRECTION);
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
         if (mCallDirection == CallDirection.INCOMING) {
-            mCallSeqID = args.getInt("call_seq");
+            mCallSeqID = args.getInt(Const.INTENT_EXTRA_SEQ);
         }
 
         if (!mTopic.isAttached()) {
@@ -519,6 +519,8 @@ public class CallFragment extends Fragment {
         if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
             activity.finishCall();
         }
+        Log.i(TAG, "Calling endCallInProgress");
+        Cache.endCallInProgress();
     }
 
     // Call initiation.
@@ -542,7 +544,7 @@ public class CallFragment extends Fragment {
                                     if (seq > 0) {
                                         // All good.
                                         mCallSeqID = seq;
-                                        Cache.registerCallInProgress(mTopic.getName(), seq);
+                                        Cache.setCallActive(mTopic.getName(), seq);
                                         return null;
                                     }
                                 }

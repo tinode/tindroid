@@ -134,10 +134,10 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
         activity.findViewById(R.id.authPermissions)
                 .setOnClickListener(v -> UiUtils.showEditPermissions(activity, me, me.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O"));
+                        Const.ACTION_UPDATE_AUTH, "O"));
         activity.findViewById(R.id.anonPermissions)
                 .setOnClickListener(v -> UiUtils.showEditPermissions(activity, me, me.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O"));
+                        Const.ACTION_UPDATE_ANON, "O"));
 
         // Assign initial form values.
         updateFormValues(activity, me);

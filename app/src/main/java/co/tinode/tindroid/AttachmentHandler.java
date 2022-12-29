@@ -21,8 +21,6 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -496,7 +494,6 @@ public class AttachmentHandler extends Worker {
         Drafty content = null;
         boolean success = false;
         InputStream is = null;
-        ByteArrayOutputStream baos = null;
         Bitmap bmp = null;
         try {
             final ContentResolver resolver = context.getContentResolver();
@@ -529,9 +526,9 @@ public class AttachmentHandler extends Worker {
                 uploadDetails.fileSize = is.available();
 
                 // Create a tiny preview bitmap.
-                if (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM || bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM) {
+                if (bmp.getWidth() > Const.IMAGE_PREVIEW_DIM || bmp.getHeight() > Const.IMAGE_PREVIEW_DIM) {
                     uploadDetails.previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
-                                    UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM, false),
+                                    Const.IMAGE_PREVIEW_DIM, Const.IMAGE_PREVIEW_DIM, false),
                             "image/jpeg");
                 }
             } else {
@@ -741,7 +738,7 @@ public class AttachmentHandler extends Worker {
      * @param bmp new avatar; no action is taken if avatar is null.
      * @return result of the operation.
      */
-    static PromisedReply<ServerMessage> uploadAvatar(@NotNull final VxCard pub, @Nullable Bitmap bmp,
+    static PromisedReply<ServerMessage> uploadAvatar(@NonNull final VxCard pub, @Nullable Bitmap bmp,
                                                      @Nullable String topicName) {
         if (bmp == null) {
             // No action needed.
@@ -752,13 +749,13 @@ public class AttachmentHandler extends Worker {
 
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        if (width < UiUtils.MIN_AVATAR_SIZE || height < UiUtils.MIN_AVATAR_SIZE) {
+        if (width < Const.MIN_AVATAR_SIZE || height < Const.MIN_AVATAR_SIZE) {
             // FAIL.
             return new PromisedReply<>(new Exception("Image is too small"));
         }
 
-        if (width != height || width > UiUtils.MAX_AVATAR_SIZE) {
-            bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
+        if (width != height || width > Const.MAX_AVATAR_SIZE) {
+            bmp = UiUtils.scaleSquareBitmap(bmp, Const.MAX_AVATAR_SIZE);
             width = bmp.getWidth();
             height = bmp.getHeight();
         }
@@ -772,11 +769,11 @@ public class AttachmentHandler extends Worker {
         PromisedReply<ServerMessage> result;
         try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
             long fileSize = is.available();
-            if (fileSize > UiUtils.MAX_INBAND_AVATAR_SIZE) {
+            if (fileSize > Const.MAX_INBAND_AVATAR_SIZE) {
                 // Sending avatar out of band.
 
                 // Generate small avatar preview.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
                 result = uploader.uploadAsync(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
@@ -791,7 +788,7 @@ public class AttachmentHandler extends Worker {
                         });
             } else {
                 // Can send a small avatar in-band.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 result = new PromisedReply<>((ServerMessage) null);
             }
         } catch (IOException | IllegalArgumentException ex) {
@@ -868,8 +865,8 @@ public class AttachmentHandler extends Worker {
         }
 
         // Make sure the image dimensions are not too large.
-        if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-            bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE, false);
+        if (bmp.getWidth() > Const.MAX_BITMAP_SIZE || bmp.getHeight() > Const.MAX_BITMAP_SIZE) {
+            bmp = UiUtils.scaleBitmap(bmp, Const.MAX_BITMAP_SIZE, Const.MAX_BITMAP_SIZE, false);
 
             byte[] bits = UiUtils.bitmapToBytes(bmp, uploadDetails.mimeType);
             uploadDetails.fileSize = bits.length;

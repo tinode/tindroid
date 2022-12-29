@@ -163,8 +163,8 @@
     <string name="login_rejected">登录被拒绝</string>
     <string name="email_rejected">邮件被拒绝</string>
     <string name="invalid_confirmation_code">无效验证码</string>
-    <string name="notification_channel_name">新消息</string>
-    <string name="notification_channel_description">收到新消息</string>
+    <string name="new_message_channel_name">新消息</string>
+    <string name="new_message_channel_description">收到新消息</string>
     <string name="new_message">新消息</string>
     <string name="request_pass_reset_title">密码重置</string>
     <string name="request_pass_reset">请求验证码对应 %1$s:</string>

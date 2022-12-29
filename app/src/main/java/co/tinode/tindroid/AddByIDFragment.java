@@ -36,7 +36,7 @@ public class AddByIDFragment extends Fragment {
                 } else {
                     Intent it = new Intent(activity, MessageActivity.class);
                     it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    it.putExtra("topic", id);
+                    it.putExtra(Const.INTENT_EXTRA_TOPIC, id);
                     startActivity(it);
                 }
             }

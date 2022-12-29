@@ -79,7 +79,7 @@ public class SendToActivity extends AppCompatActivity {
                 launcher.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             }
             launcher.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            launcher.putExtra("topic", topicName);
+            launcher.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
             startActivity(launcher);
             finish();
         }, Topic::isWriter);

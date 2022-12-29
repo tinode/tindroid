@@ -4,8 +4,6 @@ import android.content.Context;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -168,7 +166,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return ssb;
     }
 
-    protected static SpannableStringBuilder assignStyle(@NotNull Object style, List<SpannableStringBuilder> content) {
+    protected static SpannableStringBuilder assignStyle(@NonNull Object style, List<SpannableStringBuilder> content) {
         SpannableStringBuilder ssb = join(content);
         if (ssb != null) {
             ssb.setSpan(style, 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

@@ -192,7 +192,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int[] selected = getSelectedArray();
                 if (id == R.id.action_edit) {
                     if (selected != null) {
-                        showMessageQuote(UiUtils.MsgAction.EDIT, selected[0], UiUtils.EDIT_PREVIEW_LENGTH);
+                        showMessageQuote(UiUtils.MsgAction.EDIT, selected[0], Const.EDIT_PREVIEW_LENGTH);
                     }
                     return true;
                 } else if (id == R.id.action_delete) {
@@ -207,7 +207,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     return true;
                 } else if (id == R.id.action_reply) {
                     if (selected != null) {
-                        showMessageQuote(UiUtils.MsgAction.REPLY, selected[0], UiUtils.QUOTED_REPLY_LENGTH);
+                        showMessageQuote(UiUtils.MsgAction.REPLY, selected[0], Const.QUOTED_REPLY_LENGTH);
                     }
                     return true;
                 } else if (id == R.id.action_forward) {

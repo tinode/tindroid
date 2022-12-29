@@ -41,12 +41,13 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!--uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" /-->
+    <!--uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
-    <!-- Telephony API: receiving calls. -->
+    <!-- Telephony API: placing and receiving calls. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
 
     <queries>
         <intent>
@@ -211,7 +212,7 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-        <!-- Service to recive incoming calls -->
+        <!-- Service to place and receive calls. -->
         <service android:name=".services.CallConnectionService"
             android:exported="true"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
@@ -219,6 +220,9 @@
                 <action android:name="android.telecom.ConnectionService" />
             </intent-filter>
         </service>
+
+        <!-- Receives broadcast to hang up incoming call -->
+        <receiver android:name=".CallBroadcastReceiver" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

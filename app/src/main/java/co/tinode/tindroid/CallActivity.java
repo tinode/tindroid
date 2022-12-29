@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.KeyguardManager;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -17,6 +18,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -48,8 +50,11 @@ public class CallActivity extends AppCompatActivity  {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
-                String topicName = intent.getStringExtra("topic");
-                int seq = intent.getIntExtra("seq", -1);
+                NotificationManager nm = getSystemService(NotificationManager.class);
+                nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+
+                String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
+                int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
                 if (mTopicName.equals(topicName) && mSeq == seq) {
                     finish();
                 }
@@ -60,6 +65,13 @@ public class CallActivity extends AppCompatActivity  {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+
+        // Handle external requests to finish call.
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        lbm.registerReceiver(mBroadcastReceiver, new IntentFilter(INTENT_ACTION_CALL_CLOSE));
 
         final Intent intent = getIntent();
         final String action = intent != null ? intent.getAction() : null;
@@ -74,8 +86,8 @@ public class CallActivity extends AppCompatActivity  {
 
         mTinode = Cache.getTinode();
 
-        mTopicName = intent.getStringExtra("topic");
-        mSeq = intent.getIntExtra("seq", -1);
+        mTopicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
+        mSeq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
         if (mTopic == null) {
@@ -83,6 +95,9 @@ public class CallActivity extends AppCompatActivity  {
             finish();
             return;
         }
+
+        Log.i(TAG, "args: seq=" + mSeq + "; accepted=" +
+                intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, false));
 
         Cache.setSelectedTopicName(mTopicName);
         mLoginListener = new EventListener();
@@ -93,13 +108,14 @@ public class CallActivity extends AppCompatActivity  {
         switch (action) {
             case INTENT_ACTION_CALL_INCOMING:
                 // Incoming call started by the ser
-                fragmentToShow = FRAGMENT_INCOMING;
-                args.putString("call_direction", "incoming");
+                boolean accepted = intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, false);
+                fragmentToShow = accepted ? FRAGMENT_ACTIVE : FRAGMENT_INCOMING;
+                args.putString(Const.INTENT_EXTRA_CALL_DIRECTION, "incoming");
                 break;
 
             case INTENT_ACTION_CALL_START:
                 // Call started by the current user.
-                args.putString("call_direction", "outgoing");
+                args.putString(Const.INTENT_EXTRA_CALL_DIRECTION, "outgoing");
                 fragmentToShow = FRAGMENT_ACTIVE;
                 break;
 
@@ -110,32 +126,25 @@ public class CallActivity extends AppCompatActivity  {
         }
         setContentView(R.layout.activity_call);
 
-        // Handle external request to finish call.
-        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-        IntentFilter mIntentFilter = new IntentFilter();
-        mIntentFilter.addAction(INTENT_ACTION_CALL_CLOSE);
-        lbm.registerReceiver(mBroadcastReceiver, mIntentFilter);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                        WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                        WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
-        // TODO: use WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS to show call window fullscreen.
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        // Turn screen on and unlock.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(true);
+            setTurnScreenOn(true);
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //KeyguardManager mgr = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+            //mgr.requestDismissKeyguard(this, null);
+        }
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mTurnScreenOffWhenDone = !pm.isInteractive();
-        if (mTurnScreenOffWhenDone) {
-            // Turn screen on and unlock.
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                setShowWhenLocked(true);
-                setTurnScreenOn(true);
-            } else {
-                getWindow().addFlags(WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
-                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-            }
-
-            KeyguardManager mgr = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                mgr.requestDismissKeyguard(this, null);
-            }
-        }
         // Try to reconnect and subscribe.
         topicAttach();
         showFragment(fragmentToShow, args);
@@ -147,27 +156,28 @@ public class CallActivity extends AppCompatActivity  {
         Cache.unregisterCallInProgress();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
 
-        if (mTurnScreenOffWhenDone) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-                setShowWhenLocked(false);
-                setTurnScreenOn(false);
-            } else {
-                getWindow().clearFlags(WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
-                        WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
-            }
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
+                WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+                WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+
+        if (mTurnScreenOffWhenDone && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+            setShowWhenLocked(false);
+            setTurnScreenOn(false);
         }
-        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         super.onDestroy();
     }
 
     void acceptCall() {
         Bundle args = new Bundle();
-        args.putString("call_direction", "incoming");
+        args.putString(Const.INTENT_EXTRA_CALL_DIRECTION, "incoming");
         showFragment(FRAGMENT_ACTIVE, args);
     }
 
     void declineCall() {
+        Cache.endCallInProgress();
         // Send message to server that the call is declined.
         if (mTopic != null) {
             mTopic.videoCallHangUp(mSeq);
@@ -204,8 +214,8 @@ public class CallActivity extends AppCompatActivity  {
         }
 
         args = args != null ? args : new Bundle();
-        args.putString("topic", mTopicName);
-        args.putInt("call_seq", mSeq);
+        args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
+        args.putInt(Const.INTENT_EXTRA_SEQ, mSeq);
 
         if (fragment.getArguments() != null) {
             fragment.getArguments().putAll(args);

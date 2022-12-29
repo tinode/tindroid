@@ -52,6 +52,8 @@ import com.esafirm.imagepicker.model.Image;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import org.w3c.dom.Text;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -508,7 +510,7 @@ public class MessagesFragment extends Fragment {
 
         Bundle args = getArguments();
         if (args != null) {
-            mTopicName = args.getString("topic");
+            mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         }
 
         if (mTopicName != null) {
@@ -834,7 +836,7 @@ public class MessagesFragment extends Fragment {
 
         Bundle args = getArguments();
         if (args != null) {
-            args.putString("topic", mTopicName);
+            args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
             // Save the text in the send field.
             String draft = ((EditText) activity.findViewById(R.id.editMessage)).getText().toString().trim();
             args.putString(MESSAGE_TO_SEND, draft);
@@ -1381,7 +1383,7 @@ public class MessagesFragment extends Fragment {
 
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
-        content = new Drafty().append(sender).appendLineBreak().append(content.preview(UiUtils.QUOTED_REPLY_LENGTH));
+        content = new Drafty().append(sender).appendLineBreak().append(content.preview(Const.QUOTED_REPLY_LENGTH));
         previewHolder.setText(content.format(new SendForwardedFormatter(previewHolder)));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
@@ -1400,7 +1402,9 @@ public class MessagesFragment extends Fragment {
             Bundle args = getArguments();
             if (args != null) {
                 mMessageToSend = args.getString(MESSAGE_TO_SEND);
-                mTextAction = UiUtils.MsgAction.valueOf(args.getString(MESSAGE_TEXT_ACTION));
+                String textAction = args.getString(MESSAGE_TEXT_ACTION);
+                mTextAction = TextUtils.isEmpty(textAction) ? UiUtils.MsgAction.NONE :
+                        UiUtils.MsgAction.valueOf(textAction);
                 mQuotedSeqID = args.getInt(MESSAGE_QUOTED_SEQ_ID);
                 mQuote = (Drafty) args.getSerializable(MESSAGE_QUOTED);
                 mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);

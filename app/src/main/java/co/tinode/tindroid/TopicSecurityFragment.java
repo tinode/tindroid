@@ -74,26 +74,26 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         fragment.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "O"));
+                        Const.ACTION_UPDATE_SELF_SUB, "O"));
 
         fragment.findViewById(R.id.authPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O"));
+                        Const.ACTION_UPDATE_AUTH, "O"));
 
         fragment.findViewById(R.id.anonPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O"));
+                        Const.ACTION_UPDATE_ANON, "O"));
 
         fragment.findViewById(R.id.userOne).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO"));
+                        Const.ACTION_UPDATE_SELF_SUB, "ASDO"));
 
         fragment.findViewById(R.id.userTwo).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
                         mTopic.getName(),
-                        UiUtils.ACTION_UPDATE_SUB, "ASDO"));
+                        Const.ACTION_UPDATE_SUB, "ASDO"));
 
         fragment.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
             int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
@@ -142,7 +142,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             return;
         }
 
-        String name = args.getString("topic");
+        String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicPermissions resumed with null topic.");

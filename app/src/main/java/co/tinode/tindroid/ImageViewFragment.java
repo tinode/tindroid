@@ -497,7 +497,7 @@ public class ImageViewFragment extends Fragment {
         RectF cutOut = new RectF(mCutOutRect);
         inverse.mapRect(cutOut);
 
-        if (cutOut.width() < UiUtils.MIN_AVATAR_SIZE || cutOut.height() < UiUtils.MIN_AVATAR_SIZE) {
+        if (cutOut.width() < Const.MIN_AVATAR_SIZE || cutOut.height() < Const.MIN_AVATAR_SIZE) {
             // Avatar is too small.
             Toast.makeText(activity, R.string.image_too_small, Toast.LENGTH_SHORT).show();
             return;

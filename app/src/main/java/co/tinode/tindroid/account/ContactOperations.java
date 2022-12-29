@@ -19,6 +19,7 @@ import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.Tinode;
@@ -224,7 +225,7 @@ class ContactOperations {
             try {
                 avatar = UiUtils.bitmapToBytes(Picasso.get()
                         .load(ref)
-                        .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE).centerCrop()
+                        .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE).centerCrop()
                         .get(), mimeType);
             } catch (IOException ex) {
                 Log.w(TAG, "Failed to download avatar", ex);

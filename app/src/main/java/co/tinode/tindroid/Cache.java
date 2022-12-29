@@ -1,13 +1,16 @@
 package co.tinode.tindroid;
 
 import android.os.Build;
+import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Locale;
 
+import androidx.annotation.NonNull;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.MeTopic;
@@ -77,11 +80,22 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void registerCallInProgress(String topic, int seq) {
-        sInstance.mCallInProgress = new CallInProgress(topic, seq);
+    public static void prepareNewCall(@NonNull String topic, @NonNull CallConnection conn) {
+        sInstance.mCallInProgress = new CallInProgress(topic, conn);
+    }
+
+    public static void setCallActive(String topic, int seqId) {
+        sInstance.mCallInProgress.setCallActive(topic, seqId);
+    }
+
+    public static void endCallInProgress() {
+        if (sInstance.mCallInProgress != null) {
+            sInstance.mCallInProgress.endCall();
+        }
     }
 
     public static void unregisterCallInProgress() {
+        endCallInProgress();
         sInstance.mCallInProgress = null;
     }
 

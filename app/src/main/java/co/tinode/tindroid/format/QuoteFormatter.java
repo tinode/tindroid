@@ -24,6 +24,7 @@ import java.util.Map;
 import androidx.annotation.DrawableRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 
@@ -154,7 +155,7 @@ public class QuoteFormatter extends PreviewFormatter {
 
         ImageDim dim = new ImageDim();
         dim.square = true;
-        dim.squareSize = UiUtils.REPLY_THUMBNAIL_DIM;
+        dim.squareSize = Const.REPLY_THUMBNAIL_DIM;
 
         CharacterStyle span = createImageSpan(ctx, data.get("val"), getStringVal("ref", data, null),
                 dim, metrics.density, R.drawable.ic_image, R.drawable.ic_broken_image);
@@ -180,9 +181,9 @@ public class QuoteFormatter extends PreviewFormatter {
 
         ImageDim dim = new ImageDim();
         dim.square = false;
-        dim.squareSize = UiUtils.REPLY_THUMBNAIL_DIM;
-        dim.width = UiUtils.REPLY_VIDEO_WIDTH;
-        dim.height = UiUtils.REPLY_THUMBNAIL_DIM;
+        dim.squareSize = Const.REPLY_THUMBNAIL_DIM;
+        dim.width = Const.REPLY_VIDEO_WIDTH;
+        dim.height = Const.REPLY_THUMBNAIL_DIM;
 
         CharacterStyle span = createImageSpan(ctx, data.get("preview"), getStringVal("preref", data, null),
                 dim, metrics.density, R.drawable.ic_video, R.drawable.ic_video);

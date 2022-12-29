@@ -163,9 +163,9 @@
     <string name="login_rejected">Connexion refusée</string>
     <string name="email_rejected">Email rejetté</string>
     <string name="invalid_confirmation_code">Code invalide</string>
-    <string name="notification_channel_name">Nouveau message</string>
+    <string name="new_message_channel_name">Nouveau message</string>
     <string name="new_message">Nouveau message</string>
-    <string name="notification_channel_description">Nouveau message reçu</string>
+    <string name="new_message_channel_description">Nouveau message reçu</string>
     <string name="request_pass_reset_title">Mot de passe réinitialisé</string>
     <string name="request_pass_reset">Demande de code par %1$s:</string>
     <string name="validated_address_to_use">Adresse à utiliser pour recevoir des messages</string>

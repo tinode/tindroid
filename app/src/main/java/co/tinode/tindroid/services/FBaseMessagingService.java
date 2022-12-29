@@ -27,6 +27,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.ChatsActivity;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.TindroidApp;
@@ -186,8 +187,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                                     // Show UI for accepting/declining the incoming call.
                                     Intent intent = new Intent(getApplicationContext(), CallActivity.class);
                                     intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                                    intent.putExtra("topic", topicName);
-                                    intent.putExtra("seq", seq);
+                                    intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+                                    intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
                                     intent.putExtra("from", senderName);
                                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
                                     startActivity(intent);
@@ -202,8 +203,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                                     // Dismiss the call UI.
                                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
                                     Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
-                                    intent.putExtra("topic", topicName);
-                                    intent.putExtra("seq", origSeq);
+                                    intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+                                    intent.putExtra(Const.INTENT_EXTRA_SEQ, origSeq);
                                     lbm.sendBroadcast(intent);
 
                                     // UiUtils.handleIncomingVideoCall(this, "dismiss", topicName, senderId, origSeq);
@@ -343,7 +344,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             requestCode = topicName.hashCode();
             // Communication on a known topic
             intent = new Intent(this, MessageActivity.class);
-            intent.putExtra("topic", topicName);
+            intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
         }
 
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);

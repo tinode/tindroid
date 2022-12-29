@@ -106,40 +106,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class UiUtils {
     private static final String TAG = "UiUtils";
 
-    static final int ACTION_UPDATE_SELF_SUB = 0;
-    static final int ACTION_UPDATE_SUB = 1;
-    static final int ACTION_UPDATE_AUTH = 2;
-    static final int ACTION_UPDATE_ANON = 3;
-
-    static final String PREF_TYPING_NOTIF = "pref_typingNotif";
-    static final String PREF_READ_RCPT = "pref_readReceipts";
-
-    // Maximum length of user name or topic title.
-    static final int MAX_TITLE_LENGTH = 60;
-    // Maximum length of topic description.
-    static final int MAX_DESCRIPTION_LENGTH = 360;
-    // Length of quoted text when replying.
-    public static final int QUOTED_REPLY_LENGTH = 64;
-    // Length of quoted text when altering a message.
-    public static final int EDIT_PREVIEW_LENGTH = 64;
-
-    // Maximum linear dimensions of images.
-    static final int MAX_BITMAP_SIZE = 1024;
-    // Maximum linear dimensions of video poster.
-    static final int MAX_POSTER_SIZE = 640;
-    public static final int AVATAR_THUMBNAIL_DIM = 36; // dip
-    // Image thumbnail in quoted replies and reply/forward previews.
-    public static final int REPLY_THUMBNAIL_DIM = 36;
-    // Width of video thumbnail in quoted replies and reply/forward previews.
-    public static final int REPLY_VIDEO_WIDTH = 48;
-
-    // Image preview size in messages.
-    public static final int IMAGE_PREVIEW_DIM = 64;
-    public static final int MIN_AVATAR_SIZE = 8;
-    public static final int MAX_AVATAR_SIZE = 384;
-    // Maximum byte size of avatar sent in-band.
-    public static final int MAX_INBAND_AVATAR_SIZE = 4096;
-
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
     private static final int DEFAULT_MAX_TAG_LENGTH = 96;
@@ -623,7 +589,7 @@ public class UiUtils {
     @NonNull
     public static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
         // Sanity check
-        size = Math.min(size, MAX_BITMAP_SIZE);
+        size = Math.min(size, Const.MAX_BITMAP_SIZE);
 
         int width = bmp.getWidth();
         int height = bmp.getHeight();
@@ -734,7 +700,7 @@ public class UiUtils {
         }
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
-                scaleSquareBitmap(avatar, MAX_AVATAR_SIZE)));
+                scaleSquareBitmap(avatar, Const.MAX_AVATAR_SIZE)));
     }
 
     // Construct avatar from VxCard and set it to the provided ImageView.
@@ -753,7 +719,7 @@ public class UiUtils {
             Picasso
                     .get()
                     .load(ref)
-                    .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
+                    .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
                     .placeholder(local)
                     .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
@@ -1041,19 +1007,19 @@ public class UiUtils {
 
             PromisedReply<ServerMessage> reply = null;
             switch (what) {
-                case ACTION_UPDATE_SELF_SUB:
+                case Const.ACTION_UPDATE_SELF_SUB:
                     //noinspection unchecked
                     reply = topic.updateMode(null, newAcsStr.toString());
                     break;
-                case ACTION_UPDATE_SUB:
+                case Const.ACTION_UPDATE_SUB:
                     //noinspection unchecked
                     reply = topic.updateMode(uid, newAcsStr.toString());
                     break;
-                case ACTION_UPDATE_AUTH:
+                case Const.ACTION_UPDATE_AUTH:
                     //noinspection unchecked
                     reply = topic.updateDefAcs(newAcsStr.toString(), null);
                     break;
-                case ACTION_UPDATE_ANON:
+                case Const.ACTION_UPDATE_ANON:
                     //noinspection unchecked
                     reply = topic.updateDefAcs(null, newAcsStr.toString());
                     break;
@@ -1124,8 +1090,8 @@ public class UiUtils {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
         if (!TextUtils.isEmpty(title)) {
-            if (title.length() > MAX_TITLE_LENGTH) {
-                title = title.substring(0, MAX_TITLE_LENGTH);
+            if (title.length() > Const.MAX_TITLE_LENGTH) {
+                title = title.substring(0, Const.MAX_TITLE_LENGTH);
             }
             if (oldPub != null && !stringsEqual(title, oldPub.fn)) {
                 pub = new VxCard();
@@ -1134,8 +1100,8 @@ public class UiUtils {
         }
 
         if (description != null) {
-            if (description.length() > MAX_DESCRIPTION_LENGTH) {
-                description = description.substring(0, MAX_DESCRIPTION_LENGTH);
+            if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
             String oldNote = oldPub != null ? oldPub.note : null;
             if (!stringsEqual(description, oldNote)) {
@@ -1148,8 +1114,8 @@ public class UiUtils {
 
         PrivateType priv = null;
         if (subtitle != null) {
-            if (subtitle.length() > MAX_TITLE_LENGTH) {
-                subtitle = subtitle.substring(0, MAX_TITLE_LENGTH);
+            if (subtitle.length() > Const.MAX_TITLE_LENGTH) {
+                subtitle = subtitle.substring(0, Const.MAX_TITLE_LENGTH);
             }
             PrivateType oldPriv = topic.getPriv();
             String oldComment = oldPriv != null ? oldPriv.getComment() : null;
