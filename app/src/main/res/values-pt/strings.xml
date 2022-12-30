@@ -151,7 +151,7 @@
     <string name="validate_cred">Informe o código de confirmação enviado para você por: %1$s:</string>
     <string name="validate_cred_title">Confirmar contato</string>
     <string name="confirm">Confirmar</string>
-    <string name="validation_example">Apenas numeros</string>
+    <string name="validation_example">Apenas números</string>
     <string name="enter_confirmation_code">Entre com o código de confirmação</string>
     <string name="hint_add_by_id">Informe o ID do grupo de usuário</string>
     <string name="hint_search_tags">Procurar por tags</string>
@@ -316,7 +316,7 @@
     <string name="missed_call">perdida</string>
     <string name="declined_call">recusada</string>
     <string name="disconnected_call">desconectada</string>
-    <string name="toggle_camera_button">Alternar camera</string>
+    <string name="toggle_camera_button">Alternar câmera</string>
     <string name="toggle_microphone_button">Chamada Mute/Unmute</string>
     <string name="voice_calls_limited">Você não está disponível para receber algumas mensagens de voz.</string>
     <string name="copied_to_clipboard">Copiado para área de transferência</string>
