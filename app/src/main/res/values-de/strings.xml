@@ -332,4 +332,10 @@
     <string name="unable_to_play_video">Dieses Video kann nicht abgespielt werden.</string>
     <string name="select_image_or_video">Bild oder Video auswählen</string>
     <string name="tap_to_select">Zum Auswählen tippen</string>
+
+    <string name="video_call_channel_name">Videoanrufe</string>
+    <string name="video_call_channel_description">Video- und Audioanrufe</string>
+    <string name="tinode_video_call">Tinode-Videoanruf</string>
+    <string name="answer_call">Antwort</string>
+    <string name="decline_call">Ablehnen</string>
 </resources>

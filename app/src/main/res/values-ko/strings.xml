@@ -330,4 +330,9 @@
     <string name="unable_to_play_video">이 동영상을 재생할 수 없습니다.</string>
     <string name="select_image_or_video">이미지 또는 동영상 선택</string>
     <string name="tap_to_select">탭하여 선택</string>
+    <string name="video_call_channel_name">영상 통화</string>
+    <string name="video_call_channel_description">영상 및 음성 통화</string>
+    <string name="tinode_video_call">Tinode 화상 통화</string>
+    <string name="answer_call">답변</string>
+    <string name="decline_call">거절</string>
 </resources>

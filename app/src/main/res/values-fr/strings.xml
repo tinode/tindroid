@@ -331,4 +331,9 @@
     <string name="unable_to_play_video">Impossible de lire cette vidéo.</string>
     <string name="select_image_or_video">Choisir une image ou une vidéo</string>
     <string name="tap_to_select">Appuyer pour sélectionner</string>
+    <string name="video_call_channel_name">Appels vidéo</string>
+    <string name="video_call_channel_description">Appels vidéo et audio</string>
+    <string name="tinode_video_call">Appel vidéo Tinode</string>
+    <string name="answer_call">Répondre</string>
+    <string name="decline_call">Refuser</string>
 </resources>

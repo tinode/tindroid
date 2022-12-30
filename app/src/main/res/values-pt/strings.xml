@@ -190,7 +190,6 @@
     <!-- Used in push notifications -->
     <string name="new_chat">Nova conversa</string>
     <string name="messages_not_readable">Sem acesso para novas mensagens</string>
-    <string name="content_deleted">conteúdo removido</string>
     <string name="peers_messaging_disabled">As menságens pares estão desativadas</string>
     <string name="action_enable">Ativo</string>
     <string name="find">Procurar</string>
@@ -316,7 +315,7 @@
     <string name="missed_call">perdida</string>
     <string name="declined_call">recusada</string>
     <string name="disconnected_call">desconectada</string>
-    <string name="toggle_camera_button">Alternar camera</string>
+    <string name="toggle_camera_button">Alternar câmera</string>
     <string name="toggle_microphone_button">Chamada Mute/Unmute</string>
     <string name="voice_calls_limited">Você não está disponível para receber algumas mensagens de voz.</string>
     <string name="copied_to_clipboard">Copiado para área de transferência</string>
@@ -325,4 +324,17 @@
     <string name="in_progress_call">em Chamada</string>
     <string name="connecting_call">conectando</string>
     <string name="tags_not_found">Sem tags definidas. Adicione algumas.</string>
+    <string name="edited">editado</string>
+    <string name="video">Vídeo</string>
+    <string name="video_caption_hint">Título do vídeo</string>
+    <string name="video_preview">Vídeo</string>
+    <string name="broken_video">Formato de vídeo inválido ou desconhecido.</string>
+    <string name="unable_to_play_video">Não foi possível reproduzir este vídeo.</string>
+    <string name="select_image_or_video">Escolha imagem ou vídeo</string>
+    <string name="tap_to_select">Toque para selecionar</string>
+    <string name="video_call_channel_name">Videochamadas</string>
+    <string name="video_call_channel_description">Chamadas de vídeo e áudio</string>
+    <string name="tinode_video_call">Tinode Videochamada</string>
+    <string name="answer_call">Resposta</string>
+    <string name="decline_call">Recusar</string>
 </resources>

@@ -806,7 +806,8 @@ public class UiUtils {
         return bitmap;
     }
 
-    // Create round avatar bitmap.
+    // Create avatar bitmap: try to use ref first, then in-band bits, the letter tile, then placeholder.
+    // Do NOT run on UI thread: it will throw.
     public static Bitmap avatarBitmap(Context context, VxCard pub, Topic.TopicType tp, String id, int size) {
         Bitmap bitmap = null;
         String fullName = null;
@@ -837,8 +838,7 @@ public class UiUtils {
                     .getSquareBitmap(size);
         }
 
-        Resources res = context.getResources();
-        return new RoundImageDrawable(res, bitmap).getRoundedBitmap();
+        return bitmap;
     }
 
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.

@@ -161,7 +161,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 // Assign sender's name and avatar.
                 if (sender != null && sender.pub != null) {
                     senderName = sender.pub.fn;
-                    senderIcon = UiUtils.avatarBitmap(this, sender.pub, Topic.TopicType.P2P, senderId, AVATAR_SIZE);
+                    senderIcon = UiUtils.avatarBitmap(this, sender.pub, Topic.TopicType.P2P,
+                            senderId, AVATAR_SIZE);
                 }
             }
 
@@ -169,7 +170,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 senderName = getResources().getString(R.string.sender_unknown);
             }
             if (senderIcon == null) {
-                senderIcon = UiUtils.avatarBitmap(this, null, Topic.TopicType.P2P, senderId, AVATAR_SIZE);
+                senderIcon = UiUtils.avatarBitmap(this, null, Topic.TopicType.P2P,
+                        senderId, AVATAR_SIZE);
             }
 
             String title = null;
@@ -333,15 +335,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     if (!isMe) {
                         // Show UI for accepting/declining the incoming call.
                         CallManager.acceptIncomingCall(this, topicName, seq);
-                        /*
-                        Intent intent = new Intent(getApplicationContext(), CallActivity.class);
-                        intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
-                        intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
-                        intent.putExtra(Const.INTENT_EXTRA_SENDER_NAME, senderName);
-                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                        startActivity(intent);
-                        */
                     }
                     break;
                 case "accepted":

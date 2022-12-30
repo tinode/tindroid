@@ -10,6 +10,7 @@ import android.graphics.drawable.Icon;
 import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.text.Spannable;
@@ -22,7 +23,6 @@ import androidx.annotation.ColorRes;
 import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 
-import androidx.core.app.NotificationCompat;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.CallBroadcastReceiver;
@@ -45,8 +45,24 @@ public class CallConnection extends Connection {
 
     @Override
     public void onShowIncomingCallUi() {
-        Log.i(TAG, "onShowIncomingCallUi");
+        // The UiUtils.avatarBitmap is potentially a long-running process.
+        // Must spawn a new thread then return the the UI thread.
+        final String topicName = getAddress().getEncodedSchemeSpecificPart();
+        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
+        final int width = (int) mContext.getResources().getDimension(android.R.dimen.notification_large_icon_width);
+        final Handler uiHandler = new Handler();
+        if (topic != null) {
+            new Thread(() -> {
+                final VxCard pub = (VxCard) topic.getPub();
+                final Bitmap avatar = UiUtils.avatarBitmap(mContext, pub, topic.getTopicType(), topic.getName(), width);
+                final String userName = pub != null && !TextUtils.isEmpty(pub.fn) ?
+                        pub.fn : mContext.getString(R.string.unknown);
+                uiHandler.post(() -> buildIncomingCallUi(topicName, avatar, userName));
+            }).start();
+        }
+    }
 
+    private void buildIncomingCallUi(String topicName, Bitmap avatar, String userName) {
         NotificationManager nm = mContext.getSystemService(NotificationManager.class);
 
         Notification.Builder builder = new Notification.Builder(mContext);
@@ -60,7 +76,6 @@ public class CallConnection extends Connection {
             builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
         }
 
-        String topicName = getAddress().getEncodedSchemeSpecificPart();
         Bundle args = getExtras();
         int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
 
@@ -70,22 +85,14 @@ public class CallConnection extends Connection {
         builder.setContentIntent(askUserIntent);
         // Set full screen intent to trigger display of the fullscreen UI when the notification
         // manager deems it appropriate.
-        builder.setFullScreenIntent(askUserIntent, true);
-
-        // Setup notification content.
-        ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
-        if (topic != null) {
-            VxCard pub = (VxCard) topic.getPub();
-            int width = (int) mContext.getResources().getDimension(android.R.dimen.notification_large_icon_width);
-            //Bitmap avatar = UiUtils.avatarBitmap(mContext, pub, topic.getTopicType(), topic.getName(), width);
-            //builder.setLargeIcon(Icon.createWithBitmap(avatar));
-            String userName = pub != null && !TextUtils.isEmpty(pub.fn) ? pub.fn : mContext.getString(R.string.unknown);
-            builder.setContentTitle(userName);
-        }
-        builder.setSmallIcon(R.drawable.ic_icon_push)
+        builder.setFullScreenIntent(askUserIntent, true)
+                .setLargeIcon(Icon.createWithBitmap(avatar))
+                .setContentTitle(userName)
+                .setSmallIcon(R.drawable.ic_icon_push)
                 .setContentText(mContext.getString(R.string.tinode_video_call))
                 .setUsesChronometer(true)
                 .setCategory(Notification.CATEGORY_CALL);
+
         // This will be ignored on O+ and handled by the channel
         builder.setPriority(Notification.PRIORITY_MAX);
 

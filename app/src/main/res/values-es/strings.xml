@@ -322,7 +322,6 @@
     <string name="in_progress_call">en progreso</string>
     <string name="connecting_call">de conexión</string>
     <string name="tags_not_found">No hay etiquetas definidas. Añade unas.</string>
-
     <string name="edited">editado</string>
     <string name="video">Video</string>
     <string name="video_caption_hint">Título del video</string>
@@ -331,4 +330,9 @@
     <string name="unable_to_play_video">No se puede reproducir este video.</string>
     <string name="select_image_or_video">Elegir imagen o video</string>
     <string name="tap_to_select">Toca para seleccionar</string>
+    <string name="video_call_channel_name">Videollamadas</string>
+    <string name="video_call_channel_description">Llamadas de video y audio</string>
+    <string name="tinode_video_call">Videollamada de Tinode</string>
+    <string name="answer_call">Responder</string>
+    <string name="decline_call">Rechazar</string>
 </resources>

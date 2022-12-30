@@ -154,10 +154,11 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onResume() {
-        final FragmentActivity activity = getActivity();
-        final Bundle args = getArguments();
+        super.onResume();
 
-        if (activity == null || args == null) {
+        final FragmentActivity activity = requireActivity();
+        final Bundle args = getArguments();
+        if (args == null) {
             return;
         }
 
@@ -194,7 +195,6 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         }
 
         notifyDataSetChanged();
-        super.onResume();
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -248,15 +248,11 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     // Dialog-menu with actions for individual subscribers, like "send message", "change permissions", "ban", etc.
     private void showMemberAction(final String topicTitle, final String userTitle, final String uid,
                                   final String mode) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
         if (Cache.getTinode().isMe(uid)) {
             return;
         }
 
+        final FragmentActivity activity = requireActivity();
         final String userTitleFixed = TextUtils.isEmpty(userTitle) ?
                 activity.getString(R.string.placeholder_contact_title) :
                 userTitle;
@@ -357,7 +353,6 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
             return;
         }
 
-        String topicName = mTopic.getName();
         final ImageView avatar = activity.findViewById(R.id.imageAvatar);
         final TextView title = activity.findViewById(R.id.topicTitle);
         final TextView subtitle = activity.findViewById(R.id.topicComment);
