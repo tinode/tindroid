@@ -70,7 +70,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private static final int QUOTE_STRIPE_WIDTH_DP = 4;
     private static final int STRIPE_GAP_DP = 8;
 
-    private static final int MAX_FILE_LENGTH = 28;
+    private static final int MAX_FILE_LENGTH = 18;
 
     private static final int MIN_AUDIO_PREVIEW_LENGTH = 16;
 
@@ -435,13 +435,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (span == null && ref != null) {
             URL url = Cache.getTinode().toAbsoluteURL(ref);
             if (dim.scale > 0 && url != null) {
-                Drawable fg, bg = null;
+                Drawable fg;
 
                 // "Image loading" placeholder.
                 Drawable placeholder;
                 if (bmpPreview != null) {
                     placeholder = new BitmapDrawable(ctx.getResources(), bmpPreview);
-                    bg = placeholder;
                 } else {
                     fg = AppCompatResources.getDrawable(ctx, id_placeholder);
                     if (fg != null) {
@@ -456,7 +455,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                 }
 
-                Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, dim.scaledWidth, dim.scaledHeight);
+                Drawable onError = UiUtils.getPlaceholder(ctx, overlay != null ? null : fg, null,
+                        dim.scaledWidth, dim.scaledHeight);
                 span = new RemoteImageSpan(mContainer, dim.scaledWidth, dim.scaledHeight,
                         false, placeholder, onError);
                 ((RemoteImageSpan) span).setOverlay(overlay);

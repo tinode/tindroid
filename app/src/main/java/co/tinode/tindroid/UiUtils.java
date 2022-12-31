@@ -847,8 +847,9 @@ public class UiUtils {
                                           int width, int height) {
         Drawable filter;
         if (bkg == null) {
-            // Uniformly gray background with rounded corners.
+            // Uniformly gray background.
             bkg = ResourcesCompat.getDrawable(ctx.getResources(), R.drawable.placeholder_image_bkg, null);
+
             // Transparent filter.
             filter = new ColorDrawable(0x00000000);
         } else {
@@ -866,7 +867,6 @@ public class UiUtils {
             int fgHeight = fg.getIntrinsicHeight();
             int dx = Math.max((width - fgWidth) / 2, 0);
             int dy = Math.max((height - fgHeight) / 2, 0);
-            // fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
             fg = new InsetDrawable(fg, dx, dy, dx, dy);
         }
 
@@ -874,14 +874,6 @@ public class UiUtils {
         bkg.setBounds(0, 0, width, height);
         result.setBounds(0, 0, width, height);
 
-        /*
-        if (fgWidth > 0 && fgHeight > 0) {
-            // Drawable iconWithPadding = new InsetDrawable(icon, paddingSize);
-            int dx = Math.max((width - fgWidth) / 2, 0);
-            int dy = Math.max((height - fgHeight) / 2, 0);
-            fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
-        }
-*/
         return result;
     }
 
