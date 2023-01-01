@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.os.Build;
-import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 

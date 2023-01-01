@@ -27,8 +27,11 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -40,7 +43,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for editing current user details.
  */
 public class AccPersonalFragment extends Fragment
-        implements ChatsActivity.FormUpdatable, UiUtils.AvatarPreviewer {
+        implements ChatsActivity.FormUpdatable, UiUtils.AvatarPreviewer, MenuProvider {
 
     private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
             UiUtils.avatarPickerLauncher(this, this);
@@ -53,30 +56,19 @@ public class AccPersonalFragment extends Fragment
                         return;
                     }
                 }
-                FragmentActivity activity = getActivity();
-                if (activity != null) {
-                    // Try to open the image selector again.
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
+
+                FragmentActivity activity = requireActivity();
+                // Try to open the image selector again.
+                Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
+                if (launcher != null) {
+                    mAvatarPickerLauncher.launch(launcher);
                 }
             });
-
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_personal, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -89,6 +81,13 @@ public class AccPersonalFragment extends Fragment
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         return fragment;
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this,
+                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -120,11 +119,7 @@ public class AccPersonalFragment extends Fragment
     }
 
     @Override
-    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
-        if (activity == null) {
-            return;
-        }
-
+    public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
         String fn = null;
         String description = null;
         if (me != null) {
@@ -194,10 +189,7 @@ public class AccPersonalFragment extends Fragment
 
     // Dialog for editing tags.
     private void showEditTags() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         final MeTopic me = Cache.getTinode().getMeTopic();
         String[] tagArray = me.getTags();
@@ -222,10 +214,7 @@ public class AccPersonalFragment extends Fragment
 
     // Dialog for confirming a credential.
     private void showConfirmCredential(final String meth, final String val) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_validate, null);
@@ -248,10 +237,7 @@ public class AccPersonalFragment extends Fragment
 
     // Show dialog for deleting credential
     private void showDeleteCredential(final String meth, final String val) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setNegativeButton(android.R.string.cancel, null)
@@ -268,10 +254,7 @@ public class AccPersonalFragment extends Fragment
     }
 
     private void showAddCredential() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         final View editor = LayoutInflater.from(activity).inflate(R.layout.dialog_add_credential, null);
         final AlertDialog dialog = new AlertDialog.Builder(activity)
@@ -306,25 +289,24 @@ public class AccPersonalFragment extends Fragment
 
     @Override
     public void showAvatarPreview(final Bundle args) {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
         ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_AVATAR_PREVIEW, args);
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_save, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_save) {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            FragmentActivity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
                 return false;
             }
             final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
@@ -340,7 +322,7 @@ public class AccPersonalFragment extends Fragment
                             return null;
                         }
                     })
-            .thenCatch(new UiUtils.ToastFailureListener(activity));
+                    .thenCatch(new UiUtils.ToastFailureListener(activity));
             return true;
         }
         return false;

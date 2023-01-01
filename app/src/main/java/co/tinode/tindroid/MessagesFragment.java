@@ -175,7 +175,7 @@ public class MessagesFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         // Check if permission is granted.
         if (isGranted) {
-            openFileSelector(getActivity());
+            openFileSelector(requireActivity());
         }
     });
 
@@ -187,8 +187,9 @@ public class MessagesFragment extends Fragment {
                         return;
                     }
                 }
+
                 // Try to open the image selector again.
-                openMediaSelector(getActivity());
+                openMediaSelector(requireActivity());
             });
 
     private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
@@ -196,11 +197,11 @@ public class MessagesFragment extends Fragment {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
                         // Some permission is missing. Disable audio recording button.
-                        Activity activity = getActivity();
-                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                        Activity activity = requireActivity();
+                        if (activity.isFinishing() || activity.isDestroyed()) {
                             return;
                         }
-                        getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
+                        activity.findViewById(R.id.audioRecorder).setEnabled(false);
                         return;
                     }
                 }
@@ -212,8 +213,8 @@ public class MessagesFragment extends Fragment {
                     return;
                 }
 
-                final MessageActivity activity = (MessageActivity) getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                final MessageActivity activity = (MessageActivity) requireActivity();
+                if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
@@ -232,7 +233,7 @@ public class MessagesFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         mImagePickerLauncher = ImagePickerLauncherKt.registerImagePicker(this,
-                this::getActivity, media -> {
+                this::requireContext, media -> {
                     if (media == null || media.isEmpty()) {
                         return null;
                     }
@@ -271,10 +272,7 @@ public class MessagesFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         mGoToLatest = activity.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
@@ -503,10 +501,7 @@ public class MessagesFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         Bundle args = getArguments();
         if (args != null) {
@@ -755,8 +750,8 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -825,10 +820,7 @@ public class MessagesFragment extends Fragment {
 
         releaseAudio(false);
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_NORMAL);
@@ -869,11 +861,9 @@ public class MessagesFragment extends Fragment {
     public void onPrepareOptionsMenu(@NonNull final Menu menu) {
         if (mTopic != null) {
             if (mTopic.isDeleted()) {
-                final Activity activity = getActivity();
-                if (activity != null) {
-                    menu.clear();
-                    activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
-                }
+                final Activity activity = requireActivity();
+                menu.clear();
+                activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
             } else {
                 menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
                 menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
@@ -892,10 +882,7 @@ public class MessagesFragment extends Fragment {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return false;
-        }
+        final Activity activity = requireActivity();
 
         int id = item.getItemId();
         if (id == R.id.action_clear) {
@@ -982,10 +969,7 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
@@ -1011,16 +995,13 @@ public class MessagesFragment extends Fragment {
             }
         } catch (SecurityException | IOException | IllegalStateException ex) {
             Log.e(TAG, "Unable to play recording", ex);
-            Toast.makeText(getActivity(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
             mAudioPlayer = null;
         }
     }
 
     private void releaseAudio(boolean keepRecord) {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -1090,13 +1071,9 @@ public class MessagesFragment extends Fragment {
         if (mChatInvitationShown) {
             return;
         }
-
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
         mChatInvitationShown = true;
+
+        final Activity activity = requireActivity();
 
         final BottomSheetDialog invitation = new BottomSheetDialog(activity);
         final LayoutInflater inflater = LayoutInflater.from(invitation.getContext());
@@ -1178,8 +1155,8 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void openFileSelector(@Nullable Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void openFileSelector(@NonNull Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -1191,8 +1168,8 @@ public class MessagesFragment extends Fragment {
         mFilePickerLauncher.launch("*/*");
     }
 
-    private void openMediaSelector(@Nullable final Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void openMediaSelector(@NonNull final Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -1238,19 +1215,16 @@ public class MessagesFragment extends Fragment {
     }
 
     private boolean sendMessage(Drafty content, int seqId, boolean isReplacement) {
-        MessageActivity activity = (MessageActivity) getActivity();
-        if (activity != null) {
-            boolean done = activity.sendMessage(content, seqId, isReplacement);
-            if (done) {
-                scrollToBottom(false);
-            }
-            return done;
+        MessageActivity activity = (MessageActivity) requireActivity();
+        boolean done = activity.sendMessage(content, seqId, isReplacement);
+        if (done) {
+            scrollToBottom(false);
         }
-        return false;
+        return done;
     }
 
-    private void sendText(Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void sendText(@NonNull Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
         final EditText inputField = activity.findViewById(R.id.editMessage);
@@ -1290,8 +1264,8 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void sendAudio(AppCompatActivity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void sendAudio(@NonNull AppCompatActivity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -1315,7 +1289,7 @@ public class MessagesFragment extends Fragment {
     }
 
     private void cancelPreview(Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -1442,8 +1416,8 @@ public class MessagesFragment extends Fragment {
         public ContentInfoCompat onReceiveContent(@NonNull View view, @NonNull ContentInfoCompat payload) {
             Pair<ContentInfoCompat, ContentInfoCompat> split = payload.partition(item -> item.getUri() != null);
 
-            final MessageActivity activity = (MessageActivity) getActivity();
-            if (split.first != null && activity != null) {
+            final MessageActivity activity = (MessageActivity) requireActivity();
+            if (split.first != null) {
                 // Handle posted URIs.
                 ClipData data = split.first.getClip();
                 if (data.getItemCount() > 0) {

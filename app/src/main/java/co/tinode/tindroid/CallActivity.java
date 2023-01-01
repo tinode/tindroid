@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.KeyguardManager;
 import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;

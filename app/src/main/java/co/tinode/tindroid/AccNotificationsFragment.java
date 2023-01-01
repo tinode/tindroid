@@ -4,8 +4,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -18,6 +16,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.preference.PreferenceManager;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -28,22 +27,13 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for editing current user details.
  */
 public class AccNotificationsFragment extends Fragment implements ChatsActivity.FormUpdatable {
-
     private static final String TAG = "AccNotificationsFrag";
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_notifications, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -60,9 +50,9 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
 
     @Override
     public void onResume() {
-        final FragmentActivity activity = getActivity();
+        final FragmentActivity activity = requireActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
-        if (activity == null || me == null) {
+        if (me == null) {
             return;
         }
 
@@ -106,18 +96,13 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
     }
 
     @Override
-    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
-        if (activity == null || me == null) {
+    public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
+        if (me == null) {
             return;
         }
 
         // Incognito mode
         SwitchCompat ctrl = activity.findViewById(R.id.switchIncognitoMode);
         ctrl.setChecked(me.isMuted());
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
     }
 }

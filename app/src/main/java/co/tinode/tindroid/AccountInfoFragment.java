@@ -19,28 +19,23 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 
 /**
  * Fragment for editing current user details.
  */
-public class AccountInfoFragment extends Fragment implements ChatsActivity.FormUpdatable {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
+public class AccountInfoFragment extends Fragment implements ChatsActivity.FormUpdatable, MenuProvider {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_account_info, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -53,7 +48,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
         fragment.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
-            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboard != null) {
                 clipboard.setPrimaryClip(ClipData.newPlainText("account ID", Cache.getTinode().getMyId()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
@@ -70,11 +65,18 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this,
+                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
+
+    @Override
     public void onResume() {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
-        if (me == null || activity == null) {
+        if (me == null) {
             return;
         }
 
@@ -85,11 +87,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void updateFormValues(final FragmentActivity activity, final MeTopic<VxCard> me) {
-        if (activity == null) {
-            return;
-        }
-
+    public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
         String myID = Cache.getTinode().getMyId();
         ((TextView) activity.findViewById(R.id.topicAddress)).setText(myID);
 
@@ -126,18 +124,16 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_edit, menu);
-        super.onCreateOptionsMenu(menu, inflater);
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menuInflater.inflate(R.menu.menu_edit, menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_edit) {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            FragmentActivity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
                 return false;
             }
 

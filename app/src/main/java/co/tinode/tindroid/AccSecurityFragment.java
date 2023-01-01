@@ -6,8 +6,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -31,20 +29,12 @@ import co.tinode.tinodesdk.NotConnectedException;
  * Fragment for editing current user details.
  */
 public class AccSecurityFragment extends Fragment implements ChatsActivity.FormUpdatable {
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_security, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -191,10 +181,5 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
                     activity.finish();
                 })
                 .show();
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
     }
 }
