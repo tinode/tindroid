@@ -500,6 +500,7 @@ public class UiUtils {
         if (one == null || two == null) {
             return false;
         }
+
         return (one.getDate() == two.getDate()) &&
                 (one.getMonth() == two.getMonth()) &&
                 (one.getYear() == two.getYear());

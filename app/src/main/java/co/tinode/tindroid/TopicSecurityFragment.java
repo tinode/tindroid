@@ -49,17 +49,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(@NonNull View fragment, Bundle savedInstance) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
@@ -133,10 +124,9 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onStart() {
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
@@ -208,8 +198,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     public void notifyDataSetChanged() {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -229,8 +219,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     // Called when topic description is changed.
     private void notifyContentChanged() {
 
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
