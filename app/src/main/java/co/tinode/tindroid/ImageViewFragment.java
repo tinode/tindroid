@@ -512,7 +512,7 @@ public class ImageViewFragment extends Fragment {
                     (int) cutOut.width(), (int) cutOut.height());
         }
 
-        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
+        String topicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         ((AvatarCompletionHandler) activity).onAcceptAvatar(topicName, bmp);
 
         activity.getSupportFragmentManager().popBackStack();

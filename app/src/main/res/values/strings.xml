@@ -142,7 +142,7 @@
     <string name="edit_account">Edit account name</string>
     <string name="invalid_login">Login is invalid</string>
 
-    <string name="default_attachment_name" translatable="false">tinode_file_attachment</string>
+    <string name="default_attachment_name" translatable="false">file_attachment</string>
     <string name="download_attachment">save</string>
     <string name="broken_image">Unknown or invalid image format</string>
     <string name="file_manager_not_found">File manager not found</string>

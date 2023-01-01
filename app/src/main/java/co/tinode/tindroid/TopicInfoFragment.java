@@ -348,8 +348,8 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
 
     // Called when topic description is changed.
     private void notifyContentChanged() {
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final FragmentActivity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

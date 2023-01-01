@@ -656,7 +656,7 @@ public class MessageActivity extends AppCompatActivity
         }
 
         args = args != null ? args : new Bundle();
-        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+        args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
 
         if (tag.equals(FRAGMENT_MESSAGES)) {
             args.putString(MessagesFragment.MESSAGE_TO_SEND, mMessageText);

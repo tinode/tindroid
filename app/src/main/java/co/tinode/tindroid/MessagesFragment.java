@@ -220,7 +220,7 @@ public class MessagesFragment extends Fragment {
                 final Bundle args = new Bundle();
                 args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, content);
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
-                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
                 // Show attachment preview.
                 activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
             });
@@ -250,7 +250,7 @@ public class MessagesFragment extends Fragment {
                     args.putString(AttachmentHandler.ARG_FILE_PATH, item.getPath());
                     args.putString(AttachmentHandler.ARG_OPERATION,
                             isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO : AttachmentHandler.ARG_OPERATION_IMAGE);
-                    args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                    args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
 
                     // Show attachment preview.
                     activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
