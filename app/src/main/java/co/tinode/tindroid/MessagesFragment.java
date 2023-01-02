@@ -3,7 +3,9 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.media.AudioAttributes;
@@ -52,8 +54,6 @@ import com.esafirm.imagepicker.model.Image;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import org.w3c.dom.Text;
-
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -74,9 +74,12 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ContentInfoCompat;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.core.view.OnReceiveContentListener;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -110,7 +113,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Fragment handling message display and message sending.
  */
-public class MessagesFragment extends Fragment {
+public class MessagesFragment extends Fragment implements MenuProvider {
     private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
 
@@ -226,6 +229,17 @@ public class MessagesFragment extends Fragment {
                 activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
             });
 
+    private final ActivityResultLauncher<String> mNotificationsPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    final MessageActivity activity = (MessageActivity) requireActivity();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        return;
+                    }
+                    Toast.makeText(activity, R.string.permission_missing, Toast.LENGTH_LONG).show();
+                }
+            });
+
     private ImagePickerLauncher mImagePickerLauncher;
 
     @Override
@@ -273,6 +287,9 @@ public class MessagesFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
         final MessageActivity activity = (MessageActivity) requireActivity();
+
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(),
+                Lifecycle.State.RESUMED);
 
         mGoToLatest = activity.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
@@ -519,6 +536,13 @@ public class MessagesFragment extends Fragment {
 
         updateFormValues();
         activity.sendNoteRead(0);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && !nm.areNotificationsEnabled()) {
+                mNotificationsPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
 
     void runMessagesLoader(String topicName) {
@@ -852,13 +876,8 @@ public class MessagesFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_topic, menu);
-    }
-
-    @Override
-    public void onPrepareOptionsMenu(@NonNull final Menu menu) {
+    public void onPrepareMenu(@NonNull Menu menu) {
+        MenuProvider.super.onPrepareMenu(menu);
         if (mTopic != null) {
             if (mTopic.isDeleted()) {
                 final Activity activity = requireActivity();
@@ -881,7 +900,12 @@ public class MessagesFragment extends Fragment {
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_topic, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         final Activity activity = requireActivity();
 
         int id = item.getItemId();
@@ -914,7 +938,7 @@ public class MessagesFragment extends Fragment {
             return true;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     void setRefreshing(boolean active) {
@@ -1160,7 +1184,8 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+                !UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             mFileOpenerRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             return;
         }
@@ -1173,8 +1198,15 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
+        LinkedList<String> permissions = new LinkedList<>();
+        permissions.add(Manifest.permission.CAMERA);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        } else {
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+        }
+        LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions.toArray(new String[]{}));
         if (!missing.isEmpty()) {
             mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
