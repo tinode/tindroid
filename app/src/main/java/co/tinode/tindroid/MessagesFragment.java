@@ -211,8 +211,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             });
 
     private final ActivityResultLauncher<String> mFilePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), content -> {
-                if (content == null) {
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri == null) {
                     return;
                 }
 
@@ -222,7 +222,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 }
 
                 final Bundle args = new Bundle();
-                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, content);
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                 args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
                 // Show attachment preview.
@@ -238,6 +238,14 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     }
                     Toast.makeText(activity, R.string.permission_missing, Toast.LENGTH_LONG).show();
                 }
+            });
+
+    private final ActivityResultLauncher<Object> mMediaPickerLauncher =
+            registerForActivityResult(new MediaPickerContract(), uri -> {
+                if (uri == null) {
+                    return;
+                }
+                Log.i(TAG, "Got result " + uri);
             });
 
     private ImagePickerLauncher mImagePickerLauncher;
@@ -1223,7 +1231,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         config.setIncludeVideo(true);
         config.setReturnMode(ReturnMode.ALL);
         config.setImageTitle(getString(R.string.tap_to_select));
-        mImagePickerLauncher.launch(config);
+        // mImagePickerLauncher.launch(config);
+
+        mMediaPickerLauncher.launch(null);
     }
 
     private File createImageFile(Activity activity) throws IOException {
