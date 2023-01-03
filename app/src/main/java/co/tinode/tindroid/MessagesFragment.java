@@ -18,7 +18,6 @@ import android.media.audiofx.NoiseSuppressor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -27,7 +26,6 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Pair;
-import android.util.TypedValue;
 import android.view.GestureDetector;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
@@ -43,25 +41,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.esafirm.imagepicker.features.ImagePickerConfig;
-import com.esafirm.imagepicker.features.ImagePickerLauncher;
-import com.esafirm.imagepicker.features.ImagePickerLauncherKt;
-import com.esafirm.imagepicker.features.ImagePickerMode;
-import com.esafirm.imagepicker.features.ReturnMode;
-import com.esafirm.imagepicker.helper.ImagePickerUtils;
-import com.esafirm.imagepicker.model.Image;
-
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -72,7 +59,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.ContentInfoCompat;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
@@ -245,49 +231,32 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 if (uri == null) {
                     return;
                 }
-                Log.i(TAG, "Got result " + uri);
+
+                final MessageActivity activity = (MessageActivity) requireActivity();
+                if (activity.isFinishing() || activity.isDestroyed()) {
+                    return;
+                }
+
+                String mimeType = activity.getContentResolver().getType(uri);
+                boolean isVideo = mimeType != null && mimeType.startsWith("video");
+
+                final Bundle args = new Bundle();
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
+                args.putString(AttachmentHandler.ARG_FILE_NAME, uri.getLastPathSegment());
+                args.putString(AttachmentHandler.ARG_FILE_PATH, uri.getPath());
+                args.putString(AttachmentHandler.ARG_OPERATION,
+                        isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO :
+                                AttachmentHandler.ARG_OPERATION_IMAGE);
+                args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
+
+                // Show attachment preview.
+                activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
+                        MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             });
-
-    private ImagePickerLauncher mImagePickerLauncher;
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        mImagePickerLauncher = ImagePickerLauncherKt.registerImagePicker(this,
-                this::requireContext, media -> {
-                    if (media == null || media.isEmpty()) {
-                        return null;
-                    }
-                    final MessageActivity activity = (MessageActivity) requireActivity();
-                    if (activity.isFinishing() || activity.isDestroyed()) {
-                        return null;
-                    }
-
-                    Image item = media.get(0);
-                    boolean isVideo = ImagePickerUtils.INSTANCE.isVideoFormat(item);
-
-                    final Bundle args = new Bundle();
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, item.getUri());
-                    args.putString(AttachmentHandler.ARG_FILE_NAME, item.getName());
-                    args.putString(AttachmentHandler.ARG_FILE_PATH, item.getPath());
-                    args.putString(AttachmentHandler.ARG_OPERATION,
-                            isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO : AttachmentHandler.ARG_OPERATION_IMAGE);
-                    args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
-
-                    // Show attachment preview.
-                    activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
-                            MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-
-                    return null;
-                });
-
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
 
@@ -1220,40 +1189,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
-        ImagePickerConfig config = new ImagePickerConfig();
-        TypedValue val = new TypedValue();
-        activity.getTheme().resolveAttribute(android.R.attr.textColorPrimary, val, true);
-        int color = ResourcesCompat.getColor(getResources(), val.resourceId, activity.getTheme());
-        config.setArrowColor(color);
-
-        // R.style.ImagePickerTheme;
-        config.setMode(ImagePickerMode.SINGLE);
-        config.setIncludeVideo(true);
-        config.setReturnMode(ReturnMode.ALL);
-        config.setImageTitle(getString(R.string.tap_to_select));
-        // mImagePickerLauncher.launch(config);
-
         mMediaPickerLauncher.launch(null);
-    }
-
-    private File createImageFile(Activity activity) throws IOException {
-        // Create an image file name
-        String imageFileName = "IMG_" +
-                new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + "_";
-        File storageDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File imageFile = File.createTempFile(
-                imageFileName,  // prefix
-                ".jpg",  // suffix
-                storageDir      // directory
-        );
-
-        // Make sure directories exist.
-        File path = imageFile.getParentFile();
-        if (path != null) {
-            path.mkdirs();
-        }
-
-        return imageFile;
     }
 
     private boolean sendMessage(Drafty content, int seqId, boolean isReplacement) {

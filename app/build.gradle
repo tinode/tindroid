@@ -101,8 +101,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics:18.3.2'
     implementation 'com.google.firebase:firebase-messaging:23.1.1'
 
-    implementation 'com.github.esafirm:android-image-picker:3.0.0'
-
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
     implementation 'com.squareup.picasso:picasso:2.8'
