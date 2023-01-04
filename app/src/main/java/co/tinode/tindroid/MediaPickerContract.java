@@ -61,6 +61,7 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
         List<Intent> foundIntents = new ArrayList<>();
         PackageManager pm = context.getPackageManager();
 
+        // Get all available cameras.
         List<ResolveInfo> found = pm.queryIntentActivities(camera, PackageManager.MATCH_ALL);
         for (ResolveInfo ri : found) {
             Intent intent = new Intent(camera);
@@ -68,6 +69,7 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
             foundIntents.add(intent);
         }
 
+        // Find default gallery app.
         found = pm.queryIntentActivities(gallery, PackageManager.MATCH_DEFAULT_ONLY);
         for (ResolveInfo ri : found) {
             Intent intent = new Intent(gallery);

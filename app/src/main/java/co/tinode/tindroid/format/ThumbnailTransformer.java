@@ -22,7 +22,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
 
     public PromisedReply<Void[]> completionPromise() {
         if (components == null) {
-            return new PromisedReply<>(null);
+            return new PromisedReply<>((Void[]) null);
         }
 
         // noinspection unchecked

@@ -419,36 +419,43 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private void showMessageQuote(UiUtils.MsgAction action, int pos, int quoteLength) {
+        toggleSelectionAt(pos);
+        notifyItemChanged(pos);
+        updateSelectionMode();
+
         StoredMessage msg = getMessage(pos);
-        if (msg != null && msg.status == BaseDb.Status.SYNCED) {
-            toggleSelectionAt(pos);
-            notifyItemChanged(pos);
-            updateSelectionMode();
-            ThumbnailTransformer tr = new ThumbnailTransformer();
-            final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
-            tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void[]>() {
-                @Override
-                public PromisedReply<Void[]> onSuccess(Void[] result) {
-                    mActivity.runOnUiThread(() -> {
-                        if (action == UiUtils.MsgAction.REPLY) {
-                            Drafty reply = Drafty.quote(messageFrom(msg), msg.from, content);
-                            mActivity.showReply(reply, msg.seq);
-                        } else {
-                            // If the message being edited is a replacement message, use the original seqID.
-                            int seq = msg.getReplacementSeqId();
-                            if (seq <= 0) {
-                                seq = msg.seq;
-                            }
-                            String markdown = msg.content.toMarkdown(false);
-                            mActivity.startEditing(markdown, content.wrapInto("QQ"), seq);
-                        }
-                    });
-                    return null;
-                }
-            });
-        } else {
-            Toast.makeText(mActivity, R.string.cannot_reply, Toast.LENGTH_SHORT).show();
+        if (msg == null) {
+            return;
         }
+
+        ThumbnailTransformer tr = new ThumbnailTransformer();
+        final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
+        tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void[]>() {
+            @Override
+            public PromisedReply<Void[]> onSuccess(Void[] result) {
+                mActivity.runOnUiThread(() -> {
+                    if (action == UiUtils.MsgAction.REPLY) {
+                        Drafty reply = Drafty.quote(messageFrom(msg), msg.from, content);
+                        mActivity.showReply(reply, msg.seq);
+                    } else {
+                        // If the message being edited is a replacement message, use the original seqID.
+                        int seq = msg.getReplacementSeqId();
+                        if (seq <= 0) {
+                            seq = msg.seq;
+                        }
+                        String markdown = msg.content.toMarkdown(false);
+                        mActivity.startEditing(markdown, content.wrapInto("QQ"), seq);
+                    }
+                });
+                return null;
+            }
+        }).thenCatch(new PromisedReply.FailureListener<Void[]>() {
+            @Override
+            public <E extends Exception> PromisedReply<Void[]> onFailure(E err) {
+                Log.w(TAG, "Unable to create message preview", err);
+                return null;
+            }
+        });
     }
 
     private void showMessageForwardSelector(int pos) {
@@ -849,27 +856,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
                 Menu menu = mSelectionMode.getMenu();
+                boolean mutable = false;
+                boolean repliable = false;
                 if (selected == 1) {
                     StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
-                    if (msg != null && msg.content != null) {
-                        boolean mutable = true;
-                        String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
-                        Drafty.Entity[] ents = msg.content.getEntities();
-                        if (ents != null) {
-                            for (Drafty.Entity ent : ents) {
-                                if (Arrays.binarySearch(types, ent.tp) >= 0) {
-                                    mutable = false;
-                                    break;
+                    if (msg != null && msg.status == BaseDb.Status.SYNCED) {
+                        repliable = true;
+                        if (msg.content != null && msg.isMine()) {
+                            mutable = true;
+                            String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
+                            Drafty.Entity[] ents = msg.content.getEntities();
+                            if (ents != null) {
+                                for (Drafty.Entity ent : ents) {
+                                    if (Arrays.binarySearch(types, ent.tp) >= 0) {
+                                        mutable = false;
+                                        break;
+                                    }
                                 }
                             }
                         }
-                        menu.findItem(R.id.action_edit).setVisible(mutable);
                     }
-                } else {
-                    menu.findItem(R.id.action_edit).setVisible(false);
                 }
-                menu.findItem(R.id.action_reply).setVisible(selected == 1);
-                menu.findItem(R.id.action_forward).setVisible(selected == 1);
+                menu.findItem(R.id.action_edit).setVisible(mutable);
+                menu.findItem(R.id.action_reply).setVisible(repliable);
+                menu.findItem(R.id.action_forward).setVisible(repliable);
             }
         }
     }
