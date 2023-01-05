@@ -648,9 +648,19 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        String size = UiUtils.bytesToHumanSize(getIntVal("size", data));
-        if (!TextUtils.isEmpty(size)) {
-            result.append("\u2009(" + size +")", new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        int byteCount = getIntVal("size", data);
+        if (byteCount <= 0) {
+            Object val = data.get("val");
+            byte[] bits = (val instanceof String) ?
+                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+            if (bits != null) {
+                byteCount = bits.length;
+            }
+        }
+        if (byteCount > 0) {
+            result.append("\u2009(" + UiUtils.bytesToHumanSize(byteCount) +")",
+                    new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         if (mClicker == null) {
