@@ -196,9 +196,9 @@ public class ImageViewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
@@ -455,8 +455,8 @@ public class ImageViewFragment extends Fragment {
     }
 
     private void sendImage() {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

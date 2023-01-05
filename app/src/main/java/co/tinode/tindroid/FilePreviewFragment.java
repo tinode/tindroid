@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -18,12 +19,11 @@ import java.util.Map;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
 public class FilePreviewFragment extends Fragment {
-    private static final String TAG = "FilePreviewFragment";
-
     // Icon ID for mime type. Add more mime type to icon mappings here.
     private static final Map<String, Integer> sMime2Icon;
     private static final int DEFAULT_ICON_ID = R.drawable.ic_file;
@@ -43,7 +43,10 @@ public class FilePreviewFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 // Check if permission is granted.
                 if (isGranted) {
-                    updateFormValues(getActivity(), getArguments(), null, true);
+                    Bundle args = getArguments();
+                    if (args != null) {
+                        updateFormValues(requireActivity(), args, null, true);
+                    }
                 }
             });
 
@@ -84,15 +87,23 @@ public class FilePreviewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Activity activity = getActivity();
+        Activity activity = requireActivity();
         Bundle args = getArguments();
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
+        }
+
+        Toolbar toolbar = activity.findViewById(R.id.toolbar);
+        if (toolbar != null) {
+            toolbar.setTitle(R.string.document_preview);
+            toolbar.setSubtitle(null);
+            toolbar.setLogo(null);
         }
 
         boolean accessGranted;
 
-        if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+                !UiUtils.isPermissionGranted(getActivity(), Manifest.permission.READ_EXTERNAL_STORAGE)) {
             accessGranted = false;
             mRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
         } else {
@@ -109,14 +120,11 @@ public class FilePreviewFragment extends Fragment {
             ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(0));
             mSendButton.setEnabled(false);
         }
-        setHasOptionsMenu(false);
+        // setHasOptionsMenu(false);
     }
 
-    private void updateFormValues(Activity activity, Bundle args, Uri uri, boolean accessGranted) {
-        if (activity == null || args == null) {
-            return;
-        }
-
+    private void updateFormValues(@NonNull Activity activity,
+                                  @NonNull Bundle args, Uri uri, boolean accessGranted) {
         if (uri == null) {
             uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         }
@@ -154,8 +162,8 @@ public class FilePreviewFragment extends Fragment {
     }
 
     private void sendFile() {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

@@ -353,4 +353,5 @@
     <string name="tinode_video_call">Tinode Video Call</string>
     <string name="answer_call">Answer</string>
     <string name="decline_call">Decline</string>
+    <string name="document_preview">Document preview</string>
 </resources>
