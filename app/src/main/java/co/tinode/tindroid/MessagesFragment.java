@@ -474,10 +474,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                                     boolean fatal = failure.getBoolean(AttachmentHandler.ARG_FATAL, false);
                                     SqlStore store = BaseDb.getInstance().getStore();
                                     Storage.Message msg = store.getMessageById(msgId);
-                                    if (fatal && msg != null) {
-                                        store.msgDiscard(mTopic, msgId);
-                                    }
-                                    if (msg != null) {
+                                    if (msg != null && BaseDb.isUnsentSeq(msg.getSeqId())) {
+                                        if (fatal) {
+                                            store.msgDiscard(mTopic, msgId);
+                                        }
                                         runMessagesLoader(mTopicName);
                                         String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();

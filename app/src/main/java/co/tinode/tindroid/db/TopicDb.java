@@ -198,7 +198,6 @@ public class TopicDb implements BaseColumns {
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
     private static final String TAG = "TopicsDb";
-    private static final int UNSENT_ID_START = 2_000_000_000;
 
     /**
      * Save topic description to DB
@@ -248,14 +247,14 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_LASTUSED, lastUsed.getTime());
         values.put(COLUMN_NAME_MIN_LOCAL_SEQ, 0);
         values.put(COLUMN_NAME_MAX_LOCAL_SEQ, 0);
-        values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, UNSENT_ID_START);
+        values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, BaseDb.UNSENT_ID_START);
 
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
             StoredTopic st = new StoredTopic();
             st.id = id;
             st.lastUsed = lastUsed;
-            st.nextUnsentId = UNSENT_ID_START;
+            st.nextUnsentId = BaseDb.UNSENT_ID_START;
             st.status = status;
             topic.setLocal(st);
         }
@@ -565,10 +564,6 @@ public class TopicDb implements BaseColumns {
         }
 
         throw new IllegalArgumentException("Stored topic undefined " + topic.getName());
-    }
-
-    public static boolean isUnsentSeq(int seq) {
-        return seq >= UNSENT_ID_START;
     }
 
     @SuppressWarnings("WeakerAccess")

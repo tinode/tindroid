@@ -35,6 +35,8 @@ public class BaseDb extends SQLiteOpenHelper {
     private StoredAccount mAcc = null;
     private SqlStore mStore = null;
 
+    static final int UNSENT_ID_START = 2_000_000_000;
+
     /**
      * Private constructor
      */
@@ -117,6 +119,10 @@ public class BaseDb extends SQLiteOpenHelper {
     @Override
     public void onConfigure(SQLiteDatabase db) {
         db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    public static boolean isUnsentSeq(int seq) {
+        return seq >= BaseDb.UNSENT_ID_START;
     }
 
     /**
