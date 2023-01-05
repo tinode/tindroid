@@ -356,7 +356,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         // Deleting all version of an edited message.
                         int[] ids = store.getAllMsgVersions(topic, replSeq, -1);
                         for (int id : ids) {
-                            if (TopicDb.isUnsentSeq(id)) {
+                            if (BaseDb.isUnsentSeq(id)) {
                                 store.msgDiscardSeq(topic, id);
                                 discarded++;
                             } else {

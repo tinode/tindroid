@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
@@ -21,6 +22,7 @@ import android.view.MenuItem;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.MediaController;
@@ -55,8 +57,10 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final int DEFAULT_WIDTH = 640;
     private static final int DEFAULT_HEIGHT = 480;
 
-    // Max size of the poster bitmap to be sent as byte array. Otherwise write to temp file.
-    private static final int MAX_POSTER_BYTES = 6144; // 6K.
+    // Max size of the video and poster bitmap to be sent as byte array.
+    // Otherwise write to temp file.
+    private static final int MAX_POSTER_BYTES = 4096; // 4K.
+    private static final int MAX_VIDEO_BYTES = 6144;
 
     private ImageView mPosterView;
     private ProgressBar mProgressView;
@@ -149,9 +153,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
@@ -284,28 +288,76 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         Picasso.get().cancelRequest(mPosterView);
     }
 
+    private Uri writeToTempFile(Context ctx, byte[] bits, String prefix, String suffix) {
+        Uri fileUri = null;
+        try {
+            File temp = File.createTempFile(prefix, suffix, ctx.getCacheDir());
+            temp.deleteOnExit();
+            fileUri = Uri.fromFile(temp);
+            OutputStream os = new FileOutputStream(temp);
+            os.write(bits);
+            os.close();
+        } catch (IOException ex) {
+            Log.i(TAG, "Unable to create temp file for video " + prefix, ex);
+        }
+        return fileUri;
+    }
+
     private void sendVideo() {
         final MessageActivity activity = (MessageActivity) requireActivity();
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        Bundle args = getArguments();
-        if (args == null) {
+        Bundle inputArgs = getArguments();
+        if (inputArgs == null) {
+            Log.w(TAG, "sendVideo called with no arguments");
             return;
+        }
+
+        Bundle outputArgs = new Bundle();
+
+        outputArgs.putString(AttachmentHandler.ARG_TOPIC_NAME,
+                inputArgs.getString(AttachmentHandler.ARG_TOPIC_NAME));
+
+        String mimeType = inputArgs.getString(AttachmentHandler.ARG_MIME_TYPE);
+        outputArgs.putString(AttachmentHandler.ARG_MIME_TYPE, mimeType);
+
+        outputArgs.putParcelable(AttachmentHandler.ARG_REMOTE_URI,
+                inputArgs.getParcelable(AttachmentHandler.ARG_REMOTE_URI));
+
+        outputArgs.putParcelable(AttachmentHandler.ARG_LOCAL_URI,
+                inputArgs.getParcelable(AttachmentHandler.ARG_LOCAL_URI));
+
+        final byte[] videoBits = inputArgs.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
+        if (videoBits != null) {
+            if (videoBits.length > MAX_VIDEO_BYTES) {
+                MimeTypeMap mime = MimeTypeMap.getSingleton();
+                String ext = mime.getExtensionFromMimeType(mimeType);
+                Uri fileUri = writeToTempFile(activity, videoBits, "VID_",
+                        TextUtils.isEmpty(ext) ? ".video" : ("." + ext));
+                if (fileUri != null) {
+                    outputArgs.putParcelable(AttachmentHandler.ARG_LOCAL_URI, fileUri);
+                } else {
+                    Toast.makeText(activity, R.string.unable_to_attach_file, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                outputArgs.putByteArray(AttachmentHandler.ARG_SRC_BYTES, videoBits);
+            }
         }
 
         final EditText inputField = activity.findViewById(R.id.editMessage);
         if (inputField != null) {
             String caption = inputField.getText().toString().trim();
             if (!TextUtils.isEmpty(caption)) {
-                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, caption);
+                outputArgs.putString(AttachmentHandler.ARG_IMAGE_CAPTION, caption);
             }
         }
 
-        args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
-        args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
-        args.putInt(AttachmentHandler.ARG_DURATION, mVideoView.getDuration());
+        outputArgs.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
+        outputArgs.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
+        outputArgs.putInt(AttachmentHandler.ARG_DURATION, mVideoView.getDuration());
 
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
@@ -315,23 +367,17 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 }
                 byte[] bitmapBits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
                 if (bitmapBits.length > MAX_POSTER_BYTES) {
-                    try {
-                        File temp = File.createTempFile("POSTER_", ".jpeg", activity.getCacheDir());
-                        temp.deleteOnExit();
-                        args.putParcelable(AttachmentHandler.ARG_PRE_URI, Uri.fromFile(temp));
-                        OutputStream os = new FileOutputStream(temp);
-                        os.write(bitmapBits);
-                        os.close();
-                    } catch (IOException ex) {
-                        Log.i(TAG, "Unable to create temp file for video poster", ex);
+                    Uri fileUri = writeToTempFile(activity, bitmapBits, "PST_", ".jpeg");
+                    if (fileUri != null) {
+                        outputArgs.putParcelable(AttachmentHandler.ARG_PRE_URI, fileUri);
                     }
                 } else {
-                    args.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                    outputArgs.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
                 }
-                args.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
+                outputArgs.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
             }
 
-            AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_VIDEO, args);
+            AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_VIDEO, outputArgs);
             activity.getSupportFragmentManager().popBackStack();
         });
     }
