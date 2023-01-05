@@ -182,7 +182,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 mVideoView.start();
                 initialized = true;
             } else {
-                final byte[] bits = args.getByteArray("val");
+                final byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
                 if (bits != null) {
                     try {
                         File temp = File.createTempFile("VID_" + System.currentTimeMillis(),
