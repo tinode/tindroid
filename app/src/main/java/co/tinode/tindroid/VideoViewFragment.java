@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,6 +19,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.PixelCopy;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
@@ -28,7 +28,12 @@ import android.widget.ImageView;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import android.widget.VideoView;
+
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 
 import com.squareup.picasso.Picasso;
 
@@ -62,9 +67,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final int MAX_POSTER_BYTES = 4096; // 4K.
     private static final int MAX_VIDEO_BYTES = 6144;
 
+    ExoPlayer mExoPlayer;
+
     private ImageView mPosterView;
     private ProgressBar mProgressView;
-    private VideoView mVideoView;
+    private StyledPlayerView mVideoView;
 
     private int mVideoWidth;
     private int mVideoHeight;
@@ -79,14 +86,33 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         final Activity activity = requireActivity();
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
+
+        // Construct ExoPlayer instance.
+        DefaultHttpDataSource.Factory httpDataSourceFactory =
+                new DefaultHttpDataSource.Factory()
+                        .setAllowCrossProtocolRedirects(true)
+                        .setDefaultRequestProperties(Cache.getTinode().getRequestHeaders());
+        //SimpleCache simpleCache = new SimpleCache();
+        //DataSource.Factory cacheDataSourceFactory =
+        //        new CacheDataSource.Factory()
+        //                .setCache(simpleCache)
+        //                .setUpstreamDataSourceFactory(httpDataSourceFactory);
+        mExoPlayer = new ExoPlayer.Builder(activity)
+                .setMediaSourceFactory(
+                        new DefaultMediaSourceFactory(activity)
+                                .setDataSourceFactory(httpDataSourceFactory))
+                .build();
+
         mPosterView = view.findViewById(R.id.poster);
         mProgressView = view.findViewById(R.id.loading);
 
-        mVideoView = view.findViewById(R.id.video);
+        mVideoView = (StyledPlayerView) view.findViewById(R.id.video);
+        mVideoView.setPlayer(mExoPlayer);
         MediaController mediaControls = new MediaController(activity);
         mediaControls.setAnchorView(mVideoView);
-        mediaControls.setMediaPlayer(mVideoView);
-        mVideoView.setMediaController(mediaControls);
+        //mediaControls.setMediaPlayer(mExoPlayer);
+        //mVideoView.setMediaController(mediaControls);
+        /*
         mVideoView.setOnPreparedListener(mp -> {
             mProgressView.setVisibility(View.GONE);
             mPosterView.setVisibility(View.GONE);
@@ -126,7 +152,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
             return true;
         });
-
+*/
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
         // Send message on Enter.
@@ -171,16 +197,20 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.editMessage).requestFocus();
-            mVideoView.setVideoURI(localUri);
-            mVideoView.start();
+            MediaItem mediaItem = MediaItem.fromUri(localUri);
+            mExoPlayer.setMediaItem(mediaItem);
+            mExoPlayer.prepare();
+            mExoPlayer.getPlayWhenReady();
             initialized = true;
         } else {
             // Viewing received video.
             activity.findViewById(R.id.metaPanel).setVisibility(View.GONE);
             final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
             if (ref != null) {
-                mVideoView.setVideoURI(ref, Cache.getTinode().getLargeFileHelper().headers());
-                mVideoView.start();
+                MediaItem mediaItem = MediaItem.fromUri(ref);
+                mExoPlayer.setMediaItem(mediaItem);
+                mExoPlayer.prepare();
+                mExoPlayer.getPlayWhenReady();
                 initialized = true;
             } else {
                 final byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
@@ -192,8 +222,10 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
                         out.close();
-                        mVideoView.setVideoURI(Uri.fromFile(temp));
-                        mVideoView.start();
+                        MediaItem mediaItem = MediaItem.fromUri(Uri.fromFile(temp));
+                        mExoPlayer.setMediaItem(mediaItem);
+                        mExoPlayer.prepare();
+                        mExoPlayer.getPlayWhenReady();
                         initialized = true;
                     } catch (IOException ex) {
                         Log.w(TAG, "Failed to save video to temp file", ex);
@@ -354,7 +386,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
         outputArgs.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
         outputArgs.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
-        outputArgs.putInt(AttachmentHandler.ARG_DURATION, mVideoView.getDuration());
+        outputArgs.putInt(AttachmentHandler.ARG_DURATION, (int) mExoPlayer.getDuration());
 
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
@@ -389,15 +421,22 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         try {
             HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
             handlerThread.start();
-            PixelCopy.request(mVideoView, bitmap, result -> {
-                if (result == PixelCopy.SUCCESS) {
-                    callback.done(bitmap);
-                } else {
-                    Log.w(TAG, "Failed to capture frame: " + result);
-                    callback.done(null);
-                }
-                handlerThread.quitSafely();
-            }, new Handler(handlerThread.getLooper()));
+            View surfaceView = mVideoView.getVideoSurfaceView();
+            if (surfaceView instanceof SurfaceView) {
+                PixelCopy.request((SurfaceView) surfaceView, bitmap, result -> {
+                    if (result == PixelCopy.SUCCESS) {
+                        callback.done(bitmap);
+                    } else {
+                        Log.w(TAG, "Failed to capture frame: " + result);
+                        callback.done(null);
+                    }
+                    handlerThread.quitSafely();
+                }, new Handler(handlerThread.getLooper()));
+            } else {
+                callback.done(null);
+                Log.w(TAG, "Wrong type of video surface: " +
+                        (surfaceView != null ? surfaceView.getClass().getName() : "null"));
+            }
         } catch (IllegalArgumentException ex) {
             callback.done(null);
             Log.w(TAG, "Failed to capture frame", ex);

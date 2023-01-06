@@ -14,14 +14,15 @@
         android:background="#000"
         android:orientation="vertical">
 
-        <VideoView
+        <com.google.android.exoplayer2.ui.StyledPlayerView
             android:id="@+id/video"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_centerInParent="true"
             android:layout_gravity="center"
             android:contentDescription=""
-            android:visibility="visible" />
+            android:visibility="visible"
+            app:surface_type="surface_view"/>
 
         <ImageView
             android:id="@+id/poster"
