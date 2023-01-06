@@ -6,8 +6,6 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -51,17 +49,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(@NonNull View fragment, Bundle savedInstance) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final Activity activity = requireActivity();
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
@@ -73,27 +62,27 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
         // Set up listeners
         fragment.findViewById(R.id.permissionsSingle).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAccessMode().getWant(), null,
-                    UiUtils.ACTION_UPDATE_SELF_SUB,
+                    Const.ACTION_UPDATE_SELF_SUB,
                     mTopic.getAccessMode().getGivenHelper().isOwner() ? "" : "O"));
 
         fragment.findViewById(R.id.authPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAuthAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_AUTH, "O"));
+                        Const.ACTION_UPDATE_AUTH, "O"));
 
         fragment.findViewById(R.id.anonPermissions).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic, mTopic.getAnonAcsStr(), null,
-                        UiUtils.ACTION_UPDATE_ANON, "O"));
+                        Const.ACTION_UPDATE_ANON, "O"));
 
         fragment.findViewById(R.id.userOne).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getAccessMode().getWant(), null,
-                        UiUtils.ACTION_UPDATE_SELF_SUB, "ASDO"));
+                        Const.ACTION_UPDATE_SELF_SUB, "ASDO"));
 
         fragment.findViewById(R.id.userTwo).setOnClickListener(v ->
                 UiUtils.showEditPermissions(activity, mTopic,
                         mTopic.getSubscription(mTopic.getName()).acs.getGiven(),
                         mTopic.getName(),
-                        UiUtils.ACTION_UPDATE_SUB, "ASDO"));
+                        Const.ACTION_UPDATE_SUB, "ASDO"));
 
         fragment.findViewById(R.id.buttonClearMessages).setOnClickListener(v -> {
             int confirm = mTopic.isDeleter() ? R.string.confirm_delmsg_for_all : R.string.confirm_delmsg_for_self;
@@ -135,14 +124,13 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     @SuppressWarnings("unchecked")
     // onResume sets up the form with values and views which do not change + sets up listeners.
     public void onStart() {
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
-        String name = args.getString("topic");
+        String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicPermissions resumed with null topic.");
@@ -210,8 +198,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     public void notifyDataSetChanged() {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -231,8 +219,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     // Called when topic description is changed.
     private void notifyContentChanged() {
 
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -241,13 +229,6 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
         ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        // inflater.inflate(R.menu.menu_topic_info, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     // Confirmation dialog "Do you really want to do X?"

@@ -18,11 +18,8 @@ import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,7 +31,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 
@@ -70,36 +70,57 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION_IMAGE = "image";
     final static String ARG_OPERATION_FILE = "file";
     final static String ARG_OPERATION_AUDIO = "audio";
+    final static String ARG_OPERATION_VIDEO = "video";
 
     // Bundle argument names.
-    final static String ARG_TOPIC_NAME = "topic";
+    final static String ARG_TOPIC_NAME = Const.INTENT_EXTRA_TOPIC;
     final static String ARG_LOCAL_URI = "local_uri";
     final static String ARG_REMOTE_URI = "remote_uri";
     final static String ARG_SRC_BYTES = "bytes";
     final static String ARG_SRC_BITMAP = "bitmap";
+    final static String ARG_PREVIEW = "preview";
+    final static String ARG_MIME_TYPE = "mime";
+    final static String ARG_PRE_MIME_TYPE = "pre_mime";
+    final static String ARG_PRE_URI = "pre_rem_uri";
+    final static String ARG_IMAGE_WIDTH = "width";
+    final static String ARG_IMAGE_HEIGHT = "height";
+    final static String ARG_DURATION = "duration";
+    final static String ARG_FILE_SIZE = "fileSize";
 
     final static String ARG_FILE_PATH = "filePath";
     final static String ARG_FILE_NAME = "fileName";
     final static String ARG_MSG_ID = "msgId";
     final static String ARG_IMAGE_CAPTION = "caption";
     final static String ARG_PROGRESS = "progress";
-    final static String ARG_FILE_SIZE = "fileSize";
     final static String ARG_ERROR = "error";
     final static String ARG_FATAL = "fatal";
-    final static String ARG_MIME_TYPE = "mime";
     final static String ARG_AVATAR = "square_img";
-    final static String ARG_IMAGE_WIDTH = "width";
-    final static String ARG_IMAGE_HEIGHT = "height";
-    final static String ARG_AUDIO_DURATION = "duration";
-    final static String ARG_AUDIO_PREVIEW = "preview";
 
     final static String TAG_UPLOAD_WORK = "AttachmentUploader";
 
     private static final String TAG = "AttachmentHandler";
-    private LargeFileHelper mUploader = null;
+
+    private final List<LargeFileHelper> mUploaders = Collections.synchronizedList(new ArrayList<>());
 
     public AttachmentHandler(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
+    }
+
+    private enum UploadType {
+        UNKNOWN, AUDIO, FILE, IMAGE, VIDEO;
+
+        static UploadType parse(String type) {
+            if (ARG_OPERATION_AUDIO.equals(type)) {
+                return AUDIO;
+            } else if (ARG_OPERATION_FILE.equals(type)) {
+                return FILE;
+            } else if (ARG_OPERATION_IMAGE.equals(type)) {
+                return IMAGE;
+            } else if (ARG_OPERATION_VIDEO.equals(type)) {
+                return VIDEO;
+            }
+            return UNKNOWN;
+        }
     }
 
     @NonNull
@@ -110,8 +131,8 @@ public class AttachmentHandler extends Worker {
         int orientation = -1;
 
         UploadDetails result = new UploadDetails();
-        result.imageWidth = 0;
-        result.imageHeight = 0;
+        result.width = 0;
+        result.height = 0;
 
         String mimeType = resolver.getType(uri);
         if (mimeType == null) {
@@ -185,27 +206,41 @@ public class AttachmentHandler extends Worker {
         head.put("mime", Drafty.MIME_TYPE);
         Storage.Message msg = BaseDb.getInstance().getStore()
                 .msgDraft(Cache.getTinode().getTopic(topicName), content, head);
+        UploadType type = UploadType.parse(operation);
+
         if (msg != null) {
             Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
             assert uri != null;
+
 
             Data.Builder data = new Data.Builder()
                     .putString(ARG_OPERATION, operation)
                     .putString(ARG_LOCAL_URI, uri.toString())
                     .putLong(ARG_MSG_ID, msg.getDbId())
                     .putString(ARG_TOPIC_NAME, topicName)
-                    .putInt(ARG_AUDIO_DURATION, args.getInt(ARG_AUDIO_DURATION))
                     .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
                     .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
                     .putString(ARG_MIME_TYPE, args.getString(ARG_MIME_TYPE))
                     .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
-                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH));
-            if (ARG_OPERATION_AUDIO.equals(operation)) {
-                byte[] preview = args.getByteArray(ARG_AUDIO_PREVIEW);
+                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH))
+                    .putInt(ARG_IMAGE_WIDTH, args.getInt(ARG_IMAGE_WIDTH))
+                    .putInt(ARG_IMAGE_HEIGHT, args.getInt(ARG_IMAGE_HEIGHT));
+
+            if (type == UploadType.AUDIO || type == UploadType.VIDEO) {
+                byte[] preview = args.getByteArray(ARG_PREVIEW);
                 if (preview != null) {
-                    data.putByteArray(ARG_AUDIO_PREVIEW, preview);
+                    data.putByteArray(ARG_PREVIEW, preview);
+                }
+                data.putInt(ARG_DURATION, args.getInt(ARG_DURATION));
+                Uri preUri = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
+                if (preUri != null) {
+                    data.putString(ARG_PRE_URI, preUri.toString());
+                }
+                if (type == UploadType.VIDEO && preview != null || preUri != null) {
+                    data.putString(ARG_PRE_MIME_TYPE, args.getString(ARG_PRE_MIME_TYPE));
                 }
             }
+
             Constraints constraints = new Constraints.Builder()
                     .setRequiredNetworkType(NetworkType.CONNECTED)
                     .build();
@@ -223,13 +258,12 @@ public class AttachmentHandler extends Worker {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    static long enqueueDownloadAttachment(AppCompatActivity activity, Map<String, Object> data,
+    static long enqueueDownloadAttachment(AppCompatActivity activity, String ref, byte[] bits,
                                           String fname, String mimeType) {
         long downloadId = -1;
-        Object ref = data.get("ref");
-        if (ref instanceof String) {
+        if (ref != null) {
             try {
-                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) ref);
+                URL url = new URL(Cache.getTinode().getBaseUrl(), ref);
                 String scheme = url.getProtocol();
                 // Make sure the file is downloaded over http or https protocols.
                 if (scheme.equals("http") || scheme.equals("https")) {
@@ -243,16 +277,7 @@ public class AttachmentHandler extends Worker {
                 Log.w(TAG, "Server address is not yet configured", ex);
                 Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
             }
-        } else {
-            Object val = data.get("val");
-            byte[] bits = val instanceof String ? Base64.decode((String) val, Base64.DEFAULT) :
-                    val instanceof byte[] ? (byte[]) val : null;
-            if (bits == null) {
-                Log.w(TAG, "Invalid or missing attachment");
-                Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
-                return downloadId;
-            }
-
+        } else if (bits != null) {
             // Create file in a downloads directory by default.
             File path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
             // Make sure Downloads folder exists.
@@ -317,7 +342,11 @@ public class AttachmentHandler extends Worker {
                 Toast.makeText(activity, R.string.failed_to_open_file, Toast.LENGTH_SHORT).show();
                 activity.startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
             }
+        } else {
+            Log.w(TAG, "Invalid or missing attachment");
+            Toast.makeText(activity, R.string.failed_to_download, Toast.LENGTH_SHORT).show();
         }
+
         return downloadId;
     }
 
@@ -389,7 +418,7 @@ public class AttachmentHandler extends Worker {
     }
 
     // Send file in-band
-    private static Drafty draftyFile(String mimeType, byte[] bits, String fname) {
+    private static Drafty draftyFile(String mimeType, String fname, byte[] bits) {
         Drafty content = new Drafty();
         content.attachFile(mimeType, bits, fname);
         return content;
@@ -402,6 +431,21 @@ public class AttachmentHandler extends Worker {
         return content;
     }
 
+    // Send image.
+    private static Drafty draftyVideo(String caption, String mimeType, byte[] bits, String refUrl,
+                                      int width, int height,
+                                      int duration, byte[] preview, String preref, String premime,
+                                      String fname, long size) {
+        Drafty content = new Drafty();
+        content.insertVideo(0, mimeType, bits, width, height, preref == null ? preview : null,
+                wrapRefUrl(preref), premime, duration, fname, wrapRefUrl(refUrl), size);
+        if (!TextUtils.isEmpty(caption)) {
+            content.appendLineBreak()
+                    .append(Drafty.fromPlainText(caption));
+        }
+        return content;
+    }
+
     @NonNull
     @Override
     public ListenableWorker.Result doWork() {
@@ -410,17 +454,23 @@ public class AttachmentHandler extends Worker {
 
     @Override
     public void onStopped() {
-        super.onStopped();
-        if (mUploader != null) {
-            mUploader.cancel();
+        synchronized (mUploaders) {
+            for (LargeFileHelper lfh : mUploaders) {
+                lfh.cancel();
+            }
         }
+
+        super.onStopped();
     }
 
+    // This is long running/blocking call. It should not be called on UI thread.
     private ListenableWorker.Result uploadMessageAttachment(final Context context, final Data args) {
         Storage store = BaseDb.getInstance().getStore();
 
-        // File upload "file", "image", "audio".
-        final String operation = args.getString(ARG_OPERATION);
+        // File upload "file", "image", "audio", "video".
+        // When "video": video itself + video poster (image).
+        UploadType operation = UploadType.parse(args.getString(ARG_OPERATION));
+
         final String topicName = args.getString(ARG_TOPIC_NAME);
         // URI must exist.
         final Uri uri = Uri.parse(args.getString(ARG_LOCAL_URI));
@@ -444,11 +494,10 @@ public class AttachmentHandler extends Worker {
         Drafty content = null;
         boolean success = false;
         InputStream is = null;
-        ByteArrayOutputStream baos = null;
         Bitmap bmp = null;
         try {
-            UploadDetails uploadDetails = getFileDetails(context, uri, filePath);
-            String fname = uploadDetails.fileName;
+            final ContentResolver resolver = context.getContentResolver();
+            final UploadDetails uploadDetails = getFileDetails(context, uri, filePath);
 
             if (uploadDetails.fileSize == 0) {
                 Log.w(TAG, "File size is zero; uri=" + uri + "; file=" + filePath);
@@ -457,25 +506,68 @@ public class AttachmentHandler extends Worker {
                                 .putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
             }
 
-            if (fname == null) {
-                fname = context.getString(R.string.default_attachment_name);
+            if (TextUtils.isEmpty(uploadDetails.fileName)) {
+                uploadDetails.fileName = context.getString(R.string.default_attachment_name);
             }
 
-            final ContentResolver resolver = context.getContentResolver();
+            if (TextUtils.isEmpty(uploadDetails.mimeType)) {
+                uploadDetails.mimeType = args.getString(ARG_MIME_TYPE);
+            }
+
+            uploadDetails.valueRef = null;
+            uploadDetails.previewRef = null;
+            uploadDetails.previewSize = 0;
 
             // Image is being attached. Ensure the image has correct orientation and size.
-            if (ARG_OPERATION_IMAGE.equals(operation)) {
+            if (operation == UploadType.IMAGE) {
                 // Make sure the image is not too large in byte-size and in linear dimensions.
                 bmp = prepareImage(resolver, uri, uploadDetails);
                 is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
                 uploadDetails.fileSize = is.available();
+
+                // Create a tiny preview bitmap.
+                if (bmp.getWidth() > Const.IMAGE_PREVIEW_DIM || bmp.getHeight() > Const.IMAGE_PREVIEW_DIM) {
+                    uploadDetails.previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
+                                    Const.IMAGE_PREVIEW_DIM, Const.IMAGE_PREVIEW_DIM, false),
+                            "image/jpeg");
+                }
+            } else {
+                uploadDetails.duration = args.getInt(ARG_DURATION, 0);
+                // Poster could be provided as a byte array.
+                uploadDetails.previewBits = args.getByteArray(ARG_PREVIEW);
+                if (uploadDetails.previewBits == null) {
+                    // Check if poster is provided as a local URI.
+                    String preUriStr = args.getString(ARG_PRE_URI);
+                    if (preUriStr != null) {
+                        InputStream posterIs = resolver.openInputStream(Uri.parse(preUriStr));
+                        if (posterIs != null) {
+                            uploadDetails.previewBits = readAll(posterIs);
+                            posterIs.close();
+                        }
+                    }
+                }
+                if (operation == UploadType.VIDEO) {
+                    uploadDetails.width = args.getInt(ARG_IMAGE_WIDTH, 0);
+                    uploadDetails.height = args.getInt(ARG_IMAGE_HEIGHT, 0);
+                    uploadDetails.previewMime = args.getString(ARG_PRE_MIME_TYPE);
+                    uploadDetails.previewSize = uploadDetails.previewBits != null ?
+                            uploadDetails.previewBits.length : 0;
+                    if (uploadDetails.previewSize > uploadDetails.fileSize) {
+                        // Image poster is greater than video itself. This is not currently supported.
+                        Log.w(TAG, "Video poster size " + uploadDetails.previewSize +
+                                " is greater than video " + uploadDetails.fileSize);
+                        return ListenableWorker.Result.failure(
+                                result.putBoolean(ARG_FATAL, true)
+                                        .putString(ARG_ERROR, context.getString(R.string.unable_to_attach_file)).build());
+                    }
+                }
             }
 
             if (uploadDetails.fileSize > maxFileUploadSize) {
+                // Fail: file is too big to be send in-band or out of band.
                 if (is != null) {
                     is.close();
                 }
-                // File is too big to be send in-band or out of band.
                 Log.w(TAG, "Unable to process attachment: too big, size=" + uploadDetails.fileSize);
                 return ListenableWorker.Result.failure(
                         result.putString(ARG_ERROR,
@@ -493,109 +585,113 @@ public class AttachmentHandler extends Worker {
                     throw new IOException("Failed to open file at " + uri);
                 }
 
-                if (uploadDetails.fileSize > maxInbandAttachmentSize) {
-                    byte[] previewBits = null;
-                    // Update draft with file or image data.
-                    String ref = "mid:uploading-" + msgId;
-                    Drafty msgDraft = null;
-                    if (ARG_OPERATION_FILE.equals(operation)) {
-                        msgDraft = draftyAttachment(uploadDetails.mimeType, fname, ref, uploadDetails.fileSize);
-                    } else if (ARG_OPERATION_IMAGE.equals(operation)) {
-                        // Create a tiny preview bitmap.
-                        if (bmp.getWidth() > UiUtils.IMAGE_PREVIEW_DIM || bmp.getHeight() > UiUtils.IMAGE_PREVIEW_DIM) {
-                            previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
-                                    UiUtils.IMAGE_PREVIEW_DIM, UiUtils.IMAGE_PREVIEW_DIM), "image/jpeg");
-                        }
-                        msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, previewBits,
-                                ref, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, uploadDetails.fileSize);
-                    } else if (ARG_OPERATION_AUDIO.equals(operation)) {
-                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
-                        uploadDetails.mimeType = uploadDetails.mimeType == null ?
-                                args.getString(ARG_MIME_TYPE) : "audio/aac";
-                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW), null,
-                                ref, uploadDetails.duration, fname, uploadDetails.fileSize);
+                if (uploadDetails.fileSize + uploadDetails.previewSize > maxInbandAttachmentSize) {
+                    // Send out of band.
+                    uploadDetails.valueRef = "mid:uploading-" + msgId;
+                    if (uploadDetails.previewSize > maxInbandAttachmentSize / 4) {
+                        uploadDetails.previewRef = "mid:uploading-" + msgId + "/1";
                     }
+                } else {
+                    uploadDetails.valueBits = readAll(is);
+                }
 
-                    if (msgDraft != null) {
-                        store.msgDraftUpdate(topic, msgId, msgDraft);
-                    } else {
-                        throw new IllegalArgumentException("Unknown operation " + operation);
-                    }
+                Drafty msgDraft = prepareDraft(operation, uploadDetails, args.getString(ARG_IMAGE_CAPTION));
+                if (msgDraft != null) {
+                    store.msgDraftUpdate(topic, msgId, msgDraft);
+                } else {
+                    store.msgDiscard(topic, msgId);
+                    throw new IllegalArgumentException("Unknown operation " + operation);
+                }
 
+                if (uploadDetails.valueRef != null) {
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
                             .putLong(ARG_PROGRESS, 0)
                             .putLong(ARG_FILE_SIZE, uploadDetails.fileSize).build());
 
-                    // Upload then send message with a link. This is a long-running blocking call.
-                    mUploader = Cache.getTinode().getLargeFileHelper();
-                    ServerMessage msg = mUploader.upload(is, fname, uploadDetails.mimeType, uploadDetails.fileSize,
+                    // Upload results.
+                    //noinspection unchecked
+                    PromisedReply<ServerMessage>[] uploadResults = (PromisedReply<ServerMessage>[]) new PromisedReply[2];
+
+                    // Upload large media.
+                    LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
+                    mUploaders.add(uploader);
+                    uploadResults[0] = uploader.uploadAsync(is, uploadDetails.fileName,
+                            uploadDetails.mimeType, uploadDetails.fileSize,
                             topicName, (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
                                     .putLong(ARG_PROGRESS, progress)
                                     .putLong(ARG_FILE_SIZE, size)
                                     .build()));
-                    if (mUploader.isCanceled()) {
+                    mUploaders.remove(uploader);
+                    if (uploader.isCanceled()) {
                         throw new CancellationException();
                     }
-                    success = msg != null && msg.ctrl != null && msg.ctrl.code == 200;
+
+                    // Optionally upload video poster.
+                    if (uploadDetails.previewRef != null) {
+                        LargeFileHelper posterUploader = Cache.getTinode().getLargeFileHelper();
+                        mUploaders.add(posterUploader);
+                        uploadResults[1] = uploader.uploadAsync(is, uploadDetails.fileName, uploadDetails.mimeType,
+                                uploadDetails.fileSize, topicName, null);
+                        mUploaders.remove(posterUploader);
+                        // Don't care if it's cancelled.
+                    } else {
+                        uploadResults[1] = null;
+                    }
+
+                    ServerMessage[] msgs = new ServerMessage[2];
+                    try {
+                        // Wait for uploads to finish. This is a long-running blocking call.
+                        Object[] objs = PromisedReply.allOf(uploadResults).getResult();
+                        msgs[0] = (ServerMessage) objs[0];
+                        msgs[1] = (ServerMessage) objs[1];
+                    } catch (Exception ex) {
+                        throw new CancellationException();
+                    }
+
+                    Log.i(TAG, "Upload result " + msgs[0]);
+                    success = msgs[0] != null && msgs[0].ctrl != null && msgs[0].ctrl.code == 200;
+
                     if (success) {
-                        String url = msg.ctrl.getStringParam("url", null);
+                        String url = msgs[0].ctrl.getStringParam("url", null);
                         result.putString(ARG_REMOTE_URI, url);
                         switch (operation) {
-                            case ARG_OPERATION_FILE:
-                                content = draftyAttachment(uploadDetails.mimeType, fname, url, uploadDetails.fileSize);
+                            case AUDIO:
+                                content = draftyAudio(uploadDetails.mimeType, uploadDetails.previewBits,
+                                        null, url, uploadDetails.duration, uploadDetails.fileName,
+                                        uploadDetails.fileSize);
                                 break;
-                            case ARG_OPERATION_IMAGE:
+
+                            case FILE:
+                                content = draftyAttachment(uploadDetails.mimeType, uploadDetails.fileName,
+                                        url, uploadDetails.fileSize);
+                                break;
+
+                            case IMAGE:
                                 content = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
-                                        previewBits, url, uploadDetails.imageWidth, uploadDetails.imageHeight,
-                                        fname, uploadDetails.fileSize);
+                                        uploadDetails.previewBits, url, uploadDetails.width, uploadDetails.height,
+                                        uploadDetails.fileName, uploadDetails.fileSize);
                                 break;
-                            case ARG_OPERATION_AUDIO:
-                                content = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
-                                        null, url, uploadDetails.duration, fname, uploadDetails.fileSize);
+
+                            case VIDEO:
+                                String posterUrl = null;
+                                if (msgs[1] != null && msgs[1].ctrl != null && msgs[1].ctrl.code == 200){
+                                    posterUrl = msgs[1].ctrl.getStringParam("url", null);
+                                }
+                                content = draftyVideo(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
+                                        null, url, uploadDetails.width, uploadDetails.height,
+                                        uploadDetails.duration, uploadDetails.previewBits,
+                                        posterUrl, uploadDetails.previewMime,
+                                        uploadDetails.fileName, uploadDetails.fileSize);
                                 break;
                         }
+                    } else {
+                        result.putBoolean(ARG_FATAL, true)
+                                .putString(ARG_ERROR, "Server returned error");
                     }
                 } else {
-                    baos = new ByteArrayOutputStream();
-                    byte[] buffer = new byte[16384];
-                    int len;
-                    while ((len = is.read(buffer)) > 0) {
-                        baos.write(buffer, 0, len);
-                    }
-
-                    byte[] bits = baos.toByteArray();
-                    Drafty msgDraft = null;
-                    if (ARG_OPERATION_FILE.equals(operation)) {
-                        msgDraft = draftyFile(uploadDetails.mimeType, bits, fname);
-                    } else if (ARG_OPERATION_IMAGE.equals(operation)) {
-                        if (uploadDetails.imageWidth == 0) {
-                            BitmapFactory.Options options = new BitmapFactory.Options();
-                            options.inJustDecodeBounds = true;
-                            InputStream bais = new ByteArrayInputStream(bits);
-                            len = bais.available();
-                            BitmapFactory.decodeStream(bais, null, options);
-                            bais.close();
-
-                            uploadDetails.imageWidth = options.outWidth;
-                            uploadDetails.imageHeight = options.outHeight;
-                        }
-                        msgDraft = draftyImage(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType, bits,
-                                null, uploadDetails.imageWidth, uploadDetails.imageHeight, fname, len);
-                    } else if (ARG_OPERATION_AUDIO.equals(operation)) {
-                        uploadDetails.duration = args.getInt(ARG_AUDIO_DURATION, 0);
-                        uploadDetails.mimeType = uploadDetails.mimeType == null ? args.getString(ARG_MIME_TYPE) : "audio/aac";
-                        msgDraft = draftyAudio(uploadDetails.mimeType, args.getByteArray(ARG_AUDIO_PREVIEW),
-                                bits, null, uploadDetails.duration, fname, bits.length);
-                    }
-
-                    if (msgDraft != null) {
-                        store.msgDraftUpdate(topic, msgId, msgDraft);
-                    } else {
-                        throw new IllegalArgumentException("Unknown operation " + operation);
-                    }
-
+                    // Send in-band.
                     success = true;
                     setProgressAsync(new Data.Builder()
                             .putAll(result.build())
@@ -605,25 +701,21 @@ public class AttachmentHandler extends Worker {
                 }
             }
         } catch (CancellationException ignored) {
-        } catch (IOException | SecurityException ex) {
+            result.putString(ARG_ERROR, context.getString(R.string.canceled));
+            Log.i(TAG, "Upload cancelled");
+        } catch (IOException | SecurityException | IllegalArgumentException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
         } finally {
             if (bmp != null) {
                 bmp.recycle();
             }
-            if (ARG_OPERATION_AUDIO.equals(operation) && filePath != null) {
+            if (operation == UploadType.AUDIO && filePath != null) {
                 new File(filePath).delete();
             }
             if (is != null) {
                 try {
                     is.close();
-                } catch (IOException ignored) {
-                }
-            }
-            if (baos != null) {
-                try {
-                    baos.close();
                 } catch (IOException ignored) {
                 }
             }
@@ -646,7 +738,7 @@ public class AttachmentHandler extends Worker {
      * @param bmp new avatar; no action is taken if avatar is null.
      * @return result of the operation.
      */
-    static PromisedReply<ServerMessage> uploadAvatar(@NotNull final VxCard pub, @Nullable Bitmap bmp,
+    static PromisedReply<ServerMessage> uploadAvatar(@NonNull final VxCard pub, @Nullable Bitmap bmp,
                                                      @Nullable String topicName) {
         if (bmp == null) {
             // No action needed.
@@ -657,13 +749,13 @@ public class AttachmentHandler extends Worker {
 
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        if (width < UiUtils.MIN_AVATAR_SIZE || height < UiUtils.MIN_AVATAR_SIZE) {
+        if (width < Const.MIN_AVATAR_SIZE || height < Const.MIN_AVATAR_SIZE) {
             // FAIL.
             return new PromisedReply<>(new Exception("Image is too small"));
         }
 
-        if (width != height || width > UiUtils.MAX_AVATAR_SIZE) {
-            bmp = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
+        if (width != height || width > Const.MAX_AVATAR_SIZE) {
+            bmp = UiUtils.scaleSquareBitmap(bmp, Const.MAX_AVATAR_SIZE);
             width = bmp.getWidth();
             height = bmp.getHeight();
         }
@@ -677,14 +769,14 @@ public class AttachmentHandler extends Worker {
         PromisedReply<ServerMessage> result;
         try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
             long fileSize = is.available();
-            if (fileSize > UiUtils.MAX_INBAND_AVATAR_SIZE) {
+            if (fileSize > Const.MAX_INBAND_AVATAR_SIZE) {
                 // Sending avatar out of band.
 
                 // Generate small avatar preview.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
-                result = uploader.uploadFuture(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
+                result = uploader.uploadAsync(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
                                 topicName, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
@@ -696,7 +788,7 @@ public class AttachmentHandler extends Worker {
                         });
             } else {
                 // Can send a small avatar in-band.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, UiUtils.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 result = new PromisedReply<>((ServerMessage) null);
             }
         } catch (IOException | IllegalArgumentException ex) {
@@ -705,6 +797,58 @@ public class AttachmentHandler extends Worker {
         }
 
         return result;
+    }
+
+    // Create placeholder draft message.
+    private static Drafty prepareDraft(UploadType operation, UploadDetails uploadDetails, String caption) {
+        Drafty msgDraft = null;
+
+        switch (operation) {
+            case AUDIO:
+                if (TextUtils.isEmpty(uploadDetails.mimeType)) {
+                    uploadDetails.mimeType = "audio/aac";
+                }
+
+                msgDraft = draftyAudio(uploadDetails.mimeType, uploadDetails.previewBits,
+                        uploadDetails.valueBits, uploadDetails.valueRef, uploadDetails.duration,
+                        uploadDetails.fileName, uploadDetails.valueBits.length);
+                break;
+
+            case FILE:
+                if (!TextUtils.isEmpty(uploadDetails.valueRef)) {
+                    msgDraft = draftyAttachment(uploadDetails.mimeType, uploadDetails.fileName,
+                            uploadDetails.valueRef, uploadDetails.fileSize);
+                } else {
+                    msgDraft = draftyFile(uploadDetails.mimeType, uploadDetails.fileName, uploadDetails.valueBits);
+                }
+                break;
+
+            case IMAGE:
+                if (TextUtils.isEmpty(uploadDetails.mimeType)) {
+                    uploadDetails.mimeType = "image/jpeg";
+                }
+                if (uploadDetails.width == 0 && uploadDetails.previewBits != null) {
+                    BitmapFactory.Options options = boundsFromBitmapBits(uploadDetails.previewBits);
+                    uploadDetails.width = options.outWidth;
+                    uploadDetails.height = options.outHeight;
+                }
+                msgDraft = draftyImage(caption, uploadDetails.mimeType, uploadDetails.previewBits,
+                        uploadDetails.valueRef, uploadDetails.width, uploadDetails.height,
+                        uploadDetails.fileName, uploadDetails.fileSize);
+                break;
+
+            case VIDEO:
+                if (TextUtils.isEmpty(uploadDetails.mimeType)) {
+                    uploadDetails.mimeType = "video/mpeg";
+                }
+                msgDraft = draftyVideo(caption, uploadDetails.mimeType,
+                        uploadDetails.valueBits, uploadDetails.valueRef, uploadDetails.width, uploadDetails.height,
+                        uploadDetails.duration, uploadDetails.previewBits, uploadDetails.previewRef,
+                        uploadDetails.previewMime, uploadDetails.fileName, uploadDetails.fileSize);
+                break;
+        }
+
+        return msgDraft;
     }
 
     // Make sure the image is not too large in byte-size and in linear dimensions, has correct orientation.
@@ -721,8 +865,8 @@ public class AttachmentHandler extends Worker {
         }
 
         // Make sure the image dimensions are not too large.
-        if (bmp.getWidth() > UiUtils.MAX_BITMAP_SIZE || bmp.getHeight() > UiUtils.MAX_BITMAP_SIZE) {
-            bmp = UiUtils.scaleBitmap(bmp, UiUtils.MAX_BITMAP_SIZE, UiUtils.MAX_BITMAP_SIZE);
+        if (bmp.getWidth() > Const.MAX_BITMAP_SIZE || bmp.getHeight() > Const.MAX_BITMAP_SIZE) {
+            bmp = UiUtils.scaleBitmap(bmp, Const.MAX_BITMAP_SIZE, Const.MAX_BITMAP_SIZE, false);
 
             byte[] bits = UiUtils.bitmapToBytes(bmp, uploadDetails.mimeType);
             uploadDetails.fileSize = bits.length;
@@ -772,20 +916,53 @@ public class AttachmentHandler extends Worker {
             Log.w(TAG, "Failed to obtain image orientation", ex);
         }
 
-        uploadDetails.imageWidth = bmp.getWidth();
-        uploadDetails.imageHeight = bmp.getHeight();
+        uploadDetails.width = bmp.getWidth();
+        uploadDetails.height = bmp.getHeight();
 
         return bmp;
     }
 
+    private static BitmapFactory.Options boundsFromBitmapBits(byte[] bits) {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        InputStream bais = new ByteArrayInputStream(bits);
+        BitmapFactory.decodeStream(bais, null, options);
+        try {
+            bais.close();
+        } catch (IOException ignored) {}
+        return options;
+    }
+
+    private static byte[] readAll(InputStream is) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[16384];
+        int len;
+        while ((len = is.read(buffer)) > 0) {
+            out.write(buffer, 0, len);
+        }
+        // No need to close ByteArrayOutputStream.
+        // ByteArrayOutputStream.close() is a noop.
+        return out.toByteArray();
+    }
+
     static class UploadDetails {
         String mimeType;
-        int imageOrientation;
+        String previewMime;
+
         String filePath;
         String fileName;
         long fileSize;
-        int imageWidth;
-        int imageHeight;
+
+        int imageOrientation;
+        int width;
+        int height;
         int duration;
+
+        String valueRef;
+        byte[] valueBits;
+
+        String previewRef;
+        byte[] previewBits;
+        int previewSize;
     }
 }

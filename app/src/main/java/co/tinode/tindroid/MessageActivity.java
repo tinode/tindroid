@@ -43,6 +43,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -82,6 +83,7 @@ public class MessageActivity extends AppCompatActivity
     static final String FRAGMENT_PERMISSIONS = "permissions";
     static final String FRAGMENT_EDIT_MEMBERS = "edit_members";
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
+    static final String FRAGMENT_VIEW_VIDEO = "view_video";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_FORWARD_TO = "forward_to";
@@ -234,7 +236,6 @@ public class MessageActivity extends AppCompatActivity
         mMessageSender.resume();
 
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        //noinspection ConstantConditions
         mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
         intent.putExtra(Intent.EXTRA_TEXT, (String) null);
         Uri attachment = intent.getData();
@@ -247,6 +248,9 @@ public class MessageActivity extends AppCompatActivity
             if (type.startsWith("image/")) {
                 args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
                 showFragment(FRAGMENT_VIEW_IMAGE, args, true);
+            } else if (type.startsWith("video/")) {
+                args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
+                showFragment(FRAGMENT_VIEW_VIDEO, args, true);
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
@@ -255,8 +259,8 @@ public class MessageActivity extends AppCompatActivity
 
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(this);
 
-        mSendReadReceipts = pref.getBoolean(UiUtils.PREF_READ_RCPT, true);
-        mSendTypingNotifications = pref.getBoolean(UiUtils.PREF_TYPING_NOTIF, true);
+        mSendReadReceipts = pref.getBoolean(Const.PREF_READ_RCPT, true);
+        mSendTypingNotifications = pref.getBoolean(Const.PREF_TYPING_NOTIF, true);
 
         BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
     }
@@ -357,7 +361,7 @@ public class MessageActivity extends AppCompatActivity
     // Get topic name from Intent the Activity was launched with (push notification, other app, other activity).
     private String readTopicNameFromIntent(Intent intent) {
         // Check if the activity was launched by internally-generated intent.
-        String name = intent.getStringExtra("topic");
+        String name = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
         if (!TextUtils.isEmpty(name)) {
             return name;
         }
@@ -539,11 +543,14 @@ public class MessageActivity extends AppCompatActivity
             }
             return true;
         } else if (id == R.id.action_call) {
+            CallManager.placeOutgoingCall(mTopicName);
+            /*
             Intent intent = new Intent(getApplicationContext(), CallActivity.class);
             intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
-            intent.putExtra("topic", mTopicName);
+            intent.putExtra(Const.INTENT_EXTRA_TOPIC, mTopicName);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
             startActivity(intent);
+             */
             return true;
         }
 
@@ -621,6 +628,9 @@ public class MessageActivity extends AppCompatActivity
                 case FRAGMENT_VIEW_IMAGE:
                     fragment = new ImageViewFragment();
                     break;
+                case FRAGMENT_VIEW_VIDEO:
+                    fragment = new VideoViewFragment();
+                    break;
                 case FRAGMENT_FILE_PREVIEW:
                     fragment = new FilePreviewFragment();
                     break;
@@ -646,7 +656,7 @@ public class MessageActivity extends AppCompatActivity
         }
 
         args = args != null ? args : new Bundle();
-        args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+        args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
 
         if (tag.equals(FRAGMENT_MESSAGES)) {
             args.putString(MessagesFragment.MESSAGE_TO_SEND, mMessageText);
@@ -681,9 +691,12 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
-    boolean sendMessage(Drafty content, int seq) {
+    boolean sendMessage(Drafty content, int seq, boolean isReplacement) {
         if (mTopic != null) {
-            Map<String,Object> head = seq > 0 ? Tinode.headersForReply(seq) : null;
+            Map<String,Object> head = seq > 0 ?
+                    (isReplacement ? Tinode.headersForReplacement(seq) :
+                            Tinode.headersForReply(seq)) :
+                    null;
             PromisedReply<ServerMessage> done = mTopic.publish(content, head);
             BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
             runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
@@ -719,9 +732,24 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
+    void startEditing(String original, Drafty quote, int seq) {
+        if (isFragmentVisible(FRAGMENT_MESSAGES)) {
+            MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
+            if (mf != null) {
+                mf.startEditing(this, original, quote, seq);
+            }
+        }
+    }
+
     void sendKeyPress() {
         if (mTopic != null && mSendTypingNotifications) {
             mTopic.noteKeyPress();
+        }
+    }
+
+    void sendRecordingProgress(boolean audioOnly) {
+        if (mTopic != null && mSendTypingNotifications) {
+            mTopic.noteRecording(audioOnly);
         }
     }
 

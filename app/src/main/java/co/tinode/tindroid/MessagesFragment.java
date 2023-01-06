@@ -3,7 +3,9 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.media.AudioAttributes;
@@ -16,12 +18,9 @@ import android.media.audiofx.NoiseSuppressor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Parcelable;
 import android.os.SystemClock;
-import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -47,12 +46,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Locale;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -63,11 +59,13 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
-import androidx.core.content.FileProvider;
 import androidx.core.view.ContentInfoCompat;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.core.view.OnReceiveContentListener;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -101,15 +99,16 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Fragment handling message display and message sending.
  */
-public class MessagesFragment extends Fragment {
+public class MessagesFragment extends Fragment implements MenuProvider {
     private static final String TAG = "MessageFragment";
     private static final int MESSAGES_TO_LOAD = 24;
 
     private static final String[] SUPPORTED_MIME_TYPES = new String[]{"image/*"};
 
     static final String MESSAGE_TO_SEND = "messageText";
-    static final String MESSAGE_REPLY = "reply";
-    static final String MESSAGE_REPLY_ID = "replyID";
+    static final String MESSAGE_TEXT_ACTION = "messageTextAction";
+    static final String MESSAGE_QUOTED = "quotedDrafty";
+    static final String MESSAGE_QUOTED_SEQ_ID = "quotedSeqID";
 
     static final int ZONE_CANCEL = 0;
     static final int ZONE_LOCK = 1;
@@ -134,11 +133,9 @@ public class MessagesFragment extends Fragment {
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
 
-    private String mCurrentPhotoFile;
-    private Uri mCurrentPhotoUri;
-
-    private int mReplySeqID = -1;
-    private Drafty mReply = null;
+    private UiUtils.MsgAction mTextAction = UiUtils.MsgAction.NONE;
+    private int mQuotedSeqID = -1;
+    private Drafty mQuote = null;
     private Drafty mContentToForward = null;
     private Drafty mForwardSender = null;
 
@@ -167,7 +164,7 @@ public class MessagesFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         // Check if permission is granted.
         if (isGranted) {
-            openFileSelector(getActivity());
+            openFileSelector(requireActivity());
         }
     });
 
@@ -179,8 +176,9 @@ public class MessagesFragment extends Fragment {
                         return;
                     }
                 }
+
                 // Try to open the image selector again.
-                openImageSelector(getActivity());
+                openMediaSelector(requireActivity());
             });
 
     private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
@@ -188,80 +186,87 @@ public class MessagesFragment extends Fragment {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
                         // Some permission is missing. Disable audio recording button.
-                        Activity activity = getActivity();
-                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                        Activity activity = requireActivity();
+                        if (activity.isFinishing() || activity.isDestroyed()) {
                             return;
                         }
-                        getActivity().findViewById(R.id.audioRecorder).setEnabled(false);
+                        activity.findViewById(R.id.audioRecorder).setEnabled(false);
                         return;
                     }
                 }
             });
 
     private final ActivityResultLauncher<String> mFilePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.GetContent(), content -> {
-                if (content == null) {
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri == null) {
                     return;
                 }
 
-                final MessageActivity activity = (MessageActivity) getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                final MessageActivity activity = (MessageActivity) requireActivity();
+                if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
                 final Bundle args = new Bundle();
-                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, content);
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
-                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
+                args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
                 // Show attachment preview.
                 activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
             });
 
-    private final ActivityResultLauncher<Intent> mImagePickerLauncher =
-            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-                if (result == null || result.getResultCode() != Activity.RESULT_OK) {
+    private final ActivityResultLauncher<String> mNotificationsPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    final MessageActivity activity = (MessageActivity) requireActivity();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        return;
+                    }
+                    Toast.makeText(activity, R.string.permission_missing, Toast.LENGTH_LONG).show();
+                }
+            });
+
+    private final ActivityResultLauncher<Object> mMediaPickerLauncher =
+            registerForActivityResult(new MediaPickerContract(), uri -> {
+                if (uri == null) {
                     return;
                 }
 
-                final MessageActivity activity = (MessageActivity) getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                final MessageActivity activity = (MessageActivity) requireActivity();
+                if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
+
+                String mimeType = activity.getContentResolver().getType(uri);
+                boolean isVideo = mimeType != null && mimeType.startsWith("video");
 
                 final Bundle args = new Bundle();
-                final Intent data = result.getData();
-                Uri localUri = data != null ? data.getData() : null;
-                if (localUri != null) {
-                    // Image from the gallery.
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, localUri);
-                } else {
-                    // Image from the camera.
-                    args.putString(AttachmentHandler.ARG_FILE_PATH, mCurrentPhotoFile);
-                    args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, mCurrentPhotoUri);
-                    mCurrentPhotoFile = null;
-                    mCurrentPhotoUri = null;
-                }
+                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
+                args.putString(AttachmentHandler.ARG_FILE_NAME, uri.getLastPathSegment());
+                args.putString(AttachmentHandler.ARG_FILE_PATH, uri.getPath());
+                args.putString(AttachmentHandler.ARG_OPERATION,
+                        isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO :
+                                AttachmentHandler.ARG_OPERATION_IMAGE);
+                args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
 
-                args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_IMAGE);
-                args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
                 // Show attachment preview.
-                activity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+                activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
+                        MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             });
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
         return inflater.inflate(R.layout.fragment_messages, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
+
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(),
+                Lifecycle.State.RESUMED);
 
         mGoToLatest = activity.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
@@ -348,9 +353,11 @@ public class MessagesFragment extends Fragment {
         AppCompatImageButton send = view.findViewById(R.id.chatSendButton);
         send.setOnClickListener(v -> sendText(activity));
         view.findViewById(R.id.chatForwardButton).setOnClickListener(v -> sendText(activity));
+        AppCompatImageButton doneEditing = view.findViewById(R.id.chatEditDoneButton);
+        doneEditing.setOnClickListener(v -> sendText(activity));
 
         // Send image button
-        view.findViewById(R.id.attachImage).setOnClickListener(v -> openImageSelector(activity));
+        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity));
 
         // Send file button
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
@@ -374,11 +381,17 @@ public class MessagesFragment extends Fragment {
                     activity.sendKeyPress();
                 }
 
-                // Show either [send] or [record audio] button.
-                if (charSequence.length() > 0) {
+                // Show either [send] or [record audio] or [done editing] button.
+                if (mTextAction == UiUtils.MsgAction.EDIT) {
+                    doneEditing.setVisibility(View.VISIBLE);
+                    audio.setVisibility(View.INVISIBLE);
+                    send.setVisibility(View.INVISIBLE);
+                } else if (charSequence.length() > 0) {
+                    doneEditing.setVisibility(View.INVISIBLE);
                     audio.setVisibility(View.INVISIBLE);
                     send.setVisibility(View.VISIBLE);
                 } else {
+                    doneEditing.setVisibility(View.INVISIBLE);
                     audio.setVisibility(View.VISIBLE);
                     send.setVisibility(View.INVISIBLE);
                 }
@@ -461,10 +474,10 @@ public class MessagesFragment extends Fragment {
                                     boolean fatal = failure.getBoolean(AttachmentHandler.ARG_FATAL, false);
                                     SqlStore store = BaseDb.getInstance().getStore();
                                     Storage.Message msg = store.getMessageById(msgId);
-                                    if (fatal && msg != null) {
-                                        store.msgDiscard(mTopic, msgId);
-                                    }
-                                    if (msg != null) {
+                                    if (msg != null && BaseDb.isUnsentSeq(msg.getSeqId())) {
+                                        if (fatal) {
+                                            store.msgDiscard(mTopic, msgId);
+                                        }
                                         runMessagesLoader(mTopicName);
                                         String error = failure.getString(AttachmentHandler.ARG_ERROR);
                                         Toast.makeText(activity, error, Toast.LENGTH_SHORT).show();
@@ -482,14 +495,11 @@ public class MessagesFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         Bundle args = getArguments();
         if (args != null) {
-            mTopicName = args.getString("topic");
+            mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         }
 
         if (mTopicName != null) {
@@ -503,6 +513,13 @@ public class MessagesFragment extends Fragment {
 
         updateFormValues();
         activity.sendNoteRead(0);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            NotificationManager nm = (NotificationManager) activity.getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm != null && !nm.areNotificationsEnabled()) {
+                mNotificationsPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
 
     void runMessagesLoader(String topicName) {
@@ -568,6 +585,7 @@ public class MessagesFragment extends Fragment {
                         timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
                     }
                     mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
+                    ((MessageActivity) activity).sendRecordingProgress(true);
                 }
             }
         };
@@ -733,8 +751,8 @@ public class MessagesFragment extends Fragment {
             return;
         }
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -777,7 +795,7 @@ public class MessagesFragment extends Fragment {
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
-                    input.setText(mMessageToSend);
+                    input.append(mMessageToSend);
                     mMessageToSend = null;
                 }
                 setSendPanelVisible(activity, R.id.sendMessagePanel);
@@ -803,24 +821,21 @@ public class MessagesFragment extends Fragment {
 
         releaseAudio(false);
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_NORMAL);
         audioManager.setSpeakerphoneOn(false);
 
-        // Save the text in the send field.
-        EditText input = activity.findViewById(R.id.editMessage);
-        String draft = input.getText().toString().trim();
         Bundle args = getArguments();
         if (args != null) {
-            args.putString("topic", mTopicName);
+            args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
+            // Save the text in the send field.
+            String draft = ((EditText) activity.findViewById(R.id.editMessage)).getText().toString().trim();
             args.putString(MESSAGE_TO_SEND, draft);
-            args.putInt(MESSAGE_REPLY_ID, mReplySeqID);
-            args.putSerializable(MESSAGE_REPLY, mReply);
+            args.putString(MESSAGE_TEXT_ACTION, mTextAction.name());
+            args.putInt(MESSAGE_QUOTED_SEQ_ID, mQuotedSeqID);
+            args.putSerializable(MESSAGE_QUOTED, mQuote);
             args.putSerializable(ForwardToFragment.CONTENT_TO_FORWARD, mContentToForward);
             args.putSerializable(ForwardToFragment.FORWARDING_FROM_USER, mForwardSender);
         }
@@ -838,20 +853,13 @@ public class MessagesFragment extends Fragment {
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_topic, menu);
-    }
-
-    @Override
-    public void onPrepareOptionsMenu(@NonNull final Menu menu) {
+    public void onPrepareMenu(@NonNull Menu menu) {
+        MenuProvider.super.onPrepareMenu(menu);
         if (mTopic != null) {
             if (mTopic.isDeleted()) {
-                final Activity activity = getActivity();
-                if (activity != null) {
-                    menu.clear();
-                    activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
-                }
+                final Activity activity = requireActivity();
+                menu.clear();
+                activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
             } else {
                 menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
                 menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
@@ -869,11 +877,13 @@ public class MessagesFragment extends Fragment {
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return false;
-        }
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+        inflater.inflate(R.menu.menu_topic, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
+        final Activity activity = requireActivity();
 
         int id = item.getItemId();
         if (id == R.id.action_clear) {
@@ -905,7 +915,7 @@ public class MessagesFragment extends Fragment {
             return true;
         }
 
-        return super.onOptionsItemSelected(item);
+        return false;
     }
 
     void setRefreshing(boolean active) {
@@ -955,15 +965,12 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
+    private synchronized void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
         if (mAudioPlayer != null) {
             return;
         }
 
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_CALL);
@@ -987,18 +994,15 @@ public class MessagesFragment extends Fragment {
                     agc.setEnabled(true);
                 }
             }
-        } catch (IOException | IllegalStateException ex) {
+        } catch (SecurityException | IOException | IllegalStateException ex) {
             Log.e(TAG, "Unable to play recording", ex);
-            Toast.makeText(getActivity(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
             mAudioPlayer = null;
         }
     }
 
     private void releaseAudio(boolean keepRecord) {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final MessageActivity activity = (MessageActivity) requireActivity();
 
         activity.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -1068,13 +1072,9 @@ public class MessagesFragment extends Fragment {
         if (mChatInvitationShown) {
             return;
         }
-
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
         mChatInvitationShown = true;
+
+        final Activity activity = requireActivity();
 
         final BottomSheetDialog invitation = new BottomSheetDialog(activity);
         final LayoutInflater inflater = LayoutInflater.from(invitation.getContext());
@@ -1156,12 +1156,13 @@ public class MessagesFragment extends Fragment {
         }
     }
 
-    private void openFileSelector(@Nullable Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void openFileSelector(@NonNull Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        if (!UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+                !UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             mFileOpenerRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
             return;
         }
@@ -1169,94 +1170,39 @@ public class MessagesFragment extends Fragment {
         mFilePickerLauncher.launch("*/*");
     }
 
-    private void openImageSelector(@Nullable final Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void openMediaSelector(@NonNull final Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
+        LinkedList<String> permissions = new LinkedList<>();
+        permissions.add(Manifest.permission.CAMERA);
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+        } else {
+            permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+        }
+        LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions.toArray(new String[]{}));
         if (!missing.isEmpty()) {
             mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
             return;
         }
 
-        // Pick image from gallery.
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png"});
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        // Make sure camera is available.
-        if (cameraIntent.resolveActivity(activity.getPackageManager()) != null) {
-            // Create temp file for storing the photo.
-            File photoFile = null;
-            try {
-                photoFile = createImageFile(activity);
-            } catch (IOException ex) {
-                // Error occurred while creating the File
-                Log.w(TAG, "Unable to create temp file for storing camera photo", ex);
-            }
-            // Continue only if the File was successfully created
-            if (photoFile != null) {
-                Uri photoUri = FileProvider.getUriForFile(activity,
-                        "co.tinode.tindroid.provider", photoFile);
-
-                cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-                // See explanation here: http://medium.com/@quiro91/ceb9bb0eec3a
-                cameraIntent.setClipData(ClipData.newRawUri("", photoUri));
-                cameraIntent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                mCurrentPhotoFile = photoFile.getAbsolutePath();
-                mCurrentPhotoUri = photoUri;
-
-            } else {
-                cameraIntent = null;
-            }
-        } else {
-            cameraIntent = null;
-        }
-
-        // Pack two intents into a chooser.
-        Intent chooserIntent = Intent.createChooser(galleryIntent, getString(R.string.select_image));
-        if (cameraIntent != null) {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Parcelable[]{cameraIntent});
-        }
-        mImagePickerLauncher.launch(chooserIntent);
+        mMediaPickerLauncher.launch(null);
     }
 
-    private File createImageFile(Activity activity) throws IOException {
-        // Create an image file name
-        String imageFileName = "IMG_" +
-                new SimpleDateFormat("yyMMdd_HHmmss", Locale.getDefault()).format(new Date()) + "_";
-        File storageDir = activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File imageFile = File.createTempFile(
-                imageFileName,  // prefix
-                ".jpg",  // suffix
-                storageDir      // directory
-        );
-
-        // Make sure directories exist.
-        File path = imageFile.getParentFile();
-        if (path != null) {
-            path.mkdirs();
+    private boolean sendMessage(Drafty content, int seqId, boolean isReplacement) {
+        MessageActivity activity = (MessageActivity) requireActivity();
+        boolean done = activity.sendMessage(content, seqId, isReplacement);
+        if (done) {
+            scrollToBottom(false);
         }
-
-        return imageFile;
+        return done;
     }
 
-    private boolean sendMessage(Drafty content, int replyTo) {
-        MessageActivity activity = (MessageActivity) getActivity();
-        if (activity != null) {
-            boolean done = activity.sendMessage(content, replyTo);
-            if (done) {
-                scrollToBottom(false);
-            }
-            return done;
-        }
-        return false;
-    }
-
-    private void sendText(Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void sendText(@NonNull Activity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
         final EditText inputField = activity.findViewById(R.id.editMessage);
@@ -1265,7 +1211,7 @@ public class MessagesFragment extends Fragment {
         }
 
         if (mContentToForward != null) {
-            if (sendMessage(mForwardSender.appendLineBreak().append(mContentToForward), -1)) {
+            if (sendMessage(mForwardSender.appendLineBreak().append(mContentToForward), -1, false)) {
                 mForwardSender = null;
                 mContentToForward = null;
             }
@@ -1277,23 +1223,27 @@ public class MessagesFragment extends Fragment {
         String message = inputField.getText().toString().trim();
         if (!message.equals("")) {
             Drafty msg = Drafty.parse(message);
-            if (mReply != null) {
-                msg = mReply.append(msg);
+            boolean isReplacement = false;
+            if (mTextAction == UiUtils.MsgAction.EDIT) {
+                isReplacement = true;
+            } else if (mQuote != null) {
+                msg = mQuote.append(msg);
             }
-            if (sendMessage(msg, mReplySeqID)) {
+            if (sendMessage(msg, mQuotedSeqID, isReplacement)) {
                 // Message is successfully queued, clear text from the input field and redraw the list.
                 inputField.getText().clear();
-                if (mReplySeqID > 0) {
-                    mReplySeqID = -1;
-                    mReply = null;
+                if (mQuotedSeqID > 0) {
+                    mTextAction = UiUtils.MsgAction.NONE;
+                    mQuotedSeqID = -1;
+                    mQuote = null;
                     activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
                 }
             }
         }
     }
 
-    private void sendAudio(AppCompatActivity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+    private void sendAudio(@NonNull AppCompatActivity activity) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -1307,50 +1257,85 @@ public class MessagesFragment extends Fragment {
         }
 
         byte[] preview = mAudioSampler.obtain(96);
-        args.putByteArray(AttachmentHandler.ARG_AUDIO_PREVIEW, preview);
+        args.putByteArray(AttachmentHandler.ARG_PREVIEW, preview);
         args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, Uri.fromFile(mAudioRecord));
         args.putString(AttachmentHandler.ARG_FILE_PATH, mAudioRecord.getAbsolutePath());
-        args.putInt(AttachmentHandler.ARG_AUDIO_DURATION, mAudioRecordDuration);
+        args.putInt(AttachmentHandler.ARG_DURATION, mAudioRecordDuration);
         args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_AUDIO);
         args.putString(AttachmentHandler.ARG_TOPIC_NAME, mTopicName);
         AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_AUDIO, args);
     }
 
     private void cancelPreview(Activity activity) {
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        mReplySeqID = -1;
-        mReply = null;
+        mQuotedSeqID = -1;
+        mQuote = null;
         mContentToForward = null;
         mForwardSender = null;
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+        if (mTextAction == UiUtils.MsgAction.EDIT) {
+            ((EditText) activity.findViewById(R.id.editMessage)).setText("");
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
+        }
+
+        mTextAction = UiUtils.MsgAction.NONE;
     }
 
-    void showReply(Activity activity, Drafty reply, int seq) {
-        mReply = reply;
-        mReplySeqID = seq;
+    void startEditing(Activity activity, String original, Drafty quote, int seq) {
+        handleQuotedText(activity, UiUtils.MsgAction.EDIT, original, quote, seq);
+    }
+
+    void showReply(Activity activity, Drafty quote, int seq) {
+        handleQuotedText(activity, UiUtils.MsgAction.REPLY, null, quote, seq);
+    }
+
+    private void handleQuotedText(Activity activity, UiUtils.MsgAction action,
+                                  String original, Drafty quote, int seq) {
+        mQuotedSeqID = seq;
+        mQuote = quote;
         mContentToForward = null;
         mForwardSender = null;
 
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
-        TextView replyHolder = activity.findViewById(R.id.contentPreview);
-        replyHolder.setText(reply.format(new SendReplyFormatter(replyHolder)));
+        if (!TextUtils.isEmpty(original)) {
+            EditText editText = activity.findViewById(R.id.editMessage);
+            // Two steps: clear field, then append to move cursor to the end.
+            editText.setText("");
+            editText.append(original);
+            editText.requestFocus();
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.VISIBLE);
+        } else {
+            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
+            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
+            if (mTextAction == UiUtils.MsgAction.EDIT) {
+                ((EditText)activity.findViewById(R.id.editMessage)).setText("");
+            }
+        }
+        TextView previewHolder = activity.findViewById(R.id.contentPreview);
+        previewHolder.setText(quote.format(new SendReplyFormatter(previewHolder)));
+        mTextAction = action;
     }
 
     private void showContentToForward(Activity activity, Drafty sender, Drafty content) {
-        mReplySeqID = -1;
-        mReply = null;
+        mTextAction = UiUtils.MsgAction.FORWARD;
+        mQuotedSeqID = -1;
+        mQuote = null;
 
         activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
         TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
-        content = new Drafty().append(sender).appendLineBreak().append(content.preview(UiUtils.QUOTED_REPLY_LENGTH));
+        content = new Drafty().append(sender).appendLineBreak().append(content.preview(Const.QUOTED_REPLY_LENGTH));
         previewHolder.setText(content.format(new SendForwardedFormatter(previewHolder)));
         activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
     }
@@ -1369,15 +1354,19 @@ public class MessagesFragment extends Fragment {
             Bundle args = getArguments();
             if (args != null) {
                 mMessageToSend = args.getString(MESSAGE_TO_SEND);
-                mReplySeqID = args.getInt(MESSAGE_REPLY_ID);
-                mReply = (Drafty) args.getSerializable(MESSAGE_REPLY);
+                String textAction = args.getString(MESSAGE_TEXT_ACTION);
+                mTextAction = TextUtils.isEmpty(textAction) ? UiUtils.MsgAction.NONE :
+                        UiUtils.MsgAction.valueOf(textAction);
+                mQuotedSeqID = args.getInt(MESSAGE_QUOTED_SEQ_ID);
+                mQuote = (Drafty) args.getSerializable(MESSAGE_QUOTED);
                 mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
                 mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
 
                 // Clear used arguments.
                 args.remove(MESSAGE_TO_SEND);
-                args.remove(MESSAGE_REPLY_ID);
-                args.remove(MESSAGE_REPLY);
+                args.remove(MESSAGE_TEXT_ACTION);
+                args.remove(MESSAGE_QUOTED_SEQ_ID);
+                args.remove(MESSAGE_QUOTED);
                 args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
                 args.remove(ForwardToFragment.FORWARDING_FROM_USER);
             }
@@ -1405,8 +1394,8 @@ public class MessagesFragment extends Fragment {
         public ContentInfoCompat onReceiveContent(@NonNull View view, @NonNull ContentInfoCompat payload) {
             Pair<ContentInfoCompat, ContentInfoCompat> split = payload.partition(item -> item.getUri() != null);
 
-            final MessageActivity activity = (MessageActivity) getActivity();
-            if (split.first != null && activity != null) {
+            final MessageActivity activity = (MessageActivity) requireActivity();
+            if (split.first != null) {
                 // Handle posted URIs.
                 ClipData data = split.first.getClip();
                 if (data.getItemCount() > 0) {

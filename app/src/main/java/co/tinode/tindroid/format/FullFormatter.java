@@ -11,6 +11,7 @@ import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.text.Layout;
 import android.text.SpannableStringBuilder;
@@ -32,8 +33,11 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
 import java.util.Arrays;
@@ -41,11 +45,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.widgets.TextDrawable;
 import co.tinode.tindroid.widgets.WaveDrawable;
 
 /**
@@ -65,9 +72,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     private static final int QUOTE_STRIPE_WIDTH_DP = 4;
     private static final int STRIPE_GAP_DP = 8;
 
-    private static final int MAX_FILE_LENGTH = 28;
+    private static final int MAX_FILE_LENGTH = 18;
 
     private static final int MIN_AUDIO_PREVIEW_LENGTH = 16;
+
+    // Size of the [PLAY] control in video in dip.
+    private static final int PLAY_CONTROL_SIZE = 42;
 
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
@@ -167,11 +177,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     static SpannableStringBuilder handleMention_Impl(List<SpannableStringBuilder> content, Map<String, Object> data) {
         int color = sDefaultColor;
-
         if (data != null) {
-            try {
-                color = colorMention((String) data.get("val"));
-            } catch (ClassCastException ignored) {}
+            color = colorMention(getStringVal("val", data, ""));
         }
 
         return assignStyle(new ForegroundColorSpan(color), content);
@@ -217,10 +224,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         result.append(" ");
 
-        Number duration = null;
-        try {
-            duration = (Number) data.get("duration");
-        } catch (ClassCastException ignored) {}
+        int duration = getIntVal("duration", data);
 
         // Initialize and insert waveform drawable.
         Object val = data.get("preview");
@@ -235,8 +239,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             waveDrawable = new WaveDrawable(res);
             waveDrawable.setBounds(new Rect(0, 0, (int) width, (int) (bounds.height() * 0.9f)));
             waveDrawable.setCallback(mContainer);
-            if (duration != null) {
-                waveDrawable.setDuration(duration.intValue());
+            if (duration > 0) {
+                waveDrawable.setDuration(duration);
             }
             waveDrawable.put(preview);
         } else {
@@ -336,7 +340,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         // Insert duration on the next line as small text.
         result.append("\n");
 
-        String strDur = duration != null ? " " + millisToTime(duration, true) : null;
+        String strDur = duration > 0 ? " " + millisToTime(duration, true) : null;
         if (TextUtils.isEmpty(strDur)) {
             strDur = " -:--";
         }
@@ -349,43 +353,41 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         return result;
     }
 
-    @Override
-    protected SpannableStringBuilder handleImage(final Context ctx, List<SpannableStringBuilder> content,
-                                                 final Map<String, Object> data) {
-        if (data == null) {
-            return null;
-        }
+    private static class ImageDim {
+        float scale;
+        int width;
+        int height;
+        int scaledWidth;
+        int scaledHeight;
 
-        SpannableStringBuilder result = null;
-        // Bitmap dimensions specified by the sender.
-        int width = 0, height = 0;
-        Object tmp;
-        if ((tmp = data.get("width")) instanceof Number) {
-            width = ((Number) tmp).intValue();
+        public @NotNull String toString() {
+            return width + "x" + height + "/" + scaledWidth + "x" + scaledHeight + "@" + scale;
         }
-        if ((tmp = data.get("height")) instanceof Number) {
-            height = ((Number) tmp).intValue();
-        }
+    }
 
-        // Calculate scaling factor for images to fit into the viewport.
-        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
-        float scale = scaleBitmap(width, height, mViewport, metrics.density);
-        // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
-        int scaledWidth = 0, scaledHeight = 0;
-        if (scale > 0) {
-            scaledWidth = (int) (width * scale * metrics.density);
-            scaledHeight = (int) (height * scale * metrics.density);
-        }
+    private CharacterStyle createImageSpan(final Context ctx, final Object val, final String ref,
+                                           final ImageDim dim, final float density,
+                                           @Nullable final Drawable overlay,
+                                           @DrawableRes int id_placeholder, @DrawableRes int id_error) {
 
         CharacterStyle span = null;
         Bitmap bmpPreview = null;
 
+        // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
+        dim.scale = scaleBitmap(dim.width, dim.height, mViewport, density);
+        // Bitmap dimensions specified by the sender converted to viewport size in display pixels.
+        dim.scaledWidth = 0;
+        dim.scaledHeight = 0;
+        if (dim.scale > 0) {
+            dim.scaledWidth = (int) (dim.width * dim.scale * density);
+            dim.scaledHeight = (int) (dim.height * dim.scale * density);
+        }
+
         // Inline image.
-        Object val = data.get("val");
         if (val != null) {
             try {
-                // True if inline image is only a preview: try to use out of band image (default).
-                boolean isPreviewOnly = true;
+                // False if inline image is only a preview: try to use out of band image (default).
+                boolean usePreviewAsMainImage = false;
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
                 byte[] bits = (val instanceof String) ?
@@ -395,36 +397,41 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                     // Check if the inline bitmap is big enough to be used as primary image.
                     int previewWidth = bmpPreview.getWidth();
                     int previewHeight = bmpPreview.getHeight();
-                    if (scale == 0) {
+                    if (dim.scale == 0) {
                         // If dimensions are not specified in the attachment metadata, try to use bitmap dimensions.
-                        scale = scaleBitmap(previewWidth, previewHeight, mViewport, metrics.density);
-                        if (scale != 0) {
+                        dim.scale = scaleBitmap(previewWidth, previewHeight, mViewport, density);
+                        if (dim.scale != 0) {
                             // Because sender-provided dimensions are unknown or invalid we have to use
                             // this inline image as the primary one (out of band image is ignored).
-                            isPreviewOnly = false;
-                            scaledWidth = (int) (previewWidth * scale * metrics.density);
-                            scaledHeight = (int) (previewHeight * scale * metrics.density);
+                            usePreviewAsMainImage = true;
+                            dim.scaledWidth = (int) (previewWidth * dim.scale * density);
+                            dim.scaledHeight = (int) (previewHeight * dim.scale * density);
                         }
                     }
 
                     Bitmap oldBmp = bmpPreview;
-                    if (scale == 0) {
+                    if (dim.scale == 0) {
                         // Can't scale the image. There must be something wrong with it.
                         bmpPreview = null;
                     } else {
-                        bmpPreview = Bitmap.createScaledBitmap(bmpPreview, scaledWidth, scaledHeight, true);
+                        bmpPreview = Bitmap.createScaledBitmap(bmpPreview, dim.scaledWidth, dim.scaledHeight, true);
                         // Check if the image is big enough to use as the primary one (ignoring possible full-size
                         // out-of-band image). If it's not already suitable for preview don't bother.
-                        isPreviewOnly = isPreviewOnly && previewWidth * metrics.density < scaledWidth * 0.35f;
-
+                        usePreviewAsMainImage = usePreviewAsMainImage ||
+                                (previewWidth / density > dim.scaledWidth * 0.35f);
                     }
                     oldBmp.recycle();
                 } else {
                     Log.w(TAG, "Failed to decode preview bitmap");
                 }
 
-                if (bmpPreview != null && !isPreviewOnly) {
-                    span = new ImageSpan(ctx, bmpPreview);
+                if (bmpPreview != null && (usePreviewAsMainImage || ref == null)) {
+                    Drawable drawable = new BitmapDrawable(ctx.getResources(), bmpPreview);
+                    if (overlay != null) {
+                        drawable = new LayerDrawable(new Drawable[]{drawable, overlay});
+                    }
+                    drawable.setBounds(0, 0, dim.scaledWidth, dim.scaledHeight);
+                    span = new ImageSpan(drawable);
                 }
             } catch (Exception ex) {
                 Log.w(TAG, "Broken image preview", ex);
@@ -432,43 +439,67 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         // Out of band image.
-        if (span == null && (val = data.get("ref")) instanceof String) {
-            String ref = (String) val;
+        if (span == null && ref != null) {
             URL url = Cache.getTinode().toAbsoluteURL(ref);
-            if (scale > 0 && url != null) {
-                Drawable fg, bg = null;
+            if (dim.scale > 0 && url != null) {
+                Drawable fg;
 
                 // "Image loading" placeholder.
                 Drawable placeholder;
                 if (bmpPreview != null) {
                     placeholder = new BitmapDrawable(ctx.getResources(), bmpPreview);
-                    bg = placeholder;
                 } else {
-                    fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_image);
+                    fg = AppCompatResources.getDrawable(ctx, id_placeholder);
                     if (fg != null) {
                         fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                     }
-                    placeholder = UiUtils.getPlaceholder(ctx, fg, null, scaledWidth, scaledHeight);
+                    placeholder = UiUtils.getPlaceholder(ctx, fg, null, dim.scaledWidth, dim.scaledHeight);
                 }
 
                 // "Failed to load image" placeholder.
-                fg = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
+                fg = AppCompatResources.getDrawable(ctx, id_error);
                 if (fg != null) {
                     fg.setBounds(0, 0, fg.getIntrinsicWidth(), fg.getIntrinsicHeight());
                 }
-                Drawable onError = UiUtils.getPlaceholder(ctx, fg, bg, scaledWidth, scaledHeight);
 
-                span = new RemoteImageSpan(mContainer, scaledWidth, scaledHeight, false, placeholder, onError);
+                Drawable onError = UiUtils.getPlaceholder(ctx, overlay != null ? null : fg, null,
+                        dim.scaledWidth, dim.scaledHeight);
+                span = new RemoteImageSpan(mContainer, dim.scaledWidth, dim.scaledHeight,
+                        false, placeholder, onError);
+                ((RemoteImageSpan) span).setOverlay(overlay);
                 ((RemoteImageSpan) span).load(url);
             }
         }
 
+        return span;
+    }
+
+    @Override
+    protected SpannableStringBuilder handleImage(final Context ctx, List<SpannableStringBuilder> content,
+                                                 final Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        ImageDim dim = new ImageDim();
+
+        // Bitmap dimensions specified by the sender.
+        dim.width = getIntVal("width", data);
+        dim.height = getIntVal("height", data);
+
+        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+        CharacterStyle span = createImageSpan(ctx, data.get("val"),
+                getStringVal("ref", data, null), dim, metrics.density,
+                null,
+                R.drawable.ic_image, R.drawable.ic_broken_image);
+
+        SpannableStringBuilder result = null;
         if (span == null) {
             // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
             Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
             if (broken != null) {
                 broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-                span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, scaledWidth, scaledHeight));
+                span = new ImageSpan(UiUtils.getPlaceholder(ctx, broken, null, dim.scaledWidth, dim.scaledHeight));
                 result = assignStyle(span, content);
             }
         } else if (mClicker != null) {
@@ -478,6 +509,70 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 @Override
                 public void onClick(@NonNull View widget) {
                     mClicker.onClick("IM", data, null);
+                }
+            }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
+        } else {
+            result = assignStyle(span, content);
+        }
+
+        return result;
+    }
+
+    @Override
+    protected SpannableStringBuilder handleVideo(final Context ctx, List<SpannableStringBuilder> content,
+                                                 final Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        ImageDim dim = new ImageDim();
+        // Video dimensions specified by the sender.
+        dim.width = getIntVal("width", data);
+        dim.height = getIntVal("height", data);
+
+        DisplayMetrics metrics = ctx.getResources().getDisplayMetrics();
+
+        // Play ( > ) icon + [00:00] over the image.
+        Resources res = ctx.getResources();
+        LayerDrawable overlay;
+        if (mClicker != null) {
+            //noinspection ConstantConditions
+            overlay = (LayerDrawable) (AppCompatResources.getDrawable(ctx, R.drawable.video_overlay).mutate());
+            TextDrawable duration = new TextDrawable(res,
+                    millisToTime(getIntVal("duration", data), false).toString());
+            duration.setTextSize(res, 12);
+            // Do not need to use Theme color because the background here is a video frame.
+            duration.setTextColor(0xFF666666);
+            overlay.setDrawableByLayerId(R.id.duration, duration);
+        } else {
+            overlay = null;
+        }
+
+        CharacterStyle span = createImageSpan(ctx, data.get("preview"),
+                getStringVal("preref", data, null), dim, metrics.density,
+                overlay,
+                R.drawable.ic_video, R.drawable.ic_video);
+
+        SpannableStringBuilder result;
+        if (span == null) {
+            // If the poster cannot be decoded for whatever reason, just show show a uniform gray background
+            // with play control on top.
+            Drawable drawable = UiUtils.getPlaceholder(ctx, null, null, dim.scaledWidth, dim.scaledHeight);
+            if (overlay != null) {
+                Rect bounds = drawable.copyBounds();
+                drawable = new LayerDrawable(new Drawable[]{drawable, overlay});
+                drawable.setBounds(bounds);
+            }
+            span = new ImageSpan(drawable);
+        }
+
+        if (mClicker != null) {
+            // Make image clickable by wrapping ImageSpan into a ClickableSpan.
+            result = assignStyle(span, content);
+            result.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(@NonNull View widget) {
+                    mClicker.onClick("VD", data, null);
                 }
             }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
         } else {
@@ -551,27 +646,28 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         // Insert document's file name
-        String fname = null;
-        try {
-            fname = (String) data.get("name");
-        } catch (NullPointerException | ClassCastException ignored) {
-        }
+        String fname = getStringVal("name", data, null);
         if (TextUtils.isEmpty(fname)) {
             fname = ctx.getResources().getString(R.string.default_attachment_name);
-        } else //noinspection ConstantConditions
-            if (fname.length() > MAX_FILE_LENGTH) {
+        } else if (fname.length() > MAX_FILE_LENGTH) {
             fname = fname.substring(0, MAX_FILE_LENGTH/2 - 1) + "…" +
                     fname.substring(fname.length() - MAX_FILE_LENGTH/2);
         }
 
         result.append(fname, new TypefaceSpan("monospace"), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        try {
-            //noinspection ConstantConditions
-            String size = UiUtils.bytesToHumanSize((int) data.get("size"));
-            if (!TextUtils.isEmpty(size)) {
-                result.append("\u2009(" + size +")", new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        int byteCount = getIntVal("size", data);
+        if (byteCount <= 0) {
+            Object val = data.get("val");
+            byte[] bits = (val instanceof String) ?
+                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+            if (bits != null) {
+                byteCount = bits.length;
             }
-        } catch (NullPointerException | ClassCastException ignored) {
+        }
+        if (byteCount > 0) {
+            result.append("\u2009(" + UiUtils.bytesToHumanSize(byteCount) +")",
+                    new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
         if (mClicker == null) {
@@ -693,16 +789,12 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         result.setSpan(new SubscriptSpan(), 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        Object val = data.get("incoming");
-        boolean incoming = val instanceof Boolean ? (Boolean) val : false;
+        boolean incoming = getBooleanVal("incoming", data);
         result.append(ctx.getString(incoming ? R.string.incoming_call : R.string.outgoing_call),
                 new RelativeSizeSpan(1.15f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        val = data.get("duration");
-        int duration = val instanceof Number ? ((Number) val).intValue() : 0;
-
-        val = data.get("state");
-        String state = val instanceof String ? (String) val : "";
+        int duration = getIntVal("duration", data);
+        String state = getStringVal("state", data, "");
 
         result.append("\n");
 
@@ -739,15 +831,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         if (data != null) {
             // Does object have viewport dimensions?
-            int width = 0, height = 0;
-            Object tmp;
-            if ((tmp = data.get("width")) instanceof Number) {
-                width = ((Number) tmp).intValue();
-            }
-            if ((tmp = data.get("height")) instanceof Number) {
-                height = ((Number) tmp).intValue();
-            }
-
+            int width = getIntVal("width", data);
+            int height = getIntVal("height", data);
             if (width <= 0 || height <= 0) {
                 return handleAttachment(ctx, data);
             }

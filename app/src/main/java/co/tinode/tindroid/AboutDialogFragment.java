@@ -20,10 +20,7 @@ public class AboutDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         // Use the Builder class for convenient dialog construction
-        final Activity activity = getActivity();
-        if (activity == null) {
-            throw new IllegalStateException("Activity is null");
-        }
+        final Activity activity = requireActivity();
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         View dialog = View.inflate(activity, R.layout.dialog_about, null);

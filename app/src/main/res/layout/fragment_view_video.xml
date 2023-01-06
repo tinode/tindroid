@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#000"
+        android:orientation="vertical">
+
+        <VideoView
+            android:id="@+id/video"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            android:contentDescription=""
+            android:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/poster"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:foregroundGravity="center"
+            android:layout_centerInParent="true"
+            android:layout_gravity="center"
+            tools:ignore="ContentDescription"
+            tools:src="@drawable/ic_video" />
+
+        <ProgressBar
+            android:id="@+id/loading"
+            style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="@color/colorChipBackground"
+            android:layout_centerInParent="true" />
+    </RelativeLayout>
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/metaPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        card_view:cardBackgroundColor="?android:colorBackground"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardUseCompatPadding="true">
+
+        <LinearLayout
+            android:id="@+id/sendVideoPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="6sp"
+            android:visibility="visible"
+            tools:ignore="RtlSymmetry">
+
+            <EditText
+                android:id="@+id/editMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:hint="@string/video_caption_hint"
+                android:imeOptions="actionSend"
+                android:importantForAutofill="no"
+                android:inputType="textMultiLine|textCapSentences"
+                android:maxLines="3"
+                android:textColor="?android:attr/textColorPrimary" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/chatSendButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="0.1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/send_message_button_hint"
+                android:paddingStart="4sp"
+                android:paddingEnd="8sp"
+                app:srcCompat="@drawable/ic_send"
+                app:tint="?attr/colorAccent" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+</LinearLayout>

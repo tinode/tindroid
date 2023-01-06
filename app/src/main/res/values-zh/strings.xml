@@ -163,8 +163,8 @@
     <string name="login_rejected">登录被拒绝</string>
     <string name="email_rejected">邮件被拒绝</string>
     <string name="invalid_confirmation_code">无效验证码</string>
-    <string name="notification_channel_name">新消息</string>
-    <string name="notification_channel_description">收到新消息</string>
+    <string name="new_message_channel_name">新消息</string>
+    <string name="new_message_channel_description">收到新消息</string>
     <string name="new_message">新消息</string>
     <string name="request_pass_reset_title">密码重置</string>
     <string name="request_pass_reset">请求验证码对应 %1$s:</string>
@@ -187,7 +187,6 @@
     <string name="new_chat_block">屏蔽</string>
     <string name="new_chat">新聊天</string>
     <string name="messages_not_readable">无法访问新消息</string>
-    <string name="content_deleted">内容已删除</string>
     <string name="peers_messaging_disabled">对方消息已禁用</string>
     <string name="action_enable">启用</string>
     <string name="find">查找</string>
@@ -324,4 +323,18 @@
     <string name="in_progress_call">通话中</string>
     <string name="connecting_call">连接</string>
     <string name="tags_not_found">尚未定义标签。添加一些。</string>
+
+    <string name="edited">已编辑</string>
+    <string name="video">视频</string>
+    <string name="video_caption_hint">视频标题</string>
+    <string name="video_preview">视频</string>
+    <string name="broken_video">无效或未知的视频格式。</string>
+    <string name="unable_to_play_video">无法播放此视频。</string>
+    <string name="select_image_or_video">选择图片或视频</string>
+    <string name="tap_to_select">点击选择</string>
+    <string name="video_call_channel_name">视频通话</string>
+    <string name="video_call_channel_description">视频和音频通话</string>
+    <string name="tinode_video_call">Tinode 视频通话</string>
+    <string name="answer_call">接听</string>
+    <string name="decline_call">拒绝</string>
 </resources>

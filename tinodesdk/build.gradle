@@ -1,11 +1,11 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 24
-        targetSdkVersion 32
+        targetSdkVersion 33
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
 
@@ -29,11 +29,11 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    api 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
-    api 'com.fasterxml.jackson.core:jackson-core:2.13.4'
-    api 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.14.1'
+    api 'com.fasterxml.jackson.core:jackson-core:2.14.1'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.14.1'
     api 'org.java-websocket:Java-WebSocket:1.5.3'
 
-    implementation 'org.jetbrains:annotations:23.0.0'
+    implementation 'org.jetbrains:annotations:23.1.0'
     testImplementation 'junit:junit:4.13.2'
 }

@@ -8,7 +8,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -93,6 +92,9 @@ public class ImageViewFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final Activity activity = getActivity();
+        if (activity == null) {
+            return null;
+        }
 
         View view = inflater.inflate(R.layout.fragment_view_image, container, false);
         mMatrix = new Matrix();
@@ -101,7 +103,7 @@ public class ImageViewFragment extends Fragment {
 
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onScroll(MotionEvent e1, MotionEvent e2, float dX, float dY) {
+            public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -125,7 +127,7 @@ public class ImageViewFragment extends Fragment {
 
         ScaleGestureDetector.OnScaleGestureListener scaleListener = new ScaleGestureDetector.SimpleOnScaleGestureListener() {
             @Override
-            public boolean onScale(ScaleGestureDetector scaleDetector) {
+            public boolean onScale(@NonNull ScaleGestureDetector scaleDetector) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -194,9 +196,9 @@ public class ImageViewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-        if (activity == null || args == null) {
+        if (args == null) {
             return;
         }
 
@@ -295,8 +297,6 @@ public class ImageViewFragment extends Fragment {
                                         return;
                                     }
 
-                                    Log.i(TAG, "Image loaded");
-
                                     final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
                                     mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
                                     mWorkingRect = new RectF(mInitialRect);
@@ -325,7 +325,7 @@ public class ImageViewFragment extends Fragment {
         if (bmp != null) {
             // Must ensure the bitmap is not too big (some cameras can produce
             // bigger bitmaps that the phone can render)
-            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM);
+            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM, false);
 
             mImageView.enableOverlay(mAvatarUpload);
 
@@ -421,7 +421,7 @@ public class ImageViewFragment extends Fragment {
     @Override
     public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_image, menu);
+        inflater.inflate(R.menu.menu_download, menu);
     }
 
     @Override
@@ -440,6 +440,7 @@ public class ImageViewFragment extends Fragment {
             }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
+                filename += "" + (System.currentTimeMillis() % 10000);
             }
             Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
             String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,
@@ -454,8 +455,8 @@ public class ImageViewFragment extends Fragment {
     }
 
     private void sendImage() {
-        final MessageActivity activity = (MessageActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
@@ -496,7 +497,7 @@ public class ImageViewFragment extends Fragment {
         RectF cutOut = new RectF(mCutOutRect);
         inverse.mapRect(cutOut);
 
-        if (cutOut.width() < UiUtils.MIN_AVATAR_SIZE || cutOut.height() < UiUtils.MIN_AVATAR_SIZE) {
+        if (cutOut.width() < Const.MIN_AVATAR_SIZE || cutOut.height() < Const.MIN_AVATAR_SIZE) {
             // Avatar is too small.
             Toast.makeText(activity, R.string.image_too_small, Toast.LENGTH_SHORT).show();
             return;
@@ -511,7 +512,7 @@ public class ImageViewFragment extends Fragment {
                     (int) cutOut.width(), (int) cutOut.height());
         }
 
-        String topicName = args.getString(AttachmentHandler.ARG_TOPIC_NAME);
+        String topicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         ((AvatarCompletionHandler) activity).onAcceptAvatar(topicName, bmp);
 
         activity.getSupportFragmentManager().popBackStack();

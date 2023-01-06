@@ -89,9 +89,9 @@ public class IncomingCallFragment extends Fragment
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-        if (args == null || activity == null) {
+        if (args == null) {
             Log.w(TAG, "Call fragment created with no arguments");
             // Reject the call.
             declineCall();
@@ -102,11 +102,11 @@ public class IncomingCallFragment extends Fragment
         mListener = new InfoListener();
         tinode.addListener(mListener);
 
-        mTopicName = args.getString("topic");
-        mSeq = args.getInt("call_seq");
-        Cache.registerCallInProgress(mTopicName, mSeq);
+        mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
+        mSeq = args.getInt(Const.INTENT_EXTRA_SEQ);
+        Cache.setCallActive(mTopicName, mSeq);
 
-        // Technically the call is from args.getString("from")
+        // Technically the call is from args.getString(Const.INTENT_EXTRA_SENDER_NAME)
         // but it's the same as "topic" for p2p topics;
         // noinspection unchecked
         ComTopic<VxCard> topic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
@@ -131,14 +131,15 @@ public class IncomingCallFragment extends Fragment
     public void onResume() {
         super.onResume();
 
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             // We are done. Just quit.
             return;
         }
 
         mMediaPlayer = MediaPlayer.create(activity, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
         mMediaPlayer.start();
+
         startCamera(activity);
     }
 
@@ -209,8 +210,8 @@ public class IncomingCallFragment extends Fragment
     }
 
     private void declineCall() {
-        final CallActivity activity = (CallActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final CallActivity activity = (CallActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             // We are done. Just quit.
             return;
         }
@@ -218,8 +219,8 @@ public class IncomingCallFragment extends Fragment
     }
 
     private void acceptCall() {
-        final CallActivity activity = (CallActivity) getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final CallActivity activity = (CallActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             // We are done. Just quit.
             return;
         }

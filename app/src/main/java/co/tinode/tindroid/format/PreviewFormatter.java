@@ -112,11 +112,8 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     protected SpannableStringBuilder handleAudio(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         SpannableStringBuilder node = annotatedIcon(ctx, R.drawable.ic_mic_ol, 0);
         node.append(" ");
-        Number duration = null;
-        try {
-            duration = (Number) data.get("duration");
-        } catch (NullPointerException | ClassCastException ignored) {}
-        if (duration != null) {
+        int duration = getIntVal("duration", data);
+        if (duration > 0) {
             node.append(millisToTime(duration, false));
         } else {
             node.append(ctx.getResources().getString(R.string.audio));
@@ -127,6 +124,12 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     @Override
     protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_image_ol, R.string.picture);
+    }
+
+    @Override
+    protected SpannableStringBuilder handleVideo(final Context ctx, List<SpannableStringBuilder> content,
+                                                 final Map<String, Object> data) {
+        return annotatedIcon(ctx, R.drawable.ic_videocam_ol, R.string.video);
     }
 
     @Override
@@ -186,12 +189,9 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
             return handleUnknown(ctx, content, null);
         }
 
-        Object val = data.get("incoming");
-        boolean incoming = val instanceof Boolean ? (Boolean) val : false;
-        val = data.get("duration");
-        int duration = val instanceof Number ? ((Number) val).intValue() : 0;
-        val = data.get("state");
-        String state = val instanceof String ? (String) val : "";
+        boolean incoming = getBooleanVal("incoming", data);
+        int duration = getIntVal("duration", data);
+        String state = getStringVal("state", data, "");
 
         boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
         String status = " " + (duration > 0 ?

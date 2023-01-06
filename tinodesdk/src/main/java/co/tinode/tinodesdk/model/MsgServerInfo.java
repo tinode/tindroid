@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Info packet
  */
 public class MsgServerInfo implements Serializable {
-    public enum What {CALL, KP, RECV, READ, UNKNOWN}
+    public enum What {CALA, CALL, KP, KPA, KPV, RECV, READ, UNKNOWN}
     public enum Event {ACCEPT, ANSWER, HANG_UP, ICE_CANDIDATE, OFFER, RINGING, UNKNOWN}
 
     public String topic;
@@ -27,12 +27,18 @@ public class MsgServerInfo implements Serializable {
             return What.UNKNOWN;
         } else if (what.equals("kp")) {
             return What.KP;
+        } else if (what.equals("kpa")) {
+            return What.KPA;
+        } else if (what.equals("kpv")) {
+            return What.KPV;
         } else if (what.equals("recv")) {
             return What.RECV;
         } else if (what.equals("read")) {
             return What.READ;
         } else if (what.equals("call")) {
             return What.CALL;
+        } else if (what.equals("cala")) {
+            return What.CALA;
         }
         return What.UNKNOWN;
     }

@@ -48,9 +48,10 @@ public class LargeFileHelper {
         mUserAgent = userAgent;
     }
 
-    // Upload file out of band. This should not be called on the UI thread.
+    // Upload file out of band. Blocking operation: it should not be called on the UI thread.
     public ServerMessage upload(@NotNull InputStream in, @NotNull String filename, @NotNull String mimetype, long size,
-                                @Nullable String topic, @Nullable FileHelperProgress progress) throws IOException, CancellationException {
+                                @Nullable String topic, @Nullable FileHelperProgress progress)
+            throws IOException, CancellationException {
         mCanceled = false;
         HttpURLConnection conn = null;
         ServerMessage msg;
@@ -119,12 +120,9 @@ public class LargeFileHelper {
     }
 
     // Uploads the file using Runnable, returns PromisedReply. Safe to call on UI thread.
-    public PromisedReply<ServerMessage> uploadFuture(final InputStream in,
-                                                     final String filename,
-                                                     final String mimetype,
-                                                     final long size,
-                                                     final String topic,
-                                                     final FileHelperProgress progress) {
+    public PromisedReply<ServerMessage> uploadAsync(@NotNull InputStream in, @NotNull String filename,
+                                                    @NotNull String mimetype, long size,
+                                                    @Nullable String topic, @Nullable FileHelperProgress progress) {
         final PromisedReply<ServerMessage> result = new PromisedReply<>();
         new Thread(() -> {
             try {

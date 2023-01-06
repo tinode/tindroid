@@ -164,10 +164,10 @@
     <string name="login_rejected">Login rejeitado</string>
     <string name="email_rejected">Email rejeitado</string>
     <string name="invalid_confirmation_code">Código inválido</string>
-    <string name="notification_channel_name">Nova mensagem</string>
+    <string name="new_message_channel_name">Nova mensagem</string>
     <!-- Used in push notifications -->
     <string name="new_message">Nova mensagem</string>
-    <string name="notification_channel_description">Nova mensagem recebida</string>
+    <string name="new_message_channel_description">Nova mensagem recebida</string>
     <string name="request_pass_reset_title">Redefinir senha</string>
     <string name="request_pass_reset">Código requerido por %1$s:</string>
     <string name="validated_address_to_use">Validado %1$s para envio do código</string>
@@ -190,7 +190,6 @@
     <!-- Used in push notifications -->
     <string name="new_chat">Nova conversa</string>
     <string name="messages_not_readable">Sem acesso para novas mensagens</string>
-    <string name="content_deleted">conteúdo removido</string>
     <string name="peers_messaging_disabled">As menságens pares estão desativadas</string>
     <string name="action_enable">Ativo</string>
     <string name="find">Procurar</string>
@@ -325,4 +324,17 @@
     <string name="in_progress_call">em Chamada</string>
     <string name="connecting_call">conectando</string>
     <string name="tags_not_found">Sem tags definidas. Adicione algumas.</string>
+    <string name="edited">editado</string>
+    <string name="video">Vídeo</string>
+    <string name="video_caption_hint">Título do vídeo</string>
+    <string name="video_preview">Vídeo</string>
+    <string name="broken_video">Formato de vídeo inválido ou desconhecido.</string>
+    <string name="unable_to_play_video">Não foi possível reproduzir este vídeo.</string>
+    <string name="select_image_or_video">Escolha imagem ou vídeo</string>
+    <string name="tap_to_select">Toque para selecionar</string>
+    <string name="video_call_channel_name">Videochamadas</string>
+    <string name="video_call_channel_description">Chamadas de vídeo e áudio</string>
+    <string name="tinode_video_call">Tinode Videochamada</string>
+    <string name="answer_call">Resposta</string>
+    <string name="decline_call">Recusar</string>
 </resources>

@@ -56,13 +56,11 @@ public class SignUpFragment extends Fragment
                         return;
                     }
                 }
-                FragmentActivity activity = getActivity();
-                if (activity != null) {
-                    // Try to open the image selector again.
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
+                FragmentActivity activity = requireActivity();
+                // Try to open the image selector again.
+                Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
+                if (launcher != null) {
+                    mAvatarPickerLauncher.launch(launcher);
                 }
             });
 
@@ -71,10 +69,7 @@ public class SignUpFragment extends Fragment
                              Bundle savedInstanceState) {
         setHasOptionsMenu(false);
 
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
@@ -86,7 +81,7 @@ public class SignUpFragment extends Fragment
 
         // Get avatar from the gallery or photo camera.
         fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-            Intent launcher = UiUtils.avatarSelectorIntent(getActivity(), mRequestAvatarPermissionsLauncher);
+            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
             if (launcher != null) {
                 mAvatarPickerLauncher.launch(launcher);
             }
@@ -99,8 +94,8 @@ public class SignUpFragment extends Fragment
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null || parent.isFinishing() || parent.isDestroyed()) {
+        final LoginActivity parent = (LoginActivity) requireActivity();
+        if (parent.isFinishing() || parent.isDestroyed()) {
             return;
         }
 
@@ -115,8 +110,8 @@ public class SignUpFragment extends Fragment
      */
     @Override
     public void onClick(View v) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null || parent.isFinishing() || parent.isDestroyed()) {
+        final LoginActivity parent = (LoginActivity) requireActivity();
+        if (parent.isFinishing() || parent.isDestroyed()) {
             return;
         }
 
@@ -149,16 +144,16 @@ public class SignUpFragment extends Fragment
         }
         // Make sure user name is not too long.
         final String fullName;
-        if (fn.length() > UiUtils.MAX_TITLE_LENGTH) {
-            fullName = fn.substring(0, UiUtils.MAX_TITLE_LENGTH);
+        if (fn.length() > Const.MAX_TITLE_LENGTH) {
+            fullName = fn.substring(0, Const.MAX_TITLE_LENGTH);
         } else {
             fullName = fn;
         }
 
         String description = ((EditText) parent.findViewById(R.id.userDescription)).getText().toString().trim();
         if (!TextUtils.isEmpty(description)) {
-            if (description.length() > UiUtils.MAX_DESCRIPTION_LENGTH) {
-                description = description.substring(0, UiUtils.MAX_DESCRIPTION_LENGTH);
+            if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
         } else {
             description = null;
@@ -263,8 +258,8 @@ public class SignUpFragment extends Fragment
 
     @Override
     public void showAvatarPreview(Bundle args) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final FragmentActivity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
         ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_AVATAR_PREVIEW, args);

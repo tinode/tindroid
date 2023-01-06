@@ -6,14 +6,18 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="com.android.launcher.permission.INSTALL_SHORTCUT"/>
-    <!-- Needed for video calls, adding an avatar pic when registering new accounts reading attachments. -->
+    <!-- Needed for video calls, adding an avatar pic when registering new accounts,
+    attaching photos to messages. -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <!-- Enable installation on devices without the camera: some features won't be available -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-        android:maxSdkVersion="28" />
+        android:maxSdkVersion="28"/>
+    <!-- Needed for picking images and videos from gallery -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"/>
 
     <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>
@@ -37,10 +41,16 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!--uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" /-->
+    <!--uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <!-- Telephony API: placing and receiving calls. -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Required on API 33+ -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <queries>
         <intent>
@@ -205,6 +215,17 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+        <!-- Service to place and receive calls. -->
+        <service android:name=".services.CallConnectionService"
+            android:exported="true"
+            android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.ConnectionService" />
+            </intent-filter>
+        </service>
+
+        <!-- Receives broadcast to hang up incoming call -->
+        <receiver android:name=".CallBroadcastReceiver" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

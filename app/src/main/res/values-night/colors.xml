@@ -11,8 +11,8 @@
     <color name="colorReplyBubble">#10CCCCCC</color>
     <color name="colorReplyText">#CCCCCC</color>
 
-    <color name="colorNegativeAction">#d32f2f</color>
-    <color name="colorPositiveAction">#2E7D32</color>
+    <color name="colorNegativeAction">#983220</color>
+    <color name="colorPositiveAction">#326F3E</color>
     <color name="colorNeutralAction">#555555</color>
     <color name="colorSwipeChervon">#AAAAAA</color>
 

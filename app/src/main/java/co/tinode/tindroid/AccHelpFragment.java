@@ -6,8 +6,6 @@ import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.text.method.MovementMethod;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -24,22 +22,11 @@ import androidx.fragment.app.Fragment;
  * Fragment for editing current user details.
  */
 public class AccHelpFragment extends Fragment {
-
-    private static final String TAG = "AccountHelpFragment";
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_help, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -54,13 +41,16 @@ public class AccHelpFragment extends Fragment {
         // Make policy links clickable.
         MovementMethod movementInstance = LinkMovementMethod.getInstance();
         TextView link = fragment.findViewById(R.id.contactUs);
-        link.setText(Html.fromHtml(getString(R.string.contact_us)));
+        link.setText(Html.fromHtml(getString(R.string.contact_us),
+                Html.FROM_HTML_MODE_COMPACT));
         link.setMovementMethod(movementInstance);
         link = fragment.findViewById(R.id.termsOfUse);
-        link.setText(Html.fromHtml(getString(R.string.terms_of_use)));
+        link.setText(Html.fromHtml(getString(R.string.terms_of_use),
+                Html.FROM_HTML_MODE_COMPACT));
         link.setMovementMethod(movementInstance);
         link = fragment.findViewById(R.id.privacyPolicy);
-        link.setText(Html.fromHtml(getString(R.string.privacy_policy)));
+        link.setText(Html.fromHtml(getString(R.string.privacy_policy),
+                Html.FROM_HTML_MODE_COMPACT));
         link.setMovementMethod(movementInstance);
 
         fragment.findViewById(R.id.aboutTheApp).setOnClickListener(v ->
@@ -72,10 +62,5 @@ public class AccHelpFragment extends Fragment {
         });
 
         return fragment;
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
     }
 }

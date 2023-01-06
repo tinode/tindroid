@@ -164,9 +164,9 @@
     <string name="login_rejected">El nombre de usuario ha sido rechazado</string>
     <string name="email_rejected">La dirección de correo electrónico ha sido rechazado</string>
     <string name="invalid_confirmation_code">Código inválido</string>
-    <string name="notification_channel_name">Nuevo mensaje</string>
+    <string name="new_message_channel_name">Nuevo mensaje</string>
     <string name="new_message">Nuevo mensaje</string>
-    <string name="notification_channel_description">Has recibido un nuevo mensaje</string>
+    <string name="new_message_channel_description">Has recibido un nuevo mensaje</string>
     <string name="request_pass_reset_title">Restablecer contraseña</string>
     <string name="request_pass_reset">Solicitar código por %1$s:</string>
     <string name="validated_address_to_use">%1$s validado para enviar código</string>
@@ -188,7 +188,6 @@
     <string name="new_chat_block">Bloquear</string>
     <string name="new_chat">Nuevo chat</string>
     <string name="messages_not_readable">Sin acceso a nuevos mensajes</string>
-    <string name="content_deleted">este mensaje fue eliminado</string>
     <string name="peers_messaging_disabled">La mensajería Peer está deshabilitada</string>
     <string name="action_enable">Habilitar</string>
     <string name="find">Buscar</string>
@@ -323,4 +322,17 @@
     <string name="in_progress_call">en progreso</string>
     <string name="connecting_call">de conexión</string>
     <string name="tags_not_found">No hay etiquetas definidas. Añade unas.</string>
+    <string name="edited">editado</string>
+    <string name="video">Video</string>
+    <string name="video_caption_hint">Título del video</string>
+    <string name="video_preview">Vídeo</string>
+    <string name="broken_video">Formato de video no válido o desconocido.</string>
+    <string name="unable_to_play_video">No se puede reproducir este video.</string>
+    <string name="select_image_or_video">Elegir imagen o video</string>
+    <string name="tap_to_select">Toca para seleccionar</string>
+    <string name="video_call_channel_name">Videollamadas</string>
+    <string name="video_call_channel_description">Llamadas de video y audio</string>
+    <string name="tinode_video_call">Videollamada de Tinode</string>
+    <string name="answer_call">Responder</string>
+    <string name="decline_call">Rechazar</string>
 </resources>

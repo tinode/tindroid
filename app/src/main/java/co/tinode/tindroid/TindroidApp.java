@@ -18,6 +18,9 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
+import android.graphics.Color;
+import android.media.AudioAttributes;
+import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -80,9 +83,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
-
-    //private static String sServerHost = null;
-    //private static boolean sUseTLS = false;
 
     public TindroidApp() {
         sContext = this;
@@ -184,9 +184,12 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 }
             }
         };
-        LocalBroadcastManager.getInstance(this).registerReceiver(br, new IntentFilter("FCM_REFRESH_TOKEN"));
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        lbm.registerReceiver(br, new IntentFilter("FCM_REFRESH_TOKEN"));
+        lbm.registerReceiver(new CallBroadcastReceiver(),
+                new IntentFilter(CallBroadcastReceiver.ACTION_INCOMING_CALL));
 
-        createNotificationChannel();
+        createNotificationChannels();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
@@ -227,14 +230,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
                 CallInProgress call = Cache.getCallInProgress();
                 if (call == null) {
-                    // Call invite from the peer.
-                    Intent intent = new Intent();
-                    intent.setAction(CallActivity.INTENT_ACTION_CALL_INCOMING);
-                    intent.putExtra("topic", data.topic);
-                    intent.putExtra("seq", data.seq);
-                    intent.putExtra("from", data.from);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    TindroidApp.this.startActivity(intent);
+                    CallManager.acceptIncomingCall(TindroidApp.this, data.topic, data.seq);
                 } else if (!call.equals(data.topic, data.seq)) {
                     // Another incoming call. Decline.
                     topic.videoCallHangUp(data.seq);
@@ -256,8 +252,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     // Another client has accepted the call. Dismiss call notification.
                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
                     Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
-                    intent.putExtra("topic", info.src);
-                    intent.putExtra("seq", info.seq);
+                    intent.putExtra(Const.INTENT_EXTRA_TOPIC, info.src);
+                    intent.putExtra(Const.INTENT_EXTRA_SEQ, info.seq);
                     lbm.sendBroadcast(intent);
                 }
             }
@@ -345,15 +341,33 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         }
     }
 
-    private void createNotificationChannel() {
+    private void createNotificationChannels() {
         // Create the NotificationChannel on API 26+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel("new_message",
-                    getString(R.string.notification_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription(getString(R.string.notification_channel_description));
+            NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
+                    getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
+            newMessage.setDescription(getString(R.string.new_message_channel_description));
+            newMessage.enableLights(true);
+            newMessage.setLightColor(Color.WHITE);
+
+            NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
+                    getString(R.string.video_call_channel_name),
+                    NotificationManager.IMPORTANCE_HIGH);
+            videoCall.setDescription(getString(R.string.video_call_channel_description));
+            videoCall.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                            new AudioAttributes.Builder()
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                    .build());
+            videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
+            videoCall.enableVibration(true);
+            videoCall.enableLights(true);
+            videoCall.setLightColor(Color.RED);
+
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null) {
-                nm.createNotificationChannel(channel);
+                nm.createNotificationChannel(newMessage);
+                nm.createNotificationChannel(videoCall);
             }
         }
     }

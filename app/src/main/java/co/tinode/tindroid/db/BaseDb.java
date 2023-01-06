@@ -25,7 +25,7 @@ public class BaseDb extends SQLiteOpenHelper {
     /**
      * Schema version. Increment on schema changes.
      */
-    private static final int DATABASE_VERSION = 18;
+    private static final int DATABASE_VERSION = 19;
 
     /**
      * Filename for SQLite file.
@@ -34,6 +34,8 @@ public class BaseDb extends SQLiteOpenHelper {
     private static BaseDb sInstance = null;
     private StoredAccount mAcc = null;
     private SqlStore mStore = null;
+
+    static final int UNSENT_ID_START = 2_000_000_000;
 
     /**
      * Private constructor
@@ -117,6 +119,10 @@ public class BaseDb extends SQLiteOpenHelper {
     @Override
     public void onConfigure(SQLiteDatabase db) {
         db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    public static boolean isUnsentSeq(int seq) {
+        return seq >= BaseDb.UNSENT_ID_START;
     }
 
     /**

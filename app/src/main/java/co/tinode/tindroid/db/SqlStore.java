@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -307,7 +308,7 @@ public class SqlStore implements Storage {
         msg.topic = topic.getName();
         msg.from = getMyUid();
         msg.ts = new Date(new Date().getTime() + mTimeAdjustment);
-        // Set seq to zero. MessageDb will assign a unique temporary (very large int, >= 2E9) seq.
+        // Set seq to zero. MessageDb will assign a unique temporary (very large int, >= 2e9) seq.
         // The temp seq will be updated later, when the message is received by the server.
         msg.seq = 0;
         msg.status = initialStatus;
@@ -357,6 +358,15 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public boolean msgDiscardSeq(Topic topic, int seq) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return false;
+        }
+        return MessageDb.delete(mDbh.getWritableDatabase(), st.id, seq);
+    }
+
+    @Override
     public boolean msgFailed(Topic topic, long messageDbId) {
         return MessageDb.updateStatusAndContent(mDbh.getWritableDatabase(), messageDbId,
                 BaseDb.Status.FAILED, null);
@@ -377,12 +387,10 @@ public class SqlStore implements Storage {
         boolean result = false;
         try {
             db.beginTransaction();
-
-            if (MessageDb.delivered(mDbh.getWritableDatabase(), messageDbId, timestamp, seq) &&
-                    TopicDb.msgReceived(db, topic, timestamp, seq)) {
-                db.setTransactionSuccessful();
-                result = true;
-            }
+            MessageDb.delivered(mDbh.getWritableDatabase(), messageDbId, timestamp, seq);
+            TopicDb.msgReceived(db, topic, timestamp, seq);
+            db.setTransactionSuccessful();
+            result = true;
         } catch (SQLException ex) {
             Log.w(TAG, "Exception while updating message", ex);
         } finally {
@@ -522,6 +530,15 @@ public class SqlStore implements Storage {
     @Override
     public <T extends Storage.Message> T getMessagePreviewById(long dbMessageId) {
         return messageById(dbMessageId, MessageDb.MESSAGE_PREVIEW_LENGTH);
+    }
+
+    @Override
+    public int[] getAllMsgVersions(Topic topic, int seq, int limit) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st == null) {
+            return null;
+        }
+        return MessageDb.getAllVersions(mDbh.getReadableDatabase(), st.id, seq, limit);
     }
 
     @SuppressWarnings("unchecked")

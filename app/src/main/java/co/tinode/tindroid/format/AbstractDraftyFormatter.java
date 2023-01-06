@@ -4,8 +4,6 @@ import android.content.Context;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +47,9 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
 
     // Embedded image.
     protected abstract T handleImage(final Context ctx, List<T> content, final Map<String, Object> data);
+
+    // Embedded image.
+    protected abstract T handleVideo(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // File attachment.
     protected abstract T handleAttachment(final Context ctx, final Map<String, Object> data);
@@ -115,8 +116,10 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                     span = handleAudio(mContext, content, data);
                     break;
                 case "IM":
-                    // Additional processing for images
                     span = handleImage(mContext, content, data);
+                    break;
+                case "VD":
+                    span = handleVideo(mContext, content, data);
                     break;
                 case "EX":
                     // Attachments; attachments cannot have sub-elements.
@@ -163,7 +166,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return ssb;
     }
 
-    protected static SpannableStringBuilder assignStyle(@NotNull Object style, List<SpannableStringBuilder> content) {
+    protected static SpannableStringBuilder assignStyle(@NonNull Object style, List<SpannableStringBuilder> content) {
         SpannableStringBuilder ssb = join(content);
         if (ssb != null) {
             ssb.setSpan(style, 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -171,15 +174,22 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return ssb;
     }
 
-    // Convert milliseconds to '00:00' format.
+    // Convert milliseconds to '[00:0]0:00' or '[00:]00:00' (fixedMin) format.
     protected static StringBuilder millisToTime(@NonNull Number millis, boolean fixedMin) {
         StringBuilder sb = new StringBuilder();
         float duration = millis.floatValue() / 1000;
+
+        int hours = (int) Math.floor(duration / 3600f);
+        if (hours > 0) {
+            sb.append(hours).append(":");
+        }
+
         int min = (int) Math.floor(duration / 60f);
-        if (fixedMin && min < 10) {
+        if (hours > 0 || (fixedMin && min < 10)) {
             sb.append("0");
         }
-        sb.append(min).append(":");
+        sb.append(min % 60).append(":");
+
         int sec = (int) (duration % 60f);
         if (sec < 10) {
             sb.append("0");
@@ -207,5 +217,29 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 break;
         }
         return comment;
+    }
+
+    protected static int getIntVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Number) {
+            return ((Number) tmp).intValue();
+        }
+        return 0;
+    }
+
+    protected static String getStringVal(String name, Map<String, Object> data, String def) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof CharSequence) {
+            return tmp.toString();
+        }
+        return def;
+    }
+
+    protected static boolean getBooleanVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Boolean) {
+            return (boolean) tmp;
+        }
+        return false;
     }
 }

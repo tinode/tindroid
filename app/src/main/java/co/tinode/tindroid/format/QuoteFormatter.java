@@ -17,11 +17,14 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 
+import java.net.URL;
 import java.util.List;
 import java.util.Map;
 
+import androidx.annotation.DrawableRes;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 
@@ -59,6 +62,87 @@ public class QuoteFormatter extends PreviewFormatter {
         return FullFormatter.handleMention_Impl(content, data);
     }
 
+    private static class ImageDim {
+        boolean square;
+        int squareSize;
+        int width;
+        int height;
+    }
+
+    private CharacterStyle createImageSpan(Context ctx, Object val, String ref,
+                                           ImageDim dim, float density,
+                                           @DrawableRes int id_placeholder, @DrawableRes int id_error) {
+
+        Resources res = ctx.getResources();
+
+        // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
+        Drawable broken = AppCompatResources.getDrawable(ctx, id_error);
+        //noinspection ConstantConditions
+        broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
+        broken = UiUtils.getPlaceholder(ctx, broken, null,
+                (int) (dim.squareSize * density),
+                (int) (dim.squareSize * density));
+
+        CharacterStyle span = null;
+
+        // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny preview.
+        if (val != null) {
+            // Inline image.
+            BitmapDrawable thumbnail;
+            try {
+                // If the message is not yet sent, the bits could be raw byte[] as opposed to
+                // base64-encoded.
+                byte[] bits = (val instanceof String) ?
+                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                if (bmp != null) {
+                    if (dim.square) {
+                        thumbnail = new BitmapDrawable(res,
+                                UiUtils.scaleSquareBitmap(bmp, (int) (dim.squareSize * density)));
+                        thumbnail.setBounds(0, 0,
+                                (int) (dim.squareSize * density), (int) (dim.squareSize * density));
+                    } else {
+                        thumbnail = new BitmapDrawable(res, UiUtils.scaleBitmap(bmp,
+                                        (int) (dim.width * density), (int) (dim.height * density), true));
+                        thumbnail.setBounds(0, 0, thumbnail.getBitmap().getWidth(),
+                                thumbnail.getBitmap().getHeight());
+                    }
+                    span = new StyledImageSpan(thumbnail,
+                            new RectF(IMAGE_PADDING * density,
+                                    IMAGE_PADDING * density,
+                                    IMAGE_PADDING * density,
+                                    IMAGE_PADDING * density));
+                }
+            } catch (Exception ex) {
+                Log.w(TAG, "Broken image preview", ex);
+            }
+        } else if (ref != null) {
+            int width = dim.width;
+            int height  = dim.height;
+            if (dim.square) {
+                width = dim.squareSize;
+                height  = dim.squareSize;
+            }
+            URL url = Cache.getTinode().toAbsoluteURL(ref);
+            // If small in-band image is not available, get the large one and shrink.
+            span = new RemoteImageSpan(mParent, (int) (width * density), (int) (height * density), true,
+                    AppCompatResources.getDrawable(ctx, id_placeholder), broken);
+            if (url != null) {
+                ((RemoteImageSpan) span).load(url);
+            }
+        }
+
+        if (span == null) {
+            span = new StyledImageSpan(broken,
+                    new RectF(IMAGE_PADDING * density,
+                            IMAGE_PADDING * density,
+                            IMAGE_PADDING * density,
+                            IMAGE_PADDING * density));
+        }
+
+        return span;
+    }
+
     @Override
     protected SpannableStringBuilder handleImage(Context ctx, List<SpannableStringBuilder> content,
                                                  Map<String, Object> data) {
@@ -67,70 +151,48 @@ public class QuoteFormatter extends PreviewFormatter {
         }
 
         Resources res = ctx.getResources();
-
-        // Using fixed dimensions for the image.
         DisplayMetrics metrics = res.getDisplayMetrics();
-        int size = (int) (UiUtils.REPLY_THUMBNAIL_DIM * metrics.density);
 
-        Object filename = data.get("name");
-        if (filename instanceof String) {
-            filename = shortenFileName((String) filename);
-        } else {
-            filename = res.getString(R.string.picture);
-        }
+        ImageDim dim = new ImageDim();
+        dim.square = true;
+        dim.squareSize = Const.REPLY_THUMBNAIL_DIM;
 
-        // If the image cannot be decoded for whatever reason, show a 'broken image' icon.
-        Drawable broken = AppCompatResources.getDrawable(ctx, R.drawable.ic_broken_image);
-        //noinspection ConstantConditions
-        broken.setBounds(0, 0, broken.getIntrinsicWidth(), broken.getIntrinsicHeight());
-        broken = UiUtils.getPlaceholder(ctx, broken, null, size, size);
+        CharacterStyle span = createImageSpan(ctx, data.get("val"), getStringVal("ref", data, null),
+                dim, metrics.density, R.drawable.ic_image, R.drawable.ic_broken_image);
 
         SpannableStringBuilder node = new SpannableStringBuilder();
-        CharacterStyle span = null;
-
-        Object val;
-
-        // Trying to use in-band image first: we don't need the full image at "ref" to generate a tiny preview.
-        if ((val = data.get("val")) != null) {
-            // Inline image.
-            Drawable thumbnail = null;
-            try {
-                // If the message is not yet sent, the bits could be raw byte[] as opposed to
-                // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                if (bmp != null) {
-                    thumbnail = new BitmapDrawable(res, UiUtils.scaleSquareBitmap(bmp, size));
-                    thumbnail.setBounds(0, 0, size, size);
-                    span = new StyledImageSpan(thumbnail,
-                            new RectF(IMAGE_PADDING * metrics.density,
-                                    IMAGE_PADDING * metrics.density,
-                                    IMAGE_PADDING * metrics.density,
-                                    IMAGE_PADDING * metrics.density));
-                }
-            } catch (Exception ex) {
-                Log.w(TAG, "Broken image preview", ex);
-            }
-        } else if ((val = data.get("ref")) instanceof String) {
-            // If small in-band image is not available, get the large one and shrink.
-            Log.i(TAG, "Out-of-band " + val);
-
-            span = new RemoteImageSpan(mParent, size, size, true,
-                    AppCompatResources.getDrawable(ctx, R.drawable.ic_image), broken);
-            ((RemoteImageSpan) span).load(Cache.getTinode().toAbsoluteURL((String) val));
-        }
-
-        if (span == null) {
-            span = new StyledImageSpan(broken,
-                    new RectF(IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density,
-                            IMAGE_PADDING * metrics.density));
-        }
-
         node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        node.append(" ").append((String) filename);
+
+        String filename = getStringVal("name", data, res.getString(R.string.picture));
+        node.append(" ").append(shortenFileName(filename));
+
+        return node;
+    }
+
+    @Override
+    protected SpannableStringBuilder handleVideo(Context ctx, List<SpannableStringBuilder> content,
+                                                 Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        Resources res = ctx.getResources();
+        DisplayMetrics metrics = res.getDisplayMetrics();
+
+        ImageDim dim = new ImageDim();
+        dim.square = false;
+        dim.squareSize = Const.REPLY_THUMBNAIL_DIM;
+        dim.width = Const.REPLY_VIDEO_WIDTH;
+        dim.height = Const.REPLY_THUMBNAIL_DIM;
+
+        CharacterStyle span = createImageSpan(ctx, data.get("preview"), getStringVal("preref", data, null),
+                dim, metrics.density, R.drawable.ic_video, R.drawable.ic_video);
+
+        SpannableStringBuilder node = new SpannableStringBuilder();
+        node.append(" ", span, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        String filename = getStringVal("name", data, res.getString(R.string.video));
+        node.append(" ").append(shortenFileName(filename));
 
         return node;
     }

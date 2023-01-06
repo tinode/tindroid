@@ -155,10 +155,16 @@ public interface Storage {
     boolean msgPruneFailed(Topic topic);
 
     /**
-     * Delete message by database id.
+     * Remove message by database id.
      */
     @SuppressWarnings("UnusedReturnValue")
     boolean msgDiscard(Topic topic, long dbMessageId);
+
+    /**
+     * Remove message by seq ID.
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    boolean msgDiscardSeq(Topic topic, int seq);
 
     /**
      * Message delivered to the server and received a real seq ID.
@@ -210,6 +216,15 @@ public interface Storage {
      * Retrieve a single message preview by database id.
      */
     <T extends Message> T getMessagePreviewById(long dbMessageId);
+
+    /**
+     * Get seq IDs of up to limit versions of the edited message with the given ID.
+     * @param topic topic which sent the message.
+     * @param seq ID of the edited message to get versions of.
+     * @param limit the count of latest versions to get or all if limit is zero.
+     * @return array of seq ID of edits ordered from newest to oldest.
+     */
+    int[] getAllMsgVersions(Topic topic, int seq, int limit);
 
     /**
      * Get the latest message in each topic. Caller must close the result after use.

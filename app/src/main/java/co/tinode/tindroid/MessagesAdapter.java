@@ -75,6 +75,7 @@ import androidx.work.WorkManager;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
 import co.tinode.tindroid.db.StoredMessage;
+import co.tinode.tindroid.db.TopicDb;
 import co.tinode.tindroid.format.CopyFormatter;
 import co.tinode.tindroid.format.FullFormatter;
 import co.tinode.tindroid.format.QuoteFormatter;
@@ -87,7 +88,6 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
-import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -107,10 +107,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private static final int REFRESH_HARD = 2;
 
     // Bits defining message bubble variations
-    // _TIP_ == "single", i.e. has a bubble tip.
-    // _SIMPLE_ == no bubble tip, just a rounded rectangle.
+    // _TIP == "single", i.e. has a bubble tip.
     // _DATE == the date bubble is visible.
-    private static final int VIEWTYPE_SIDE_CENTER = 0b000001;
     private static final int VIEWTYPE_SIDE_LEFT   = 0b000010;
     private static final int VIEWTYPE_SIDE_RIGHT  = 0b000100;
     private static final int VIEWTYPE_TIP         = 0b001000;
@@ -140,7 +138,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private SparseBooleanArray mSelectedItems = null;
     private int mPagesToLoad;
 
-    private final MediaControl mMediaControl = new MediaControl();
+    private final MediaControl mMediaControl;
 
     MessagesAdapter(@NonNull MessageActivity context, @NonNull SwipeRefreshLayout refresher) {
         super();
@@ -152,6 +150,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mPagesToLoad = 1;
 
         mMessageLoaderCallback = new MessageLoaderCallbacks();
+
+        mMediaControl = new MediaControl(context);
 
         mSelectionModeCallback = new ActionMode.Callback() {
             @Override
@@ -190,24 +190,28 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             public boolean onActionItemClicked(ActionMode actionMode, MenuItem menuItem) {
                 // Don't convert to switch: Android does not like it.
                 int id = menuItem.getItemId();
-                if (id == R.id.action_delete) {
-                    sendDeleteMessages(getSelectedArray());
+                int[] selected = getSelectedArray();
+                if (id == R.id.action_edit) {
+                    if (selected != null) {
+                        showMessageQuote(UiUtils.MsgAction.EDIT, selected[0], Const.EDIT_PREVIEW_LENGTH);
+                    }
+                    return true;
+                } else if (id == R.id.action_delete) {
+                    sendDeleteMessages(selected);
                     return true;
                 } else if (id == R.id.action_copy) {
-                    copyMessageText(getSelectedArray());
+                    copyMessageText(selected);
                     return true;
                 } else if (id == R.id.action_send_now) {
                     // FIXME: implement resending now.
                     Log.d(TAG, "Try re-sending selected item");
                     return true;
                 } else if (id == R.id.action_reply) {
-                    int[] selected = getSelectedArray();
                     if (selected != null) {
-                        showReplyPreview(selected[0]);
+                        showMessageQuote(UiUtils.MsgAction.REPLY, selected[0], Const.QUOTED_REPLY_LENGTH);
                     }
                     return true;
                 } else if (id == R.id.action_forward) {
-                    int[] selected = getSelectedArray();
                     if (selected != null) {
                         showMessageForwardSelector(selected[0]);
                     }
@@ -347,6 +351,20 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int pos = positions[i++];
                 StoredMessage msg = getMessage(pos);
                 if (msg != null) {
+                    int replSeq = msg.getReplacementSeqId();
+                    if (replSeq > 0) {
+                        // Deleting all version of an edited message.
+                        int[] ids = store.getAllMsgVersions(topic, replSeq, -1);
+                        for (int id : ids) {
+                            if (BaseDb.isUnsentSeq(id)) {
+                                store.msgDiscardSeq(topic, id);
+                                discarded++;
+                            } else {
+                                toDelete.add(id);
+                            }
+                        }
+                    }
+
                     if (msg.status == BaseDb.Status.SYNCED) {
                         toDelete.add(msg.seq);
                     } else {
@@ -357,7 +375,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             if (!toDelete.isEmpty()) {
-                topic.delMessages(MsgRange.listToRanges(toDelete), true)
+                topic.delMessages(toDelete, true)
                         .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -400,27 +418,44 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return uname;
     }
 
-    private void showReplyPreview(int pos) {
+    private void showMessageQuote(UiUtils.MsgAction action, int pos, int quoteLength) {
+        toggleSelectionAt(pos);
+        notifyItemChanged(pos);
+        updateSelectionMode();
+
         StoredMessage msg = getMessage(pos);
-        if (msg != null && msg.status == BaseDb.Status.SYNCED) {
-            toggleSelectionAt(pos);
-            notifyItemChanged(pos);
-            updateSelectionMode();
-            ThumbnailTransformer tr = new ThumbnailTransformer();
-            Drafty replyContent = msg.content.replyContent(UiUtils.QUOTED_REPLY_LENGTH, 1).transform(tr);
-            tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void>() {
-                @Override
-                public PromisedReply<Void> onSuccess(Void result) {
-                    mActivity.runOnUiThread(() -> {
-                        Drafty reply = Drafty.quote(messageFrom(msg), msg.from, replyContent);
-                        mActivity.showReply(reply, msg.seq);
-                    });
-                    return null;
-                }
-            });
-        } else {
-            Toast.makeText(mActivity, R.string.cannot_reply, Toast.LENGTH_SHORT).show();
+        if (msg == null) {
+            return;
         }
+
+        ThumbnailTransformer tr = new ThumbnailTransformer();
+        final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
+        tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void[]>() {
+            @Override
+            public PromisedReply<Void[]> onSuccess(Void[] result) {
+                mActivity.runOnUiThread(() -> {
+                    if (action == UiUtils.MsgAction.REPLY) {
+                        Drafty reply = Drafty.quote(messageFrom(msg), msg.from, content);
+                        mActivity.showReply(reply, msg.seq);
+                    } else {
+                        // If the message being edited is a replacement message, use the original seqID.
+                        int seq = msg.getReplacementSeqId();
+                        if (seq <= 0) {
+                            seq = msg.seq;
+                        }
+                        String markdown = msg.content.toMarkdown(false);
+                        mActivity.startEditing(markdown, content.wrapInto("QQ"), seq);
+                    }
+                });
+                return null;
+            }
+        }).thenCatch(new PromisedReply.FailureListener<Void[]>() {
+            @Override
+            public <E extends Exception> PromisedReply<Void[]> onFailure(E err) {
+                Log.w(TAG, "Unable to create message preview", err);
+                return null;
+            }
+        });
     }
 
     private void showMessageForwardSelector(int pos) {
@@ -462,30 +497,26 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         StoredMessage m = getMessage(position);
 
         if (m != null) {
-            if (m.delId > 0) {
-                itemType = packViewType(VIEWTYPE_SIDE_CENTER, false, false, false);
-            } else {
-                long nextFrom = -2;
-                Date nextDate = null;
-                if (position > 0) {
-                    StoredMessage m2 = getMessage(position - 1);
-                    if (m2 != null) {
-                        nextFrom = m2.userId;
-                        nextDate = m2.ts;
-                    }
+            long nextFrom = -2;
+            Date nextDate = null;
+            if (position > 0) {
+                StoredMessage m2 = getMessage(position - 1);
+                if (m2 != null) {
+                    nextFrom = m2.userId;
+                    nextDate = m2.ts;
                 }
-                Date prevDate = null;
-                if (position < getItemCount() - 1) {
-                    StoredMessage m2 = getMessage(position + 1);
-                    if (m2 != null) {
-                        prevDate = m2.ts;
-                    }
-                }
-                itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
-                        m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
-                        Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
-                        !UiUtils.isSameDate(prevDate, m.ts));
             }
+            Date prevDate = null;
+            if (position < getItemCount() - 1) {
+                StoredMessage m2 = getMessage(position + 1);
+                if (m2 != null) {
+                    prevDate = m2.ts;
+                }
+            }
+            itemType = packViewType(m.isMine() ? VIEWTYPE_SIDE_RIGHT : VIEWTYPE_SIDE_LEFT,
+                    m.userId != nextFrom || !UiUtils.isSameDate(nextDate, m.ts),
+                    Topic.isGrpType(mTopicName) && !ComTopic.isChannel(mTopicName),
+                    !UiUtils.isSameDate(prevDate, m.ts));
         }
 
         return itemType;
@@ -497,9 +528,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         // Create a new message bubble view.
 
         int layoutId = -1;
-        if ((viewType & VIEWTYPE_SIDE_CENTER) != 0) {
-            layoutId = R.layout.meta_message;
-        } else if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
+        if ((viewType & VIEWTYPE_SIDE_LEFT) != 0) {
             if ((viewType & VIEWTYPE_AVATAR) != 0 && (viewType & VIEWTYPE_TIP) != 0) {
                 layoutId = R.layout.message_left_single_avatar;
             } else if ((viewType & VIEWTYPE_TIP) != 0) {
@@ -553,19 +582,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         holder.seqId = m.seq;
 
-        if (holder.mIcon != null) {
-            // Meta bubble in the center of the screen
-            holder.mIcon.setVisibility(View.VISIBLE);
-            holder.mText.setText(R.string.content_deleted);
-            return;
-        }
-
         if (mCursor == null) {
             return;
         }
 
         final long msgId = m.getDbId();
 
+        boolean isEdited = m.isReplacement() && m.getHeader("webrtc") == null;
         boolean hasAttachment = m.content != null && m.content.getEntReferences() != null;
         boolean uploadingAttachment = hasAttachment && m.isPending();
         boolean uploadFailed = hasAttachment && (m.status == BaseDb.Status.FAILED);
@@ -588,7 +611,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             holder.mText.setText(text);
         }
 
-        if (m.content != null && m.content.hasEntities(Arrays.asList("AU", "BN", "LN", "MN", "HT", "IM", "EX"))) {
+        if (m.content != null && m.content.hasEntities(
+                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "VD"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -674,6 +698,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         DateUtils.DAY_IN_MILLIS,
                         DateUtils.FORMAT_NUMERIC_DATE | DateUtils.FORMAT_SHOW_YEAR).toString().toUpperCase();
                 holder.mDateDivider.setText(date);
+            }
+
+            if (holder.mEdited != null) {
+                holder.mEdited.setVisibility(isEdited ? View.VISIBLE : View.GONE);
             }
             if (holder.mMeta != null) {
                 holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
@@ -828,8 +856,30 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else {
                 mSelectionMode.setTitle(String.valueOf(selected));
                 Menu menu = mSelectionMode.getMenu();
-                menu.findItem(R.id.action_reply).setVisible(selected == 1);
-                menu.findItem(R.id.action_forward).setVisible(selected == 1);
+                boolean mutable = false;
+                boolean repliable = false;
+                if (selected == 1) {
+                    StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
+                    if (msg != null && msg.status == BaseDb.Status.SYNCED) {
+                        repliable = true;
+                        if (msg.content != null && msg.isMine()) {
+                            mutable = true;
+                            String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
+                            Drafty.Entity[] ents = msg.content.getEntities();
+                            if (ents != null) {
+                                for (Drafty.Entity ent : ents) {
+                                    if (Arrays.binarySearch(types, ent.tp) >= 0) {
+                                        mutable = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                menu.findItem(R.id.action_edit).setVisible(mutable);
+                menu.findItem(R.id.action_reply).setVisible(repliable);
+                menu.findItem(R.id.action_forward).setVisible(repliable);
             }
         }
     }
@@ -893,16 +943,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
      * <p>
      * If the app does not has permission then the user will be prompted to grant permission.
      */
-    @SuppressWarnings("UnusedReturnValue")
-    private boolean verifyStoragePermissions() {
+    private void verifyStoragePermissions() {
         // Check if we have write permission
-        if (!UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+                !UiUtils.isPermissionGranted(mActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             // We don't have permission so prompt the user
             Log.d(TAG, "No permission to write to storage");
             ActivityCompat.requestPermissions(mActivity, PERMISSIONS_STORAGE, REQUEST_EXTERNAL_STORAGE);
-            return false;
         }
-        return true;
     }
 
     // Run loader on UI thread
@@ -963,12 +1011,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
-        final ImageView mIcon;
         final ImageView mAvatar;
         final View mMessageBubble;
         final AppCompatImageView mDeliveredIcon;
         final TextView mDateDivider;
         final TextView mText;
+        final TextView mEdited;
         final TextView mMeta;
         final TextView mUserName;
         final View mSelected;
@@ -985,13 +1033,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             super(itemView);
 
             mViewType = viewType;
-            mIcon = itemView.findViewById(R.id.icon);
             mAvatar = itemView.findViewById(R.id.avatar);
             mMessageBubble = itemView.findViewById(R.id.messageBubble);
             mDeliveredIcon = itemView.findViewById(R.id.messageViewedIcon);
             mDateDivider = itemView.findViewById(R.id.dateDivider);
             mText = itemView.findViewById(R.id.messageText);
             mMeta = itemView.findViewById(R.id.messageMeta);
+            mEdited = itemView.findViewById(R.id.messageEdited);
             mUserName = itemView.findViewById(R.id.userName);
             mSelected = itemView.findViewById(R.id.selected);
             mRippleOverlay = itemView.findViewById(R.id.overlay);
@@ -1104,6 +1152,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 case "BN":
                     // Button
                     return clickButton(data);
+
+                case "VD":
+                    // Pay video.
+                    return clickVideo(data);
             }
             return false;
         }
@@ -1113,23 +1165,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return false;
             }
 
-            String fname = null;
-            String mimeType = null;
-            try {
-                fname = (String) data.get("name");
-                mimeType = (String) data.get("mime");
-            } catch (ClassCastException ignored) {
-            }
+            String fname = UiUtils.getStringVal("name", data, null);
+            String mimeType = UiUtils.getStringVal("mime", data, null);
 
             // Try to extract file name from reference.
             if (TextUtils.isEmpty(fname)) {
-                Object ref = data.get("ref");
-                if (ref instanceof String) {
-                    try {
-                        URL url = new URL((String) ref);
-                        fname = url.getFile();
-                    } catch (MalformedURLException ignored) {
-                    }
+                String ref = UiUtils.getStringVal("ref", data, "");
+                try {
+                    URL url = new URL(ref);
+                    fname = url.getFile();
+                } catch (MalformedURLException ignored) {
                 }
             }
 
@@ -1137,7 +1182,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 fname = mActivity.getString(R.string.default_attachment_name);
             }
 
-            AttachmentHandler.enqueueDownloadAttachment(mActivity, data, fname, mimeType);
+            AttachmentHandler.enqueueDownloadAttachment(mActivity,
+                    UiUtils.getStringVal("ref", data, null),
+                    UiUtils.getByteArray("val", data), fname, mimeType);
+
             return true;
         }
 
@@ -1175,27 +1223,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             try {
-                String actionType = (String) data.get("act");
-                String actionValue = (String) data.get("val");
-                String name = (String) data.get("name");
+                String actionType = UiUtils.getStringVal("act", data, null);
+                String actionValue = UiUtils.getStringVal("val", data, null);
+                String name = UiUtils.getStringVal("name", data, null);
                 // StoredMessage msg = getMessage(mPosition);
                 if ("pub".equals(actionType)) {
-                    Drafty newMsg = new Drafty((String) data.get("title"));
+                    Drafty newMsg = new Drafty(UiUtils.getStringVal("title", data, null));
                     Map<String, Object> json = new HashMap<>();
                     // {"seq":6,"resp":{"yes":1}}
                     if (!TextUtils.isEmpty(name)) {
                         Map<String, Object> resp = new HashMap<>();
-                        // noinspection
                         resp.put(name, TextUtils.isEmpty(actionValue) ? 1 : actionValue);
                         json.put("resp", resp);
                     }
 
                     json.put("seq", "" + mSeqId);
                     newMsg.attachJSON(json);
-                    mActivity.sendMessage(newMsg, -1);
+                    mActivity.sendMessage(newMsg, -1, false);
 
                 } else if ("url".equals(actionType)) {
-                    URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("ref"));
+                    URL url = new URL(Cache.getTinode().getBaseUrl(),
+                            UiUtils.getStringVal("ref", data, ""));
                     String scheme = url.getProtocol();
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                     if ("http".equals(scheme) || "https".equals(scheme)) {
@@ -1211,7 +1259,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
                     }
                 }
-            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            } catch (MalformedURLException ignored) {
                 return false;
             }
 
@@ -1224,313 +1272,83 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             try {
-                URL url = new URL(Cache.getTinode().getBaseUrl(), (String) data.get("url"));
+                URL url = new URL(Cache.getTinode().getBaseUrl(), UiUtils.getStringVal("url", data, ""));
                 String scheme = url.getProtocol();
                 if ("http".equals(scheme) || "https".equals(scheme)) {
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                     mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
                 }
-            } catch (ClassCastException | MalformedURLException | NullPointerException ignored) {
+            } catch (MalformedURLException ignored) {
                 return false;
             }
             return true;
         }
 
-        private boolean clickImage(Map<String, Object> data) {
+        // Code common to image & video click.
+        private Bundle mediaClick(Map<String, Object> data) {
             if (data == null) {
-                return false;
+                return null;
             }
+
             Bundle args = null;
-            Object val;
-            if ((val = data.get("ref")) instanceof String) {
-                URL url = Cache.getTinode().toAbsoluteURL((String) val);
-                // URL is null when the image is not sent yet.
-                if (url != null) {
-                    args = new Bundle();
-                    args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, Uri.parse(url.toString()));
-                }
+            Uri ref =  UiUtils.getUriVal("ref", data);
+            if (ref != null) {
+                args = new Bundle();
+                args.putParcelable(AttachmentHandler.ARG_REMOTE_URI, ref);
             }
 
-            if (args == null && (val = data.get("val")) != null) {
-                byte[] bytes = val instanceof String ?
-                        Base64.decode((String) val, Base64.DEFAULT) :
-                        val instanceof byte[] ? (byte[]) val : null;
-                if (bytes != null) {
-                    args = new Bundle();
-                    args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
-                }
+            byte[] bytes = UiUtils.getByteArray("val", data);
+            if (bytes != null) {
+                args = args == null ? new Bundle() : args;
+                args.putByteArray(AttachmentHandler.ARG_SRC_BYTES, bytes);
             }
 
-            if (args != null) {
-                try {
-                    args.putString(AttachmentHandler.ARG_MIME_TYPE, (String) data.get("mime"));
-                    args.putString(AttachmentHandler.ARG_FILE_NAME, (String) data.get("name"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, (int) data.get("width"));
-                    //noinspection ConstantConditions
-                    args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, (int) data.get("height"));
-                } catch (NullPointerException | ClassCastException ex) {
-                    Log.w(TAG, "Invalid type of image parameters", ex);
-                }
+            if (args == null) {
+                return null;
             }
 
-            if (args != null) {
-                mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
-            } else {
+            args.putString(AttachmentHandler.ARG_MIME_TYPE, UiUtils.getStringVal("mime", data, null));
+            args.putString(AttachmentHandler.ARG_FILE_NAME, UiUtils.getStringVal("name", data, null));
+            args.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, UiUtils.getIntVal("width", data));
+            args.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, UiUtils.getIntVal("height", data));
+
+            return args;
+        }
+        private boolean clickImage(Map<String, Object> data) {
+            Bundle args = mediaClick(data);
+
+            if (args == null) {
                 Toast.makeText(mActivity, R.string.broken_image, Toast.LENGTH_SHORT).show();
-            }
-
-            return true;
-        }
-    }
-
-    // Actions to take in setOnPreparedListener, when the player is ready.
-    private enum PlayerReadyAction {
-        // Do nothing.
-        NOOP,
-        // Start playing.
-        PLAY,
-        // Seek without changing player state.
-        SEEK,
-        // Seek, then play when seek finishes.
-        SEEKNPLAY
-    }
-
-    private class MediaControl {
-        private AudioManager mAudioManager = null;
-        private MediaPlayer mAudioPlayer = null;
-        private int mPlayingAudioSeq = -1;
-        private FullFormatter.AudioControlCallback mAudioControlCallback = null;
-        // Action to take when the player becomes ready.
-        private PlayerReadyAction mReadyAction = PlayerReadyAction.NOOP;
-        // Playback fraction to seek to when the player is ready.
-        private float mSeekTo = -1f;
-
-        boolean ensurePlayerReady(final int seq, Map<String, Object> data,
-                                       FullFormatter.AudioControlCallback control) throws IOException {
-            if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
-                mAudioControlCallback = control;
-                return true;
-            }
-
-            if (mPlayingAudioSeq > 0 && mAudioControlCallback != null) {
-                mAudioControlCallback.reset();
-            }
-
-            // Declare current player un-prepared.
-            mPlayingAudioSeq = -1;
-
-            if (mAudioPlayer != null) {
-                try {
-                    mAudioPlayer.stop();
-                } catch (IllegalStateException ignored) {}
-                mAudioPlayer.reset();
-            } else {
-                mAudioPlayer = new MediaPlayer();
-            }
-
-            if (mAudioManager == null) {
-                mAudioManager = (AudioManager) mActivity.getSystemService(Activity.AUDIO_SERVICE);
-                mAudioManager.setMode(AudioManager.MODE_IN_CALL);
-                mAudioManager.setSpeakerphoneOn(true);
-            }
-
-            mAudioControlCallback = control;
-            mAudioPlayer.setOnPreparedListener(mp -> {
-                if (mPlayingAudioSeq > 0) {
-                    // Another media have already been started while we waited for this media to become ready.
-                    mp.release();
-                    return;
-                }
-
-                mPlayingAudioSeq = seq;
-                if (mReadyAction == PlayerReadyAction.PLAY) {
-                    mReadyAction = PlayerReadyAction.NOOP;
-                    mp.start();
-                } else if (mReadyAction == PlayerReadyAction.SEEK ||
-                        mReadyAction == PlayerReadyAction.SEEKNPLAY) {
-                    seekTo(fractionToPos(mSeekTo));
-                }
-                mSeekTo = -1f;
-            });
-            mAudioPlayer.setOnCompletionListener(mp -> {
-                if (mPlayingAudioSeq != seq) {
-                    return;
-                }
-                int pos = mp.getCurrentPosition();
-                if (pos > 0) {
-                    if (mAudioControlCallback != null) {
-                        mAudioControlCallback.reset();
-                    }
-                }
-            });
-            mAudioPlayer.setOnErrorListener((mp, what, extra) -> {
-                Log.w(TAG, "Playback error " + what + "/" + extra);
-                if (mPlayingAudioSeq != seq) {
-                    return true;
-                }
-                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                return false;
-            });
-            mAudioPlayer.setOnSeekCompleteListener(mp -> {
-                if (mPlayingAudioSeq != seq) {
-                    return;
-                }
-                if (mReadyAction == PlayerReadyAction.SEEKNPLAY) {
-                    mReadyAction = PlayerReadyAction.NOOP;
-                    mp.start();
-                }
-            });
-            mAudioPlayer.setAudioAttributes(
-                    new AudioAttributes.Builder()
-                            .setLegacyStreamType(AudioManager.STREAM_VOICE_CALL).build());
-
-            Object val;
-            if ((val = data.get("ref")) instanceof String) {
-                Tinode tinode = Cache.getTinode();
-                URL url = tinode.toAbsoluteURL((String) val);
-                if (url != null) {
-                    try {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            mAudioPlayer.setDataSource(mActivity, Uri.parse(url.toString()),
-                                    tinode.getRequestHeaders(), null);
-                        } else {
-                            Uri uri = Uri.parse(url.toString()).buildUpon()
-                                    .appendQueryParameter("apikey", tinode.getApiKey())
-                                    .appendQueryParameter("auth", "token")
-                                    .appendQueryParameter("secret", tinode.getAuthToken())
-                                    .build();
-                            mAudioPlayer.setDataSource(mActivity, uri);
-                        }
-                    } catch (SecurityException | IOException ex) {
-                        Log.w(TAG, "Failed to add URI data source ", ex);
-                        Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    mAudioControlCallback.reset();
-                    Log.w(TAG, "Invalid ref URL " + val);
-                    Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
-                    return false;
-                }
-            } else if ((val = data.get("val")) instanceof String) {
-                byte[] source = Base64.decode((String) val, Base64.DEFAULT);
-                mAudioPlayer.setDataSource(new MemoryAudioSource(source));
-            } else {
-                mAudioControlCallback.reset();
-                Log.w(TAG, "Unable to play audio: missing data");
-                Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                 return false;
             }
-            mAudioPlayer.prepareAsync();
+
+            mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
             return true;
         }
 
-        void releasePlayer(int seq) {
-            if ((seq != 0 && mPlayingAudioSeq != seq) || mPlayingAudioSeq == -1) {
-                return;
+        private boolean clickVideo(Map<String, Object> data) {
+            Log.i(TAG, "Play video!");
+
+            Bundle args = mediaClick(data);
+
+            if (args == null) {
+                Toast.makeText(mActivity, R.string.broken_video, Toast.LENGTH_SHORT).show();
+                return false;
             }
 
-            mPlayingAudioSeq = -1;
-            mReadyAction = PlayerReadyAction.NOOP;
-            mSeekTo = -1f;
-            if (mAudioPlayer != null) {
-                try {
-                    mAudioPlayer.stop();
-                } catch (IllegalStateException ignored) {}
-                mAudioPlayer.reset();
-                mAudioPlayer.release();
-                mAudioPlayer = null;
+            Uri preref = UiUtils.getUriVal("preref", data);
+            if (preref != null) {
+                args.putParcelable(AttachmentHandler.ARG_PRE_URI, preref);
             }
-            if (mAudioControlCallback != null) {
-                mAudioControlCallback.reset();
+            byte[] bytes = UiUtils.getByteArray("preview", data);
+            if (bytes != null) {
+                args.putByteArray(AttachmentHandler.ARG_PREVIEW, bytes);
             }
-        }
+            args.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, UiUtils.getStringVal("premime", data, null));
 
-        // Start playing at the current position.
-        void playWhenReady() {
-            if (mPlayingAudioSeq > 0) {
-                mAudioPlayer.start();
-            } else {
-                mReadyAction = PlayerReadyAction.PLAY;
-            }
-        }
+            mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_VIDEO, args, true);
 
-        void pause() {
-            if (mAudioPlayer != null && mAudioPlayer.isPlaying()) {
-                mAudioPlayer.pause();
-            }
-            mReadyAction = PlayerReadyAction.NOOP;
-            mSeekTo = -1f;
-        }
-
-        void seekToWhenReady(float fraction) {
-            if (mPlayingAudioSeq > 0) {
-                // Already prepared.
-                int pos = fractionToPos(fraction);
-                if (mAudioPlayer.getCurrentPosition() != pos) {
-                    // Need to seek.
-                    mReadyAction = PlayerReadyAction.NOOP;
-                    seekTo(pos);
-                } else {
-                    // Already prepared & at the right position.
-                    mAudioPlayer.start();
-                }
-            } else {
-                mReadyAction = PlayerReadyAction.SEEK;
-                mSeekTo = fraction;
-            }
-        }
-
-        void seekTo(int pos) {
-            if (mAudioPlayer != null && mPlayingAudioSeq > 0) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    mAudioPlayer.seekTo(pos, MediaPlayer.SEEK_CLOSEST);
-                } else {
-                    mAudioPlayer.seekTo(pos);
-                }
-            }
-        }
-
-        private int fractionToPos(float fraction) {
-            try {
-                if (mAudioPlayer != null && mPlayingAudioSeq > 0) {
-                    long duration = mAudioPlayer.getDuration();
-                    if (duration > 0) {
-                        return ((int) (fraction * duration));
-                    } else {
-                        Log.w(TAG, "Audio has no duration");
-                    }
-                }
-            } catch (IllegalStateException ex) {
-                Log.w(TAG, "Duration not available yet " + mPlayingAudioSeq, ex);
-            }
-            return -1;
-        }
-    }
-
-    // Wrap in-band audio into MediaDataSource to make it playable by MediaPlayer.
-    private static class MemoryAudioSource extends MediaDataSource {
-        private final byte[] mData;
-
-        MemoryAudioSource(byte[] source) {
-            mData = source;
-        }
-
-        @Override
-        public int readAt(long position, byte[] destination, int offset, int size) throws IOException {
-            size = Math.min(mData.length - (int) position, size);
-            System.arraycopy(mData, (int) position, destination, offset, size);
-            return size;
-        }
-
-        @Override
-        public long getSize() throws IOException {
-            return mData.length;
-        }
-
-        @Override
-        public void close() throws IOException {
-            // Do nothing.
+            return true;
         }
     }
 }

@@ -164,9 +164,9 @@
     <string name="login_rejected">Benutzername wurde abgelehnt</string>
     <string name="email_rejected">Die E-Mail-Adresse wurde abgelehnt</string>
     <string name="invalid_confirmation_code">Ungültiger Code</string>
-    <string name="notification_channel_name">Neue Nachricht</string>
+    <string name="new_message_channel_name">Neue Nachricht</string>
     <string name="new_message">Neue Nachricht</string>
-    <string name="notification_channel_description">Sie haben eine neue Nachricht erhalten</string>
+    <string name="new_message_channel_description">Sie haben eine neue Nachricht erhalten</string>
     <string name="request_pass_reset_title">Passwort zurücksetzen</string>
     <string name="request_pass_reset">Code anfordern mit %1$s:</string>
     <string name="validated_address_to_use">%1$s muss zum senden des Codes validiert sein</string>
@@ -188,7 +188,6 @@
     <string name="new_chat_block">Blockieren</string>
     <string name="new_chat">Neue Unterhaltung</string>
     <string name="messages_not_readable">Neue Nachrichten können nicht gelesen werden</string>
-    <string name="content_deleted">dieser Inhalt wurde gelöscht</string>
     <string name="peers_messaging_disabled">Gruppennachrichten sind deaktiviert</string>
     <string name="action_enable">Aktivieren</string>
     <string name="find">Suchen</string>
@@ -324,4 +323,19 @@
     <string name="in_progress_call">in Arbeit</string>
     <string name="connecting_call">verbinden</string>
     <string name="tags_not_found">Keine Schlagworte definiert. Erstellen Sie welche.</string>
+
+    <string name="edited">geändert</string>
+    <string name="video">Video</string>
+    <string name="video_caption_hint">Titel des Videos</string>
+    <string name="video_preview">Video</string>
+    <string name="broken_video">Ungültiges oder unbekanntes Videoformat.</string>
+    <string name="unable_to_play_video">Dieses Video kann nicht abgespielt werden.</string>
+    <string name="select_image_or_video">Bild oder Video auswählen</string>
+    <string name="tap_to_select">Zum Auswählen tippen</string>
+
+    <string name="video_call_channel_name">Videoanrufe</string>
+    <string name="video_call_channel_description">Video- und Audioanrufe</string>
+    <string name="tinode_video_call">Tinode-Videoanruf</string>
+    <string name="answer_call">Antwort</string>
+    <string name="decline_call">Ablehnen</string>
 </resources>

@@ -173,19 +173,19 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 return;
             }
             // Make sure topic title is not too long.
-            if (topicTitle.length() > UiUtils.MAX_TITLE_LENGTH) {
-                topicTitle = topicTitle.substring(0, UiUtils.MAX_TITLE_LENGTH);
+            if (topicTitle.length() > Const.MAX_TITLE_LENGTH) {
+                topicTitle = topicTitle.substring(0, Const.MAX_TITLE_LENGTH);
             }
 
             String description = ((EditText) activity.findViewById(R.id.topicDescription)).getText().toString();
-            if (description.length() > UiUtils.MAX_DESCRIPTION_LENGTH) {
-                description = description.substring(0, UiUtils.MAX_DESCRIPTION_LENGTH);
+            if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
 
             // Private comment.
             String pcomment = ((EditText) activity.findViewById(R.id.editPrivate)).getText().toString();
-            if (pcomment.length() > UiUtils.MAX_TITLE_LENGTH) {
-                pcomment = pcomment.substring(0, UiUtils.MAX_TITLE_LENGTH);
+            if (pcomment.length() > Const.MAX_TITLE_LENGTH) {
+                pcomment = pcomment.substring(0, Const.MAX_TITLE_LENGTH);
             }
 
             final String tags = ((EditText) activity.findViewById(R.id.editTags)).getText().toString();
@@ -237,7 +237,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
 
                                 Intent intent = new Intent(activity, MessageActivity.class);
                                 intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-                                intent.putExtra("topic", topic.getName());
+                                intent.putExtra(Const.INTENT_EXTRA_TOPIC, topic.getName());
                                 startActivity(intent);
 
                                 return null;

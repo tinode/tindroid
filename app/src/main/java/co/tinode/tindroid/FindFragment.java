@@ -453,7 +453,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             }
             // See discussion here: https://github.com/tinode/tindroid/issues/39
             launcher.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-            launcher.putExtra("topic", topicName);
+            launcher.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
             startActivity(launcher);
             activity.finish();
         }

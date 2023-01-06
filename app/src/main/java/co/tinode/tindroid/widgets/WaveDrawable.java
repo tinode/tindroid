@@ -9,6 +9,8 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 
+import java.util.Arrays;
+
 import androidx.annotation.FloatRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,7 +43,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     private byte[] mOriginal;
 
-    // Amplitude values received from the caller and resampled to fit the screen.
+    // Amplitude values received from the caller and resampled to range 0..1.
     private float[] mBuffer;
     // Count of amplitude values actually added to the buffer.
     private int mContains;
@@ -121,7 +123,7 @@ public class WaveDrawable extends Drawable implements Runnable {
             resampleBars(mOriginal, mBuffer);
             mIndex = 0;
             mContains = mBuffer.length;
-            recalcBars();
+            recalcBars(1.0f);
         }
         invalidateSelf();
     }
@@ -265,7 +267,17 @@ public class WaveDrawable extends Drawable implements Runnable {
             mIndex %= mBuffer.length;
             mBuffer[mIndex] = amplitude;
         }
-        recalcBars();
+
+        float max = 0f;
+        for (float v : mBuffer) {
+            if (v > max) {
+                max = v;
+            }
+        }
+        if (max == 0.0f) {
+            max = 1.0f;
+        }
+        recalcBars(max);
         invalidateSelf();
     }
 
@@ -279,7 +291,7 @@ public class WaveDrawable extends Drawable implements Runnable {
         resampleBars(amplitudes, mBuffer);
         mIndex = 0;
         mContains = mBuffer.length;
-        recalcBars();
+        recalcBars(1.0f);
         invalidateSelf();
     }
 
@@ -288,24 +300,13 @@ public class WaveDrawable extends Drawable implements Runnable {
     }
 
     // Calculate vertices of amplitude bars.
-    private void recalcBars() {
+    private void recalcBars(float scalingFactor) {
         if (mBuffer.length == 0) {
             return;
         }
 
         int height = mSize.height();
         if (mEffectiveWidth <= 0 || height <= 0) {
-            return;
-        }
-
-        // Values for scaling amplitude.
-        float max = Integer.MIN_VALUE;
-        for (float amp : mBuffer) {
-            if (amp > max) {
-                max = amp;
-            }
-        }
-        if (max <= 0) {
             return;
         }
 
@@ -319,7 +320,7 @@ public class WaveDrawable extends Drawable implements Runnable {
             // startX, endX
             float x = mLeftPadding + 1.0f + i * (sLineWidth + sSpacing) + sLineWidth * 0.5f;
             // Y length
-            float y = amp / max * height * 0.9f + 0.01f;
+            float y = amp / scalingFactor * height * 0.9f + 0.01f;
             // startX
             mBars[i * 4] = x;
             // startY
@@ -329,7 +330,6 @@ public class WaveDrawable extends Drawable implements Runnable {
             // stopY
             mBars[i * 4 + 3] = (height + y) * 0.5f;
         }
-
     }
 
     // Get thumb position for level.
@@ -362,8 +362,11 @@ public class WaveDrawable extends Drawable implements Runnable {
 
         if (max > 0) {
             for (int i = 0; i < dst.length; i++) {
-                dst[i] = dst[i] /max;
+                dst[i] = dst[i]/max;
             }
+        } else {
+            // Replace zeros or negative values with some small amplitude.
+            Arrays.fill(dst, 0.01f);
         }
     }
 

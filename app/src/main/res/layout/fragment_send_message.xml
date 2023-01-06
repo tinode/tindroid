@@ -94,6 +94,7 @@
                 android:contentDescription="@string/record_audio_button_hint"
                 android:paddingStart="4dp"
                 android:paddingEnd="6dp"
+                android:visibility="visible"
                 app:srcCompat="@drawable/ic_mic"
                 app:tint="?attr/colorAccent" />
 
@@ -108,6 +109,19 @@
                 android:paddingEnd="6dp"
                 android:visibility="invisible"
                 app:srcCompat="@drawable/ic_send"
+                app:tint="?attr/colorAccent" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/chatEditDoneButton"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/send_message_button_hint"
+                android:paddingStart="4dp"
+                android:paddingEnd="6dp"
+                android:visibility="invisible"
+                app:srcCompat="@drawable/ic_check_circle"
                 app:tint="?attr/colorAccent" />
         </FrameLayout>
     </LinearLayout>

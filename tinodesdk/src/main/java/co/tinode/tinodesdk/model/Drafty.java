@@ -84,7 +84,7 @@ public class Drafty implements Serializable {
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
 
     private static final String[] DATA_FIELDS =
-            new String[]{"act", "duration", "height", "incoming", "mime", "name", "preview", "ref",
+            new String[]{"act", "duration", "height", "incoming", "mime", "name", "premime", "preref", "preview", "ref",
                     "size", "state", "title", "url", "val", "width"};
 
     private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
@@ -567,27 +567,12 @@ public class Drafty implements Serializable {
      * @param width image width in pixels
      * @param height image height in pixels
      * @param fname name of the file to suggest to the receiver.
-     * @return 'this' Drafty object.
-     */
-    @SuppressWarnings("UnusedReturnValue")
-    public Drafty insertImage(int at, String mime, byte[] bits, int width, int height, String fname) {
-        return insertImage(at, mime, bits, width, height, fname, null, 0);
-    }
-
-    /**
-     * Insert inline image
-     *
-     * @param at location to insert image at
-     * @param mime Content-type, such as 'image/jpeg'.
-     * @param bits Content as an array of bytes
-     * @param width image width in pixels
-     * @param height image height in pixels
-     * @param fname name of the file to suggest to the receiver.
      * @param refurl Reference to full/extended image.
      * @param size file size hint (in bytes) as reported by the client.
      *
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("UnusedReturnValue")
     public Drafty insertImage(int at,
                               @Nullable String mime,
                               byte[] bits, int width, int height,
@@ -733,6 +718,63 @@ public class Drafty implements Serializable {
         }
 
         insert(at, " ", "AU", data);
+        return this;
+    }
+
+    /**
+     * Insert audio recording into Drafty document.
+     *
+     * @param at Location to insert video at.
+     * @param mime Content-type, such as 'video/webm'.
+     * @param bits Video content to include inline if video is very small.
+     * @param width Width of the video.
+     * @param height Height of the video.
+     * @param preview image poster for the video to include inline.
+     * @param preref URL of an image poster.
+     * @param premime Content-type of the image poster, such as 'image/png'.
+     * @param duration Record duration in milliseconds.
+     * @param fname Optional file name to suggest to the receiver.
+     * @param refurl Reference to video content sent out of band.
+     * @param size File size hint as reported by the client.
+     *
+     * @return <code>this</code> Drafty document.
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public Drafty insertVideo(int at,
+                              @NotNull String mime,
+                              byte[] bits,
+                              int width, int height,
+                              byte[] preview,
+                              @Nullable URI preref,
+                              @Nullable String premime,
+                              int duration,
+                              @Nullable String fname,
+                              @Nullable URI refurl,
+                              long size) {
+        if (bits == null && refurl == null) {
+            throw new IllegalArgumentException("Either video bits or reference URL must not be null.");
+        }
+
+        Map<String,Object> data = new HashMap<>();
+        data.put("mime", mime);
+        addOrSkip(data, "val", bits);
+        data.put("duration", duration);
+        addOrSkip(data, "preview", preview);
+        addOrSkip(data, "premime", premime);
+        if (preref != null) {
+            addOrSkip(data, "preref", preref.toString());
+        }
+        addOrSkip(data,"name", fname);
+        data.put("width", width);
+        data.put("height", height);
+        if (refurl != null) {
+            addOrSkip(data, "ref", refurl.toString());
+        }
+        if (size > 0) {
+            data.put("size", size);
+        }
+
+        insert(at, " ", "VD", data);
         return this;
     }
 
@@ -948,10 +990,13 @@ public class Drafty implements Serializable {
     }
 
     /**
-     Mostly for testing: convert Drafty to a markdown string.
+     * Mostly for testing: convert Drafty to a markdown string.
+     * @param plainLink links should be written as plain text, without any formatting.
+     * @return Drafty as markdown-formatted string; elements not representable as markdown are converted to plain text.
      */
-    public String toMarkdown() {
+    public String toMarkdown(boolean plainLink) {
         return format(new Formatter<String>() {
+            final boolean usePlainLink = plainLink;
             @Override
             public String wrapText(CharSequence text) {
                 return text.toString();
@@ -998,7 +1043,9 @@ public class Drafty implements Serializable {
                         res = "`" + res + "`";
                         break;
                     case "LN":
-                        res = "[" + res + "](" + attr.get("url") + ")";
+                        if (!usePlainLink) {
+                            res = "[" + res + "](" + attr.get("url") + ")";
+                        }
                         break;
                 }
 
@@ -1481,11 +1528,13 @@ public class Drafty implements Serializable {
         attachmentsToEnd(tree, maxAttachments);
         // Shorten the doc.
         tree = shortenTree(tree, length, "…");
-        String[] allow = new String[]{"val"};
+        String[] imAllow = new String[]{"val"};
+        String[] vdAllow = new String[]{"preview"};
         tree = treeTopDown(tree, new Transformer() {
             @Override
             public Node transform(Node node) {
-                node.data = copyEntData(node.data, MAX_PREVIEW_DATA_SIZE, node.isStyle("IM") ? allow : null);
+                node.data = copyEntData(node.data, MAX_PREVIEW_DATA_SIZE,
+                        node.isStyle("IM") ? imAllow : node.isStyle("VD") ? vdAllow : null);
                 return node;
             }
         });

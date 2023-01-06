@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.AccessChange;
@@ -1478,7 +1479,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Delete messages with id in the provided list.
+     * Delete messages with IDs in the provided array of ranges.
      *
      * @param ranges delete messages with ids in these ranges.
      * @param hard hard-delete messages
@@ -1508,6 +1509,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         return new PromisedReply<>(new NotConnectedException());
+    }
+
+    /**
+     * Delete messages with id in the provided list.
+     *
+     * @param list delete messages with IDs from the list.
+     * @param hard hard-delete messages
+     */
+    public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
+        return delMessages(MsgRange.listToRanges(list), hard);
     }
 
     /**
@@ -1623,6 +1634,20 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mStore.setRecv(this, result);
         }
         return result;
+    }
+
+    /**
+     * Send a recording notification to server. Ensure we do not sent too many.
+     */
+    public void noteRecording(boolean audioOnly) {
+        long now = System.currentTimeMillis();
+        if (now - mLastKeyPress > Tinode.getKeyPressDelay()) {
+            try {
+                mTinode.noteRecording(getName(), audioOnly);
+                mLastKeyPress = now;
+            } catch (NotConnectedException ignored) {
+            }
+        }
     }
 
     /**

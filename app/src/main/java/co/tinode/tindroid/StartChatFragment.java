@@ -30,10 +30,7 @@ public class StartChatFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final FragmentActivity activity = requireActivity();
 
         int initialTab = 0;
         if (savedInstance != null) {
@@ -52,10 +49,7 @@ public class StartChatFragment extends Fragment {
     public void onSaveInstanceState(@NonNull Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final FragmentActivity activity = requireActivity();
 
         final TabLayout tabLayout = activity.findViewById(R.id.tabsCreationOptions);
         if (tabLayout != null) {

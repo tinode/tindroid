@@ -6,7 +6,6 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDoneException;
 import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -79,7 +78,12 @@ public class MessageDb implements BaseColumns {
      */
     private static final String COLUMN_NAME_REPLACES_SEQ ="repl_seq";
     /**
-     * Effective seq id this message represents (latest message version in edit history).
+     * Timestamp of the original message this message has replaced
+     * (could be the same as tc, if it does not replace anything).
+     */
+    private static final String COLUMN_NAME_EFFECTIVE_TS ="eff_ts";
+    /**
+     * If not NULL, then this message is the latest in edit history and this is the seq ID of the message it replaced.
      */
     private static final String COLUMN_NAME_EFFECTIVE_SEQ ="eff_seq";
     /**
@@ -107,6 +111,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_HIGH + " INT," +
                     COLUMN_NAME_DEL_ID + " INT," +
                     COLUMN_NAME_REPLACES_SEQ + " INT," +
+                    COLUMN_NAME_EFFECTIVE_TS + " INT," +
                     COLUMN_NAME_EFFECTIVE_SEQ + " INT," +
                     COLUMN_NAME_HEAD + " TEXT," +
                     COLUMN_NAME_CONTENT + " TEXT)";
@@ -116,16 +121,17 @@ public class MessageDb implements BaseColumns {
     static final int COLUMN_IDX_USER_ID = 2;
     static final int COLUMN_IDX_STATUS = 3;
     static final int COLUMN_IDX_SENDER = 4;
-    static final int COLUMN_IDX_TS = 5;
+    // static final int COLUMN_IDX_TS = 5;
     static final int COLUMN_IDX_SEQ = 6;
     static final int COLUMN_IDX_HIGH = 7;
     static final int COLUMN_IDX_DEL_ID = 8;
-    static final int COLUMN_IDX_REPLACES_SEQ = 9;
-    static final int COLUMN_IDX_EFFECTIVE_SEQ = 10;
-    static final int COLUMN_IDX_HEAD = 11;
-    static final int COLUMN_IDX_CONTENT = 12;
+    // static final int COLUMN_IDX_REPLACES_SEQ = 9;
+    static final int COLUMN_IDX_REPLACES_TS = 10;
+    static final int COLUMN_IDX_EFFECTIVE_SEQ = 11;
+    static final int COLUMN_IDX_HEAD = 12;
+    static final int COLUMN_IDX_CONTENT = 13;
     // Used in JOIN.
-    static final int COLUMN_IDX_TOPIC_NAME = 13;
+    static final int COLUMN_IDX_TOPIC_NAME = 14;
 
     /**
      * SQL statement to drop Messages table.
@@ -156,7 +162,7 @@ public class MessageDb implements BaseColumns {
                     COLUMN_NAME_TOPIC_ID + "," +
                     COLUMN_NAME_EFFECTIVE_SEQ + " DESC) WHERE " + COLUMN_NAME_EFFECTIVE_SEQ + " IS NOT NULL";
     /**
-     * Save message to DB
+     * Save message to DB.
      *
      * @return ID of the newly added message
      */
@@ -175,25 +181,48 @@ public class MessageDb implements BaseColumns {
             return -1;
         }
 
-        int effSeq = msg.getReplacementSeqId();
-        if (effSeq <= 0) {
-            effSeq = msg.seq;
-        }
         db.beginTransaction();
         try {
-            int origSeq = getOriginalSeqFor(db, msg.topicId, effSeq);
-            if (origSeq > 0) {
-                if (origSeq < msg.seq) {
-                    // Newer message version. Invalidate the old effective message record.
-                    invalidateMessage(db, msg.topicId, origSeq);
+            int effSeq = msg.getReplacementSeqId();
+            long effTs = -1;
+            if (effSeq > 0) {
+                // This is a replacement message. Two cases:
+                // 1. The original message is already received and stored in DB. It should be replaced with this one.
+                // 2. The original message is not in the DB and thus this message should not be shown to the user.
+                Cursor c = getMessageBySeq(db, msg.topicId, effSeq);
+                StoredMessage latestMsg = null;
+                if (c.moveToFirst()) {
+                    latestMsg = StoredMessage.readMessage(c, 0);
+                    effTs = latestMsg.ts.getTime();
+                }
+                c.close();
+
+                // Replacement message.
+                if (latestMsg != null && (msg.seq == 0 || msg.seq > latestMsg.seq)) {
+                    // Case 1: newer version while the original is found.
+                    // Clear the effective_seq (invalidate) of all older effective message records.
+                    deactivateMessageVersion(db, msg.topicId, effSeq);
                 } else {
-                    // The already existing message version is newer than this one.
-                    // Do not set effective seq.
+                    // Case 2: original not found. Do not set effective seq.
                     effSeq = -1;
+                }
+            } else {
+                // This is not a replacement message. Three cases:
+                // 1. This is a never edited message.
+                // 2. Edited message but edits are not in the database.
+                // 3. Edited and edits are in the database already.
+                effTs = msg.ts != null ? msg.ts.getTime() : -1;
+                effSeq = msg.seq;
+                if (msg.seq > 0) {
+                    // Check if there are newer versions of this message and activate the latest one.
+                    if (activateMessageVersion(db, msg.topicId, msg.seq, effTs)) {
+                        // If activated, then this message has been replaced by a newer one.
+                        effSeq = -1;
+                    }
                 }
             }
 
-            msg.id = insertRaw(db, topic, msg, effSeq);
+            msg.id = insertRaw(db, topic, msg, effSeq, effTs);
             if (msg.id > 0) {
                 db.setTransactionSuccessful();
             }
@@ -214,7 +243,7 @@ public class MessageDb implements BaseColumns {
      *
      * @return ID of the newly added message
      */
-    private static long insertRaw(SQLiteDatabase db, Topic topic, StoredMessage msg, int withEffSeq) {
+    private static long insertRaw(SQLiteDatabase db, Topic topic, StoredMessage msg, int withEffSeq, long withEffTs) {
         if (msg.userId <= 0) {
             msg.userId = UserDb.getId(db, msg.from);
         }
@@ -227,7 +256,9 @@ public class MessageDb implements BaseColumns {
         BaseDb.Status status;
         if (msg.seq == 0) {
             msg.seq = TopicDb.getNextUnsentSeq(db, topic);
-            withEffSeq = msg.seq;
+            if (withEffSeq <= 0) {
+                withEffSeq = msg.seq;
+            }
             status = msg.status == BaseDb.Status.UNDEFINED ? BaseDb.Status.QUEUED : msg.status;
         } else {
             status = BaseDb.Status.SYNCED;
@@ -240,6 +271,9 @@ public class MessageDb implements BaseColumns {
         values.put(COLUMN_NAME_STATUS, status.value);
         values.put(COLUMN_NAME_SENDER, msg.from);
         values.put(COLUMN_NAME_TS, msg.ts != null ? msg.ts.getTime() : null);
+        if (withEffTs > 0) {
+            values.put(COLUMN_NAME_EFFECTIVE_TS, withEffTs);
+        }
         values.put(COLUMN_NAME_SEQ, msg.seq);
         int replacesSeq = msg.getReplacementSeqId();
         if (replacesSeq > 0) {
@@ -269,38 +303,64 @@ public class MessageDb implements BaseColumns {
         return false;
     }
 
-    static boolean delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
-        ContentValues values = new ContentValues();
-        values.put(COLUMN_NAME_STATUS, BaseDb.Status.SYNCED.value);
-        values.put(COLUMN_NAME_TS, timestamp.getTime());
-        values.put(COLUMN_NAME_SEQ, seq);
-        values.put(COLUMN_NAME_EFFECTIVE_SEQ, seq);
-        int updated = db.update(TABLE_NAME, values, _ID + "=" + msgId, null);
-        return updated > 0;
+    static void delivered(SQLiteDatabase db, long msgId, Date timestamp, int seq) {
+        String sql = "UPDATE " + TABLE_NAME + " SET " +
+                COLUMN_NAME_STATUS + "=" + BaseDb.Status.SYNCED.value + "," +
+                COLUMN_NAME_TS + "=" + timestamp.getTime() + "," +
+                COLUMN_NAME_SEQ + "=" + seq + "," +
+                COLUMN_NAME_EFFECTIVE_TS +
+                    "=CASE WHEN " + COLUMN_NAME_EFFECTIVE_TS + " IS NULL THEN " +
+                        timestamp.getTime() + " ELSE " + COLUMN_NAME_EFFECTIVE_TS + " END," +
+                COLUMN_NAME_EFFECTIVE_SEQ +
+                    "=CASE WHEN " + COLUMN_NAME_REPLACES_SEQ + " IS NOT NULL THEN "
+                        + COLUMN_NAME_REPLACES_SEQ + " ELSE " + seq + " END " +
+                "WHERE " + _ID + "=" + msgId;
+        db.execSQL(sql);
     }
 
-    private static void invalidateMessage(SQLiteDatabase db, long topicId, int seqId) {
+    // Clear COLUMN_NAME_EFFECTIVE_SEQ to remove message from display.
+    private static void deactivateMessageVersion(SQLiteDatabase db, long topicId, int effSeq) {
         ContentValues values = new ContentValues();
         values.putNull(COLUMN_NAME_EFFECTIVE_SEQ);
         db.update(TABLE_NAME, values,
                 COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
-                COLUMN_NAME_SEQ + "=" + seqId,
+                        COLUMN_NAME_EFFECTIVE_SEQ + "=" + effSeq,
                 null);
     }
 
-    private static int getOriginalSeqFor(SQLiteDatabase db, long topicId, int effSeq) {
-        if (effSeq <= 0) {
-            return -1;
-        }
+    // Find the newest version of a message and make it visible
+    // by setting COLUMN_NAME_EFFECTIVE_SEQ to the given seq value.
+    private static boolean activateMessageVersion(SQLiteDatabase db, long topicId, int seqId, long effTs) {
+        ContentValues values = new ContentValues();
+        values.put(COLUMN_NAME_EFFECTIVE_SEQ, seqId);
+        values.put(COLUMN_NAME_EFFECTIVE_TS, effTs);
+        return db.update(TABLE_NAME, values,
+                // Select the newest message with the given COLUMN_NAME_REPLACES_SEQ.
+                _ID + "=" +
+                        "(SELECT " + _ID + " FROM " + TABLE_NAME +
+                            " WHERE " + COLUMN_NAME_REPLACES_SEQ + "=" + seqId + " AND " +
+                                COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                            " ORDER BY " + COLUMN_NAME_SEQ + " DESC LIMIT 1)",
+                null) > 0;
+    }
 
-        try {
-            return (int) db.compileStatement("SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
-                    " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
-                    COLUMN_NAME_EFFECTIVE_SEQ + "=" + effSeq).simpleQueryForLong();
-        } catch (SQLiteDoneException ignored) {
-            // Message not found
-            return -1;
+    // Find all version of an edited message (if any). The versions are sorted from newest to oldest.
+    // Does not return the original message id (seq).
+    public static int[] getAllVersions(SQLiteDatabase db, long topicId, int seq, int limit) {
+        Cursor cursor = db.rawQuery("SELECT " + COLUMN_NAME_SEQ + " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
+                COLUMN_NAME_REPLACES_SEQ + "=" + seq +
+                " ORDER BY " + COLUMN_NAME_SEQ + " DESC" +
+                (limit > 0 ? " LIMIT " + limit : ""), null);
+        ArrayList<Integer> ids = new ArrayList<>();
+        if (cursor.moveToFirst()) {
+            do {
+                int repl = cursor.getInt(0);
+                ids.add(repl);
+            } while (cursor.moveToNext());
         }
+        cursor.close();
+        return ids.stream().mapToInt(i->i).toArray();
     }
 
     /**
@@ -344,7 +404,7 @@ public class MessageDb implements BaseColumns {
      *
      * @param db    database to select from;
      * @param topicId _id of the topic which owns the message.
-     * @param effSeq effective seq ID of the message tp get.
+     * @param effSeq effective seq ID of the message to get.
      * @return cursor with the message (close after use!).
      */
     static Cursor getMessageBySeq(SQLiteDatabase db, long topicId, int effSeq) {
@@ -421,7 +481,8 @@ public class MessageDb implements BaseColumns {
      */
     static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
         int high = 0;
-        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS missing" +
+        // Find the greatest seq present in the DB.
+        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS highest" +
                 " FROM " + TABLE_NAME + " AS m1" +
                 " LEFT JOIN " + TABLE_NAME + " AS m2" +
                 " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
@@ -687,6 +748,19 @@ public class MessageDb implements BaseColumns {
      */
     static boolean delete(SQLiteDatabase db, long msgId) {
         return db.delete(TABLE_NAME, _ID + "=" + msgId, null) > 0;
+    }
+
+    /**
+     * Delete single message by topic ID and seq.
+     *
+     * @param db    Database to use.
+     * @param topicId Database ID of the topic with the message.
+     * @param seq Seq ID of the message to delete.
+     * @return true on success, false on failure.
+     */
+    static boolean delete(SQLiteDatabase db, long topicId, int seq) {
+        return db.delete(TABLE_NAME, COLUMN_NAME_TOPIC_ID + "=" + topicId +
+                " AND " + COLUMN_NAME_SEQ + "=" + seq, null) > 0;
     }
 
     /**

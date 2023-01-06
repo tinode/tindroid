@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.ByteArrayOutputStream;
 
 import androidx.annotation.NonNull;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.model.Mergeable;
 import co.tinode.tinodesdk.model.TheCard;
@@ -72,7 +73,7 @@ public class VxCard extends TheCard {
         if (photo != null && photo.data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
             if (bmp != null) {
-                mImage = UiUtils.scaleSquareBitmap(bmp, UiUtils.MAX_AVATAR_SIZE);
+                mImage = UiUtils.scaleSquareBitmap(bmp, Const.MAX_AVATAR_SIZE);
                 // createScaledBitmap may return the same object if scaling is not required.
                 if (bmp != mImage) {
                     bmp.recycle();

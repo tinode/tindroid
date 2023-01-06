@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/player_control"
+        android:width="48dp" android:height="48dp"
+        android:drawable="@drawable/player_control"
+        android:gravity="center" />
+    <item
+        android:id="@+id/duration_background"
+        android:gravity="bottom|left"
+        android:width="48dp" android:height="18dp"
+        android:left="2dp" android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="4dp" />
+            <solid android:color="#99FFFFFF" />
+        </shape>
+    </item>
+    <!-- This is a placeholder for TextDrawable with duration. -->
+    <item
+        android:id="@+id/duration"
+        android:width="48dp" android:height="18dp"
+        android:gravity="bottom|left"
+        android:left="2dp"
+        android:bottom="2dp"
+        android:drawable="@color/colorChipBorder" />
+</layer-list>

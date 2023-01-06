@@ -16,6 +16,7 @@ import java.util.HashMap;
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.core.content.res.ResourcesCompat;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.UiUtils;
 
 /**
@@ -26,6 +27,7 @@ public class UrlLayerDrawable extends LayerDrawable {
     private static final int INTRINSIC_SIZE = 128;
 
     HashMap<Integer,Target> mTargets = null;
+
     public UrlLayerDrawable(@NonNull Drawable[] layers) {
         super(layers);
     }
@@ -73,7 +75,7 @@ public class UrlLayerDrawable extends LayerDrawable {
         };
         RequestCreator c = Picasso.get()
                 .load(Uri.decode(url))
-                .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
+                .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
                 .centerCrop();
         if (error != 0) {
             c = c.error(error);

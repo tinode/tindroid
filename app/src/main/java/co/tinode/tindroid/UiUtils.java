@@ -23,6 +23,7 @@ import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -32,6 +33,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
@@ -77,7 +79,6 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -105,33 +106,6 @@ import co.tinode.tinodesdk.model.ServerMessage;
 public class UiUtils {
     private static final String TAG = "UiUtils";
 
-    static final int ACTION_UPDATE_SELF_SUB = 0;
-    static final int ACTION_UPDATE_SUB = 1;
-    static final int ACTION_UPDATE_AUTH = 2;
-    static final int ACTION_UPDATE_ANON = 3;
-
-    static final String PREF_TYPING_NOTIF = "pref_typingNotif";
-    static final String PREF_READ_RCPT = "pref_readReceipts";
-
-    // Maximum length of user name or topic title.
-    static final int MAX_TITLE_LENGTH = 60;
-    // Maximum length of topic description.
-    static final int MAX_DESCRIPTION_LENGTH = 360;
-    // Length of quoted text.
-    public static final int QUOTED_REPLY_LENGTH = 64;
-
-    // Maximum linear dimensions of images.
-    static final int MAX_BITMAP_SIZE = 1024;
-    public static final int AVATAR_THUMBNAIL_DIM = 36; // dip
-    // Image thumbnail in quoted replies and reply/forward previews.
-    public static final int REPLY_THUMBNAIL_DIM = 36;
-    // Image preview size in messages.
-    public static final int IMAGE_PREVIEW_DIM = 64;
-    public static final int MIN_AVATAR_SIZE = 8;
-    public static final int MAX_AVATAR_SIZE = 384;
-    // Maximum byte size of avatar sent in-band.
-    public static final int MAX_INBAND_AVATAR_SIZE = 4096;
-
     // Default tag parameters
     private static final int DEFAULT_MIN_TAG_LENGTH = 4;
     private static final int DEFAULT_MAX_TAG_LENGTH = 96;
@@ -148,6 +122,10 @@ public class UiUtils {
     private static final int LOGO_LAYER_TYPING = 2;
     // If StoredMessage activity is visible, this is the current topic in that activity.
     private static String sVisibleTopic = null;
+
+    public enum MsgAction {
+        NONE, REPLY, FORWARD, EDIT
+    }
 
     static void setupToolbar(final Activity activity, final VxCard pub,
                              final String topicName, final boolean online, final Date lastSeen, boolean deleted) {
@@ -362,6 +340,7 @@ public class UiUtils {
     }
 
     static void doLogout(Context context) {
+        CallManager.unregisterCallingAccount();
         TindroidApp.stopWatchingContacts();
         Cache.invalidate();
 
@@ -521,6 +500,7 @@ public class UiUtils {
         if (one == null || two == null) {
             return false;
         }
+
         return (one.getDate() == two.getDate()) &&
                 (one.getMonth() == two.getMonth()) &&
                 (one.getYear() == two.getYear());
@@ -611,7 +591,7 @@ public class UiUtils {
     @NonNull
     public static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
         // Sanity check
-        size = Math.min(size, MAX_BITMAP_SIZE);
+        size = Math.min(size, Const.MAX_BITMAP_SIZE);
 
         int width = bmp.getWidth();
         int height = bmp.getHeight();
@@ -641,30 +621,26 @@ public class UiUtils {
     }
 
     /**
-     * Scale bitmap down to be under certain liner dimensions but no less than by the given amount.
+     * Scale bitmap down to be under certain liner dimensions.
      *
      * @param bmp       bitmap to scale.
      * @param maxWidth  maximum allowed bitmap width.
      * @param maxHeight maximum allowed bitmap height.
-     * @return scaled bitmap or original, it it does not need ot be scaled.
+     * @param upscale enable increasing size of the image (up to 10x).
+     * @return scaled bitmap or original, it it does not need to be scaled.
      */
     @NonNull
-    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight) {
+    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight,
+                                     final boolean upscale) {
         int width = bmp.getWidth();
         int height = bmp.getHeight();
-        float factor = 1.0f;
-        // Calculate scaling factor due to large linear dimensions.
-        if (width >= height) {
-            if (width > maxWidth) {
-                factor = (float) width / maxWidth;
-            }
-        } else {
-            if (height > maxHeight) {
-                factor = (float) height / maxHeight;
-            }
-        }
+
+        // Calculate scaling factor.
+        float factor = Math.max((float) width / maxWidth, upscale ? 0.1f : 1.0f);
+        factor = Math.max((float) height / maxHeight, factor);
+
         // Scale down.
-        if (factor > 1.0) {
+        if (upscale || factor > 1.0) {
             height /= factor;
             width /= factor;
             return Bitmap.createScaledBitmap(bmp, width, height, true);
@@ -726,7 +702,7 @@ public class UiUtils {
         }
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
-                scaleSquareBitmap(avatar, MAX_AVATAR_SIZE)));
+                scaleSquareBitmap(avatar, Const.MAX_AVATAR_SIZE)));
     }
 
     // Construct avatar from VxCard and set it to the provided ImageView.
@@ -745,7 +721,7 @@ public class UiUtils {
             Picasso
                     .get()
                     .load(ref)
-                    .resize(UiUtils.MAX_AVATAR_SIZE, UiUtils.MAX_AVATAR_SIZE)
+                    .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
                     .placeholder(local)
                     .error(R.drawable.ic_broken_image_round)
                     .into(avatarView);
@@ -831,7 +807,8 @@ public class UiUtils {
         return bitmap;
     }
 
-    // Create round avatar bitmap.
+    // Create avatar bitmap: try to use ref first, then in-band bits, the letter tile, then placeholder.
+    // Do NOT run on UI thread: it will throw.
     public static Bitmap avatarBitmap(Context context, VxCard pub, Topic.TopicType tp, String id, int size) {
         Bitmap bitmap = null;
         String fullName = null;
@@ -862,17 +839,18 @@ public class UiUtils {
                     .getSquareBitmap(size);
         }
 
-        Resources res = context.getResources();
-        return new RoundImageDrawable(res, bitmap).getRoundedBitmap();
+        return bitmap;
     }
 
     // Creates LayerDrawable of the right size with gray background and 'fg' in the middle.
     // Used in chat bubbled to generate placeholder and error images for Picasso.
-    public static Drawable getPlaceholder(Context ctx, Drawable fg, Drawable bkg, int width, int height) {
+    public static Drawable getPlaceholder(@NonNull Context ctx, @Nullable Drawable fg, @Nullable Drawable bkg,
+                                          int width, int height) {
         Drawable filter;
         if (bkg == null) {
-            // Uniformly gray background with rounded corners.
+            // Uniformly gray background.
             bkg = ResourcesCompat.getDrawable(ctx.getResources(), R.drawable.placeholder_image_bkg, null);
+
             // Transparent filter.
             filter = new ColorDrawable(0x00000000);
         } else {
@@ -880,14 +858,23 @@ public class UiUtils {
             filter = new ColorDrawable(0xCCCCCCCC);
         }
 
-        final int fgWidth = fg.getIntrinsicWidth();
-        final int fgHeight = fg.getIntrinsicHeight();
-        final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
-        result.setBounds(0, 0, width, height);
+
         // Move foreground to the center of the drawable.
-        int dx = Math.max((width - fgWidth) / 2, 0);
-        int dy = Math.max((height - fgHeight) / 2, 0);
-        fg.setBounds(dx, dy, dx + fgWidth, dy + fgHeight);
+        if (fg == null) {
+            // Transparent drawable.
+            fg = new ColorDrawable(0x00000000);
+        } else {
+            int fgWidth = fg.getIntrinsicWidth();
+            int fgHeight = fg.getIntrinsicHeight();
+            int dx = Math.max((width - fgWidth) / 2, 0);
+            int dy = Math.max((height - fgHeight) / 2, 0);
+            fg = new InsetDrawable(fg, dx, dy, dx, dy);
+        }
+
+        final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
+        bkg.setBounds(0, 0, width, height);
+        result.setBounds(0, 0, width, height);
+
         return result;
     }
 
@@ -1014,19 +1001,19 @@ public class UiUtils {
 
             PromisedReply<ServerMessage> reply = null;
             switch (what) {
-                case ACTION_UPDATE_SELF_SUB:
+                case Const.ACTION_UPDATE_SELF_SUB:
                     //noinspection unchecked
                     reply = topic.updateMode(null, newAcsStr.toString());
                     break;
-                case ACTION_UPDATE_SUB:
+                case Const.ACTION_UPDATE_SUB:
                     //noinspection unchecked
                     reply = topic.updateMode(uid, newAcsStr.toString());
                     break;
-                case ACTION_UPDATE_AUTH:
+                case Const.ACTION_UPDATE_AUTH:
                     //noinspection unchecked
                     reply = topic.updateDefAcs(newAcsStr.toString(), null);
                     break;
-                case ACTION_UPDATE_ANON:
+                case Const.ACTION_UPDATE_ANON:
                     //noinspection unchecked
                     reply = topic.updateDefAcs(null, newAcsStr.toString());
                     break;
@@ -1097,8 +1084,8 @@ public class UiUtils {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
         if (!TextUtils.isEmpty(title)) {
-            if (title.length() > MAX_TITLE_LENGTH) {
-                title = title.substring(0, MAX_TITLE_LENGTH);
+            if (title.length() > Const.MAX_TITLE_LENGTH) {
+                title = title.substring(0, Const.MAX_TITLE_LENGTH);
             }
             if (oldPub != null && !stringsEqual(title, oldPub.fn)) {
                 pub = new VxCard();
@@ -1107,8 +1094,8 @@ public class UiUtils {
         }
 
         if (description != null) {
-            if (description.length() > MAX_DESCRIPTION_LENGTH) {
-                description = description.substring(0, MAX_DESCRIPTION_LENGTH);
+            if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
+                description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
             String oldNote = oldPub != null ? oldPub.note : null;
             if (!stringsEqual(description, oldNote)) {
@@ -1121,8 +1108,8 @@ public class UiUtils {
 
         PrivateType priv = null;
         if (subtitle != null) {
-            if (subtitle.length() > MAX_TITLE_LENGTH) {
-                subtitle = subtitle.substring(0, MAX_TITLE_LENGTH);
+            if (subtitle.length() > Const.MAX_TITLE_LENGTH) {
+                subtitle = subtitle.substring(0, Const.MAX_TITLE_LENGTH);
             }
             PrivateType oldPriv = topic.getPriv();
             String oldComment = oldPriv != null ? oldPriv.getComment() : null;
@@ -1425,6 +1412,38 @@ public class UiUtils {
             return b.length() == 0;
         }
         return a.length() == 0;
+    }
+
+    static public int getIntVal(String name, Map<String, Object> data) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof Number) {
+            return ((Number) tmp).intValue();
+        }
+        return 0;
+    }
+
+    static public String getStringVal(String name, Map<String, Object> data, String def) {
+        Object tmp;
+        if ((tmp = data.get(name)) instanceof CharSequence) {
+            return tmp.toString();
+        }
+        return def;
+    }
+
+    static public Uri getUriVal(String name, Map<String, Object> data) {
+        String str = getStringVal(name, data, null);
+        if (str == null) {
+            return null;
+        }
+        URL url = Cache.getTinode().toAbsoluteURL(str);
+        return url != null ? Uri.parse(url.toString()) : null;
+    }
+
+    static public byte[] getByteArray(String name, Map<String, Object> data) {
+        Object val = data.get(name);
+        return val instanceof String ?
+                Base64.decode((String) val, Base64.DEFAULT) :
+                val instanceof byte[] ? (byte[]) val : null;
     }
 
     interface ProgressIndicator {

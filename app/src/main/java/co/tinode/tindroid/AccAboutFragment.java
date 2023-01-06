@@ -2,8 +2,6 @@ package co.tinode.tindroid;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
@@ -21,15 +19,11 @@ import androidx.fragment.app.Fragment;
  */
 public class AccAboutFragment extends Fragment {
 
-    private static final String TAG = "AccountAboutFragment";
-
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.dialog_about, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -47,10 +41,5 @@ public class AccAboutFragment extends Fragment {
         ((TextView) fragment.findViewById(R.id.app_server)).setText(Cache.getTinode().getHttpOrigin());
 
         return fragment;
-    }
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        menu.clear();
     }
 }
