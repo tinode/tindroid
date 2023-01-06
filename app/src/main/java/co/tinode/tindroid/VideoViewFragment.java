@@ -37,8 +37,8 @@ import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
-
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
+
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedOutputStream;
