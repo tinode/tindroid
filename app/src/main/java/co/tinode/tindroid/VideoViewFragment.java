@@ -187,7 +187,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 if (bits != null) {
                     try {
                         File temp = File.createTempFile("VID_" + System.currentTimeMillis(),
-                                ".extension", activity.getCacheDir());
+                                ".video", activity.getCacheDir());
                         temp.deleteOnExit();
                         OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
