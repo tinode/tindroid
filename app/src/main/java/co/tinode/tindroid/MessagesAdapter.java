@@ -1327,8 +1327,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         private boolean clickVideo(Map<String, Object> data) {
-            Log.i(TAG, "Play video!");
-
             Bundle args = mediaClick(data);
 
             if (args == null) {

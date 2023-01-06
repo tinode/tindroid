@@ -25,12 +25,14 @@ import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
 import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
@@ -77,7 +79,6 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private int mVideoHeight;
 
     private MenuItem mDownloadMenuItem;
-    private boolean isPreview = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -103,56 +104,59 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                                 .setDataSourceFactory(httpDataSourceFactory))
                 .build();
 
+        mExoPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                Player.Listener.super.onPlaybackStateChanged(playbackState);
+                switch(playbackState) {
+                    case Player.STATE_IDLE:
+                        break;
+                    case Player.STATE_BUFFERING:
+                        break;
+                    case Player.STATE_READY:
+                        mProgressView.setVisibility(View.GONE);
+                        mPosterView.setVisibility(View.GONE);
+                        mVideoView.setVisibility(View.VISIBLE);
+                        if (mDownloadMenuItem != null) {
+                            // Local video may be ready before menu is ready.
+                            mDownloadMenuItem.setEnabled(true);
+                        }
+                        Format fmt = mExoPlayer.getVideoFormat();
+                        if (fmt != null) {
+                            mVideoWidth = fmt.width;
+                            mVideoHeight = fmt.height;
+                        } else {
+                            Log.w(TAG, "Unable to read video dimensions");
+                        }
+                        break;
+                    case Player.STATE_ENDED:
+                        mProgressView.setVisibility(View.GONE);
+                        break;
+                }
+            }
+
+            @Override
+            public void onPlayerError(@NonNull PlaybackException error) {
+                Log.w(TAG, "Playback error", error);
+                mProgressView.setVisibility(View.GONE);
+                Bundle args = getArguments();
+                if (args != null) {
+                    int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
+                    int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
+                    mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
+                            null, width, height));
+                }
+                Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
+            }
+        });
+
         mPosterView = view.findViewById(R.id.poster);
         mProgressView = view.findViewById(R.id.loading);
 
         mVideoView = (StyledPlayerView) view.findViewById(R.id.video);
         mVideoView.setPlayer(mExoPlayer);
-        MediaController mediaControls = new MediaController(activity);
-        mediaControls.setAnchorView(mVideoView);
-        //mediaControls.setMediaPlayer(mExoPlayer);
-        //mVideoView.setMediaController(mediaControls);
-        /*
-        mVideoView.setOnPreparedListener(mp -> {
-            mProgressView.setVisibility(View.GONE);
-            mPosterView.setVisibility(View.GONE);
-            mVideoView.setVisibility(View.VISIBLE);
-            if (mDownloadMenuItem != null) {
-                // Local video may be ready before menu is ready.
-                mDownloadMenuItem.setEnabled(true);
-            }
-            mVideoWidth = mp.getVideoWidth();
-            mVideoHeight = mp.getVideoHeight();
-            if (isPreview) {
-                mVideoView.pause();
-            }
-        });
-        mVideoView.setOnInfoListener((mp, what, extra) -> {
-            switch(what) {
-                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    mProgressView.setVisibility(View.VISIBLE);
-                    break;
-                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
-                    mProgressView.setVisibility(View.GONE);
-            }
-            return false;
-        });
-        mVideoView.setOnErrorListener((mp, what, extra) -> {
-            Log.w(TAG, "Playback error " + what + "/" + extra);
-            mProgressView.setVisibility(View.GONE);
-            Bundle args = getArguments();
-            if (args != null) {
-                int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
-                int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
-                mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
-                        ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
-                        null, width, height));
-            }
-            Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
-            return true;
-        });
-*/
+
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
         // Send message on Enter.
@@ -190,17 +194,14 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         }
 
         boolean initialized = false;
-        isPreview = false;
         final Uri localUri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         if (localUri != null) {
-            isPreview = true;
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.editMessage).requestFocus();
             MediaItem mediaItem = MediaItem.fromUri(localUri);
             mExoPlayer.setMediaItem(mediaItem);
             mExoPlayer.prepare();
-            mExoPlayer.getPlayWhenReady();
             initialized = true;
         } else {
             // Viewing received video.
@@ -309,6 +310,13 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // No poster included at all. Show gray background with an icon in the middle.
         mPosterView.setForegroundGravity(Gravity.CENTER);
         mPosterView.setImageDrawable(placeholder);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mExoPlayer.stop();
+        mExoPlayer.release();
     }
 
     @Override
