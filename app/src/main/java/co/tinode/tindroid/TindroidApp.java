@@ -34,6 +34,9 @@ import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
+import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -72,6 +75,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     // 256 MB.
     private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
+    private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
     private static TindroidApp sContext;
 
@@ -80,6 +84,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     // The Tinode cache is linked from here so it's never garbage collected.
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private static Cache sCache;
+
+    private static SimpleCache sVideoCache;
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
@@ -370,6 +376,21 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 nm.createNotificationChannel(videoCall);
             }
         }
+    }
+
+    public static synchronized SimpleCache getVideoCache() {
+        String dirs = sContext.getCacheDir().getAbsolutePath();
+        if (sVideoCache == null) {
+            String path = dirs + File.separator + "video";
+            boolean isLocked = SimpleCache.isCacheFolderLocked(new File(path));
+            if (!isLocked) {
+                sVideoCache = new SimpleCache(new File(path),
+                        new LeastRecentlyUsedCacheEvictor(VIDEO_CACHE_SIZE),
+                        new StandaloneDatabaseProvider(sContext));
+            }
+        }
+
+        return sVideoCache;
     }
 
     // Read saved account credentials and try to connect to server using them.

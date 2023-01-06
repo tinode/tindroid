@@ -34,9 +34,11 @@ import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedOutputStream;
@@ -44,6 +46,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -53,6 +57,7 @@ import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import co.tinode.tinodesdk.Tinode;
 
 /**
  * Fragment for viewing a video: before being attached or received.
@@ -69,7 +74,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final int MAX_POSTER_BYTES = 4096; // 4K.
     private static final int MAX_VIDEO_BYTES = 6144;
 
-    ExoPlayer mExoPlayer;
+    private ExoPlayer mExoPlayer;
+    // Media source factory for remote videos from Tinode server.
+    private MediaSource.Factory mTinodeHttpMediaSourceFactory;
 
     private ImageView mPosterView;
     private ProgressBar mProgressView;
@@ -88,21 +95,16 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
 
-        // Construct ExoPlayer instance.
         DefaultHttpDataSource.Factory httpDataSourceFactory =
                 new DefaultHttpDataSource.Factory()
                         .setAllowCrossProtocolRedirects(true)
                         .setDefaultRequestProperties(Cache.getTinode().getRequestHeaders());
-        //SimpleCache simpleCache = new SimpleCache();
-        //DataSource.Factory cacheDataSourceFactory =
-        //        new CacheDataSource.Factory()
-        //                .setCache(simpleCache)
-        //                .setUpstreamDataSourceFactory(httpDataSourceFactory);
-        mExoPlayer = new ExoPlayer.Builder(activity)
-                .setMediaSourceFactory(
-                        new DefaultMediaSourceFactory(activity)
-                                .setDataSourceFactory(httpDataSourceFactory))
-                .build();
+        mTinodeHttpMediaSourceFactory = new DefaultMediaSourceFactory(
+                new CacheDataSource.Factory()
+                        .setCache(TindroidApp.getVideoCache())
+                        .setUpstreamDataSourceFactory(httpDataSourceFactory));
+        // Construct ExoPlayer instance.
+        mExoPlayer = new ExoPlayer.Builder(activity).build();
 
         mExoPlayer.addListener(new Player.Listener() {
             @Override
@@ -199,6 +201,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.editMessage).requestFocus();
+            mVideoView.setControllerAutoShow(true);
             MediaItem mediaItem = MediaItem.fromUri(localUri);
             mExoPlayer.setMediaItem(mediaItem);
             mExoPlayer.prepare();
@@ -206,12 +209,38 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         } else {
             // Viewing received video.
             activity.findViewById(R.id.metaPanel).setVisibility(View.GONE);
-            final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
+            Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
             if (ref != null) {
-                MediaItem mediaItem = MediaItem.fromUri(ref);
-                mExoPlayer.setMediaItem(mediaItem);
+                // Remote URL. Check if URL is trusted.
+                Tinode tinode = Cache.getTinode();
+                boolean trusted = false;
+                if (ref.isAbsolute()) {
+                    try {
+                        trusted = tinode.isTrustedURL(new URL(ref.toString()));
+                    } catch (MalformedURLException ignored) {
+                        Log.i(TAG, "Invalid video URL: '" + ref + "'");
+                    }
+                } else {
+                    URL url = tinode.toAbsoluteURL(ref.toString());
+                    if (url != null) {
+                        ref = Uri.parse(url.toString());
+                        trusted = true;
+                    } else {
+                        Log.i(TAG, "Invalid relative video URL: '" + ref + "'");
+                    }
+                }
+
+                if (trusted) {
+                    MediaSource mediaSource = mTinodeHttpMediaSourceFactory.createMediaSource(
+                            new MediaItem.Builder().setUri(ref).build());
+                    mExoPlayer.setMediaSource(mediaSource);
+                } else {
+                    MediaItem mediaItem = MediaItem.fromUri(ref);
+                    mExoPlayer.setMediaItem(mediaItem);
+                }
+                mVideoView.setControllerAutoShow(false);
                 mExoPlayer.prepare();
-                mExoPlayer.getPlayWhenReady();
+                mExoPlayer.setPlayWhenReady(true);
                 initialized = true;
             } else {
                 final byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
@@ -223,10 +252,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
                         out.close();
+                        mVideoView.setControllerAutoShow(false);
                         MediaItem mediaItem = MediaItem.fromUri(Uri.fromFile(temp));
                         mExoPlayer.setMediaItem(mediaItem);
                         mExoPlayer.prepare();
-                        mExoPlayer.getPlayWhenReady();
+                        mExoPlayer.setPlayWhenReady(true);
                         initialized = true;
                     } catch (IOException ex) {
                         Log.w(TAG, "Failed to save video to temp file", ex);
