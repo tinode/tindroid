@@ -76,10 +76,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return null;
-        }
+        final Activity activity = requireActivity();
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
         mPosterView = view.findViewById(R.id.poster);

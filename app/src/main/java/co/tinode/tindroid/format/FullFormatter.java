@@ -37,6 +37,8 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -357,12 +359,17 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         int height;
         int scaledWidth;
         int scaledHeight;
+
+        public @NotNull String toString() {
+            return width + "x" + height + "/" + scaledWidth + "x" + scaledHeight + "@" + scale;
+        }
     }
 
     private CharacterStyle createImageSpan(final Context ctx, final Object val, final String ref,
                                            final ImageDim dim, final float density,
                                            @Nullable final Drawable overlay,
                                            @DrawableRes int id_placeholder, @DrawableRes int id_error) {
+
         CharacterStyle span = null;
         Bitmap bmpPreview = null;
 
@@ -379,8 +386,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         // Inline image.
         if (val != null) {
             try {
-                // True if inline image is only a preview: try to use out of band image (default).
-                boolean isPreviewOnly = true;
+                // False if inline image is only a preview: try to use out of band image (default).
+                boolean usePreviewAsMainImage = false;
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
                 byte[] bits = (val instanceof String) ?
@@ -396,7 +403,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                         if (dim.scale != 0) {
                             // Because sender-provided dimensions are unknown or invalid we have to use
                             // this inline image as the primary one (out of band image is ignored).
-                            isPreviewOnly = false;
+                            usePreviewAsMainImage = true;
                             dim.scaledWidth = (int) (previewWidth * dim.scale * density);
                             dim.scaledHeight = (int) (previewHeight * dim.scale * density);
                         }
@@ -410,20 +417,20 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                         bmpPreview = Bitmap.createScaledBitmap(bmpPreview, dim.scaledWidth, dim.scaledHeight, true);
                         // Check if the image is big enough to use as the primary one (ignoring possible full-size
                         // out-of-band image). If it's not already suitable for preview don't bother.
-                        isPreviewOnly = isPreviewOnly && previewWidth * density < dim.scaledWidth * 0.35f;
-
+                        usePreviewAsMainImage = usePreviewAsMainImage ||
+                                (previewWidth / density > dim.scaledWidth * 0.35f);
                     }
                     oldBmp.recycle();
                 } else {
                     Log.w(TAG, "Failed to decode preview bitmap");
                 }
 
-                if (bmpPreview != null && !isPreviewOnly) {
+                if (bmpPreview != null && (usePreviewAsMainImage || ref == null)) {
                     Drawable drawable = new BitmapDrawable(ctx.getResources(), bmpPreview);
                     if (overlay != null) {
                         drawable = new LayerDrawable(new Drawable[]{drawable, overlay});
-                        drawable.setBounds(0, 0, dim.scaledWidth, dim.scaledHeight);
                     }
+                    drawable.setBounds(0, 0, dim.scaledWidth, dim.scaledHeight);
                     span = new ImageSpan(drawable);
                 }
             } catch (Exception ex) {
