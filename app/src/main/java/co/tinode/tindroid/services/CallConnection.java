@@ -78,6 +78,7 @@ public class CallConnection extends Connection {
 
         Bundle args = getExtras();
         int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
+        boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
 
         PendingIntent askUserIntent = askUserIntent(topicName, seq);
         // Set notification content intent to take user to fullscreen UI if user taps on the
@@ -89,7 +90,8 @@ public class CallConnection extends Connection {
                 .setLargeIcon(Icon.createWithBitmap(avatar))
                 .setContentTitle(userName)
                 .setSmallIcon(R.drawable.ic_icon_push)
-                .setContentText(mContext.getString(R.string.tinode_video_call))
+                .setContentText(mContext.getString(audioOnly ? R.string.tinode_audio_call :
+                        R.string.tinode_video_call))
                 .setUsesChronometer(true)
                 .setCategory(Notification.CATEGORY_CALL);
 

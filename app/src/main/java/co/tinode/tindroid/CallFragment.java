@@ -602,21 +602,23 @@ public class CallFragment extends Fragment {
             @Override
             public void onAddStream(MediaStream mediaStream) {
                 // Received remote stream.
-                Activity activity = getActivity();
-                if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                Activity activity = requireActivity();
+                if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
                 // Add remote media stream to the renderer.
-                final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
-                activity.runOnUiThread(() -> {
-                    try {
-                        mRemoteVideoView.setVisibility(View.VISIBLE);
-                        videoTrack.addSink(mRemoteVideoView);
-                    } catch (Exception e) {
-                        handleCallClose();
-                    }
-                });
+                if (!mediaStream.videoTracks.isEmpty()) {
+                    final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
+                    activity.runOnUiThread(() -> {
+                        try {
+                            mRemoteVideoView.setVisibility(View.VISIBLE);
+                            videoTrack.addSink(mRemoteVideoView);
+                        } catch (Exception e) {
+                            handleCallClose();
+                        }
+                    });
+                }
             }
 
             @Override

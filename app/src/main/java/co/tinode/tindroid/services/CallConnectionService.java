@@ -69,7 +69,7 @@ public class CallConnectionService extends ConnectionService {
 
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);
-        conn.setVideoProvider(new TinodeVideoProvider());
+        // conn.setVideoProvider(new TinodeVideoProvider());
 
         conn.setActive();
 

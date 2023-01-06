@@ -43,7 +43,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -542,15 +541,11 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
             }
             return true;
-        } else if (id == R.id.action_call) {
-            CallManager.placeOutgoingCall(mTopicName);
-            /*
-            Intent intent = new Intent(getApplicationContext(), CallActivity.class);
-            intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
-            intent.putExtra(Const.INTENT_EXTRA_TOPIC, mTopicName);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-             */
+        } else if (id == R.id.action_audio_call) {
+            CallManager.placeOutgoingCall(mTopicName, true);
+            return true;
+        } else if (id == R.id.action_video_call) {
+            CallManager.placeOutgoingCall(mTopicName, false);
             return true;
         }
 

@@ -76,7 +76,7 @@ public class CallManager {
         telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
     }
 
-    public static void placeOutgoingCall(String callee) {
+    public static void placeOutgoingCall(String callee, boolean audioOnly) {
         CallManager shared = CallManager.getShared();
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
@@ -85,6 +85,7 @@ public class CallManager {
 
         Bundle extras = new Bundle();
         extras.putString(Const.INTENT_EXTRA_TOPIC, callee);
+        extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
         callParams.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras);
         try {
             TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
