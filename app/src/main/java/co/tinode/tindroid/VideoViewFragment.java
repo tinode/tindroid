@@ -7,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,15 +19,25 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.PixelCopy;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.MimeTypeMap;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.Toast;
-import android.widget.VideoView;
+
+import com.google.android.exoplayer2.ExoPlayer;
+import com.google.android.exoplayer2.Format;
+import com.google.android.exoplayer2.MediaItem;
+import com.google.android.exoplayer2.PlaybackException;
+import com.google.android.exoplayer2.Player;
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
+import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.ui.StyledPlayerView;
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
+import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 
 import com.squareup.picasso.Picasso;
 
@@ -37,6 +46,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -46,6 +57,7 @@ import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import co.tinode.tinodesdk.Tinode;
 
 /**
  * Fragment for viewing a video: before being attached or received.
@@ -62,15 +74,18 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     private static final int MAX_POSTER_BYTES = 4096; // 4K.
     private static final int MAX_VIDEO_BYTES = 6144;
 
+    private ExoPlayer mExoPlayer;
+    // Media source factory for remote videos from Tinode server.
+    private MediaSource.Factory mTinodeHttpMediaSourceFactory;
+
     private ImageView mPosterView;
     private ProgressBar mProgressView;
-    private VideoView mVideoView;
+    private StyledPlayerView mVideoView;
 
     private int mVideoWidth;
     private int mVideoHeight;
 
     private MenuItem mDownloadMenuItem;
-    private boolean isPreview = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -79,53 +94,70 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         final Activity activity = requireActivity();
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
+
+        DefaultHttpDataSource.Factory httpDataSourceFactory =
+                new DefaultHttpDataSource.Factory()
+                        .setAllowCrossProtocolRedirects(true)
+                        .setDefaultRequestProperties(Cache.getTinode().getRequestHeaders());
+        mTinodeHttpMediaSourceFactory = new DefaultMediaSourceFactory(
+                new CacheDataSource.Factory()
+                        .setCache(TindroidApp.getVideoCache())
+                        .setUpstreamDataSourceFactory(httpDataSourceFactory));
+        // Construct ExoPlayer instance.
+        mExoPlayer = new ExoPlayer.Builder(activity).build();
+
+        mExoPlayer.addListener(new Player.Listener() {
+            @Override
+            public void onPlaybackStateChanged(int playbackState) {
+                Player.Listener.super.onPlaybackStateChanged(playbackState);
+                switch(playbackState) {
+                    case Player.STATE_IDLE:
+                        break;
+                    case Player.STATE_BUFFERING:
+                        break;
+                    case Player.STATE_READY:
+                        mProgressView.setVisibility(View.GONE);
+                        mPosterView.setVisibility(View.GONE);
+                        mVideoView.setVisibility(View.VISIBLE);
+                        if (mDownloadMenuItem != null) {
+                            // Local video may be ready before menu is ready.
+                            mDownloadMenuItem.setEnabled(true);
+                        }
+                        Format fmt = mExoPlayer.getVideoFormat();
+                        if (fmt != null) {
+                            mVideoWidth = fmt.width;
+                            mVideoHeight = fmt.height;
+                        } else {
+                            Log.w(TAG, "Unable to read video dimensions");
+                        }
+                        break;
+                    case Player.STATE_ENDED:
+                        mProgressView.setVisibility(View.GONE);
+                        break;
+                }
+            }
+
+            @Override
+            public void onPlayerError(@NonNull PlaybackException error) {
+                Log.w(TAG, "Playback error", error);
+                mProgressView.setVisibility(View.GONE);
+                Bundle args = getArguments();
+                if (args != null) {
+                    int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
+                    int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
+                    mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
+                            ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
+                            null, width, height));
+                }
+                Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
+            }
+        });
+
         mPosterView = view.findViewById(R.id.poster);
         mProgressView = view.findViewById(R.id.loading);
 
-        mVideoView = view.findViewById(R.id.video);
-        MediaController mediaControls = new MediaController(activity);
-        mediaControls.setAnchorView(mVideoView);
-        mediaControls.setMediaPlayer(mVideoView);
-        mVideoView.setMediaController(mediaControls);
-        mVideoView.setOnPreparedListener(mp -> {
-            mProgressView.setVisibility(View.GONE);
-            mPosterView.setVisibility(View.GONE);
-            mVideoView.setVisibility(View.VISIBLE);
-            if (mDownloadMenuItem != null) {
-                // Local video may be ready before menu is ready.
-                mDownloadMenuItem.setEnabled(true);
-            }
-            mVideoWidth = mp.getVideoWidth();
-            mVideoHeight = mp.getVideoHeight();
-            if (isPreview) {
-                mVideoView.pause();
-            }
-        });
-        mVideoView.setOnInfoListener((mp, what, extra) -> {
-            switch(what) {
-                case MediaPlayer.MEDIA_INFO_BUFFERING_START:
-                case MediaPlayer.MEDIA_INFO_BUFFERING_END:
-                    mProgressView.setVisibility(View.VISIBLE);
-                    break;
-                case MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START:
-                    mProgressView.setVisibility(View.GONE);
-            }
-            return false;
-        });
-        mVideoView.setOnErrorListener((mp, what, extra) -> {
-            Log.w(TAG, "Playback error " + what + "/" + extra);
-            mProgressView.setVisibility(View.GONE);
-            Bundle args = getArguments();
-            if (args != null) {
-                int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
-                int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
-                mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
-                        ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
-                        null, width, height));
-            }
-            Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
-            return true;
-        });
+        mVideoView = (StyledPlayerView) view.findViewById(R.id.video);
+        mVideoView.setPlayer(mExoPlayer);
 
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
@@ -164,23 +196,51 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         }
 
         boolean initialized = false;
-        isPreview = false;
         final Uri localUri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
         if (localUri != null) {
-            isPreview = true;
             // Outgoing video preview.
             activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.editMessage).requestFocus();
-            mVideoView.setVideoURI(localUri);
-            mVideoView.start();
+            mVideoView.setControllerAutoShow(true);
+            MediaItem mediaItem = MediaItem.fromUri(localUri);
+            mExoPlayer.setMediaItem(mediaItem);
+            mExoPlayer.prepare();
             initialized = true;
         } else {
             // Viewing received video.
             activity.findViewById(R.id.metaPanel).setVisibility(View.GONE);
-            final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
+            Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
             if (ref != null) {
-                mVideoView.setVideoURI(ref, Cache.getTinode().getLargeFileHelper().headers());
-                mVideoView.start();
+                // Remote URL. Check if URL is trusted.
+                Tinode tinode = Cache.getTinode();
+                boolean trusted = false;
+                if (ref.isAbsolute()) {
+                    try {
+                        trusted = tinode.isTrustedURL(new URL(ref.toString()));
+                    } catch (MalformedURLException ignored) {
+                        Log.i(TAG, "Invalid video URL: '" + ref + "'");
+                    }
+                } else {
+                    URL url = tinode.toAbsoluteURL(ref.toString());
+                    if (url != null) {
+                        ref = Uri.parse(url.toString());
+                        trusted = true;
+                    } else {
+                        Log.i(TAG, "Invalid relative video URL: '" + ref + "'");
+                    }
+                }
+
+                if (trusted) {
+                    MediaSource mediaSource = mTinodeHttpMediaSourceFactory.createMediaSource(
+                            new MediaItem.Builder().setUri(ref).build());
+                    mExoPlayer.setMediaSource(mediaSource);
+                } else {
+                    MediaItem mediaItem = MediaItem.fromUri(ref);
+                    mExoPlayer.setMediaItem(mediaItem);
+                }
+                mVideoView.setControllerAutoShow(false);
+                mExoPlayer.prepare();
+                mExoPlayer.setPlayWhenReady(true);
                 initialized = true;
             } else {
                 final byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
@@ -192,8 +252,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
                         out.close();
-                        mVideoView.setVideoURI(Uri.fromFile(temp));
-                        mVideoView.start();
+                        mVideoView.setControllerAutoShow(false);
+                        MediaItem mediaItem = MediaItem.fromUri(Uri.fromFile(temp));
+                        mExoPlayer.setMediaItem(mediaItem);
+                        mExoPlayer.prepare();
+                        mExoPlayer.setPlayWhenReady(true);
                         initialized = true;
                     } catch (IOException ex) {
                         Log.w(TAG, "Failed to save video to temp file", ex);
@@ -280,6 +343,13 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     }
 
     @Override
+    public void onPause() {
+        super.onPause();
+        mExoPlayer.stop();
+        mExoPlayer.release();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
         Picasso.get().cancelRequest(mPosterView);
@@ -354,7 +424,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
         outputArgs.putInt(AttachmentHandler.ARG_IMAGE_WIDTH, mVideoWidth);
         outputArgs.putInt(AttachmentHandler.ARG_IMAGE_HEIGHT, mVideoHeight);
-        outputArgs.putInt(AttachmentHandler.ARG_DURATION, mVideoView.getDuration());
+        outputArgs.putInt(AttachmentHandler.ARG_DURATION, (int) mExoPlayer.getDuration());
 
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
@@ -389,15 +459,22 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         try {
             HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
             handlerThread.start();
-            PixelCopy.request(mVideoView, bitmap, result -> {
-                if (result == PixelCopy.SUCCESS) {
-                    callback.done(bitmap);
-                } else {
-                    Log.w(TAG, "Failed to capture frame: " + result);
-                    callback.done(null);
-                }
-                handlerThread.quitSafely();
-            }, new Handler(handlerThread.getLooper()));
+            View surfaceView = mVideoView.getVideoSurfaceView();
+            if (surfaceView instanceof SurfaceView) {
+                PixelCopy.request((SurfaceView) surfaceView, bitmap, result -> {
+                    if (result == PixelCopy.SUCCESS) {
+                        callback.done(bitmap);
+                    } else {
+                        Log.w(TAG, "Failed to capture frame: " + result);
+                        callback.done(null);
+                    }
+                    handlerThread.quitSafely();
+                }, new Handler(handlerThread.getLooper()));
+            } else {
+                callback.done(null);
+                Log.w(TAG, "Wrong type of video surface: " +
+                        (surfaceView != null ? surfaceView.getClass().getName() : "null"));
+            }
         } catch (IllegalArgumentException ex) {
             callback.done(null);
             Log.w(TAG, "Failed to capture frame", ex);
