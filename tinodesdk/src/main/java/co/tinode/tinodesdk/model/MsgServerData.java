@@ -46,6 +46,15 @@ public class MsgServerData implements Serializable {
         return null;
     }
 
+    @JsonIgnore
+    public boolean getBooleanHeader(String key) {
+        Object val = getHeader(key);
+        if (val instanceof Boolean) {
+            return (Boolean) val;
+        }
+        return false;
+    }
+
     public static WebRTC parseWebRTC(String what) {
         if (what == null) {
             return WebRTC.UNKNOWN;

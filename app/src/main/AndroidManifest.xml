@@ -41,14 +41,15 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!--uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" /-->
-    <!--uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <!-- Telephony API: placing and receiving calls. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- CALL_PHONE should not be needed for self-managed calls -->
+    <!-- uses-permission android:name="android.permission.CALL_PHONE" /-->
+
     <!-- Required on API 33+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 

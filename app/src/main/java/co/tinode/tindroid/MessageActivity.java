@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -39,10 +40,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -144,6 +148,14 @@ public class MessageActivity extends AppCompatActivity
             c.close();
         }
     };
+
+    private final ActivityResultLauncher<String> mRequestCallPhonePermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (!isGranted) {
+                    Toast.makeText(MessageActivity.this, R.string.unable_to_place_call, Toast.LENGTH_SHORT).show();
+                }
+            });
+
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
     private PausableSingleThreadExecutor mMessageSender = null;
@@ -541,11 +553,12 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
             }
             return true;
-        } else if (id == R.id.action_audio_call) {
-            CallManager.placeOutgoingCall(mTopicName, true);
-            return true;
-        } else if (id == R.id.action_video_call) {
-            CallManager.placeOutgoingCall(mTopicName, false);
+        } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
+            if (UiUtils.isPermissionGranted(this, Manifest.permission.CALL_PHONE)) {
+                CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+            } else {
+                mRequestCallPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE);
+            }
             return true;
         }
 

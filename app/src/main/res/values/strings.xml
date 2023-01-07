@@ -356,4 +356,6 @@
     <string name="document_preview">Document preview</string>
     <string name="action_call">Call</string>
     <string name="tinode_audio_call">Tinode Call</string>
+    <string name="unable_to_place_call">Unable to make this call</string>
+    <string name="unable_to_answer_call">Unable to answer this call</string>
 </resources>

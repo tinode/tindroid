@@ -1,5 +1,6 @@
 package co.tinode.tindroid.services;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
@@ -16,6 +17,7 @@ import android.view.Surface;
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallActivity;
+import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.Const;
 
 public class CallConnectionService extends ConnectionService {
@@ -24,28 +26,31 @@ public class CallConnectionService extends ConnectionService {
     @Override
     public Connection onCreateOutgoingConnection(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
+        Log.i(TAG, "onCreateOutgoingConnection");
+
         CallConnection conn = new CallConnection(getApplicationContext());
         conn.setInitializing();
+        boolean audioOnly = false;
         if (request != null) {
             conn.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
             conn.setVideoState(request.getVideoState());
+            Bundle extras = request.getExtras();
+            audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         }
-        conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
+        conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE |
+                Connection.CAPABILITY_CAN_SEND_RESPONSE_VIA_CONNECTION);
         conn.setAudioModeIsVoip(true);
-        conn.setVideoProvider(new TinodeVideoProvider());
+        if (!audioOnly) {
+            conn.setVideoProvider(new TinodeVideoProvider());
+        }
         conn.setRinging();
 
         String topicName = conn.getAddress().getSchemeSpecificPart();
-        Cache.prepareNewCall(topicName, conn);
 
-        Intent intent = new Intent(this, CallActivity.class);
-        intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
-        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        startActivity(intent);
+        CallManager.showOutgoingCallUi(this, topicName, audioOnly, conn);
 
         return conn;
     }
@@ -55,9 +60,11 @@ public class CallConnectionService extends ConnectionService {
                                                  @Nullable ConnectionRequest request) {
         CallConnection conn = new CallConnection(getApplicationContext());
         conn.setInitializing();
+        boolean audioOnly = false;
         if (request != null) {
             conn.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
             Bundle extras = request.getExtras();
+            audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
             conn.setExtras(extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS));
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -69,8 +76,9 @@ public class CallConnectionService extends ConnectionService {
 
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);
-        // conn.setVideoProvider(new TinodeVideoProvider());
-
+        if (!audioOnly) {
+            conn.setVideoProvider(new TinodeVideoProvider());
+        }
         conn.setActive();
 
         return conn;

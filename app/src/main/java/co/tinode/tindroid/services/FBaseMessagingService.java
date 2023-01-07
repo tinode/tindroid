@@ -323,6 +323,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private void handleCallNotification(@NonNull String webrtc, boolean isMe, @NonNull Map<String, String> data) {
         String seqStr = data.get("seq");
         String topicName = data.get("topic");
+        boolean audioOnly = Boolean.parseBoolean(data.get("aonly"));
         try {
             int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
             if (seq <= 0) {
@@ -334,7 +335,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 case "started":
                     if (!isMe) {
                         // Show UI for accepting/declining the incoming call.
-                        CallManager.acceptIncomingCall(this, topicName, seq);
+                        CallManager.acceptIncomingCall(this, topicName, seq, audioOnly);
                     }
                     break;
                 case "accepted":

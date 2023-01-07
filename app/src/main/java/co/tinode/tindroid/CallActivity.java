@@ -50,7 +50,7 @@ public class CallActivity extends AppCompatActivity  {
         public void onReceive(Context context, Intent intent) {
             if (INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
                 NotificationManager nm = getSystemService(NotificationManager.class);
-                nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+                nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
 
                 String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
                 int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
@@ -66,7 +66,7 @@ public class CallActivity extends AppCompatActivity  {
         super.onCreate(savedInstanceState);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
-        nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+        nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
 
         // Handle external requests to finish call.
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

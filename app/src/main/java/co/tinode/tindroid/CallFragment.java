@@ -115,6 +115,7 @@ public class CallFragment extends Fragment {
     private int mCallSeqID = 0;
     private InfoListener mTinodeListener;
     private boolean mCallStarted = false;
+    private boolean mAudioOnly = false;
 
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
@@ -174,11 +175,14 @@ public class CallFragment extends Fragment {
         String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) tinode.getTopic(name);
+
         String callStateStr = args.getString(Const.INTENT_EXTRA_CALL_DIRECTION);
         mCallDirection = "incoming".equals(callStateStr) ? CallDirection.INCOMING : CallDirection.OUTGOING;
         if (mCallDirection == CallDirection.INCOMING) {
             mCallSeqID = args.getInt(Const.INTENT_EXTRA_SEQ);
         }
+
+        mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
 
         if (!mTopic.isAttached()) {
             mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
@@ -325,8 +329,8 @@ public class CallFragment extends Fragment {
     // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
     // and "accept" for incoming call).
     private void startMediaAndSignal() {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             // We are done. Just quit.
             return;
         }
@@ -346,30 +350,21 @@ public class CallFragment extends Fragment {
 
         // Create a new PeerConnectionFactory instance - using Hardware encoder and decoder.
         PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
-        DefaultVideoEncoderFactory defaultVideoEncoderFactory = new DefaultVideoEncoderFactory(
-                mRootEglBase.getEglBaseContext(), true, true);
-        DefaultVideoDecoderFactory defaultVideoDecoderFactory = new DefaultVideoDecoderFactory(mRootEglBase.getEglBaseContext());
-        mPeerConnectionFactory = PeerConnectionFactory.builder()
-                .setOptions(options)
-                .setVideoEncoderFactory(defaultVideoEncoderFactory)
-                .setVideoDecoderFactory(defaultVideoDecoderFactory)
-                .createPeerConnectionFactory();
-
-        // Create a VideoCapturer instance.
-        mVideoCapturerAndroid = createCameraCapturer(new Camera1Enumerator(false));
-        // Create a VideoSource instance
-        if (mVideoCapturerAndroid != null) {
-            SurfaceTextureHelper surfaceTextureHelper =
-                    SurfaceTextureHelper.create("CaptureThread", mRootEglBase.getEglBaseContext());
-            mVideoSource = mPeerConnectionFactory.createVideoSource(mVideoCapturerAndroid.isScreencast());
-            mVideoCapturerAndroid.initialize(surfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
+        PeerConnectionFactory.Builder pcfBuilder = PeerConnectionFactory.builder()
+                .setOptions(options);
+        if (!mAudioOnly) {
+            DefaultVideoEncoderFactory defaultVideoEncoderFactory = new DefaultVideoEncoderFactory(
+                    mRootEglBase.getEglBaseContext(), true, true);
+            DefaultVideoDecoderFactory defaultVideoDecoderFactory = new DefaultVideoDecoderFactory(
+                    mRootEglBase.getEglBaseContext());
+            pcfBuilder.setVideoEncoderFactory(defaultVideoEncoderFactory)
+                    .setVideoDecoderFactory(defaultVideoDecoderFactory);
         }
+        mPeerConnectionFactory = pcfBuilder.createPeerConnectionFactory();
 
         // Create MediaConstraints - Will be useful for specifying video and audio constraints.
         MediaConstraints audioConstraints = new MediaConstraints();
         MediaConstraints videoConstraints = new MediaConstraints();
-
-        mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
 
         // Create an AudioSource instance
         mAudioSource = mPeerConnectionFactory.createAudioSource(audioConstraints);
@@ -378,17 +373,32 @@ public class CallFragment extends Fragment {
             mLocalAudioTrack.setEnabled(false);
         }
 
-        if (mVideoCapturerAndroid != null) {
-            mVideoCapturerAndroid.startCapture(1024, 720, 30);
-        }
+        // Create a VideoCapturer instance.
+        if (!mAudioOnly) {
+            mVideoCapturerAndroid = createCameraCapturer(new Camera1Enumerator(false));
 
-        // VideoRenderer is ready => add the renderer to the VideoTrack.
-        mLocalVideoTrack.addSink(mLocalVideoView);
-        if (mVideoOff) {
-            mLocalVideoTrack.setEnabled(false);
+            // Create a VideoSource instance
+            if (mVideoCapturerAndroid != null) {
+                SurfaceTextureHelper surfaceTextureHelper =
+                        SurfaceTextureHelper.create("CaptureThread", mRootEglBase.getEglBaseContext());
+                mVideoSource = mPeerConnectionFactory.createVideoSource(mVideoCapturerAndroid.isScreencast());
+                mVideoCapturerAndroid.initialize(surfaceTextureHelper, activity, mVideoSource.getCapturerObserver());
+            }
+
+            mLocalVideoTrack = mPeerConnectionFactory.createVideoTrack("100", mVideoSource);
+
+            if (mVideoCapturerAndroid != null) {
+                mVideoCapturerAndroid.startCapture(1024, 720, 30);
+            }
+
+            // VideoRenderer is ready => add the renderer to the VideoTrack.
+            mLocalVideoTrack.addSink(mLocalVideoView);
+            if (mVideoOff) {
+                mLocalVideoTrack.setEnabled(false);
+            }
+            mLocalVideoView.setMirror(true);
+            mRemoteVideoView.setMirror(false);
         }
-        mLocalVideoView.setMirror(true);
-        mRemoteVideoView.setMirror(false);
 
         handleCallStart();
     }
@@ -438,6 +448,10 @@ public class CallFragment extends Fragment {
     }
 
     private void initVideos() {
+        if (mAudioOnly) {
+            return;
+        }
+
         mRootEglBase = EglBase.create();
 
         mRemoteVideoView.init(mRootEglBase.getEglBaseContext(), null);
@@ -555,13 +569,9 @@ public class CallFragment extends Fragment {
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
-                Activity activity = getActivity();
-                if (activity != null) {
-                    rearrangePeerViews(activity);
-                    mTopic.videoCallAccept(mCallSeqID);
-                } else {
-                    handleCallClose();
-                }
+                Activity activity = requireActivity();
+                rearrangePeerViews(activity);
+                mTopic.videoCallAccept(mCallSeqID);
                 break;
             default:
                 break;
@@ -704,14 +714,16 @@ public class CallFragment extends Fragment {
         // Create a local media stream and attach it to the peer connection.
         MediaStream stream = mPeerConnectionFactory.createLocalMediaStream("102");
         stream.addTrack(mLocalAudioTrack);
-        stream.addTrack(mLocalVideoTrack);
+        if (!mAudioOnly) {
+            stream.addTrack(mLocalVideoTrack);
+        }
         mLocalPeer.addStream(stream);
     }
 
     private void handleVideoCallAccepted() {
         Log.d(TAG, "handling video call accepted");
-        Activity activity = getActivity();
-        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+        Activity activity = requireActivity();
+        if (activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
 
@@ -785,7 +797,7 @@ public class CallFragment extends Fragment {
         //noinspection ConstantConditions
         int sdpMLineIndex = (int) m.getOrDefault("sdpMLineIndex", 0);
         String sdp = (String) m.getOrDefault("candidate", "");
-        if (sdp.isEmpty()) {
+        if (sdp == null || sdp.isEmpty()) {
             // Skip.
             Log.e(TAG, "Invalid ICE candidate with an empty candidate SDP" + info.toString());
             return;

@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.services.CallConnection;
@@ -79,7 +80,7 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void prepareNewCall(@NonNull String topic, @NonNull CallConnection conn) {
+    public static void prepareNewCall(@NonNull String topic, @Nullable CallConnection conn) {
         sInstance.mCallInProgress = new CallInProgress(topic, conn);
     }
 

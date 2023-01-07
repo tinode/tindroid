@@ -230,7 +230,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
                 CallInProgress call = Cache.getCallInProgress();
                 if (call == null) {
-                    CallManager.acceptIncomingCall(TindroidApp.this, data.topic, data.seq);
+                    CallManager.acceptIncomingCall(TindroidApp.this,
+                            data.topic, data.seq, data.getBooleanHeader("aonly"));
                 } else if (!call.equals(data.topic, data.seq)) {
                     // Another incoming call. Decline.
                     topic.videoCallHangUp(data.seq);

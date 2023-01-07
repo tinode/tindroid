@@ -23,7 +23,7 @@ public class CallBroadcastReceiver extends BroadcastReceiver {
 
         // Clear incoming call notification.
         NotificationManager nm = context.getSystemService(NotificationManager.class);
-        nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+        nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
 
         if (ACTION_INCOMING_CALL.equals(intent.getAction())) {
             String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
