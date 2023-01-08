@@ -95,14 +95,13 @@ public class CallActivity extends AppCompatActivity  {
             return;
         }
 
-        Log.i(TAG, "args: seq=" + mSeq + "; accepted=" +
-                intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, false));
-
         Cache.setSelectedTopicName(mTopicName);
         mLoginListener = new EventListener();
         mTinode.addListener(mLoginListener);
 
         Bundle args = new Bundle();
+        args.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY,
+                intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, false));
         String fragmentToShow;
         switch (action) {
             case INTENT_ACTION_CALL_INCOMING:

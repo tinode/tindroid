@@ -99,7 +99,7 @@ public class CallManager {
     }
 
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (shouldBypassTelecom(true)) {
             // Self-managed phone accounts are not supported, bypassing Telecom.
             showOutgoingCallUi(activity, callee, audioOnly, null);
             return;
@@ -133,7 +133,7 @@ public class CallManager {
         extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
         extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+        if (shouldBypassTelecom(false)) {
             // Bypass Telecom where self-managed calls are not supported.
             Cache.prepareNewCall(caller, null);
             showIncomingCallUi(context, caller, extras);
@@ -178,6 +178,7 @@ public class CallManager {
                                           boolean audioOnly, CallConnection conn) {
         Cache.prepareNewCall(topicName, conn);
 
+        Log.i(TAG, "Init call audioOnly=" + audioOnly);
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
@@ -221,8 +222,6 @@ public class CallManager {
 
                 int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
                 boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-
-                Log.i(TAG, "AudioOnly=" + audioOnly);
 
                 PendingIntent askUserIntent = askUserIntent(context, topicName, seq, audioOnly);
                 // Set notification content intent to take user to fullscreen UI if user taps on the
@@ -298,5 +297,12 @@ public class CallManager {
         intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
         return PendingIntent.getBroadcast(context, 103, intent,
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static boolean shouldBypassTelecom(boolean outgoing) {
+        if (outgoing) {
+            return Build.VERSION.SDK_INT < Build.VERSION_CODES.P;
+        }
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O;
     }
 }

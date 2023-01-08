@@ -149,13 +149,6 @@ public class MessageActivity extends AppCompatActivity
         }
     };
 
-    private final ActivityResultLauncher<String> mRequestCallPhonePermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-                if (!isGranted) {
-                    Toast.makeText(MessageActivity.this, R.string.unable_to_place_call, Toast.LENGTH_SHORT).show();
-                }
-            });
-
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
     private PausableSingleThreadExecutor mMessageSender = null;
@@ -554,11 +547,7 @@ public class MessageActivity extends AppCompatActivity
             }
             return true;
         } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
-            if (UiUtils.isPermissionGranted(this, Manifest.permission.CALL_PHONE)) {
-                CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
-            } else {
-                mRequestCallPhonePermissionLauncher.launch(Manifest.permission.CALL_PHONE);
-            }
+            CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
             return true;
         }
 

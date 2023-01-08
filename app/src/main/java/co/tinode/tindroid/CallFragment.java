@@ -162,9 +162,9 @@ public class CallFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final Activity activity = getActivity();
+        final Activity activity = requireActivity();
         final Bundle args = getArguments();
-        if (args == null || activity == null) {
+        if (args == null) {
             Log.w(TAG, "Call fragment created with no arguments");
             // Reject the call.
             handleCallClose();
@@ -294,7 +294,9 @@ public class CallFragment extends Fragment {
         b.setImageResource(disabled ? disabledIcon : enabledIcon);
 
         if (video) {
-            mLocalVideoTrack.setEnabled(!disabled);
+            if (mLocalVideoTrack != null) {
+                mLocalVideoTrack.setEnabled(!disabled);
+            }
         } else {
             mLocalAudioTrack.setEnabled(!disabled);
 
@@ -549,6 +551,8 @@ public class CallFragment extends Fragment {
                 // Send out a call invitation to the peer.
                 Map<String, Object> head = new HashMap<>();
                 head.put("webrtc", "started");
+                // Is audio-only?
+                head.put("aonly", mAudioOnly);
                 mTopic.publish(Drafty.videoCall(), head).thenApply(
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
@@ -688,10 +692,10 @@ public class CallFragment extends Fragment {
                     return;
                 }
                 mSdpConstraints = new MediaConstraints();
-                mSdpConstraints.mandatory.add(
-                        new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
-                mSdpConstraints.mandatory.add(
-                        new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
+                mSdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+                if (!mAudioOnly) {
+                    mSdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
+                }
                 mLocalPeer.createOffer(new CustomSdpObserver("localCreateOffer") {
                     @Override
                     public void onCreateSuccess(SessionDescription sessionDescription) {
@@ -799,7 +803,7 @@ public class CallFragment extends Fragment {
         String sdp = (String) m.getOrDefault("candidate", "");
         if (sdp == null || sdp.isEmpty()) {
             // Skip.
-            Log.e(TAG, "Invalid ICE candidate with an empty candidate SDP" + info.toString());
+            Log.e(TAG, "Invalid ICE candidate with an empty candidate SDP" + info);
             return;
         }
 
@@ -839,6 +843,10 @@ public class CallFragment extends Fragment {
     }
 
     private void rearrangePeerViews(final Activity activity) {
+        if (mAudioOnly) {
+            return;
+        }
+
         activity.runOnUiThread(() -> {
             ConstraintSet cs = new ConstraintSet();
             cs.clone(mLayout);
