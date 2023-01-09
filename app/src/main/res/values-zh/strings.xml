@@ -335,6 +335,12 @@
     <string name="video_call_channel_name">视频通话</string>
     <string name="video_call_channel_description">视频和音频通话</string>
     <string name="tinode_video_call">Tinode 视频通话</string>
+    <string name="tinode_audio_call">Tinode 通话</string>
     <string name="answer_call">接听</string>
     <string name="decline_call">拒绝</string>
+
+    <string name="document_preview">文档预览</string>
+    <string name="action_call">调用</string>
+    <string name="unable_to_place_call">无法拨打电话</string>
+    <string name="unable_to_answer_call">无法接听电话</string>
 </resources>

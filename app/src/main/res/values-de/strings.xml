@@ -336,6 +336,12 @@
     <string name="video_call_channel_name">Videoanrufe</string>
     <string name="video_call_channel_description">Video- und Audioanrufe</string>
     <string name="tinode_video_call">Tinode-Videoanruf</string>
+    <string name="tinode_audio_call">Tinode-Anruf</string>
     <string name="answer_call">Antwort</string>
     <string name="decline_call">Ablehnen</string>
+
+    <string name="document_preview">Dokumentvorschau</string>
+    <string name="action_call">Anruf</string>
+    <string name="unable_to_place_call">Dieser Anruf kann nicht getätigt werden</string>
+    <string name="unable_to_answer_call">Dieser Anruf kann nicht entgegengenommen werden</string>
 </resources>

@@ -314,6 +314,12 @@
     <string name="video_call_channel_name">Видеозвонки</string>
     <string name="video_call_channel_description">Видео- и аудиовызовы</string>
     <string name="tinode_video_call">Видеозвонок Tinode</string>
+    <string name="tinode_audio_call">Звонок Tinode</string>
     <string name="answer_call">Ответить</string>
     <string name="decline_call">Отклонить</string>
+
+    <string name="document_preview">Предварительный просмотр документа</string>
+    <string name="action_call">Позвонить</string>
+    <string name="unable_to_place_call">Невозможно сделать этот звонок</string>
+    <string name="unable_to_answer_call">Невозможно ответить на этот звонок</string>
 </resources>
