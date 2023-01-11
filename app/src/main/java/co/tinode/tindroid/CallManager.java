@@ -152,8 +152,10 @@ public class CallManager {
         callParams.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
         callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-        callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
-                VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
+                    VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
+        }
 
         callParams.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, extras);
 
@@ -291,8 +293,8 @@ public class CallManager {
     }
 
     private static PendingIntent declineIntent(Context context, String topicName, int seq) {
-        final Intent intent = new Intent(context, CallBroadcastReceiver.class);
-        intent.setAction(CallBroadcastReceiver.ACTION_INCOMING_CALL);
+        final Intent intent = new Intent(context, HangUpBroadcastReceiver.class);
+        intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
         intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
         return PendingIntent.getBroadcast(context, 103, intent,

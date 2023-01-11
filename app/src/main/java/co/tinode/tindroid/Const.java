@@ -9,6 +9,8 @@ public class Const {
     public static final String PREF_TYPING_NOTIF = "pref_typingNotif";
     public static final String PREF_READ_RCPT = "pref_readReceipts";
 
+    public static final String INTENT_ACTION_CALL_CLOSE = "tindroidx.intent.action.call.CLOSE";
+
     public static final String INTENT_EXTRA_TOPIC = "co.tinode.tindroid.TOPIC";
     public static final String INTENT_EXTRA_SEQ = "co.tinode.tindroid.SEQ";
     public static final String INTENT_EXTRA_SENDER_NAME = "co.tinode.tindroid.SENDER_NAME";

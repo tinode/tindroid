@@ -224,7 +224,7 @@
         </service>
 
         <!-- Receives broadcast to hang up incoming call -->
-        <receiver android:name=".CallBroadcastReceiver" />
+        <receiver android:name=".HangUpBroadcastReceiver" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

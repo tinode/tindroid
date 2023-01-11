@@ -1,10 +1,8 @@
 package co.tinode.tindroid;
 
 import android.app.NotificationManager;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -15,9 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
-import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -33,7 +29,6 @@ public class CallActivity extends AppCompatActivity  {
 
     public static final String INTENT_ACTION_CALL_INCOMING = "tindroidx.intent.action.call.INCOMING";
     public static final String INTENT_ACTION_CALL_START = "tindroidx.intent.action.call.START";
-    public static final String INTENT_ACTION_CALL_CLOSE = "tindroidx.intent.action.call.CLOSE";
 
     private boolean mTurnScreenOffWhenDone;
 
@@ -44,33 +39,12 @@ public class CallActivity extends AppCompatActivity  {
     private ComTopic<VxCard> mTopic;
     private EventListener mLoginListener;
 
-    // Receives 'close' requests from FCM (e.g. upon remote hang-up).
-    private final BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            if (INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
-                NotificationManager nm = getSystemService(NotificationManager.class);
-                nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
-
-                String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
-                int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
-                if (mTopicName.equals(topicName) && mSeq == seq) {
-                    finish();
-                }
-            }
-        }
-    };
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
-
-        // Handle external requests to finish call.
-        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-        lbm.registerReceiver(mBroadcastReceiver, new IntentFilter(INTENT_ACTION_CALL_CLOSE));
 
         final Intent intent = getIntent();
         final String action = intent != null ? intent.getAction() : null;
@@ -152,7 +126,6 @@ public class CallActivity extends AppCompatActivity  {
     public void onDestroy() {
         mTinode.removeListener(mLoginListener);
         Cache.unregisterCallInProgress();
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(mBroadcastReceiver);
 
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
