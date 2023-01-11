@@ -125,7 +125,7 @@ public class CallActivity extends AppCompatActivity  {
     @Override
     public void onDestroy() {
         mTinode.removeListener(mLoginListener);
-        Cache.unregisterCallInProgress();
+        Cache.endCallInProgress();
 
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |

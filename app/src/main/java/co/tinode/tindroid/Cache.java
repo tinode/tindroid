@@ -67,7 +67,7 @@ public class Cache {
 
     // Invalidate existing cache.
     static void invalidate() {
-        unregisterCallInProgress();
+        endCallInProgress();
         setSelectedTopicName(null);
         if (sInstance.mTinode != null) {
             sInstance.mTinode.logout();
@@ -91,12 +91,8 @@ public class Cache {
     public static void endCallInProgress() {
         if (sInstance.mCallInProgress != null) {
             sInstance.mCallInProgress.endCall();
+            sInstance.mCallInProgress = null;
         }
-    }
-
-    public static void unregisterCallInProgress() {
-        endCallInProgress();
-        sInstance.mCallInProgress = null;
     }
 
     public static String getSelectedTopicName() {
