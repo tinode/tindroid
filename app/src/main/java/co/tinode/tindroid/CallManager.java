@@ -133,10 +133,17 @@ public class CallManager {
         extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
         extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
 
+        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
+        if (topic == null) {
+            Log.w(TAG, "Call from un unknown topic " + caller);
+            return;
+        }
+
         if (shouldBypassTelecom(false)) {
             // Bypass Telecom where self-managed calls are not supported.
             Cache.prepareNewCall(caller, null);
             showIncomingCallUi(context, caller, extras);
+            topic.videoCallRinging(seq);
             return;
         }
 
@@ -162,6 +169,7 @@ public class CallManager {
         try {
             TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
+            topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
             if (Build.MANUFACTURER.equalsIgnoreCase("Samsung")) {
                 Intent intent = new Intent();
