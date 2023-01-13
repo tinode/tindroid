@@ -1,7 +1,5 @@
 package co.tinode.tindroid.services;
 
-import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +14,6 @@ import android.view.Surface;
 
 import androidx.annotation.Nullable;
 import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.CallActivity;
 import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.Const;
 
@@ -88,7 +85,7 @@ public class CallConnectionService extends ConnectionService {
     public void onCreateIncomingConnectionFailed(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
         super.onCreateIncomingConnectionFailed(connectionManagerPhoneAccount, request);
-        Log.i(TAG, "Create outgoing call failed");
+        Log.i(TAG, "Create incoming call failed");
     }
 
     @Override

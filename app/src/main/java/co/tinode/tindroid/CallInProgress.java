@@ -14,7 +14,7 @@ public class CallInProgress {
     // Call topic.
     private final String mTopic;
     // Telephony connection.
-    private final CallConnection mConnection;
+    private CallConnection mConnection;
     // Call seq id.
     private int mSeq = 0;
 
@@ -35,9 +35,12 @@ public class CallInProgress {
     }
 
     public void endCall() {
-        if (mConnection != null && mConnection.getState() != Connection.STATE_DISCONNECTED) {
-            mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+        if (mConnection != null) {
+            if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
+                mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+            }
             mConnection.destroy();
+            mConnection = null;
         }
     }
 
