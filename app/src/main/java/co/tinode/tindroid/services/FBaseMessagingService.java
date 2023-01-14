@@ -347,6 +347,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 case "missed":
                 case "declined":
                 case "disconnected":
+                case "finished":
                     if (origSeq > 0) {
                         // Dismiss the call UI.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

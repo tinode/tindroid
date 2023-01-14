@@ -26,7 +26,7 @@ public class CallInProgress {
     }
 
     public void setCallActive(@NonNull String topic, int seqId) {
-        if (mTopic.equals(topic) || mSeq > 0) {
+        if (mTopic.equals(topic) && (mSeq == 0 || mSeq == seqId)) {
             mSeq = seqId;
             if (mConnection != null) {
                 mConnection.setActive();
