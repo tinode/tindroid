@@ -25,6 +25,7 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.CallInProgress;
 import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.Const;
@@ -329,7 +330,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Invalid seq value '" + seqStr + "'");
                 return;
             }
-
+            int origSeq = parseSeqReference(data.get("replace"));
             switch (webrtc) {
                 case "started":
                     if (!isMe) {
@@ -338,10 +339,14 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                     }
                     break;
                 case "accepted":
+                    CallInProgress call = Cache.getCallInProgress();
+                    if (origSeq > 0 && call != null && call.isConnected() && call.equals(topicName, origSeq)) {
+                        // The server notifies us of the call that we've already accepted. Do nothing.
+                        return;
+                    }
                 case "missed":
                 case "declined":
                 case "disconnected":
-                    int origSeq = parseSeqReference(data.get("replace"));
                     if (origSeq > 0) {
                         // Dismiss the call UI.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

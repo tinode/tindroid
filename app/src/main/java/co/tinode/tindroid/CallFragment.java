@@ -576,6 +576,7 @@ public class CallFragment extends Fragment {
                 Activity activity = requireActivity();
                 rearrangePeerViews(activity);
                 mTopic.videoCallAccept(mCallSeqID);
+                Cache.setCallConnected();
                 break;
             default:
                 break;
@@ -735,6 +736,7 @@ public class CallFragment extends Fragment {
         rearrangePeerViews(activity);
 
         createPeerConnection();
+        Cache.setCallConnected();
     }
 
     // Handles remote SDP offer received from the peer,

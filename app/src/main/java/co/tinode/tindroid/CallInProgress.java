@@ -17,6 +17,8 @@ public class CallInProgress {
     private CallConnection mConnection;
     // Call seq id.
     private int mSeq = 0;
+    // True if this call is established and connected between this client and the peer.
+    private boolean mConnected = false;
 
     public CallInProgress(@NonNull String topic, @Nullable CallConnection conn) {
         mTopic = topic;
@@ -34,6 +36,11 @@ public class CallInProgress {
         }
     }
 
+
+    public void setCallConnected() {
+        mConnected = true;
+    }
+
     public void endCall() {
         if (mConnection != null) {
             if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
@@ -47,4 +54,5 @@ public class CallInProgress {
     public boolean equals(String topic, int seq) {
         return mTopic.equals(topic) && mSeq == seq;
     }
+    public boolean isConnected() { return mConnected; }
 }
