@@ -17,6 +17,8 @@ public class CallInProgress {
     private CallConnection mConnection;
     // Call seq id.
     private int mSeq = 0;
+    // True if this call is established and connected between this client and the peer.
+    private boolean mConnected = false;
 
     public CallInProgress(@NonNull String topic, @Nullable CallConnection conn) {
         mTopic = topic;
@@ -24,7 +26,7 @@ public class CallInProgress {
     }
 
     public void setCallActive(@NonNull String topic, int seqId) {
-        if (mTopic.equals(topic) || mSeq > 0) {
+        if (mTopic.equals(topic) && (mSeq == 0 || mSeq == seqId)) {
             mSeq = seqId;
             if (mConnection != null) {
                 mConnection.setActive();
@@ -32,6 +34,11 @@ public class CallInProgress {
         } else {
             throw new IllegalArgumentException("Call seq is already assigned");
         }
+    }
+
+
+    public void setCallConnected() {
+        mConnected = true;
     }
 
     public void endCall() {
@@ -47,4 +54,5 @@ public class CallInProgress {
     public boolean equals(String topic, int seq) {
         return mTopic.equals(topic) && mSeq == seq;
     }
+    public boolean isConnected() { return mConnected; }
 }
