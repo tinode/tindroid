@@ -222,6 +222,8 @@ public class CallManager {
                 int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
                 boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
 
+                Cache.setCallActive(topicName, seq);
+
                 PendingIntent askUserIntent = askUserIntent(context, topicName, seq, audioOnly);
                 // Set notification content intent to take user to fullscreen UI if user taps on the
                 // notification body.
