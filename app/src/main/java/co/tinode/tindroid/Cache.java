@@ -88,6 +88,10 @@ public class Cache {
         sInstance.mCallInProgress.setCallActive(topic, seqId);
     }
 
+    public static void setCallConnected() {
+        sInstance.mCallInProgress.setCallConnected();
+    }
+
     public static void endCallInProgress() {
         if (sInstance.mCallInProgress != null) {
             sInstance.mCallInProgress.endCall();

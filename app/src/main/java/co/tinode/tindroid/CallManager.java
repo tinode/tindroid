@@ -99,7 +99,8 @@ public class CallManager {
     }
 
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
-        if (shouldBypassTelecom(true)) {
+        TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
+        if (shouldBypassTelecom(activity, telecomManager, true)) {
             // Self-managed phone accounts are not supported, bypassing Telecom.
             showOutgoingCallUi(activity, callee, audioOnly, null);
             return;
@@ -118,8 +119,6 @@ public class CallManager {
         extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
         callParams.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras);
         try {
-            TelecomManager telecomManager = (TelecomManager)
-                    TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
             telecomManager.placeCall(Uri.fromParts("tinode", callee, null), callParams);
         } catch (SecurityException ex) {
             Toast.makeText(TindroidApp.getAppContext(), R.string.unable_to_place_call, Toast.LENGTH_SHORT).show();
@@ -139,20 +138,16 @@ public class CallManager {
             return;
         }
 
-        if (shouldBypassTelecom(false)) {
+        CallManager shared = CallManager.getShared();
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
+
+        if (shouldBypassTelecom(context, telecomManager, false)) {
             // Bypass Telecom where self-managed calls are not supported.
             Cache.prepareNewCall(caller, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
             return;
         }
-
-        if (!UiUtils.isPermissionGranted(context, Manifest.permission.MANAGE_OWN_CALLS)) {
-            Log.i(TAG, "No permission to accept incoming calls");
-            return;
-        }
-
-        CallManager shared = CallManager.getShared();
 
         Uri uri = Uri.fromParts("tinode", caller, null);
         Bundle callParams = new Bundle();
@@ -167,18 +162,12 @@ public class CallManager {
         callParams.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, extras);
 
         try {
-            TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
             topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            if (Build.MANUFACTURER.equalsIgnoreCase("Samsung")) {
-                Intent intent = new Intent();
-                intent.setComponent(new ComponentName("com.android.server.telecom",
-                        "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
-                context.startActivity(intent);
-            } else {
-                context.startActivity(new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
-            }
+            Cache.prepareNewCall(caller, null);
+            showIncomingCallUi(context, caller, extras);
+            topic.videoCallRinging(seq);
         } catch (Exception ex) {
             Log.i(TAG, "Failed to accept incoming call", ex);
         }
@@ -232,6 +221,8 @@ public class CallManager {
 
                 int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
                 boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+
+                Cache.setCallActive(topicName, seq);
 
                 PendingIntent askUserIntent = askUserIntent(context, topicName, seq, audioOnly);
                 // Set notification content intent to take user to fullscreen UI if user taps on the
@@ -309,10 +300,29 @@ public class CallManager {
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    private static boolean shouldBypassTelecom(boolean outgoing) {
-        if (outgoing) {
-            return Build.VERSION.SDK_INT < Build.VERSION_CODES.P;
+    private static boolean shouldBypassTelecom(Context context, TelecomManager tm, boolean outgoing) {
+        if (!UiUtils.isPermissionGranted(context, Manifest.permission.MANAGE_OWN_CALLS)) {
+            Log.i(TAG, "No permission MANAGE_OWN_CALLS");
+            return true;
         }
-        return Build.VERSION.SDK_INT < Build.VERSION_CODES.O;
+
+        if (outgoing) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                return true;
+            }
+            boolean disabled = !tm.isOutgoingCallPermitted(getShared().mPhoneAccountHandle);
+            if (disabled) {
+                Log.i(TAG, "Account cannot place outgoing calls");
+            }
+            return disabled;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return true;
+        }
+        boolean disabled = !tm.isIncomingCallPermitted(getShared().mPhoneAccountHandle);
+        if (disabled) {
+            Log.i(TAG, "Account cannot accept incoming calls");
+        }
+        return disabled;
     }
 }

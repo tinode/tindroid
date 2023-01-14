@@ -14,9 +14,11 @@ public class CallInProgress {
     // Call topic.
     private final String mTopic;
     // Telephony connection.
-    private final CallConnection mConnection;
+    private CallConnection mConnection;
     // Call seq id.
     private int mSeq = 0;
+    // True if this call is established and connected between this client and the peer.
+    private boolean mConnected = false;
 
     public CallInProgress(@NonNull String topic, @Nullable CallConnection conn) {
         mTopic = topic;
@@ -24,7 +26,7 @@ public class CallInProgress {
     }
 
     public void setCallActive(@NonNull String topic, int seqId) {
-        if (mTopic.equals(topic) || mSeq > 0) {
+        if (mTopic.equals(topic) && (mSeq == 0 || mSeq == seqId)) {
             mSeq = seqId;
             if (mConnection != null) {
                 mConnection.setActive();
@@ -34,14 +36,23 @@ public class CallInProgress {
         }
     }
 
+
+    public void setCallConnected() {
+        mConnected = true;
+    }
+
     public void endCall() {
-        if (mConnection != null && mConnection.getState() != Connection.STATE_DISCONNECTED) {
-            mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+        if (mConnection != null) {
+            if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
+                mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
+            }
             mConnection.destroy();
+            mConnection = null;
         }
     }
 
     public boolean equals(String topic, int seq) {
         return mTopic.equals(topic) && mSeq == seq;
     }
+    public boolean isConnected() { return mConnected; }
 }
