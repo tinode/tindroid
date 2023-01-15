@@ -76,8 +76,15 @@ import co.tinode.tinodesdk.model.ServerMessage;
  */
 public class CallFragment extends Fragment {
     private static final String TAG = "CallFragment";
+
+    // Video mute/unmute events.
     private static final String VIDEO_MUTED_EVENT = "video:muted";
     private static final String VIDEO_UNMUTED_EVENT = "video:unmuted";
+
+    // Camera constants.
+    private static final int CAMERA_RESOLUTION_WIDTH = 1024;
+    private static final int CAMERA_RESOLUTION_HEIGHT = 720;
+    private static final int CAMERA_FPS = 30;
 
     public enum CallDirection {
         OUTGOING,
@@ -314,7 +321,7 @@ public class CallFragment extends Fragment {
     }
 
     private void unmuteVideo() {
-        mVideoCapturerAndroid.startCapture(1024, 720, 30);
+        mVideoCapturerAndroid.startCapture(CAMERA_RESOLUTION_WIDTH, CAMERA_RESOLUTION_HEIGHT, CAMERA_FPS);
         mLocalVideoView.setVisibility(View.VISIBLE);
         sendToPeer(VIDEO_UNMUTED_EVENT);
     }
@@ -430,7 +437,7 @@ public class CallFragment extends Fragment {
         mVideoOff = mAudioOnly;
         if (mVideoCapturerAndroid != null && !mVideoOff) {
             // Only start video in video calls (in audio-only calls video may be turned on later).
-            mVideoCapturerAndroid.startCapture(1024, 720, 30);
+            mVideoCapturerAndroid.startCapture(CAMERA_RESOLUTION_WIDTH, CAMERA_RESOLUTION_HEIGHT, CAMERA_FPS);
         }
 
         // VideoRenderer is ready => add the renderer to the VideoTrack.
@@ -646,11 +653,11 @@ public class CallFragment extends Fragment {
             mChannel = chan;
         }
         @Override
-        public void onBufferedAmountChange ( long l){
+        public void onBufferedAmountChange(long l) {
         }
 
         @Override
-        public void onStateChange () {
+        public void onStateChange() {
             Log.d(TAG, "onStateChange: remote data channel state: " + mChannel.state().toString());
             switch (mChannel.state()) {
                 case OPEN:
@@ -663,7 +670,7 @@ public class CallFragment extends Fragment {
         }
 
         @Override
-        public void onMessage(DataChannel.Buffer buffer){
+        public void onMessage(DataChannel.Buffer buffer) {
             ByteBuffer data = buffer.data;
             byte[] bytes = new byte[data.remaining()];
             data.get(bytes);
