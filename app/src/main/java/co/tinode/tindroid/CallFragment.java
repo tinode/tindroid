@@ -267,7 +267,7 @@ public class CallFragment extends Fragment {
     }
 
     private void enableControls() {
-        getActivity().runOnUiThread(() -> {
+        requireActivity().runOnUiThread(() -> {
             mToggleSpeakerphoneBtn.setEnabled(true);
             mToggleCameraBtn.setEnabled(true);
             mToggleMicBtn.setEnabled(true);
@@ -556,6 +556,7 @@ public class CallFragment extends Fragment {
     private void initialSetupComplete() {
         mCallInitialSetupComplete = true;
         drainRemoteIceCandidatesCache();
+        rearrangePeerViews(requireActivity(), false);
         enableControls();
     }
 
@@ -583,6 +584,7 @@ public class CallFragment extends Fragment {
             // Already started or not attached. wait to attach.
             return;
         }
+        Activity activity = requireActivity();
         mCallStarted = true;
         switch (mCallDirection) {
             case OUTGOING:
@@ -608,10 +610,10 @@ public class CallFragment extends Fragment {
                                 return null;
                             }
                         }, new FailureHandler(getActivity()));
+                rearrangePeerViews(activity, false);
                 break;
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
-                Activity activity = requireActivity();
                 rearrangePeerViews(activity, false);
                 mTopic.videoCallAccept(mCallSeqID);
                 Cache.setCallConnected();
@@ -669,10 +671,10 @@ public class CallFragment extends Fragment {
             Log.d(TAG, "onMessage: got message" + event);
             switch (event) {
                 case VIDEO_MUTED_EVENT:
-                    rearrangePeerViews(getActivity(), false);
+                    rearrangePeerViews(requireActivity(), false);
                     break;
                 case VIDEO_UNMUTED_EVENT:
-                    rearrangePeerViews(getActivity(), true);
+                    rearrangePeerViews(requireActivity(), true);
                     break;
                 default:
                     break;
