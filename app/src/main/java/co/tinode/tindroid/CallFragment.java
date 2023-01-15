@@ -113,6 +113,11 @@ public class CallFragment extends Fragment {
     private SurfaceViewRenderer mLocalVideoView;
     private SurfaceViewRenderer mRemoteVideoView;
 
+    // Control buttons: speakerphone, mic, camera.
+    private FloatingActionButton mToggleSpeakerphoneBtn;
+    private FloatingActionButton mToggleCameraBtn;
+    private FloatingActionButton mToggleMicBtn;
+
     private ConstraintLayout mLayout;
     private TextView mPeerName;
     private ImageView mPeerAvatar;
@@ -147,6 +152,10 @@ public class CallFragment extends Fragment {
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
 
+        mToggleSpeakerphoneBtn = v.findViewById(R.id.toggleSpeakerphoneBtn);
+        mToggleCameraBtn = v.findViewById(R.id.toggleCameraBtn);
+        mToggleMicBtn = v.findViewById(R.id.toggleMicBtn);
+
         mLayout = v.findViewById(R.id.callMainLayout);
 
         AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
@@ -154,13 +163,13 @@ public class CallFragment extends Fragment {
         audioManager.setSpeakerphoneOn(true);
 
         // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
-        v.findViewById(R.id.toggleSpeakerphoneBtn).setOnClickListener(v0 ->
+        mToggleSpeakerphoneBtn.setOnClickListener(v0 ->
                 toggleSpeakerphone((FloatingActionButton) v0));
         v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
-        v.findViewById(R.id.toggleCameraBtn).setOnClickListener(v2 ->
+        mToggleCameraBtn.setOnClickListener(v2 ->
                 toggleMedia((FloatingActionButton) v2, true,
                         R.drawable.ic_videocam, R.drawable.ic_videocam_off));
-        v.findViewById(R.id.toggleMicBtn).setOnClickListener(v3 ->
+        mToggleMicBtn.setOnClickListener(v3 ->
                 toggleMedia((FloatingActionButton) v3, false,
                         R.drawable.ic_mic, R.drawable.ic_mic_off));
         return v;
@@ -255,6 +264,14 @@ public class CallFragment extends Fragment {
     public void onPause() {
         stopSoundEffect();
         super.onPause();
+    }
+
+    private void enableControls() {
+        getActivity().runOnUiThread(() -> {
+            mToggleSpeakerphoneBtn.setEnabled(true);
+            mToggleCameraBtn.setEnabled(true);
+            mToggleMicBtn.setEnabled(true);
+        });
     }
 
     private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
@@ -482,6 +499,10 @@ public class CallFragment extends Fragment {
         mLocalVideoView.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         mLocalVideoView.setZOrderMediaOverlay(true);
         mLocalVideoView.setVisibility(mAudioOnly ? View.INVISIBLE : View.VISIBLE);
+
+        if (mAudioOnly) {
+            mToggleCameraBtn.setImageResource(R.drawable.ic_videocam_off);
+        }
     }
 
     private boolean initIceServers() {
@@ -535,6 +556,7 @@ public class CallFragment extends Fragment {
     private void initialSetupComplete() {
         mCallInitialSetupComplete = true;
         drainRemoteIceCandidatesCache();
+        enableControls();
     }
 
     // Sends a hang-up notification to the peer and closes the fragment.
@@ -590,7 +612,7 @@ public class CallFragment extends Fragment {
             case INCOMING:
                 // The callee (we) has accepted the call. Notify the caller.
                 Activity activity = requireActivity();
-                rearrangePeerViews(activity);
+                rearrangePeerViews(activity, false);
                 mTopic.videoCallAccept(mCallSeqID);
                 Cache.setCallConnected();
                 break;
@@ -647,10 +669,10 @@ public class CallFragment extends Fragment {
             Log.d(TAG, "onMessage: got message" + event);
             switch (event) {
                 case VIDEO_MUTED_EVENT:
-                    getActivity().runOnUiThread(() -> { mRemoteVideoView.setVisibility(View.INVISIBLE); });
+                    rearrangePeerViews(getActivity(), false);
                     break;
                 case VIDEO_UNMUTED_EVENT:
-                    getActivity().runOnUiThread(() -> { mRemoteVideoView.setVisibility(View.VISIBLE); });
+                    rearrangePeerViews(getActivity(), true);
                     break;
                 default:
                     break;
@@ -808,7 +830,7 @@ public class CallFragment extends Fragment {
         }
 
         stopSoundEffect();
-        rearrangePeerViews(activity);
+        rearrangePeerViews(activity, false);
 
         createPeerConnection();
         Cache.setCallConnected();
@@ -919,19 +941,33 @@ public class CallFragment extends Fragment {
         }
     }
 
-    private void rearrangePeerViews(final Activity activity) {
+    private void rearrangePeerViews(final Activity activity, boolean remoteVideoLive) {
         activity.runOnUiThread(() -> {
-            ConstraintSet cs = new ConstraintSet();
-            cs.clone(mLayout);
-            cs.removeFromVerticalChain(R.id.peerName);
-            cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP,0);
-            cs.setHorizontalBias(R.id.peerName, 0.05f);
-            cs.applyTo(mLayout);
-            mPeerName.setElevation(8);
+            if (remoteVideoLive) {
+                ConstraintSet cs = new ConstraintSet();
+                cs.clone(mLayout);
+                cs.removeFromVerticalChain(R.id.peerName);
+                cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP, 0);
+                cs.setHorizontalBias(R.id.peerName, 0.05f);
 
-            mPeerAvatar.setVisibility(View.INVISIBLE);
+                cs.applyTo(mLayout);
+                mPeerName.setElevation(8);
+
+                mPeerAvatar.setVisibility(View.INVISIBLE);
+                mRemoteVideoView.setVisibility(View.VISIBLE);
+            } else {
+                ConstraintSet cs = new ConstraintSet();
+                cs.clone(mLayout);
+                cs.removeFromVerticalChain(R.id.peerName);
+                cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.imageAvatar, ConstraintSet.TOP, 0);
+                cs.setHorizontalBias(R.id.peerName, 0.5f);
+                cs.applyTo(mLayout);
+                mPeerAvatar.setVisibility(View.VISIBLE);
+                mRemoteVideoView.setVisibility(View.INVISIBLE);
+            }
         });
     }
+
     // Auxiliary class to facilitate serialization of SDP data.
     static class SDPAux implements Serializable {
         public final String type;
