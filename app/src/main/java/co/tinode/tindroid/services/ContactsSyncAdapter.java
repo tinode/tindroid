@@ -5,7 +5,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncResult;
@@ -13,6 +12,8 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.telephony.PhoneNumberUtils;
+import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Patterns;
@@ -28,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.TindroidApp;
@@ -44,8 +46,6 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
-
-import static androidx.core.content.ContextCompat.checkSelfPermission;
 
 /**
  * Define a sync adapter for the app.
@@ -79,10 +79,10 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
      * Read address book contacts from the Contacts content provider.
      * The results are ordered by 'data1' field.
      *
-     * @param resolver content resolver to use.
+     * @param context context to use.
      * @return contacts
      */
-    private static SparseArray<ContactHolder> fetchContacts(ContentResolver resolver) {
+    private static SparseArray<ContactHolder> fetchContacts(Context context) {
         SparseArray<ContactHolder> map = new SparseArray<>();
 
         final String[] projection = {
@@ -113,13 +113,28 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         final String[] selectionArgs = args.toArray(new String[]{});
 
         // Get contacts from the database.
-        Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI, projection,
+        Cursor cursor = context.getContentResolver().query(ContactsContract.Data.CONTENT_URI, projection,
                 selection, selectionArgs, orderBy);
         if (cursor == null) {
             Log.d(TAG, "Failed to fetch contacts");
             return map;
         }
 
+        // Attempt to determine default country for standardizing phone numbers.
+        String countryCode = null;
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        if (tm != null) {
+            // First try to use country code of the SIM card.
+            countryCode = tm.getSimCountryIso();
+            if (TextUtils.isEmpty(countryCode)) {
+                // Fallback to current network.
+                countryCode = tm.getNetworkCountryIso();
+            }
+            if (TextUtils.isEmpty(countryCode)) {
+                // Use device locale country as a last resort.
+                countryCode = context.getResources().getConfiguration().getLocales().get(0).getCountry();
+            }
+        }
         final int contactIdIdx = cursor.getColumnIndex(ContactsContract.Data.CONTACT_ID);
         final int mimeTypeIdx = cursor.getColumnIndex(ContactsContract.Data.MIMETYPE);
         final int dataIdx = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA);
@@ -152,6 +167,13 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                     // This is a phone number. Syncing phones of all types. The 'mobile' marker is ignored
                     // because users ignore it these days.
                     if (!TextUtils.isEmpty(data) && Patterns.PHONE.matcher(data).matches()) {
+                        if (!TextUtils.isEmpty(countryCode)) {
+                            // Try to convert the number to E164 format.
+                            String e164 = PhoneNumberUtils.formatNumberToE164(data, countryCode);
+                            if (!TextUtils.isEmpty(e164)) {
+                                data = e164;
+                            }
+                        }
                         // Remove all characters other than 0-9 and +, save the result.
                         holder.putPhone(data.replaceAll("[^0-9+]", ""));
                     } else {
@@ -211,7 +233,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
     public void onPerformSync(final Account account, final Bundle extras, String authority,
                               ContentProviderClient provider, final SyncResult syncResult) {
 
-        if (checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) !=
+                PackageManager.PERMISSION_GRANTED) {
             Log.i(TAG, "No permission to access contacts. Sync failed.");
             syncResult.stats.numAuthExceptions++;
             return;
@@ -231,7 +254,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         // Load contacts and send them to server as fnd.Private.
-        SparseArray<ContactHolder> contactList = fetchContacts(getContext().getContentResolver());
+        SparseArray<ContactHolder> contactList = fetchContacts(getContext());
         StringBuilder contactsBuilder = new StringBuilder();
         for (int i = 0; i < contactList.size(); i++) {
             ContactHolder ch = contactList.get(contactList.keyAt(i));

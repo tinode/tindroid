@@ -9,8 +9,6 @@
     <!-- Needed for video calls, adding an avatar pic when registering new accounts,
     attaching photos to messages. -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- Enable installation on devices without the camera: some features won't be available -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -51,6 +49,12 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <!-- Required on API 33+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Enable installation on devices without the camera: some features won't be available -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Used to detect phone's country -->
+    <uses-feature android:name="android.hardware.telephony.radio.access" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony.subscription" android:required="false" />
 
     <queries>
         <intent>
