@@ -82,6 +82,7 @@ public class CallFragment extends Fragment {
     private static final String VIDEO_UNMUTED_EVENT = "video:unmuted";
 
     // Camera constants.
+    // TODO: hardcoded for now. Consider querying camera for supported values.
     private static final int CAMERA_RESOLUTION_WIDTH = 1024;
     private static final int CAMERA_RESOLUTION_HEIGHT = 720;
     private static final int CAMERA_FPS = 30;
