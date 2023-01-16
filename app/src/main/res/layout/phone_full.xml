@@ -12,7 +12,6 @@
         android:layout_height="wrap_content"
         android:paddingEnd="8dp"
         android:paddingStart="8dp"
-        android:textAppearance="@style/contactListTextPrimary"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -20,22 +19,25 @@
 
     <TextView
         android:id="@+id/country_name"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textAppearance="@style/contactListTextPrimary"
+        android:textAppearance="?android:attr/textAppearanceListItem"
         android:ellipsize="end"
+        android:maxLines="1"
         app:layout_constraintStart_toEndOf="@id/country_flag"
+        app:layout_constraintEnd_toStartOf="@id/country_dialcode"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         tools:text="United States of America" />
 
     <TextView
+        android:id="@+id/country_dialcode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:paddingStart="6dp"
         android:paddingEnd="8dp"
-        android:id="@+id/country_dialcode"
+        android:textAppearance="?android:attr/textAppearanceListItem"
         android:textColor="@color/colorAccent"
-        android:textSize="@dimen/button_text"
         android:gravity="end"
         tools:text="+1"
         app:layout_constraintEnd_toEndOf="parent"

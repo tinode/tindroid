@@ -11,14 +11,16 @@
         android:id="@+id/country_selector"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:spinnerMode="dialog"
         tools:listitem="@layout/phone_selected"/>
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="2"
-        android:layout_marginStart="6dp"
-        android:layout_marginEnd="6dp"
+        android:layout_marginTop="0dp"
+        app:helperTextEnabled="false"
         app:endIconMode="clear_text">
         <androidx.appcompat.widget.AppCompatEditText
             android:id="@+id/phone_edit_text"
@@ -27,6 +29,9 @@
             android:digits="0123456789.-() "
             android:inputType="phone"
             android:layout_weight="2"
+            android:layout_marginTop="0dp"
+            android:maxLength="16"
+            android:maxLines="1"
             tools:text="000 000 0000"
             app:errorEnabled="true" />
     </com.google.android.material.textfield.TextInputLayout>
