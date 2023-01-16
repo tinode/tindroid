@@ -1,39 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="vertical">
 
-    <Spinner
-        android:id="@+id/country_selector"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginTop="8dp"
-        android:spinnerMode="dialog"
-        tools:listitem="@layout/phone_selected"/>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="2"
-        android:layout_marginTop="0dp"
-        app:helperTextEnabled="false"
-        app:endIconMode="clear_text">
-        <androidx.appcompat.widget.AppCompatEditText
-            android:id="@+id/phone_edit_text"
-            android:layout_width="match_parent"
+        <Spinner
+            android:id="@+id/country_selector"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:digits="0123456789.-() "
-            android:inputType="phone"
-            android:layout_weight="2"
-            android:layout_marginTop="0dp"
-            android:maxLength="16"
-            android:maxLines="1"
-            tools:text="000 000 0000"
-            app:errorEnabled="true" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_marginTop="8dp"
+            android:spinnerMode="dialog"
+            tools:listitem="@layout/phone_selected" />
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginTop="0dp"
+            android:layout_weight="2"
+            app:endIconMode="clear_text"
+            app:helperTextEnabled="false">
+
+            <androidx.appcompat.widget.AppCompatEditText
+                android:id="@+id/phone_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginTop="0dp"
+                android:layout_weight="2"
+                android:digits="0123456789.-() "
+                android:inputType="phone"
+                android:maxLength="16"
+                android:maxLines="1"
+                app:errorEnabled="true"
+                tools:text="000 000 0000" />
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/phone_explanation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/phone_sms_explained"
+        android:textAppearance="@style/textSecondarySmall" />
 </LinearLayout>
