@@ -104,7 +104,6 @@ public class IncomingCallFragment extends Fragment
 
         mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         mSeq = args.getInt(Const.INTENT_EXTRA_SEQ);
-        Cache.setCallActive(mTopicName, mSeq);
 
         // Technically the call is from args.getString(Const.INTENT_EXTRA_SENDER_NAME)
         // but it's the same as "topic" for p2p topics;

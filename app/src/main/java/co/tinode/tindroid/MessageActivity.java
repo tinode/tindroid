@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -39,11 +40,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.NotificationManagerCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -145,6 +148,7 @@ public class MessageActivity extends AppCompatActivity
             c.close();
         }
     };
+
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
     private PausableSingleThreadExecutor mMessageSender = null;
@@ -542,15 +546,8 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
             }
             return true;
-        } else if (id == R.id.action_call) {
-            CallManager.placeOutgoingCall(mTopicName);
-            /*
-            Intent intent = new Intent(getApplicationContext(), CallActivity.class);
-            intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
-            intent.putExtra(Const.INTENT_EXTRA_TOPIC, mTopicName);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            startActivity(intent);
-             */
+        } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
+            CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
             return true;
         }
 

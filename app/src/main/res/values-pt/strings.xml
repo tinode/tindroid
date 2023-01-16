@@ -335,6 +335,12 @@
     <string name="video_call_channel_name">Videochamadas</string>
     <string name="video_call_channel_description">Chamadas de vídeo e áudio</string>
     <string name="tinode_video_call">Tinode Videochamada</string>
+    <string name="tinode_audio_call">Tinode Chamada</string>
     <string name="answer_call">Resposta</string>
     <string name="decline_call">Recusar</string>
+
+    <string name="document_preview">Visualização do documento</string>
+    <string name="action_call">Chamar</string>
+    <string name="unable_to_place_call">Não é possível fazer esta chamada</string>
+    <string name="unable_to_answer_call">Não é possível atender esta chamada</string>
 </resources>

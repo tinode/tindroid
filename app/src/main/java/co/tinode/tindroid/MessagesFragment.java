@@ -870,8 +870,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
                 menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
 
-                menu.findItem(R.id.action_call).setVisible(mTopic.isP2PType() &&
-                        Cache.getTinode().getServerParam("iceServers") != null);
+                boolean callsEnabled = mTopic.isP2PType() &&
+                        Cache.getTinode().getServerParam("iceServers") != null;
+                menu.findItem(R.id.action_video_call).setVisible(callsEnabled);
+                menu.findItem(R.id.action_audio_call).setVisible(callsEnabled);
             }
         }
     }

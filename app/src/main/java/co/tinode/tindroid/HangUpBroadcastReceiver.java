@@ -6,16 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tinodesdk.Topic;
 
 /**
  * Receives broadcasts to hang up or decline video/audio call.
  */
-public class CallBroadcastReceiver extends BroadcastReceiver {
-    private static final String TAG = "CallNotificationBroadcastReceiver";
-
-    public static final String ACTION_INCOMING_CALL = "co.tinode.tindroid.ACTION_INCOMING_CALL";
+public class HangUpBroadcastReceiver extends BroadcastReceiver {
+    private static final String TAG = "HangUpBroadcastReceiver";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -23,9 +20,9 @@ public class CallBroadcastReceiver extends BroadcastReceiver {
 
         // Clear incoming call notification.
         NotificationManager nm = context.getSystemService(NotificationManager.class);
-        nm.cancel(CallConnection.NOTIFICATION_TAG_INCOMING_CALL, 0);
+        nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
 
-        if (ACTION_INCOMING_CALL.equals(intent.getAction())) {
+        if (Const.INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
             String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
             int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
             Topic topic = Cache.getTinode().getTopic(topicName);

@@ -192,8 +192,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         };
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
         lbm.registerReceiver(br, new IntentFilter("FCM_REFRESH_TOKEN"));
-        lbm.registerReceiver(new CallBroadcastReceiver(),
-                new IntentFilter(CallBroadcastReceiver.ACTION_INCOMING_CALL));
+        lbm.registerReceiver(new HangUpBroadcastReceiver(), new IntentFilter(Const.INTENT_ACTION_CALL_CLOSE));
 
         createNotificationChannels();
 
@@ -225,7 +224,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 }
 
                 // Check if we have a later version of the message (which means the call
-                // has been not yet been either accepted or finished).
+                // has been not yet either accepted or finished).
                 Storage.Message msg = topic.getMessage(data.seq);
                 if (msg != null) {
                     webrtc = msg.getStringHeader("webrtc");
@@ -236,7 +235,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
                 CallInProgress call = Cache.getCallInProgress();
                 if (call == null) {
-                    CallManager.acceptIncomingCall(TindroidApp.this, data.topic, data.seq);
+                    CallManager.acceptIncomingCall(TindroidApp.this,
+                            data.topic, data.seq, data.getBooleanHeader("aonly"));
                 } else if (!call.equals(data.topic, data.seq)) {
                     // Another incoming call. Decline.
                     topic.videoCallHangUp(data.seq);
@@ -257,7 +257,9 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     call != null && call.equals(info.src, info.seq)) {
                     // Another client has accepted the call. Dismiss call notification.
                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
-                    Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
+                    final Intent intent = new Intent(TindroidApp.this,
+                            HangUpBroadcastReceiver.class);
+                    intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
                     intent.putExtra(Const.INTENT_EXTRA_TOPIC, info.src);
                     intent.putExtra(Const.INTENT_EXTRA_SEQ, info.seq);
                     lbm.sendBroadcast(intent);
