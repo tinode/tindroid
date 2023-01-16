@@ -34,6 +34,9 @@ import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
+import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
+import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 import com.squareup.picasso.OkHttp3Downloader;
 import com.squareup.picasso.Picasso;
@@ -72,6 +75,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     // 256 MB.
     private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
+    private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
     private static TindroidApp sContext;
 
@@ -80,6 +84,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     // The Tinode cache is linked from here so it's never garbage collected.
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private static Cache sCache;
+
+    private static SimpleCache sVideoCache;
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
@@ -186,8 +192,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         };
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
         lbm.registerReceiver(br, new IntentFilter("FCM_REFRESH_TOKEN"));
-        lbm.registerReceiver(new CallBroadcastReceiver(),
-                new IntentFilter(CallBroadcastReceiver.ACTION_INCOMING_CALL));
+        lbm.registerReceiver(new HangUpBroadcastReceiver(), new IntentFilter(Const.INTENT_ACTION_CALL_CLOSE));
 
         createNotificationChannels();
 
@@ -219,7 +224,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 }
 
                 // Check if we have a later version of the message (which means the call
-                // has been not yet been either accepted or finished).
+                // has been not yet either accepted or finished).
                 Storage.Message msg = topic.getMessage(data.seq);
                 if (msg != null) {
                     webrtc = msg.getStringHeader("webrtc");
@@ -230,7 +235,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
                 CallInProgress call = Cache.getCallInProgress();
                 if (call == null) {
-                    CallManager.acceptIncomingCall(TindroidApp.this, data.topic, data.seq);
+                    CallManager.acceptIncomingCall(TindroidApp.this,
+                            data.topic, data.seq, data.getBooleanHeader("aonly"));
                 } else if (!call.equals(data.topic, data.seq)) {
                     // Another incoming call. Decline.
                     topic.videoCallHangUp(data.seq);
@@ -251,7 +257,9 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     call != null && call.equals(info.src, info.seq)) {
                     // Another client has accepted the call. Dismiss call notification.
                     LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.this);
-                    Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
+                    final Intent intent = new Intent(TindroidApp.this,
+                            HangUpBroadcastReceiver.class);
+                    intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
                     intent.putExtra(Const.INTENT_EXTRA_TOPIC, info.src);
                     intent.putExtra(Const.INTENT_EXTRA_SEQ, info.seq);
                     lbm.sendBroadcast(intent);
@@ -370,6 +378,21 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 nm.createNotificationChannel(videoCall);
             }
         }
+    }
+
+    public static synchronized SimpleCache getVideoCache() {
+        String dirs = sContext.getCacheDir().getAbsolutePath();
+        if (sVideoCache == null) {
+            String path = dirs + File.separator + "video";
+            boolean isLocked = SimpleCache.isCacheFolderLocked(new File(path));
+            if (!isLocked) {
+                sVideoCache = new SimpleCache(new File(path),
+                        new LeastRecentlyUsedCacheEvictor(VIDEO_CACHE_SIZE),
+                        new StandaloneDatabaseProvider(sContext));
+            }
+        }
+
+        return sVideoCache;
     }
 
     // Read saved account credentials and try to connect to server using them.

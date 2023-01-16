@@ -29,9 +29,13 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    api 'com.fasterxml.jackson.core:jackson-databind:2.14.1'
-    api 'com.fasterxml.jackson.core:jackson-core:2.14.1'
-    api 'com.fasterxml.jackson.core:jackson-annotations:2.14.1'
+    // Do NOT upgrade jackson to 2.14+. 2.14+ requires API 26+.
+    // noinspection GradleDependency
+    api 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
+    // noinspection GradleDependency
+    api 'com.fasterxml.jackson.core:jackson-core:2.13.4'
+    // noinspection GradleDependency
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.13.4'
     api 'org.java-websocket:Java-WebSocket:1.5.3'
 
     implementation 'org.jetbrains:annotations:23.1.0'

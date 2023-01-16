@@ -23,23 +23,31 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_call"
+        android:id="@+id/action_audio_call"
         android:orderInCategory="102"
-        android:title="@string/action_video_call"
+        android:title="@string/action_call"
         android:icon="@drawable/ic_call"
         app:iconTint="?android:textColorPrimary"
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/action_mute"
+        android:id="@+id/action_video_call"
         android:orderInCategory="103"
+        android:title="@string/action_video_call"
+        android:icon="@drawable/ic_videocam"
+        app:iconTint="?android:textColorPrimary"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_mute"
+        android:orderInCategory="104"
         android:title="@string/action_mute"
         android:icon="@drawable/ic_notifications_off"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unmute"
-        android:orderInCategory="104"
+        android:orderInCategory="105"
         android:title="@string/action_unmute"
         android:icon="@drawable/ic_notifications"
         android:visible="false"
@@ -47,14 +55,14 @@
 
     <item
         android:id="@+id/action_archive"
-        android:orderInCategory="105"
+        android:orderInCategory="106"
         android:title="@string/action_archive"
         android:icon="@drawable/ic_archive"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_unarchive"
-        android:orderInCategory="106"
+        android:orderInCategory="107"
         android:title="@string/action_unarchive"
         android:icon="@drawable/ic_unarchive"
         android:visible="false"
@@ -62,21 +70,21 @@
 
     <item
         android:id="@+id/action_clear"
-        android:orderInCategory="107"
+        android:orderInCategory="108"
         android:title="@string/action_clear_messages"
         android:icon="@drawable/ic_close"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_leave"
-        android:orderInCategory="108"
+        android:orderInCategory="109"
         android:title="@string/action_leave_topic"
         android:icon="@drawable/ic_exit"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_delete"
-        android:orderInCategory="109"
+        android:orderInCategory="110"
         android:title="@string/action_delete_group"
         android:icon="@drawable/ic_delete"
         app:showAsAction="never" />

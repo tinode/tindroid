@@ -25,13 +25,13 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
-import co.tinode.tindroid.CallActivity;
+import co.tinode.tindroid.CallInProgress;
 import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.Const;
+import co.tinode.tindroid.HangUpBroadcastReceiver;
 import co.tinode.tindroid.MessageActivity;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.format.FontFormatter;
@@ -127,12 +127,19 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             String webrtc = data.get("webrtc");
+            String senderId = data.get("xfrom");
 
             // Update data state, maybe fetch missing data.
             String token = Utils.getLoginToken(getApplicationContext());
             String selectedTopic = Cache.getSelectedTopicName();
             tinode.oobNotification(data, token, "started".equals(webrtc) ||
                     topicName.equals(selectedTopic));
+
+            if (webrtc != null) {
+                // It's a video call.
+                handleCallNotification(webrtc, tinode.isMe(senderId), data);
+                return;
+            }
 
             if (Boolean.parseBoolean(data.get("silent"))) {
                 // TODO: cancel some notifications.
@@ -153,7 +160,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             // Try to resolve sender using locally stored contacts.
-            String senderId = data.get("xfrom");
             String senderName = null;
             Bitmap senderIcon = null;
             if (senderId != null) {
@@ -178,12 +184,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             CharSequence body = null;
             Bitmap avatar = null;
             if (TextUtils.isEmpty(what) || "msg".equals(what)) {
-                if (webrtc != null) {
-                    // It's a video call.
-                    handleCallNotification(webrtc, tinode.isMe(senderId), data);
-                    return;
-                }
-
                 avatar = senderIcon;
 
                 // Try to retrieve rich message content.
@@ -323,29 +323,36 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private void handleCallNotification(@NonNull String webrtc, boolean isMe, @NonNull Map<String, String> data) {
         String seqStr = data.get("seq");
         String topicName = data.get("topic");
+        boolean audioOnly = Boolean.parseBoolean(data.get("aonly"));
         try {
             int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
             if (seq <= 0) {
                 Log.w(TAG, "Invalid seq value '" + seqStr + "'");
                 return;
             }
-
+            int origSeq = parseSeqReference(data.get("replace"));
             switch (webrtc) {
                 case "started":
                     if (!isMe) {
                         // Show UI for accepting/declining the incoming call.
-                        CallManager.acceptIncomingCall(this, topicName, seq);
+                        CallManager.acceptIncomingCall(this, topicName, seq, audioOnly);
                     }
                     break;
                 case "accepted":
+                    CallInProgress call = Cache.getCallInProgress();
+                    if (origSeq > 0 && call != null && call.isConnected() && call.equals(topicName, origSeq)) {
+                        // The server notifies us of the call that we've already accepted. Do nothing.
+                        return;
+                    }
                 case "missed":
                 case "declined":
                 case "disconnected":
-                    int origSeq = parseSeqReference(data.get("replace"));
+                case "finished":
                     if (origSeq > 0) {
                         // Dismiss the call UI.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
-                        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_CLOSE);
+                        final Intent intent = new Intent(this, HangUpBroadcastReceiver.class);
+                        intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
                         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
                         intent.putExtra(Const.INTENT_EXTRA_SEQ, origSeq);
                         lbm.sendBroadcast(intent);
@@ -415,7 +422,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
 
     @SuppressWarnings("SameParameterValue")
     private static int resourceId(Resources res, String name, int defaultId, String resourceType, String packageName) {
-        int id = res.getIdentifier(name, resourceType, packageName);
+        @SuppressLint("DiscouragedApi") int id = res.getIdentifier(name, resourceType, packageName);
         return id != 0 ? id : defaultId;
     }
 
@@ -434,7 +441,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private static String locText(Resources res, String locKey, String[] locArgs, String defaultText, String packageName) {
         String result = defaultText;
         if (locKey != null) {
-            int id = res.getIdentifier(locKey, "string", packageName);
+            @SuppressLint("DiscouragedApi") int id = res.getIdentifier(locKey, "string", packageName);
             if (id != 0) {
                 if (locArgs != null) {
                     result = res.getString(id, (Object[]) locArgs);

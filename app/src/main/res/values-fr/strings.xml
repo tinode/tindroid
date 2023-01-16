@@ -334,6 +334,12 @@
     <string name="video_call_channel_name">Appels vidéo</string>
     <string name="video_call_channel_description">Appels vidéo et audio</string>
     <string name="tinode_video_call">Appel vidéo Tinode</string>
+    <string name="tinode_audio_call">Appel Tinode</string>
     <string name="answer_call">Répondre</string>
     <string name="decline_call">Refuser</string>
+
+    <string name="document_preview">Aperçu du document</string>
+    <string name="action_call">Appeler</string>
+    <string name="unable_to_place_call">Impossible de passer cet appel</string>
+    <string name="unable_to_answer_call">Impossible de répondre à cet appel</string>
 </resources>

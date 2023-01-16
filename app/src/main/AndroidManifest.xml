@@ -9,8 +9,6 @@
     <!-- Needed for video calls, adding an avatar pic when registering new accounts,
     attaching photos to messages. -->
     <uses-permission android:name="android.permission.CAMERA"/>
-    <!-- Enable installation on devices without the camera: some features won't be available -->
-    <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <!-- Needed for saving attachments -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
@@ -41,16 +39,21 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <!-- Needed for incoming call notifications -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <!--uses-permission android:name="android.permission.ACTION_MANAGE_OVERLAY_PERMISSION" /-->
-    <!--uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" /-->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <!-- Telephony API: placing and receiving calls. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
     <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+
     <!-- Required on API 33+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Enable installation on devices without the camera: some features won't be available -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Used to detect phone's country -->
+    <uses-feature android:name="android.hardware.telephony.radio.access" android:required="false" />
+    <uses-feature android:name="android.hardware.telephony.subscription" android:required="false" />
 
     <queries>
         <intent>
@@ -225,7 +228,7 @@
         </service>
 
         <!-- Receives broadcast to hang up incoming call -->
-        <receiver android:name=".CallBroadcastReceiver" />
+        <receiver android:name=".HangUpBroadcastReceiver" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

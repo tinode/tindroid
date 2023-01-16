@@ -1,32 +1,49 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
+import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+import android.text.Spannable;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
+import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
+import androidx.annotation.ColorRes;
+import androidx.annotation.StringRes;
+
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tindroid.services.CallConnectionService;
 
+import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 
 import static android.content.Context.TELECOM_SERVICE;
 
 public class CallManager {
     private static final String TAG = "CallManager";
+
+    public static final String NOTIFICATION_TAG_INCOMING_CALL = "incoming_call";
 
     private static CallManager sSharedInstance;
 
@@ -50,14 +67,19 @@ public class CallManager {
 
         // Register current user's phone account.
         mPhoneAccountHandle = new PhoneAccountHandle(new ComponentName(context, CallConnectionService.class), myID);
+        int capabilities = PhoneAccount.CAPABILITY_VIDEO_CALLING;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            capabilities = capabilities | PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING;
+        }
+
         PhoneAccount.Builder builder = PhoneAccount.builder(mPhoneAccountHandle, accLabel)
-                .addSupportedUriScheme("tinode")
                 .setAddress(Uri.fromParts("tinode", myID, null))
+                .setSubscriptionAddress(Uri.fromParts("tinode", myID, null))
+                .addSupportedUriScheme("tinode")
+                .setCapabilities(capabilities)
                 .setShortDescription(accLabel)
                 .setIcon(icon);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED);
-        }
         telecomManager.registerPhoneAccount(builder.build());
     }
 
@@ -76,64 +98,231 @@ public class CallManager {
         telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
     }
 
-    public static void placeOutgoingCall(String callee) {
-        CallManager shared = CallManager.getShared();
-        Bundle callParams = new Bundle();
-        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
-        callParams.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_BIDIRECTIONAL);
-        callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-
-        Bundle extras = new Bundle();
-        extras.putString(Const.INTENT_EXTRA_TOPIC, callee);
-        callParams.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras);
-        try {
-            TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
-            telecomManager.placeCall(Uri.fromParts("tinode", callee, null), callParams);
-        } catch (SecurityException ex) {
-            Log.w(TAG, "Unable to place call", ex);
-        }
-    }
-
-    public static void acceptIncomingCall(Context context, String caller, int seq) {
-        if (context.checkSelfPermission(Manifest.permission.MANAGE_OWN_CALLS) != PackageManager.PERMISSION_GRANTED) {
-            Log.i(TAG, "No permission to accept incoming calls");
+    public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
+        TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
+        if (shouldBypassTelecom(activity, telecomManager, true)) {
+            // Self-managed phone accounts are not supported, bypassing Telecom.
+            showOutgoingCallUi(activity, callee, audioOnly, null);
             return;
         }
 
         CallManager shared = CallManager.getShared();
+        Bundle callParams = new Bundle();
+        callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
+        if (!audioOnly) {
+            callParams.putInt(TelecomManager.EXTRA_START_CALL_WITH_VIDEO_STATE, VideoProfile.STATE_BIDIRECTIONAL);
+            callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+        }
+
+        Bundle extras = new Bundle();
+        extras.putString(Const.INTENT_EXTRA_TOPIC, callee);
+        extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
+        callParams.putParcelable(TelecomManager.EXTRA_OUTGOING_CALL_EXTRAS, extras);
+        try {
+            telecomManager.placeCall(Uri.fromParts("tinode", callee, null), callParams);
+        } catch (SecurityException ex) {
+            Toast.makeText(TindroidApp.getAppContext(), R.string.unable_to_place_call, Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Unable to place call", ex);
+        }
+    }
+
+    public static void acceptIncomingCall(Context context, String caller, int seq, boolean audioOnly) {
+        Bundle extras = new Bundle();
+        extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
+        extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
+        extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
+
+        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
+        if (topic == null) {
+            Log.w(TAG, "Call from un unknown topic " + caller);
+            return;
+        }
+
+        CallManager shared = CallManager.getShared();
+        TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
+
+        if (shouldBypassTelecom(context, telecomManager, false)) {
+            // Bypass Telecom where self-managed calls are not supported.
+            Cache.prepareNewCall(caller, null);
+            showIncomingCallUi(context, caller, extras);
+            topic.videoCallRinging(seq);
+            return;
+        }
 
         Uri uri = Uri.fromParts("tinode", caller, null);
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
-
         callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // TODO: handle audio-only calls.
-            boolean isVideoCall = true;
-            callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, isVideoCall ?
-                    VideoProfile.STATE_BIDIRECTIONAL : VideoProfile.STATE_AUDIO_ONLY);
+            callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
+                    VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
         }
 
-        Bundle extras = new Bundle();
-        extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
-        extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
         callParams.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, extras);
 
         try {
-            TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
+            topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            if (Build.MANUFACTURER.equalsIgnoreCase("Samsung")) {
-                Intent intent = new Intent();
-                intent.setComponent(new ComponentName("com.android.server.telecom",
-                        "com.android.server.telecom.settings.EnableAccountPreferenceActivity"));
-                context.startActivity(intent);
-            } else {
-                context.startActivity(new Intent(TelecomManager.ACTION_CHANGE_PHONE_ACCOUNTS));
-            }
+            Cache.prepareNewCall(caller, null);
+            showIncomingCallUi(context, caller, extras);
+            topic.videoCallRinging(seq);
         } catch (Exception ex) {
             Log.i(TAG, "Failed to accept incoming call", ex);
         }
+    }
+
+    public static void showOutgoingCallUi(Context context, String topicName,
+                                          boolean audioOnly, CallConnection conn) {
+        Cache.prepareNewCall(topicName, conn);
+
+        Log.i(TAG, "Init call audioOnly=" + audioOnly);
+        Intent intent = new Intent(context, CallActivity.class);
+        intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+        intent.putExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        context.startActivity(intent);
+    }
+
+    public static void showIncomingCallUi(Context context, String topicName, Bundle args) {
+        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(topicName);
+        if (topic == null) {
+            Log.w(TAG, "Call from un unknown topic " + topicName);
+            return;
+        }
+
+        final int width = (int) context.getResources().getDimension(android.R.dimen.notification_large_icon_width);
+        final VxCard pub = (VxCard) topic.getPub();
+        final String userName = pub != null && !TextUtils.isEmpty(pub.fn) ? pub.fn :
+                context.getString(R.string.unknown);
+        // This is the UI thread handler.
+        final Handler uiHandler = new Handler(Looper.getMainLooper());
+
+        new Thread(() -> {
+            // This call must be off UI thread.
+            final Bitmap avatar = UiUtils.avatarBitmap(context, pub,
+                    Topic.getTopicTypeByName(topicName), topicName, width);
+            // This must run on UI thread.
+            uiHandler.post(() -> {
+                NotificationManager nm = context.getSystemService(NotificationManager.class);
+
+                Notification.Builder builder = new Notification.Builder(context);
+
+                builder.setPriority(Notification.PRIORITY_HIGH)
+                        .setOngoing(true)
+                        .setVisibility(Notification.VISIBILITY_PUBLIC)
+                        .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
+                }
+
+                int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
+                boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+
+                Cache.setCallActive(topicName, seq);
+
+                PendingIntent askUserIntent = askUserIntent(context, topicName, seq, audioOnly);
+                // Set notification content intent to take user to fullscreen UI if user taps on the
+                // notification body.
+                builder.setContentIntent(askUserIntent);
+                // Set full screen intent to trigger display of the fullscreen UI when the notification
+                // manager deems it appropriate.
+                builder.setFullScreenIntent(askUserIntent, true)
+                        .setLargeIcon(Icon.createWithBitmap(avatar))
+                        .setContentTitle(userName)
+                        .setSmallIcon(R.drawable.ic_icon_push)
+                        .setContentText(context.getString(audioOnly ? R.string.tinode_audio_call :
+                                R.string.tinode_video_call))
+                        .setUsesChronometer(true)
+                        .setCategory(Notification.CATEGORY_CALL);
+
+                // This will be ignored on O+ and handled by the channel
+                builder.setPriority(Notification.PRIORITY_MAX);
+
+                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_end),
+                        getActionText(context, R.string.decline_call, R.color.colorNegativeAction), declineIntent(context, topicName, seq))
+                        .build());
+
+                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_white),
+                        getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
+                        .build());
+
+                nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, builder.build());
+            });
+        }).start();
+    }
+
+    private static Spannable getActionText(Context context, @StringRes int stringRes, @ColorRes int colorRes) {
+        Spannable spannable = new SpannableString(context.getText(stringRes));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+            spannable.setSpan(
+                    new ForegroundColorSpan(context.getColor(colorRes)), 0, spannable.length(), 0);
+        }
+        return spannable;
+    }
+
+    private static PendingIntent askUserIntent(Context context, String topicName, int seq, boolean audioOnly) {
+        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                | Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName)
+                .putExtra(Const.INTENT_EXTRA_SEQ, seq)
+                .putExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
+        intent.setClass(context, CallActivity.class);
+        return PendingIntent.getActivity(context, 101, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static PendingIntent answerIntent(Context context, String topicName, int seq, boolean audioOnly) {
+        Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
+                | Intent.FLAG_ACTIVITY_NEW_TASK
+                | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName)
+                .putExtra(Const.INTENT_EXTRA_SEQ, seq)
+                .putExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, true)
+                .putExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
+        intent.setClass(context, CallActivity.class);
+        return PendingIntent.getActivity(context, 102, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static PendingIntent declineIntent(Context context, String topicName, int seq) {
+        final Intent intent = new Intent(context, HangUpBroadcastReceiver.class);
+        intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+        intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
+        return PendingIntent.getBroadcast(context, 103, intent,
+                PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    private static boolean shouldBypassTelecom(Context context, TelecomManager tm, boolean outgoing) {
+        if (!UiUtils.isPermissionGranted(context, Manifest.permission.MANAGE_OWN_CALLS)) {
+            Log.i(TAG, "No permission MANAGE_OWN_CALLS");
+            return true;
+        }
+
+        if (outgoing) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+                return true;
+            }
+            boolean disabled = !tm.isOutgoingCallPermitted(getShared().mPhoneAccountHandle);
+            if (disabled) {
+                Log.i(TAG, "Account cannot place outgoing calls");
+            }
+            return disabled;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            return true;
+        }
+        boolean disabled = !tm.isIncomingCallPermitted(getShared().mPhoneAccountHandle);
+        if (disabled) {
+            Log.i(TAG, "Account cannot accept incoming calls");
+        }
+        return disabled;
     }
 }

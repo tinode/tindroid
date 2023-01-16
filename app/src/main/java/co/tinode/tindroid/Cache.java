@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.services.CallConnection;
@@ -66,7 +67,7 @@ public class Cache {
 
     // Invalidate existing cache.
     static void invalidate() {
-        unregisterCallInProgress();
+        endCallInProgress();
         setSelectedTopicName(null);
         if (sInstance.mTinode != null) {
             sInstance.mTinode.logout();
@@ -79,7 +80,7 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void prepareNewCall(@NonNull String topic, @NonNull CallConnection conn) {
+    public static void prepareNewCall(@NonNull String topic, @Nullable CallConnection conn) {
         sInstance.mCallInProgress = new CallInProgress(topic, conn);
     }
 
@@ -87,15 +88,15 @@ public class Cache {
         sInstance.mCallInProgress.setCallActive(topic, seqId);
     }
 
+    public static void setCallConnected() {
+        sInstance.mCallInProgress.setCallConnected();
+    }
+
     public static void endCallInProgress() {
         if (sInstance.mCallInProgress != null) {
             sInstance.mCallInProgress.endCall();
+            sInstance.mCallInProgress = null;
         }
-    }
-
-    public static void unregisterCallInProgress() {
-        endCallInProgress();
-        sInstance.mCallInProgress = null;
     }
 
     public static String getSelectedTopicName() {
