@@ -83,6 +83,7 @@
             android:src="@drawable/ic_volume_up"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
+            android:enabled="false"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
@@ -93,6 +94,7 @@
             android:src="@drawable/ic_videocam"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
+            android:enabled="false"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
@@ -103,6 +105,7 @@
             android:src="@drawable/ic_mic"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_microphone_button"
+            android:enabled="false"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
