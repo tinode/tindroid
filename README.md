@@ -30,8 +30,8 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 
 * One-on-one conversations and group chats.
 * Channels with unlimited number of read-only subscribers.
-* Video calling.
-* Attachments and inline images, voice messages.
+* Video and audio calling.
+* Attachments, inline images and videos, voice messages.
 * Unread message counters.
 * Push notifications and in-app presence notifications.
 * Message status notifications: message delivery to server; received and read notifications; typing notifications.
@@ -49,12 +49,11 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 ## Not done yet:
 
 * End-to-end encryption.
-* No video messages. 
-* No audio-only calling.
+* Recording of video messages.
 * No support for switching between multiple backends.
 * No support for multiple accounts.
 * Mentions, hashtags.
-* Previews not generated for videos, audio, links or docs.
+* Previews not generated for audio, links or docs.
 
 ## Direct Dependencies
 
