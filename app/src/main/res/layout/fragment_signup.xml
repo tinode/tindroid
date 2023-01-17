@@ -118,8 +118,10 @@
                 android:text="@string/contacts" />
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/emailWrapper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:visibility="gone"
                 android:hint="@string/email">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -129,6 +131,12 @@
                     android:ems="10"
                     android:inputType="textEmailAddress" />
             </com.google.android.material.textfield.TextInputLayout>
+
+            <co.tinode.tindroid.widgets.PhoneEdit
+                android:id="@+id/phone"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/signUp"

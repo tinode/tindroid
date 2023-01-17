@@ -2,6 +2,9 @@ package co.tinode.tinodesdk.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.Serializable;
 import java.util.Arrays;
 
@@ -26,7 +29,7 @@ public class Credential implements Comparable<Credential>, Serializable {
     // Indicator if credential is validated.
     public Boolean done;
 
-    public static Credential[] append(Credential[] creds, Credential c) {
+    public static Credential[] append(@Nullable Credential[] creds, @NotNull Credential c) {
         if (creds == null) {
             creds = new Credential[1];
         } else {

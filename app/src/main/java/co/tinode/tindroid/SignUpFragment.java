@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -9,6 +10,9 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -16,6 +20,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -23,12 +30,15 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
@@ -41,9 +51,10 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for managing registration of a new account.
  */
 public class SignUpFragment extends Fragment
-        implements View.OnClickListener, UiUtils.AvatarPreviewer {
+        implements View.OnClickListener, UiUtils.AvatarPreviewer, MenuProvider {
 
     private static final String TAG ="SignUpFragment";
+    private String[] mCredMethods;
 
     private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
             UiUtils.avatarPickerLauncher(this, this);
@@ -67,8 +78,6 @@ public class SignUpFragment extends Fragment
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        setHasOptionsMenu(false);
-
         AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         ActionBar bar = activity.getSupportActionBar();
@@ -99,10 +108,85 @@ public class SignUpFragment extends Fragment
             return;
         }
 
+        parent.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+
         AvatarViewModel avatarVM = new ViewModelProvider(parent).get(AvatarViewModel.class);
         avatarVM.getAvatar().observe(getViewLifecycleOwner(), bmp ->
             UiUtils.acceptAvatar(parent, parent.findViewById(R.id.imageAvatar), bmp)
         );
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        final LoginActivity parent = (LoginActivity) requireActivity();
+        if (parent.isFinishing() || parent.isDestroyed()) {
+            return;
+        }
+
+        final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
+        boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
+
+        final Tinode tinode = Cache.getTinode();
+        tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                // "auth:email,tel;anon:none"
+                Object credObj = tinode.getServerParam("reqCred");
+                ArrayList<String> methods = new ArrayList<>();
+                if (credObj instanceof Map) {
+                    Object methodsObj = ((Map) credObj).get("auth");
+                    if (methodsObj instanceof List) {
+                        for (Object method : (List) methodsObj) {
+                            if (method instanceof String) {
+                                methods.add((String) method);
+                            }
+                        }
+                    }
+                }
+                methods.add("tel");
+                setupCredentials(parent, methods.toArray(new String[]{}));
+                return null;
+            }
+        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            @Override
+            public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                // TODO: show "Unable to use service at this time, try again later".
+                Log.w(TAG, "Failed to connect", err);
+                return null;
+            }
+        });
+    }
+
+    // Configure email or phone field.
+    private void setupCredentials(Activity activity, String[] methods) {
+        if (methods == null || methods.length == 0) {
+            mCredMethods = new String[]{"email"};
+        } else {
+            mCredMethods = methods;
+        }
+
+        activity.runOnUiThread(() -> {
+            for (final String method : mCredMethods) {
+                Log.i(TAG, "Setting up methods: " + method);
+                if (TextUtils.isEmpty(method)) {
+                    return;
+                }
+
+                if (method.equals("tel")) {
+                    activity.findViewById(R.id.phone).setVisibility(View.VISIBLE);
+                } else if (method.equals("email")) {
+                    activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                } else {
+                    // TODO: show generic text prompt for unknown method.
+                    Log.i(TAG, "Show generic validation field");
+                }
+
+                activity.findViewById(R.id.newLogin).requestFocus();
+            }
+        });
     }
 
     /**
@@ -131,10 +215,25 @@ public class SignUpFragment extends Fragment
             return;
         }
 
-        final String email = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim();
-        if (email.isEmpty()) {
-            ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_required));
-            return;
+        final ArrayList<Credential> credentials = new ArrayList<>();
+        if (Arrays.asList(mCredMethods).contains("email")) {
+            final String email = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim();
+            if (email.isEmpty()) {
+                ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_required));
+                return;
+            } else {
+                credentials.add(new Credential("email", email));
+            }
+        }
+
+        if (Arrays.asList(mCredMethods).contains("tel")) {
+            final PhoneEdit phone = parent.findViewById(R.id.phone);
+            if (!phone.isNumberValid()) {
+                phone.setError(getText(R.string.phone_number_required));
+                return;
+            } else {
+                credentials.add(new Credential("tel", phone.getPhoneNumberE164()));
+            }
         }
 
         String fn = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
@@ -192,7 +291,7 @@ public class SignUpFragment extends Fragment
                                 meta.attachments = theCard.getPhotoRefs();
                                 return tinode.createAccountBasic(
                                         login, password, true, null, meta,
-                                        Credential.append(null, new Credential("email", email)));
+                                        credentials.toArray(new Credential[]{}));
                             }
                         })
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
@@ -263,5 +362,15 @@ public class SignUpFragment extends Fragment
             return;
         }
         ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_AVATAR_PREVIEW, args);
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menu.clear();
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        return false;
     }
 }

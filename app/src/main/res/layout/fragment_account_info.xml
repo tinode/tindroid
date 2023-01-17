@@ -146,7 +146,8 @@
         android:clickable="true"
         android:focusable="true"
         android:gravity="center_vertical"
-        android:minHeight="?attr/listPreferredItemHeight">
+        android:minHeight="?attr/listPreferredItemHeight"
+        tools:ignore="UseCompoundDrawables">
 
         <ImageView
             android:layout_width="@dimen/settings_icon_size"
@@ -240,5 +241,4 @@
             android:text="@string/help_explained" />
 
     </RelativeLayout>
-
 </LinearLayout>

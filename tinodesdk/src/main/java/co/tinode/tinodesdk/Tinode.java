@@ -106,7 +106,6 @@ public class Tinode {
             MAX_TAG_COUNT, MAX_FILE_UPLOAD_SIZE};
 
     private static final String UPLOAD_PATH = "/file/u/";
-    private static final String DOWNLOAD_PATH = "/file/s/";
 
     // Value interpreted as 'content deleted'.
     public static final String NULL_VALUE = "\u2421";
@@ -2563,11 +2562,6 @@ public class Tinode {
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
                             boolean doLogin = mAutologin && mLoginCredentials != null;
 
-                            // Resolve outstanding promises;
-                            if (!doLogin) {
-                                resolvePromises(pkt);
-                            }
-
                             // Success. Reset backoff counter.
                             conn.backoffReset();
 
@@ -2585,6 +2579,11 @@ public class Tinode {
                             }
 
                             mNotifier.onConnect(pkt.ctrl.code, pkt.ctrl.text, pkt.ctrl.params);
+
+                            // Resolve outstanding promises;
+                            if (!doLogin) {
+                                resolvePromises(pkt);
+                            }
 
                             // Login automatically if it's enabled.
                             if (doLogin) {
