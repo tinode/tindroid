@@ -361,4 +361,5 @@
     <string name="phone_sms_explained">We will send an SMS with confirmation code to the number above.</string>
     <string name="phone_number_required">Valid phone number required</string>
     <string name="phone_number_hint">Mobile phone number</string>
+    <string name="unable_to_use_service">Service unavailable at this time. Please try again later.</string>
 </resources>

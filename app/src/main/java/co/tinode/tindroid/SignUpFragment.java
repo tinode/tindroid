@@ -146,15 +146,20 @@ public class SignUpFragment extends Fragment
                         }
                     }
                 }
-                methods.add("tel");
                 setupCredentials(parent, methods.toArray(new String[]{}));
                 return null;
             }
         }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                // TODO: show "Unable to use service at this time, try again later".
                 Log.w(TAG, "Failed to connect", err);
+                parent.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        parent.findViewById(R.id.signUp).setEnabled(false);
+                        Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
+                    }
+                });
                 return null;
             }
         });
