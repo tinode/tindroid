@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,11 +27,15 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
+import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.model.Credential;
 
 /**
  * Fragment for editing current user details.
  */
 public class AccountInfoFragment extends Fragment implements ChatsActivity.FormUpdatable, MenuProvider {
+    private final static String TAG = "AccountInfoFragment";
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -43,6 +48,8 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
+        Tinode tinode = Cache.getTinode();
+
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.account_settings);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
@@ -50,10 +57,11 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         fragment.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboard != null) {
-                clipboard.setPrimaryClip(ClipData.newPlainText("account ID", Cache.getTinode().getMyId()));
+                clipboard.setPrimaryClip(ClipData.newPlainText("account ID", tinode.getMyId()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
         });
+
         fragment.findViewById(R.id.notifications).setOnClickListener(v ->
                 ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_NOTIFICATIONS, null));
         fragment.findViewById(R.id.security).setOnClickListener(v ->
@@ -104,6 +112,22 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             activity.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.danger).setVisibility(me.isTrustedDanger() ? View.VISIBLE : View.GONE);
+
+            Credential[] creds = me.getCreds();
+            if (creds != null) {
+                for (Credential cred : creds) {
+                    if ("email".equals(cred.meth)) {
+                        activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                        ((TextView) activity.findViewById(R.id.email)).setText(cred.val);
+                    } else if ("tel".equals(cred.meth)) {
+                        activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
+                        ((TextView) activity.findViewById(R.id.phone)).setText(cred.val);
+                    } else {
+                        // TODO: create generic field for displaying credential as text.
+                        Log.i(TAG, "Unknown credential method " + cred.meth);
+                    }
+                }
+            }
         }
 
         final TextView title = activity.findViewById(R.id.topicTitle);

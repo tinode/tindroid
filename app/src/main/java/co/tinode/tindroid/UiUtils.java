@@ -48,6 +48,8 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -1439,11 +1441,28 @@ public class UiUtils {
         return url != null ? Uri.parse(url.toString()) : null;
     }
 
-    static public byte[] getByteArray(String name, Map<String, Object> data) {
+    static public @Nullable byte[] getByteArray(String name, @NotNull Map<String, Object> data) {
         Object val = data.get(name);
         return val instanceof String ?
                 Base64.decode((String) val, Base64.DEFAULT) :
                 val instanceof byte[] ? (byte[]) val : null;
+    }
+
+    static public @NotNull List<String> getRequiredCredMethods(@NotNull Tinode tinode, @NotNull String forAuthLevel) {
+        // "auth:email,tel;anon:none"
+        Object credObj = tinode.getServerParam("reqCred");
+        ArrayList<String> methods = new ArrayList<>();
+        if (credObj instanceof Map) {
+            Object methodsObj = ((Map) credObj).get(forAuthLevel);
+            if (methodsObj instanceof List) {
+                for (Object method : (List) methodsObj) {
+                    if (method instanceof String) {
+                        methods.add((String) method);
+                    }
+                }
+            }
+        }
+        return methods;
     }
 
     interface ProgressIndicator {

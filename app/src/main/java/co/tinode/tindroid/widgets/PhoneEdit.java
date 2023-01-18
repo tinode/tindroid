@@ -18,7 +18,6 @@ import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.android.material.textfield.TextInputLayout;
 import com.google.i18n.phonenumbers.AsYouTypeFormatter;
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
@@ -75,6 +74,11 @@ public class PhoneEdit extends LinearLayout {
         mSpinner = findViewById(R.id.country_selector);
         mTextEdit = findViewById(R.id.phone_edit_text);
 
+        if (isInEditMode()) {
+            // Allow the view to be used in AndroidStudio layout editor.
+            return;
+        }
+
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long rowId) {
@@ -94,10 +98,9 @@ public class PhoneEdit extends LinearLayout {
         @ColorInt int colorControlActivated = typedValue.data;
         @ColorInt int colorControlNormal = ((TextView) findViewById(R.id.phone_number_hint))
                 .getTextColors().getDefaultColor();
-        OnFocusChangeListener focusListener = (v, hasFocus) -> {
-            ((TextView) findViewById(R.id.phone_number_hint))
-                    .setTextColor(hasFocus ? colorControlActivated : colorControlNormal);
-        };
+        OnFocusChangeListener focusListener = (v, hasFocus) ->
+                ((TextView) findViewById(R.id.phone_number_hint))
+                        .setTextColor(hasFocus ? colorControlActivated : colorControlNormal);
 
         mSpinner.setOnFocusChangeListener(focusListener);
 

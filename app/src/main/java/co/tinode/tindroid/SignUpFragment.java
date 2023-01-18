@@ -133,19 +133,7 @@ public class SignUpFragment extends Fragment
         tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                // "auth:email,tel;anon:none"
-                Object credObj = tinode.getServerParam("reqCred");
-                ArrayList<String> methods = new ArrayList<>();
-                if (credObj instanceof Map) {
-                    Object methodsObj = ((Map) credObj).get("auth");
-                    if (methodsObj instanceof List) {
-                        for (Object method : (List) methodsObj) {
-                            if (method instanceof String) {
-                                methods.add((String) method);
-                            }
-                        }
-                    }
-                }
+                List<String> methods = UiUtils.getRequiredCredMethods(tinode, "auth");
                 setupCredentials(parent, methods.toArray(new String[]{}));
                 return null;
             }
@@ -153,12 +141,9 @@ public class SignUpFragment extends Fragment
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 Log.w(TAG, "Failed to connect", err);
-                parent.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        parent.findViewById(R.id.signUp).setEnabled(false);
-                        Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
-                    }
+                parent.runOnUiThread(() -> {
+                    parent.findViewById(R.id.signUp).setEnabled(false);
+                    Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
                 });
                 return null;
             }
@@ -175,9 +160,8 @@ public class SignUpFragment extends Fragment
 
         activity.runOnUiThread(() -> {
             for (final String method : mCredMethods) {
-                Log.i(TAG, "Setting up methods: " + method);
                 if (TextUtils.isEmpty(method)) {
-                    return;
+                    continue;
                 }
 
                 if (method.equals("tel")) {
@@ -186,7 +170,7 @@ public class SignUpFragment extends Fragment
                     activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
                 } else {
                     // TODO: show generic text prompt for unknown method.
-                    Log.i(TAG, "Show generic validation field");
+                    Log.i(TAG, "Show generic validation field for " + method);
                 }
 
                 activity.findViewById(R.id.newLogin).requestFocus();

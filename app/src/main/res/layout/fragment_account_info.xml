@@ -1,244 +1,309 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/activity_default_margin"
-    android:orientation="vertical"
     tools:context=".AccountInfoFragment">
 
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/imageAvatar"
-        android:layout_width="@dimen/avatar_size_huge"
-        android:layout_height="@dimen/avatar_size_huge"
-        android:layout_gravity="center"
-        android:layout_margin="4sp"
-        android:contentDescription="@string/avatar"
-        app:strokeColor="@android:color/transparent"
-        app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/disk" />
-
-    <TextView
-        android:id="@+id/topicTitle"
-        style="?android:textAppearanceLarge"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:ellipsize="end"
-        android:focusable="false"
-        android:maxLines="2"
-        android:textIsSelectable="false"
-        tools:text="User name" />
-
     <LinearLayout
-        android:id="@+id/userIDwrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:minHeight="36dp">
+        android:orientation="vertical">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/imageAvatar"
+            android:layout_width="@dimen/avatar_size_huge"
+            android:layout_height="@dimen/avatar_size_huge"
+            android:layout_gravity="center"
+            android:layout_margin="4sp"
+            android:contentDescription="@string/avatar"
+            app:shapeAppearanceOverlay="@style/roundImageView"
+            app:srcCompat="@drawable/disk"
+            app:strokeColor="@android:color/transparent" />
 
         <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/activity_horizontal_margin"
-            android:text="@string/id" />
-
-        <TextView
-            android:id="@+id/topicAddress"
-            style="?android:textAppearanceMedium"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:id="@+id/topicTitle"
+            style="?android:textAppearanceLarge"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="false"
             android:ellipsize="end"
             android:focusable="false"
-            android:fontFamily="monospace"
+            android:maxLines="2"
             android:textIsSelectable="false"
-            android:typeface="monospace"
-            tools:text="usrfv2qrUr6vAd" />
+            tools:text="User name" />
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/buttonCopyID"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/userIDwrapper"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/action_copy"
-            android:drawablePadding="4sp"
-            app:drawableStartCompat="@drawable/ic_copy"
-            app:drawableTint="?android:textColorPrimary" />
-    </LinearLayout>
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
 
-    <TextView
-        android:id="@+id/verified"
-        style="?android:textAppearanceMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:minHeight="32dp"
-        android:text="@string/badge_verified"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_verified" />
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/id" />
 
-    <TextView
-        android:id="@+id/staff"
-        style="?android:textAppearanceMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:minHeight="32dp"
-        android:text="@string/badge_staff"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_verified_user" />
+            <TextView
+                android:id="@+id/topicAddress"
+                style="?android:textAppearanceMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="usrfv2qrUr6vAd" />
 
-    <TextView
-        android:id="@+id/danger"
-        style="?android:textAppearanceMedium"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:minHeight="32dp"
-        android:text="@string/badge_danger"
-        android:visibility="gone"
-        app:drawableStartCompat="@drawable/ic_danger" />
-
-    <LinearLayout
-        android:id="@+id/topicDescriptionWrapper"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:visibility="gone">
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/buttonCopyID"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/action_copy"
+                android:drawablePadding="4sp"
+                app:drawableStartCompat="@drawable/ic_copy"
+                app:drawableTint="?android:textColorPrimary" />
+        </LinearLayout>
 
         <TextView
-            style="@style/sectionTitleStyle"
-            android:layout_width="wrap_content"
+            android:id="@+id/verified"
+            style="?android:textAppearanceMedium"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/description" />
-
-        <TextView
-            android:id="@+id/topicDescription"
-            style="@style/textSecondary"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/activity_padding"
             android:ellipsize="end"
-            android:maxLines="3"
-            android:textIsSelectable="false"
-            tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
-
-    </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1sp"
-        android:layout_marginTop="@dimen/activity_padding"
-        android:layout_marginBottom="@dimen/activity_padding"
-        android:background="@color/grey"
-        tools:ignore="SmallSp" />
-
-    <LinearLayout
-        android:id="@+id/notifications"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:minHeight="?attr/listPreferredItemHeight"
-        tools:ignore="UseCompoundDrawables">
-
-        <ImageView
-            android:layout_width="@dimen/settings_icon_size"
-            android:layout_height="@dimen/settings_icon_size"
-            android:src="@drawable/ic_notifications"
-            app:tint="@color/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_verified"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_verified" />
 
         <TextView
-            style="?android:textAppearanceLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="@string/notifications" />
-
-    </LinearLayout>
-
-    <RelativeLayout
-        android:id="@+id/security"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:minHeight="?attr/listPreferredItemHeight">
-
-        <ImageView
-            android:id="@+id/icon_security"
-            android:layout_width="@dimen/settings_icon_size"
-            android:layout_height="@dimen/settings_icon_size"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/ic_security"
-            app:tint="@color/colorAccent"
-            tools:ignore="ContentDescription" />
-
-        <TextView
-            android:id="@+id/security_text"
-            style="?android:textAppearanceLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/icon_security"
-            android:text="@string/security" />
-
-        <TextView
+            android:id="@+id/staff"
             style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/security_text"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/icon_security"
-            android:text="@string/account_security_explained" />
-    </RelativeLayout>
-
-    <RelativeLayout
-        android:id="@+id/help"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:minHeight="?attr/listPreferredItemHeight">
-
-        <ImageView
-            android:id="@+id/icon_help"
-            android:layout_width="@dimen/settings_icon_size"
-            android:layout_height="@dimen/settings_icon_size"
-            android:layout_alignParentStart="true"
-            android:layout_centerVertical="true"
-            android:src="@drawable/ic_contact_support"
-            app:tint="@color/colorAccent"
-            tools:ignore="ContentDescription" />
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_staff"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_verified_user" />
 
         <TextView
-            android:id="@+id/help_text"
-            style="?android:textAppearanceLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/icon_help"
-            android:text="@string/help" />
-
-        <TextView
+            android:id="@+id/danger"
             style="?android:textAppearanceMedium"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/help_text"
-            android:layout_marginStart="16dp"
-            android:layout_toEndOf="@id/icon_help"
-            android:text="@string/help_explained" />
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:minHeight="32dp"
+            android:text="@string/badge_danger"
+            android:visibility="gone"
+            app:drawableStartCompat="@drawable/ic_danger" />
 
-    </RelativeLayout>
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/emailWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:gravity="center_vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/email_colon" />
+
+            <TextView
+                android:id="@+id/email"
+                style="?android:textAppearanceMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="jdoe@example.com" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/phoneWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            android:gravity="center_vertical">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/phone_colon" />
+
+            <TextView
+                android:id="@+id/phone"
+                style="?android:textAppearanceMedium"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="+1-702-555-0001" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/topicDescriptionWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/description" />
+
+            <TextView
+                android:id="@+id/topicDescription"
+                style="@style/textSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/activity_padding"
+                android:ellipsize="end"
+                android:maxLines="3"
+                android:textIsSelectable="false"
+                tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1sp"
+            android:layout_marginTop="@dimen/activity_padding"
+            android:layout_marginBottom="@dimen/activity_padding"
+            android:background="@color/grey"
+            tools:ignore="SmallSp" />
+
+        <LinearLayout
+            android:id="@+id/notifications"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="?attr/listPreferredItemHeight"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:layout_width="@dimen/settings_icon_size"
+                android:layout_height="@dimen/settings_icon_size"
+                android:src="@drawable/ic_notifications"
+                app:tint="@color/colorAccent"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                style="?android:textAppearanceLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="@string/notifications" />
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/security"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="?attr/listPreferredItemHeight">
+
+            <ImageView
+                android:id="@+id/icon_security"
+                android:layout_width="@dimen/settings_icon_size"
+                android:layout_height="@dimen/settings_icon_size"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_security"
+                app:tint="@color/colorAccent"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/security_text"
+                style="?android:textAppearanceLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@id/icon_security"
+                android:text="@string/security" />
+
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/security_text"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@id/icon_security"
+                android:text="@string/account_security_explained" />
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/help"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="?attr/listPreferredItemHeight">
+
+            <ImageView
+                android:id="@+id/icon_help"
+                android:layout_width="@dimen/settings_icon_size"
+                android:layout_height="@dimen/settings_icon_size"
+                android:layout_alignParentStart="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_contact_support"
+                app:tint="@color/colorAccent"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/help_text"
+                style="?android:textAppearanceLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@id/icon_help"
+                android:text="@string/help" />
+
+            <TextView
+                style="?android:textAppearanceMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/help_text"
+                android:layout_marginStart="16dp"
+                android:layout_toEndOf="@id/icon_help"
+                android:text="@string/help_explained" />
+
+        </RelativeLayout>
+    </LinearLayout>
+</ScrollView>
