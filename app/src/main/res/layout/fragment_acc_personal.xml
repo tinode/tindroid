@@ -19,9 +19,9 @@
             android:clickable="true"
             android:contentDescription="@string/avatar"
             android:focusable="true"
-            app:strokeColor="@android:color/transparent"
             app:shapeAppearanceOverlay="@style/roundImageView"
-            app:srcCompat="@drawable/disk" />
+            app:srcCompat="@drawable/disk"
+            app:strokeColor="@android:color/transparent" />
 
         <Button
             android:id="@+id/uploadAvatar"
@@ -61,6 +61,7 @@
                     android:ellipsize="end"
                     android:hint="@string/your_name"
                     android:inputType="textPersonName"
+                    android:maxLines="1"
                     tools:text="John Doe" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -75,7 +76,7 @@
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:hint="@string/description_optional"
-                    android:inputType="textPersonName|textMultiLine"
+                    android:inputType="textCapSentences|textMultiLine"
                     android:maxLines="3"
                     tools:text="I'm an all around nice guy. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
             </com.google.android.material.textfield.TextInputLayout>
@@ -106,22 +107,176 @@
                 android:text="@string/contacts" />
 
             <LinearLayout
-                android:id="@+id/credList"
+                android:id="@+id/emailWrapper"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:visibility="gone"
+                android:orientation="horizontal">
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonAddContact"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/email"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="visible"
+                    tools:text="jdoe@example.com" />
+
+                <androidx.legacy.widget.Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/emailDelete"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_delete_outline" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/emailNewWrapper"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:contentDescription="@string/add_contact"
-                android:drawablePadding="4sp"
-                android:text="@string/add_contact"
-                android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_add_black"
-                app:drawableTint="?android:textColorPrimary" />
+                android:visibility="gone"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/emailNew"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="visible"
+                    tools:text="jdoe@example.com" />
+
+                <androidx.legacy.widget.Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/unconfirmedEmail"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:padding="4dp"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_update" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/emailNewDelete"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_delete_outline" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/phoneWrapper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/phone"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="visible"
+                    tools:text="+1-702-555-0001" />
+
+                <androidx.legacy.widget.Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/phoneDelete"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_delete_outline" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/phoneNewWrapper"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/phoneNew"
+                    style="?android:textAppearanceMedium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:background="@drawable/dotted_line"
+                    android:clickable="true"
+                    android:ellipsize="end"
+                    android:focusable="true"
+                    android:fontFamily="monospace"
+                    android:maxLines="1"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="visible"
+                    tools:text="+1-702-555-0001" />
+
+                <androidx.legacy.widget.Space
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/unconfirmedPhone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_vertical"
+                    android:padding="4dp"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_update" />
+
+                <androidx.appcompat.widget.AppCompatImageButton
+                    android:id="@+id/phoneNewDelete"
+                    style="?attr/buttonBarButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:visibility="invisible"
+                    app:srcCompat="@drawable/ic_delete_outline" />
+            </LinearLayout>
 
             <View
                 android:layout_width="match_parent"

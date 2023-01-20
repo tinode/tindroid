@@ -40,11 +40,4 @@
             tools:text="000 000 0000" />
 
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/phone_explanation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/phone_sms_explained"
-        android:textAppearance="@style/textSecondarySmall" />
 </LinearLayout>

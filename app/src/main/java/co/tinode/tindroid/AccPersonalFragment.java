@@ -26,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
@@ -110,8 +111,6 @@ public class AccPersonalFragment extends Fragment
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
-        activity.findViewById(R.id.buttonAddContact).setOnClickListener(view -> showAddCredential());
-
         // Assign initial form values.
         updateFormValues(activity, me);
 
@@ -123,43 +122,146 @@ public class AccPersonalFragment extends Fragment
         String fn = null;
         String description = null;
         if (me != null) {
-            LayoutInflater inflater = LayoutInflater.from(activity);
-
-            LinearLayout credList = activity.findViewById(R.id.credList);
-
-            // Remove all items from the list of credentials.
-            while (credList.getChildCount() > 0) {
-                credList.removeViewAt(0);
-            }
-
             Credential[] creds = me.getCreds();
             if (creds != null) {
+                // We only support two emails and two phone numbers at a time.
+                Credential email = null, email2 = null;
+                Credential phone = null, phone2 = null;
+                Bundle args = new Bundle();
                 for (Credential cred : creds) {
-                    View container = inflater.inflate(R.layout.credential, credList, false);
-                    ((TextView) container.findViewById(R.id.method)).setText(cred.meth);
-                    ((TextView) container.findViewById(R.id.value)).setText(cred.val);
-                    Button btn = container.findViewById(R.id.buttonConfirm);
-                    if (cred.isDone()) {
-                        btn.setVisibility(View.GONE);
+                    if ("email".equals(cred.meth)) {
+                        // If more than one credential of the same type then just use the last one.
+                        if (!cred.isDone() || email != null) {
+                            email2 = cred;
+                        } else {
+                            email = cred;
+                        }
+                    } else if ("tel".equals(cred.meth)) {
+                        if (!cred.isDone() || phone != null) {
+                            phone2 = cred;
+                        } else {
+                            phone = cred;
+                        }
                     } else {
-                        btn.setVisibility(View.VISIBLE);
-                        btn.setTag(cred);
+                        continue;
                     }
-                    btn.setOnClickListener(view -> {
-                        Credential cred1 = (Credential) view.getTag();
-                        showConfirmCredential(cred1.meth, cred1.val);
-                    });
+                    args.putString("method", cred.meth);
+                }
 
-                    ImageButton ibtn = container.findViewById(R.id.buttonDelete);
-                    ibtn.setTag(cred);
-                    ibtn.setOnClickListener(view -> {
-                        Credential cred12 = (Credential) view.getTag();
-                        showDeleteCredential(cred12.meth, cred12.val);
-                    });
-                    credList.addView(container, 0);
+                // Old (current) email.
+                if (email == null) {
+                    activity.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                    TextView emailField = activity.findViewById(R.id.email);
+                    emailField.setText(email.val);
+                    if (email2 != null && email2.isDone()) {
+                        // Two confirmed credentials of the same method.
+                        // Make the credential unclickable: can't modify email if two emails are already given.
+                        emailField.setBackground(null);
+                        // Allow deletion of any one, including the first.
+                        AppCompatImageButton delete = activity.findViewById(R.id.emailDelete);
+                        delete.setVisibility(View.VISIBLE);
+                        delete.setTag(email);
+                        delete.setOnClickListener(this::showDeleteCredential);
+                    } else {
+                        // Second email is either not present or unconfirmed.
+                        activity.findViewById(R.id.emailDelete).setVisibility(View.INVISIBLE);
+                        args.putString("oldValue", email.val);
+                        if (email2 == null) {
+                            emailField.setOnClickListener(this::showEditCredential);
+                            emailField.setBackgroundResource(R.drawable.dotted_line);
+                        } else {
+                            emailField.setBackground(null);
+                        }
+                    }
+                    emailField.setTag(args);
+                }
+
+                // New (unconfirmed) email, or a second confirmed email if something failed.
+                if (email2 == null) {
+                    activity.findViewById(R.id.emailNewWrapper).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.emailNewWrapper).setVisibility(View.VISIBLE);
+                    TextView emailField2 = activity.findViewById(R.id.emailNew);
+                    emailField2.setText(email2.val);
+                    // Unconfirmed? Allow confirming.
+                    if (!email2.isDone()) {
+                        args.putString("newValue", email2.val);
+                        activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.VISIBLE);
+                        emailField2.setOnClickListener(this::showEditCredential);
+                        emailField2.setBackgroundResource(R.drawable.dotted_line);
+                    } else {
+                        // Confirmed: make it unclickable.
+                        activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.INVISIBLE);
+                        emailField2.setBackground(null);
+                    }
+                    emailField2.setTag(args);
+
+                    // Second credential can always be deleted.
+                    AppCompatImageButton delete = activity.findViewById(R.id.emailNewDelete);
+                    delete.setVisibility(View.VISIBLE);
+                    delete.setTag(email2);
+                    delete.setOnClickListener(this::showDeleteCredential);
+                }
+
+                // Old (current) phone.
+                if (phone == null) {
+                    activity.findViewById(R.id.phoneWrapper).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
+                    TextView phoneField = activity.findViewById(R.id.phone);
+                    phoneField.setText(phone.val);
+                    if (phone2 != null && phone2.isDone()) {
+                        // Two confirmed credentials of the same method.
+                        // Make the credential unclickable: can't modify phone if two phones are already given.
+                        phoneField.setBackground(null);
+                        // Allow deletion of any one, including the first.
+                        AppCompatImageButton delete = activity.findViewById(R.id.phoneDelete);
+                        delete.setVisibility(View.VISIBLE);
+                        delete.setTag(phone);
+                        delete.setOnClickListener(this::showDeleteCredential);
+                    } else {
+                        // Second phone is either not present or unconfirmed.
+                        activity.findViewById(R.id.phoneDelete).setVisibility(View.INVISIBLE);
+                        args.putString("oldValue", phone.val);
+                        if (phone2 == null) {
+                            phoneField.setOnClickListener(this::showEditCredential);
+                            phoneField.setBackgroundResource(R.drawable.dotted_line);
+                        } else {
+                            phoneField.setBackground(null);
+                        }
+                    }
+                    phoneField.setTag(args);
+                }
+
+                // New (unconfirmed) phone, or a second confirmed phone if something failed.
+                if (phone2 == null) {
+                    activity.findViewById(R.id.phoneNewWrapper).setVisibility(View.GONE);
+                } else {
+                    activity.findViewById(R.id.phoneNewWrapper).setVisibility(View.VISIBLE);
+                    TextView phoneField2 = activity.findViewById(R.id.phoneNew);
+                    phoneField2.setText(phone2.val);
+                    // Unconfirmed? Allow confirming.
+                    if (!phone2.isDone()) {
+                        args.putString("newValue", phone2.val);
+                        activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.VISIBLE);
+                        phoneField2.setOnClickListener(this::showEditCredential);
+                        phoneField2.setBackgroundResource(R.drawable.dotted_line);
+                    } else {
+                        // Confirmed: make it unclickable.
+                        activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.INVISIBLE);
+                        phoneField2.setBackground(null);
+                    }
+                    phoneField2.setTag(args);
+
+                    // Second credential can always be deleted.
+                    AppCompatImageButton delete = activity.findViewById(R.id.phoneNewDelete);
+                    delete.setVisibility(View.VISIBLE);
+                    delete.setTag(phone2);
+                    delete.setOnClickListener(this::showDeleteCredential);
                 }
             }
-            credList.requestLayout();
 
             VxCard pub = me.getPub();
             UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId(), false);
@@ -173,6 +275,7 @@ public class AccPersonalFragment extends Fragment
 
             String[] tags = me.getTags();
             if (tags != null) {
+                LayoutInflater inflater = activity.getLayoutInflater();
                 for (String tag : tags) {
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
@@ -212,79 +315,28 @@ public class AccPersonalFragment extends Fragment
                 .show();
     }
 
-    // Dialog for confirming a credential.
-    private void showConfirmCredential(final String meth, final String val) {
-        final Activity activity = requireActivity();
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_validate, null);
-        builder.setView(editor).setTitle(R.string.validate_cred_title)
-                .setMessage(getString(R.string.validate_cred, meth))
-                // FIXME: check for empty input and refuse to dismiss the dialog.
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String response = ((EditText) editor.findViewById(R.id.response)).getText().toString();
-                    if (TextUtils.isEmpty(response)) {
-                        return;
-                    }
-
-                    final MeTopic me = Cache.getTinode().getMeTopic();
-                    //noinspection unchecked
-                    me.confirmCred(meth, response).thenCatch(new UiUtils.ToastFailureListener(activity));
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
+    private void showEditCredential(View view) {
+        final ChatsActivity activity = (ChatsActivity) requireActivity();
+        activity.showFragment(ChatsActivity.FRAGMENT_ACC_CREDENTIALS, (Bundle) view.getTag());
     }
 
     // Show dialog for deleting credential
-    private void showDeleteCredential(final String meth, final String val) {
+    private void showDeleteCredential(View view) {
         final Activity activity = requireActivity();
+        Credential cred = (Credential) view.getTag();
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setNegativeButton(android.R.string.cancel, null)
                 .setTitle(R.string.delete_credential_title)
-                .setMessage(getString(R.string.delete_credential_confirmation, meth, val))
+                .setMessage(getString(R.string.delete_credential_confirmation, cred.meth, cred.val))
                 .setCancelable(true)
                 .setPositiveButton(android.R.string.yes, (dialog, which) -> {
                     final MeTopic me = Cache.getTinode().getMeTopic();
                     // noinspection unchecked
-                    me.delCredential(meth, val)
+                    me.delCredential(cred.meth, cred.val)
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .show();
-    }
-
-    private void showAddCredential() {
-        final Activity activity = requireActivity();
-
-        final View editor = LayoutInflater.from(activity).inflate(R.layout.dialog_add_credential, null);
-        final AlertDialog dialog = new AlertDialog.Builder(activity)
-                .setView(editor).setTitle(R.string.add_credential_title)
-                .setPositiveButton(android.R.string.ok, null)
-                .setNegativeButton(android.R.string.cancel, null)
-                .create();
-
-        dialog.setOnShowListener(dialogInterface ->
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(button -> {
-                    EditText credEditor = editor.findViewById(R.id.editCredential);
-                    String cred = credEditor.getText().toString().trim().toLowerCase();
-                    if (TextUtils.isEmpty(cred)) {
-                        return;
-                    }
-                    Credential parsed = UiUtils.parseCredential(cred);
-                    if (parsed != null) {
-                        final MeTopic me = Cache.getTinode().getMeTopic();
-                        // noinspection unchecked
-                        me.setMeta(new MsgSetMeta.Builder().with(parsed).build())
-                                .thenCatch(new UiUtils.ToastFailureListener(activity));
-
-                        // Dismiss once everything is OK.
-                        dialog.dismiss();
-                    } else {
-                        credEditor.setError(activity.getString(R.string.unrecognized_credential));
-                    }
-                }));
-
-        dialog.show();
     }
 
     @Override

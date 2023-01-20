@@ -151,6 +151,13 @@ public class PhoneEdit extends LinearLayout {
         }
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        mSpinner.setEnabled(enabled);
+        mTextEdit.setEnabled(enabled);
+        super.setEnabled(enabled);
+    }
+
     private List<CountryCode> readCountryList(Locale locale) throws IOException, JSONException {
         AssetManager am = getResources().getAssets();
         // Read dialing codes.

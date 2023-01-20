@@ -373,4 +373,5 @@
     <string name="change_email">Change email</string>
     <string name="change_phone_num">Change phone number</string>
     <string name="change_credential">Change credential</string>
+    <string name="confirmation_code_sent">Confirmation code sent</string>
 </resources>
