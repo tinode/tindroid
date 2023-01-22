@@ -2,7 +2,6 @@
 <resources>
     <color name="white">#FFFFFF</color>
     <color name="grey">#9E9E9E</color>
-    <color name="transparent">#00000000</color>
 
     <color name="colorNegativeAction">#FF983220</color>
     <color name="colorPositiveAction">#FF326F3E</color>
@@ -16,8 +15,6 @@
     <color name="colorSwipeChervon">#FFF</color>
 
     <color name="colorDanger">#B71C1C</color>
-
-    <color name="colorTextPlaceholder">#80999999</color>
 
     <color name="colorChipBackground">#ECEFF1</color>
     <color name="colorChipBorder">#90A4AE</color>
@@ -54,12 +51,9 @@
     <color name="colorMessageBubbleOther">#FFC5E1A5</color>
     <color name="colorMessageBubbleOtherFlashing">#FF85A165</color>
     <color name="colorMessageBubbleOtherFlashingLight">#FFA5C185</color>
-    <color name="colorMessageBubbleMeta">#FFe3f2fd</color>
 
     <color name="colorReplyBubble">#10333333</color>
     <color name="colorReplyText">#666666</color>
-
-    <color name="colorQuoteStripe">#039be5</color>
 
     <color name="colorImageMetaPanel">#80FFFFFF</color>
 

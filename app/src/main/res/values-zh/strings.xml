@@ -148,7 +148,6 @@
     <string name="email">邮箱</string>
     <string name="email_required">需要邮箱</string>
     <string name="validate_cred">输入发送给你的验证码对应 %1$s:</string>
-    <string name="validate_cred_title">确认联系人</string>
     <string name="confirm">确认</string>
     <string name="validation_example">仅数字</string>
     <string name="enter_confirmation_code">输入验证码</string>
@@ -167,11 +166,8 @@
     <string name="new_message_channel_description">收到新消息</string>
     <string name="new_message">新消息</string>
     <string name="request_pass_reset_title">密码重置</string>
-    <string name="request_pass_reset">请求验证码对应 %1$s:</string>
-    <string name="validated_address_to_use">已验证 %1$s 将验证码发送至</string>
     <string name="request">请求</string>
     <string name="forgot_password">忘记密码</string>
-    <string name="enter_valid_address">输入有效 %1$s</string>
     <string name="invalid_or_unknown_credential">无效或未知地址</string>
     <string name="password_reset_message_sent">发送带有说明的消息</string>
     <string name="user_not_found">未找到</string>
@@ -205,11 +201,8 @@
     <string name="action_invite">邀请</string>
     <string name="tags_management">标签 (内容发现)</string>
     <string name="contacts">联系人</string>
-    <string name="add_contact">添加另一个</string>
     <string name="manage">管理删除</string>
     <string name="delete">删除</string>
-    <string name="add_credential">输入邮箱或手机号</string>
-    <string name="unrecognized_credential">无效或无法识别验证</string>
     <string name="add_credential_title">添加联系人</string>
     <string name="delete_credential_title">删除联系人</string>
     <string name="delete_credential_confirmation">确定要删除吗 %1$s:%2$s?</string>
@@ -331,7 +324,6 @@
     <string name="broken_video">无效或未知的视频格式。</string>
     <string name="unable_to_play_video">无法播放此视频。</string>
     <string name="select_image_or_video">选择图片或视频</string>
-    <string name="tap_to_select">点击选择</string>
     <string name="video_call_channel_name">视频通话</string>
     <string name="video_call_channel_description">视频和音频通话</string>
     <string name="tinode_video_call">Tinode 视频通话</string>

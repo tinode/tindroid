@@ -161,7 +161,6 @@
     <string name="email">Email</string>
     <string name="email_required">Email required</string>
     <string name="validate_cred">Enter confirmation code sent to you by %1$s:</string>
-    <string name="validate_cred_title">Confirm contact</string>
     <string name="confirm">Confirm</string>
     <string name="validation_example">Numbers only</string>
     <string name="enter_confirmation_code">Enter confirmation code</string>
@@ -181,11 +180,8 @@
     <string name="new_message">New message</string>
     <string name="new_message_channel_description">New message was received</string>
     <string name="request_pass_reset_title">Password reset</string>
-    <string name="request_pass_reset">Request code by %1$s:</string>
-    <string name="validated_address_to_use">Validated %1$s to send code to</string>
     <string name="request">Request</string>
     <string name="forgot_password">Forgot password</string>
-    <string name="enter_valid_address">Enter valid %1$s</string>
     <string name="invalid_or_unknown_credential">Invalid or unknown address</string>
     <string name="password_reset_message_sent">Message with instructions sent</string>
     <string name="user_not_found">Not found</string>
@@ -221,11 +217,8 @@
     <string name="action_invite">Invite</string>
     <string name="tags_management">Tags</string>
     <string name="contacts">Contacts</string>
-    <string name="add_contact">Add another</string>
     <string name="manage">Manage</string>
     <string name="delete">Delete</string>
-    <string name="add_credential">Enter email or phone number</string>
-    <string name="unrecognized_credential">Invalid or unrecognized validation method</string>
     <string name="add_credential_title">Add contact</string>
     <string name="delete_credential_title">Delete contact</string>
     <string name="delete_credential_confirmation">Are you sure you want to remove %1$s:%2$s?</string>
@@ -347,7 +340,6 @@
     <string name="broken_video">Invalid or unknown video format.</string>
     <string name="unable_to_play_video">Unable to play this video.</string>
     <string name="select_image_or_video">Choose image or video</string>
-    <string name="tap_to_select">Tap to select</string>
     <string name="video_call_channel_name">Video calls</string>
     <string name="video_call_channel_description">Video and audio calls</string>
     <string name="tinode_video_call">Tinode Video Call</string>
@@ -368,7 +360,6 @@
     <string name="new_email">New email</string>
     <string name="email_msg_explained">We will send a message with confirmation code to the address above.</string>
     <string name="current_phone">Current phone number</string>
-    <string name="new_phone">New phone number</string>
     <string name="request_code">Request</string>
     <string name="change_email">Change email</string>
     <string name="change_phone_num">Change phone number</string>

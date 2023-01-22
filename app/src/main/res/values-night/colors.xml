@@ -6,7 +6,6 @@
     <color name="colorMessageBubbleOther">#FF003308</color>
     <color name="colorMessageBubbleOtherFlashing">#FF558870</color>
     <color name="colorMessageBubbleOtherFlashingLight">#FF305530</color>
-    <color name="colorMessageBubbleMeta">#FF001633</color>
 
     <color name="colorReplyBubble">#10CCCCCC</color>
     <color name="colorReplyText">#CCCCCC</color>

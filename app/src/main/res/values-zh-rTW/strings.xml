@@ -149,7 +149,6 @@
     <string name="email">電子郵件地址</string>
     <string name="email_required">需要電子郵件地址</string>
     <string name="validate_cred">輸入 %1$s 傳送給您的確認碼：</string>
-    <string name="validate_cred_title">確認聯絡人</string>
     <string name="confirm">確認</string>
     <string name="validation_example">僅數字</string>
     <string name="enter_confirmation_code">輸入確認碼</string>
@@ -168,11 +167,8 @@
     <string name="new_message">新訊息</string>
     <string name="new_message_channel_description">收到了新訊息</string>
     <string name="request_pass_reset_title">重設密碼</string>
-    <string name="request_pass_reset">由 %1$s 要求的代碼：</string>
-    <string name="validated_address_to_use">已驗證 %1$s 可用來傳送代碼</string>
     <string name="request">要求</string>
     <string name="forgot_password">忘記密碼</string>
-    <string name="enter_valid_address">輸入有效的 %1$s</string>
     <string name="invalid_or_unknown_credential">無效或未知的位址</string>
     <string name="password_reset_message_sent">已傳送包含流程的訊息</string>
     <string name="user_not_found">找不到</string>
@@ -206,11 +202,8 @@
     <string name="action_invite">邀請</string>
     <string name="tags_management">標籤</string>
     <string name="contacts">連略人</string>
-    <string name="add_contact">新增其他人</string>
     <string name="manage">管理</string>
     <string name="delete">刪除</string>
-    <string name="add_credential">輸入電子郵件地址或電話號碼</string>
-    <string name="unrecognized_credential">無效或是無法辨識的驗證方式</string>
     <string name="add_credential_title">新增聯絡人</string>
     <string name="delete_credential_title">刪除聯絡人</string>
     <string name="delete_credential_confirmation">您確定要移除 %1$s:%2$s 嗎？</string>
@@ -330,7 +323,6 @@
     <string name="broken_video">無效或未知的視頻格式。</string>
     <string name="unable_to_play_video">無法播放此視頻。</string>
     <string name="select_image_or_video">選擇圖片或視頻</string>
-    <string name="tap_to_select">點擊選擇</string>
     <string name="video_call_channel_name">視頻通話</string>
     <string name="video_call_channel_description">視頻和音頻通話</string>
     <string name="tinode_video_call">Tinode 視頻通話</string>

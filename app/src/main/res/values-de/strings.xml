@@ -149,7 +149,6 @@
     <string name="email">E-Mail-Adresse</string>
     <string name="email_required">Sie müssen eine E-Mail-Adresse eingeben</string>
     <string name="validate_cred">Geben Sie den Bestätigungscode ein, der an folgende Adresse gesendet wurde: %1$s:</string>
-    <string name="validate_cred_title">Kontakt bestätigen</string>
     <string name="confirm">Bestätigen</string>
     <string name="validation_example">Nur Zahlen</string>
     <string name="enter_confirmation_code">Geben Sie den Bestätigungscode ein</string>
@@ -168,11 +167,8 @@
     <string name="new_message">Neue Nachricht</string>
     <string name="new_message_channel_description">Sie haben eine neue Nachricht erhalten</string>
     <string name="request_pass_reset_title">Passwort zurücksetzen</string>
-    <string name="request_pass_reset">Code anfordern mit %1$s:</string>
-    <string name="validated_address_to_use">%1$s muss zum senden des Codes validiert sein</string>
     <string name="request">Anfordern</string>
     <string name="forgot_password">Haben Sie Ihr Passwort vergessen?</string>
-    <string name="enter_valid_address">geben Sie eine gültige %1$s ein</string>
     <string name="invalid_or_unknown_credential">Ungültige oder unbekannte Adresse</string>
     <string name="password_reset_message_sent">Nachricht mit Anweisungen wurde gesendet</string>
     <string name="user_not_found">Benutzer nicht gefunden</string>
@@ -206,11 +202,8 @@
     <string name="action_invite">Einladen</string>
     <string name="tags_management">Schlagwörter</string>
     <string name="contacts">Kontakte</string>
-    <string name="add_contact">Kontakt hinzufügen</string>
     <string name="manage">Verwalten</string>
     <string name="delete">Löschen</string>
-    <string name="add_credential">Geben Sie eine E-Mail-Adresse oder Telefonnummer ein</string>
-    <string name="unrecognized_credential">Ungültige oder nicht anerkannte Verifizierungsmethode</string>
     <string name="add_credential_title">Kontakt hinzufügen</string>
     <string name="delete_credential_title">Kontakt löschen</string>
     <string name="delete_credential_confirmation">Sind Sie sicher, dass Sie %1$s:%2$s entfernen wollen?</string>
@@ -331,7 +324,6 @@
     <string name="broken_video">Ungültiges oder unbekanntes Videoformat.</string>
     <string name="unable_to_play_video">Dieses Video kann nicht abgespielt werden.</string>
     <string name="select_image_or_video">Bild oder Video auswählen</string>
-    <string name="tap_to_select">Zum Auswählen tippen</string>
 
     <string name="video_call_channel_name">Videoanrufe</string>
     <string name="video_call_channel_description">Video- und Audioanrufe</string>

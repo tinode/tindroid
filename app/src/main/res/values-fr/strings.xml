@@ -148,7 +148,6 @@
     <string name="email">Email</string>
     <string name="email_required">Email requis</string>
     <string name="validate_cred">Entrez le code de confirmation vous envoyé par %1$s:</string>
-    <string name="validate_cred_title">Valider le contact</string>
     <string name="confirm">Confirmer</string>
     <string name="validation_example">Numéro uniquement</string>
     <string name="enter_confirmation_code">Entrez le code de confirmation</string>
@@ -167,11 +166,8 @@
     <string name="new_message">Nouveau message</string>
     <string name="new_message_channel_description">Nouveau message reçu</string>
     <string name="request_pass_reset_title">Mot de passe réinitialisé</string>
-    <string name="request_pass_reset">Demande de code par %1$s:</string>
-    <string name="validated_address_to_use">Adresse à utiliser pour recevoir des messages</string>
     <string name="request">Demande</string>
     <string name="forgot_password">Mot de passe oublié</string>
-    <string name="enter_valid_address">Entrez une %1$s valide</string>
     <string name="invalid_or_unknown_credential">Adresse inconnue ou invalide</string>
     <string name="password_reset_message_sent">Message avec instructions envoyé</string>
     <string name="user_not_found">Non trouvé</string>
@@ -205,11 +201,8 @@
     <string name="action_invite">Inviter</string>
     <string name="tags_management">Balises</string>
     <string name="contacts">Contacts</string>
-    <string name="add_contact">Ajouter un autre</string>
     <string name="manage">Gérer</string>
     <string name="delete">Effacer</string>
-    <string name="add_credential">Saisissez un email ou un numéro de téléphone</string>
-    <string name="unrecognized_credential">Méthode de connexion invalide ou non reconnue</string>
     <string name="add_credential_title">Ajouter contact</string>
     <string name="delete_credential_title">Effacer contact</string>
     <string name="delete_credential_confirmation">Êtes-vous sûr de vouloir effacer %1$s:%2$s?</string>
@@ -330,7 +323,6 @@
     <string name="broken_video">Format vidéo non valide ou inconnu.</string>
     <string name="unable_to_play_video">Impossible de lire cette vidéo.</string>
     <string name="select_image_or_video">Choisir une image ou une vidéo</string>
-    <string name="tap_to_select">Appuyer pour sélectionner</string>
     <string name="video_call_channel_name">Appels vidéo</string>
     <string name="video_call_channel_description">Appels vidéo et audio</string>
     <string name="tinode_video_call">Appel vidéo Tinode</string>

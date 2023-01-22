@@ -95,7 +95,7 @@
     <string name="default_permissions">Permisos predeterminados</string>
     <string name="auth_permissions">Usuarios autenticados</string>
     <string name="anon_permissions">Usuarios anónimos</string>
-    <string name="topic_private">Información adicional (sólo visible para tí)</string>
+    <string name="topic_private">Información adicional (sólo visible para ti)</string>
     <string name="edit_topic">Editar tema</string>
     <string name="edit_permissions">Editar permisos</string>
 
@@ -149,7 +149,6 @@
     <string name="email">Correo electrónico</string>
     <string name="email_required">Debes introducir una dirección de correo electrónico</string>
     <string name="validate_cred">Intruduzca el código de confirmación enviado a tu %1$s:</string>
-    <string name="validate_cred_title">Confirmar contacto</string>
     <string name="confirm">Confirmar</string>
     <string name="validation_example">Sólo números</string>
     <string name="enter_confirmation_code">Introduzca el código de confirmación</string>
@@ -168,11 +167,8 @@
     <string name="new_message">Nuevo mensaje</string>
     <string name="new_message_channel_description">Has recibido un nuevo mensaje</string>
     <string name="request_pass_reset_title">Restablecer contraseña</string>
-    <string name="request_pass_reset">Solicitar código por %1$s:</string>
-    <string name="validated_address_to_use">%1$s validado para enviar código</string>
     <string name="request">Solicitar</string>
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>
-    <string name="enter_valid_address">Introduzca un %1$s válido</string>
     <string name="invalid_or_unknown_credential">Dirección inválida o desconocida</string>
     <string name="password_reset_message_sent">Mensaje con instrucciones ha sido enviado</string>
     <string name="user_not_found">Usuario no encontrado</string>
@@ -206,11 +202,8 @@
     <string name="action_invite">Invitar</string>
     <string name="tags_management">Etiquetas</string>
     <string name="contacts">Contactos</string>
-    <string name="add_contact">Añadir contacto</string>
     <string name="manage">Gestionar</string>
     <string name="delete">Eliminar</string>
-    <string name="add_credential">Introduzca una dirección de correo electrónico o un número de teléfono</string>
-    <string name="unrecognized_credential">El método de verificación no válido o no reconocido</string>
     <string name="add_credential_title">Añadir contacto</string>
     <string name="delete_credential_title">Eliminar contacto</string>
     <string name="delete_credential_confirmation">¿Estás seguro de que quieres eliminar a %1$s:%2$s?</string>
@@ -255,7 +248,7 @@
     <string name="topic_default_permissions_explained">Los nuevos miembros reciben automáticamente estos permisos</string>
     <string name="user_default_permissions_explained">Los usuarios comienzan conversaciones contigo con estos permisos</string>
     <string name="confirm_delmsg_for_all">¿Estás seguro de que quieres eliminar todos los mensajes para todos los participantes?</string>
-    <string name="confirm_delmsg_for_self">¿Estás seguro de que deseas eliminar todos los mensajes? Los eliminas sólo para tí.</string>
+    <string name="confirm_delmsg_for_self">¿Estás seguro de que deseas eliminar todos los mensajes? Los eliminas sólo para ti.</string>
     <string name="licenses">Licencias</string>
 
     <string name="blocked_contacts">Contactos bloqueados</string>
@@ -329,7 +322,6 @@
     <string name="broken_video">Formato de video no válido o desconocido.</string>
     <string name="unable_to_play_video">No se puede reproducir este video.</string>
     <string name="select_image_or_video">Elegir imagen o video</string>
-    <string name="tap_to_select">Toca para seleccionar</string>
     <string name="video_call_channel_name">Videollamadas</string>
     <string name="video_call_channel_description">Llamadas de video y audio</string>
     <string name="tinode_video_call">Videollamada de Tinode</string>

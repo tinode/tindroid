@@ -51,8 +51,6 @@
     <string name="new_message">Новое сообщение</string>
     <string name="new_message_channel_description">Получено новое сообщение</string>
     <string name="request_pass_reset_title">Сменить пароль</string>
-    <string name="request_pass_reset">Запросить код на %1$s</string>
-    <string name="validated_address_to_use">Подтвержденный %1$s для получения кода</string>
     <string name="request">Запрос</string>
     <string name="tinode_invite_subject">Попробуйте Tinode Messenger</string>
     <string name="view_profile">Посмотреть профиль</string>
@@ -74,7 +72,6 @@
     <string name="confirm">Подтвердить</string>
     <string name="validation_example">Только цифры</string>
     <string name="validate_cred">Введите код, полученный вами по %1$s:</string>
-    <string name="validate_cred_title">Подтвердите контакт</string>
     <string name="typing_notifications_enabled">Показывать когда печатают</string>
     <string name="hint_topic_title">Название группы</string>
     <string name="topic_private">Дополнительная информация</string>
@@ -145,7 +142,6 @@
     <string name="full_name_required">Полное имя обязательно</string>
     <string name="enter_confirmation_code">Введите код подтверждения</string>
     <string name="enter_new_password">Введите пароль</string>
-    <string name="enter_valid_address">Введите %1$s</string>
     <string name="failed_credential_confirmation">Неверный код подтверждения</string>
     <string name="failed_empty_password">введите пароль</string>
     <string name="placeholder_private">Видно только вам</string>
@@ -186,11 +182,8 @@
     <string name="action_invite">Пригласить</string>
     <string name="tags_management">Теги для поиска</string>
     <string name="contacts">Контакты</string>
-    <string name="add_contact">Добавить</string>
     <string name="manage">Редактировать</string>
     <string name="delete">Удалить</string>
-    <string name="add_credential">Еmail или телефон</string>
-    <string name="unrecognized_credential">Не распознан тип контакта</string>
     <string name="add_credential_title">Контакты</string>
     <string name="delete_credential_title">Удалить контакт</string>
     <string name="delete_credential_confirmation">Удалить контакт %1$s:%2$s?</string>
@@ -310,7 +303,6 @@
     <string name="broken_video">Неизвестный формат видео</string>
     <string name="unable_to_play_video">Невозможно показать это видео</string>
     <string name="select_image_or_video">Выбрать фото или видео</string>
-    <string name="tap_to_select">Нажмите чтобы выбрать</string>
     <string name="video_call_channel_name">Видеозвонки</string>
     <string name="video_call_channel_description">Видео- и аудиовызовы</string>
     <string name="tinode_video_call">Видеозвонок Tinode</string>
