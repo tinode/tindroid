@@ -31,6 +31,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Credential;
@@ -207,7 +208,7 @@ public class AccPersonalFragment extends Fragment
                 } else {
                     activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
                     TextView phoneField = activity.findViewById(R.id.phone);
-                    phoneField.setText(phone.val);
+                    phoneField.setText(PhoneEdit.formatIntl(phone.val));
                     if (phone2 != null && phone2.isDone()) {
                         // Two confirmed credentials of the same method.
                         // Make the credential unclickable: can't modify phone if two phones are already given.
@@ -237,7 +238,7 @@ public class AccPersonalFragment extends Fragment
                 } else {
                     activity.findViewById(R.id.phoneNewWrapper).setVisibility(View.VISIBLE);
                     TextView phoneField2 = activity.findViewById(R.id.phoneNew);
-                    phoneField2.setText(phone2.val);
+                    phoneField2.setText(PhoneEdit.formatIntl(phone2.val));
                     // Unconfirmed? Allow confirming.
                     if (!phone2.isDone()) {
                         argsPhone.putString("newValue", phone2.val);

@@ -26,6 +26,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
@@ -121,7 +122,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                         ((TextView) activity.findViewById(R.id.email)).setText(cred.val);
                     } else if ("tel".equals(cred.meth)) {
                         activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
-                        ((TextView) activity.findViewById(R.id.phone)).setText(cred.val);
+                        ((TextView) activity.findViewById(R.id.phone)).setText(PhoneEdit.formatIntl(cred.val));
                     } else {
                         // TODO: create generic field for displaying credential as text.
                         Log.i(TAG, "Unknown credential method " + cred.meth);

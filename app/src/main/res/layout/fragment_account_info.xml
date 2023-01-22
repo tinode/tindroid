@@ -50,7 +50,7 @@
 
             <TextView
                 android:id="@+id/topicAddress"
-                style="?android:textAppearanceMedium"
+                style="@style/textPrimary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -75,7 +75,7 @@
 
         <TextView
             android:id="@+id/verified"
-            style="?android:textAppearanceMedium"
+            style="@style/textPrimary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -83,11 +83,12 @@
             android:minHeight="32dp"
             android:text="@string/badge_verified"
             android:visibility="gone"
+            android:drawablePadding="6dp"
             app:drawableStartCompat="@drawable/ic_verified" />
 
         <TextView
             android:id="@+id/staff"
-            style="?android:textAppearanceMedium"
+            style="@style/textPrimary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -95,11 +96,12 @@
             android:minHeight="32dp"
             android:text="@string/badge_staff"
             android:visibility="gone"
+            android:drawablePadding="6dp"
             app:drawableStartCompat="@drawable/ic_verified_user" />
 
         <TextView
             android:id="@+id/danger"
-            style="?android:textAppearanceMedium"
+            style="@style/textPrimary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:ellipsize="end"
@@ -107,6 +109,7 @@
             android:minHeight="32dp"
             android:text="@string/badge_danger"
             android:visibility="gone"
+            android:drawablePadding="6dp"
             app:drawableStartCompat="@drawable/ic_danger" />
 
         <LinearLayout
@@ -125,7 +128,7 @@
 
             <TextView
                 android:id="@+id/email"
-                style="?android:textAppearanceMedium"
+                style="@style/textPrimary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -155,7 +158,7 @@
 
             <TextView
                 android:id="@+id/phone"
-                style="?android:textAppearanceMedium"
+                style="@style/textPrimary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
