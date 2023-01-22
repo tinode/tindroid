@@ -11,44 +11,85 @@
     android:orientation="vertical"
     tools:context=".PasswordResetFragment">
 
-
     <TextView
-        android:id="@+id/callToReset"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="@string/request_pass_reset"
+        android:text="@string/request_pass_reset_code"
         android:textAppearance="?android:attr/textAppearanceMedium"/>
 
     <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/responseHint"
+        android:id="@+id/emailWrapper"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
+        android:layout_height="wrap_content"
+        android:hint="@string/email">
         <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/response"
+            android:id="@+id/email"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="text"/>
+            android:inputType="textEmailAddress"
+            tools:ignore="TouchTargetSizeCheck" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <TextView
+        android:id="@+id/will_send_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="@style/textSecondarySmall"
+        android:text="@string/email_msg_explained"/>
+
+    <co.tinode.tindroid.widgets.PhoneEdit
+        android:id="@+id/phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:inputType="text"/>
+
+    <TextView
+        android:id="@+id/will_send_sms"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="@string/phone_sms_explained"
+        android:textAppearance="@style/textSecondarySmall" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/codeWrapper"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/enter_confirmation_code">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/confirmationCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            tools:ignore="TouchTargetSizeCheck" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/editPasswordWrapper"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/enter_new_password"
+        app:endIconMode="password_toggle">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textPassword" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
+        android:id="@+id/requestButtonsWrapper"
         style="?android:attr/buttonBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end">
-
-        <Button
-            android:id="@+id/cancel"
-            style="?attr/buttonBarButtonStyle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@android:string/cancel"
-            android:textSize="@dimen/button_text"/>
+        android:layout_gravity="center_horizontal">
 
         <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/confirm"
+            android:id="@+id/requestCode"
             style="?attr/buttonStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -57,5 +98,24 @@
             android:textSize="@dimen/button_text"
             app:backgroundTint="@color/button_background"/>
 
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/confirm"
+            style="?attr/buttonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/confirm"
+            android:textColor="@color/white"
+            android:textSize="@dimen/button_text"
+            android:visibility="gone"
+            app:backgroundTint="@color/button_background"/>
+
     </LinearLayout>
+
+    <Button
+        android:id="@+id/haveCode"
+        style="?attr/buttonBarButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/i_have_code"
+        android:layout_gravity="center_horizontal"/>
 </LinearLayout>

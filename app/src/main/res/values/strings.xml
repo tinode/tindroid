@@ -374,4 +374,8 @@
     <string name="change_phone_num">Change phone number</string>
     <string name="change_credential">Change credential</string>
     <string name="confirmation_code_sent">Confirmation code sent</string>
+    <string name="request_pass_reset_code">Request password reset code</string>
+    <string name="i_have_code">I have code</string>
+    <string name="confirmation_code_required">Confirmation code required</string>
+    <string name="password_changed">Password changed</string>
 </resources>

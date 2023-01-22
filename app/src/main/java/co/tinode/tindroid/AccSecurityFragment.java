@@ -51,10 +51,10 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
     @Override
     public void onResume() {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
         final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
 
-        if (me == null || activity == null) {
+        if (me == null) {
             return;
         }
 
@@ -148,14 +148,10 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
     }
 
     private void changePassword(String login, String password) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
+        final Activity activity = requireActivity();
         try {
             // TODO: update stored record on success
-            Cache.getTinode().updateAccountBasic(null, login, password).thenApply(
+            Cache.getTinode().updateAccountBasic((String) null, login, password).thenApply(
                     null, new UiUtils.ToastFailureListener(activity)
             );
         } catch (NotConnectedException ignored) {
@@ -166,11 +162,7 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
     }
 
     private void logout() {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
+        final Activity activity = requireActivity();
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
         builder.setNegativeButton(android.R.string.cancel, null)
                 .setTitle(R.string.logout)

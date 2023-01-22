@@ -15,6 +15,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 public class MsgClientAcc<Pu,Pr> implements Serializable {
     public final String id;
     public final String user;
+    public String tmpscheme;
+    public String tmpsecret;
     public final String scheme;
     public final String secret;
     // Use the new account for immediate authentication.
@@ -52,5 +54,11 @@ public class MsgClientAcc<Pu,Pr> implements Serializable {
             cred = Arrays.copyOf(cred, cred.length + 1);
         }
         cred[cred.length-1] = c;
+    }
+
+    @JsonIgnore
+    public void setTempAuth(String scheme, String secret) {
+        this.tmpscheme = scheme;
+        this.tmpsecret = secret;
     }
 }

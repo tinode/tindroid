@@ -80,7 +80,7 @@ public class Tinode {
     private static final String TAG = "Tinode";
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.20";
+    private static final String VERSION = "0.21";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     public static final String USER_NEW = "new";
@@ -1258,13 +1258,17 @@ public class Tinode {
      * Create new account. Connection must be established prior to calling this method.
      *
      * @param uid      uid of the user to affect
+     * @param tmpScheme auth scheme to use for temporary authentication.
+     * @param tmpSecret auth secret to use for temporary authentication.
      * @param scheme   authentication scheme to use
      * @param secret   authentication secret for the chosen scheme
      * @param loginNow use the new account to login immediately
      * @param desc     default access parameters for this account
      * @return PromisedReply of the reply ctrl message
      */
-    protected <Pu, Pr> PromisedReply<ServerMessage> account(String uid, String scheme, String secret,
+    protected <Pu, Pr> PromisedReply<ServerMessage> account(String uid,
+                                                            String tmpScheme, String tmpSecret,
+                                                            String scheme, String secret,
                                                             boolean loginNow, String[] tags, MetaSetDesc<Pu, Pr> desc,
                                                             Credential[] cred) {
         ClientMessage msg = new ClientMessage<>(
@@ -1273,7 +1277,10 @@ public class Tinode {
             msg.extra = new MsgClientExtra(desc.attachments);
         }
 
-        // Add tags and credentials
+        // Assign temp auth.
+        msg.acc.setTempAuth(tmpScheme, tmpSecret);
+
+        // Add tags and credentials.
         if (tags != null) {
             for (String tag : tags) {
                 msg.acc.addTag(tag);
@@ -1316,26 +1323,42 @@ public class Tinode {
      */
     public <Pu, Pr> PromisedReply<ServerMessage> createAccountBasic(
             String uname, String password, boolean login, String[] tags, MetaSetDesc<Pu, Pr> desc, Credential[] cred) {
-        return account(USER_NEW, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password),
+        return account(USER_NEW, null, null, AuthScheme.LOGIN_BASIC,
+                AuthScheme.encodeBasicToken(uname, password),
                 login, tags, desc, cred);
     }
 
     protected PromisedReply<ServerMessage> updateAccountSecret(String uid,
+                                                               String tmpScheme, String tmpSecret,
                                                                @SuppressWarnings("SameParameterValue") String scheme,
                                                                String secret) {
-        return account(uid, scheme, secret, false, null, null, null);
+        return account(uid, tmpScheme, tmpSecret, scheme, secret, false, null, null, null);
     }
 
     /**
      * Change user name and password for accounts using Basic auth scheme.
      *
-     * @param uid      user ID being updated
+     * @param uid      user ID being updated or null if temporary authentication params are provided.
      * @param uname    new login or null to keep the old login.
      * @param password new password.
      * @return PromisedReply of the reply ctrl message.
      */
     public PromisedReply<ServerMessage> updateAccountBasic(String uid, String uname, String password) {
-        return updateAccountSecret(uid, AuthScheme.LOGIN_BASIC, AuthScheme.encodeBasicToken(uname, password));
+        return updateAccountSecret(uid, null, null, AuthScheme.LOGIN_BASIC,
+                AuthScheme.encodeBasicToken(uname, password));
+    }
+
+    /**
+     * Change user name and password for accounts using Basic auth scheme with temporary auth params.
+     *
+     * @param auth scheme:secret pair to use for temporary authentication of this action.
+     * @param uname new login or null to keep the old login.
+     * @param password new password.
+     * @return PromisedReply of the reply ctrl message.
+     */
+    public PromisedReply<ServerMessage> updateAccountBasic(AuthScheme auth, String uname, String password) {
+        return updateAccountSecret(null, auth.scheme, auth.secret, AuthScheme.LOGIN_BASIC,
+                AuthScheme.encodeBasicToken(uname, password));
     }
 
     /**

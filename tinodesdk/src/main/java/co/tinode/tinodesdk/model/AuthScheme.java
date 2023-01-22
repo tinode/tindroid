@@ -15,11 +15,10 @@ public class AuthScheme implements Serializable {
     public static final String LOGIN_BASIC = "basic";
     public static final String LOGIN_TOKEN = "token";
     public static final String LOGIN_RESET = "reset";
+    public static final String LOGIN_CODE = "code";
 
     public String scheme;
     public String secret;
-
-    public AuthScheme() {}
 
     public AuthScheme(String scheme, String secret) {
         this.scheme = scheme;
@@ -93,5 +92,10 @@ public class AuthScheme implements Serializable {
 
     public static AuthScheme tokenInstance(String secret) {
         return new AuthScheme(LOGIN_TOKEN, secret);
+    }
+
+    public static AuthScheme codeInstance(String code, String method, String value) {
+        // The secret is structured as <code>:<cred_method>:<cred_value>, "123456:email:alice@example.com".
+        return new AuthScheme(LOGIN_CODE, encodeResetSecret(code, method, value));
     }
 }

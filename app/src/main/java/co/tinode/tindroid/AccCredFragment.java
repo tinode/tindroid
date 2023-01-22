@@ -52,6 +52,8 @@ public class AccCredFragment extends Fragment implements ChatsActivity.FormUpdat
         mOldValue = args.getString("oldValue");
         mNewValue = args.getString("newValue");
 
+        Log.i(TAG, "args: " + mMethod + "; " + mOldValue + "; " + mNewValue);
+
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle("email".equals(mMethod) ? R.string.change_email :
                 "tel".equals(mMethod) ? R.string.change_phone_num : R.string.change_credential);
@@ -77,13 +79,15 @@ public class AccCredFragment extends Fragment implements ChatsActivity.FormUpdat
         if ("email".equals(mMethod)) {
             ((TextView) activity.findViewById(R.id.current_email)).setText(mOldValue);
             activity.findViewById(R.id.emailBlockWrapper).setVisibility(View.VISIBLE);
+            activity.findViewById(R.id.phoneBlockWrapper).setVisibility(View.GONE);
             ((TextView) activity.findViewById(R.id.email)).setText(mNewValue);
             disableId = R.id.email;
             willSend = R.id.will_send_email;
         } else if ("tel".equals(mMethod)) {
-            ((TextView) activity.findViewById(R.id.current_phone)).setText(mOldValue);
+            ((TextView) activity.findViewById(R.id.current_phone)).setText(PhoneEdit.formatIntl(mOldValue));
             activity.findViewById(R.id.phoneBlockWrapper).setVisibility(View.VISIBLE);
-            ((TextView) activity.findViewById(R.id.phone)).setText(mNewValue);
+            activity.findViewById(R.id.emailBlockWrapper).setVisibility(View.GONE);
+            ((PhoneEdit) activity.findViewById(R.id.phone)).setText(mNewValue);
             disableId = R.id.phone;
             willSend = R.id.will_send_sms;
         }

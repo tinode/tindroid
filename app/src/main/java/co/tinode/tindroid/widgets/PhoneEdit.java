@@ -14,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.LinearLayout;
+import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -47,7 +47,7 @@ import co.tinode.tindroid.R;
 /**
  * Widget for editing phone numbers
  */
-public class PhoneEdit extends LinearLayout {
+public class PhoneEdit extends FrameLayout {
     private final static String TAG = "PhoneEdit";
 
     private final PhoneNumberUtil mPhoneNumberUtil = PhoneNumberUtil.getInstance();
@@ -74,16 +74,11 @@ public class PhoneEdit extends LinearLayout {
         mSpinner = findViewById(R.id.country_selector);
         mTextEdit = findViewById(R.id.phone_edit_text);
 
-        if (isInEditMode()) {
-            // Allow the view to be used in AndroidStudio layout editor.
-            return;
-        }
-
         mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> adapterView, View view, int pos, long rowId) {
                 changeSelection((CountryCode) mSpinner.getSelectedItem());
-                mTextEdit.setHint(getExampleNumber());
+                mTextEdit.setHint(getExampleLocalNumber());
                 mTextEdit.setText(mTextEdit.getText());
             }
 
@@ -221,6 +216,7 @@ public class PhoneEdit extends LinearLayout {
         return countryList;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isNumberValid() {
         Phonenumber.PhoneNumber number;
         try {
@@ -228,8 +224,10 @@ public class PhoneEdit extends LinearLayout {
         } catch (NumberParseException ignored) {
             return false;
         }
+        PhoneNumberUtil.PhoneNumberType type = mPhoneNumberUtil.getNumberType(number);
         return mPhoneNumberUtil.isValidNumber(number) &&
-                mPhoneNumberUtil.getNumberType(number) == PhoneNumberUtil.PhoneNumberType.MOBILE;
+                (type == PhoneNumberUtil.PhoneNumberType.MOBILE ||
+                        type == PhoneNumberUtil.PhoneNumberType.FIXED_LINE_OR_MOBILE);
     }
 
     public @NonNull String getRawInput() {
@@ -255,6 +253,19 @@ public class PhoneEdit extends LinearLayout {
         }
     }
 
+    public void setText(CharSequence text) {
+        try {
+            Phonenumber.PhoneNumber number = mPhoneNumberUtil.parse(text, mSelected.isoCode);
+            if (mPhoneNumberUtil.isValidNumber(number)) {
+                setCountry(mPhoneNumberUtil.getRegionCodeForNumber(number));
+                mTextEdit.setText(
+                        formatLocalPart(
+                                mPhoneNumberUtil.format(number, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL)));
+            }
+        } catch (NumberParseException ignored) {
+        }
+    }
+
     public void setError(CharSequence error) {
         ((AppCompatEditText) findViewById(R.id.phone_edit_text)).setError(error);
     }
@@ -273,15 +284,18 @@ public class PhoneEdit extends LinearLayout {
         mFormatter = mPhoneNumberUtil.getAsYouTypeFormatter(mSelected.isoCode);
     }
 
-    private String getExampleNumber() {
+    private String getExampleLocalNumber() {
         Phonenumber.PhoneNumber sample = mPhoneNumberUtil.getExampleNumberForType(mSelected.isoCode,
                 PhoneNumberUtil.PhoneNumberType.MOBILE);
-        String number = mPhoneNumberUtil.format(sample, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
-        number = number.substring(mSelected.prefix.length()).trim();
-        if (number.startsWith("-")) {
-            number = number.substring(1).trim();
+        return formatLocalPart(mPhoneNumberUtil.format(sample, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL));
+    }
+
+    private String formatLocalPart(String numberE164) {
+        numberE164 = numberE164.substring(mSelected.prefix.length()).trim();
+        if (numberE164.startsWith("-")) {
+            numberE164 = numberE164.substring(1).trim();
         }
-        return number;
+        return numberE164;
     }
 
     public static String readJSONString(InputStream is) throws IOException {
@@ -293,6 +307,19 @@ public class PhoneEdit extends LinearLayout {
         }
         reader.close();
         return result.toString();
+    }
+
+    // Convenience method to format phone number string.
+    public static String formatIntl(String text) {
+        try {
+            PhoneNumberUtil pnu = PhoneNumberUtil.getInstance();
+            Phonenumber.PhoneNumber number = pnu.parse(text, "");
+            if (pnu.isValidNumber(number)) {
+                text = pnu.format(number, PhoneNumberUtil.PhoneNumberFormat.INTERNATIONAL);
+            }
+        } catch (NumberParseException ignored) {
+        }
+        return text;
     }
 
     public static class CountryCode {

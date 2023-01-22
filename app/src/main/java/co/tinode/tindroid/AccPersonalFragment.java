@@ -127,7 +127,9 @@ public class AccPersonalFragment extends Fragment
                 // We only support two emails and two phone numbers at a time.
                 Credential email = null, email2 = null;
                 Credential phone = null, phone2 = null;
-                Bundle args = new Bundle();
+                Bundle argsEmail = new Bundle(), argsPhone = new Bundle();
+                argsEmail.putString("method", "email");
+                argsPhone.putString("method", "tel");
                 for (Credential cred : creds) {
                     if ("email".equals(cred.meth)) {
                         // If more than one credential of the same type then just use the last one.
@@ -142,10 +144,7 @@ public class AccPersonalFragment extends Fragment
                         } else {
                             phone = cred;
                         }
-                    } else {
-                        continue;
                     }
-                    args.putString("method", cred.meth);
                 }
 
                 // Old (current) email.
@@ -167,7 +166,7 @@ public class AccPersonalFragment extends Fragment
                     } else {
                         // Second email is either not present or unconfirmed.
                         activity.findViewById(R.id.emailDelete).setVisibility(View.INVISIBLE);
-                        args.putString("oldValue", email.val);
+                        argsEmail.putString("oldValue", email.val);
                         if (email2 == null) {
                             emailField.setOnClickListener(this::showEditCredential);
                             emailField.setBackgroundResource(R.drawable.dotted_line);
@@ -175,7 +174,7 @@ public class AccPersonalFragment extends Fragment
                             emailField.setBackground(null);
                         }
                     }
-                    emailField.setTag(args);
+                    emailField.setTag(argsEmail);
                 }
 
                 // New (unconfirmed) email, or a second confirmed email if something failed.
@@ -187,7 +186,7 @@ public class AccPersonalFragment extends Fragment
                     emailField2.setText(email2.val);
                     // Unconfirmed? Allow confirming.
                     if (!email2.isDone()) {
-                        args.putString("newValue", email2.val);
+                        argsEmail.putString("newValue", email2.val);
                         activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.VISIBLE);
                         emailField2.setOnClickListener(this::showEditCredential);
                         emailField2.setBackgroundResource(R.drawable.dotted_line);
@@ -196,7 +195,7 @@ public class AccPersonalFragment extends Fragment
                         activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.INVISIBLE);
                         emailField2.setBackground(null);
                     }
-                    emailField2.setTag(args);
+                    emailField2.setTag(argsEmail);
 
                     // Second credential can always be deleted.
                     AppCompatImageButton delete = activity.findViewById(R.id.emailNewDelete);
@@ -224,7 +223,7 @@ public class AccPersonalFragment extends Fragment
                     } else {
                         // Second phone is either not present or unconfirmed.
                         activity.findViewById(R.id.phoneDelete).setVisibility(View.INVISIBLE);
-                        args.putString("oldValue", phone.val);
+                        argsPhone.putString("oldValue", phone.val);
                         if (phone2 == null) {
                             phoneField.setOnClickListener(this::showEditCredential);
                             phoneField.setBackgroundResource(R.drawable.dotted_line);
@@ -232,7 +231,7 @@ public class AccPersonalFragment extends Fragment
                             phoneField.setBackground(null);
                         }
                     }
-                    phoneField.setTag(args);
+                    phoneField.setTag(argsPhone);
                 }
 
                 // New (unconfirmed) phone, or a second confirmed phone if something failed.
@@ -244,7 +243,7 @@ public class AccPersonalFragment extends Fragment
                     phoneField2.setText(phone2.val);
                     // Unconfirmed? Allow confirming.
                     if (!phone2.isDone()) {
-                        args.putString("newValue", phone2.val);
+                        argsPhone.putString("newValue", phone2.val);
                         activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.VISIBLE);
                         phoneField2.setOnClickListener(this::showEditCredential);
                         phoneField2.setBackgroundResource(R.drawable.dotted_line);
@@ -253,7 +252,7 @@ public class AccPersonalFragment extends Fragment
                         activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.INVISIBLE);
                         phoneField2.setBackground(null);
                     }
-                    phoneField2.setTag(args);
+                    phoneField2.setTag(argsPhone);
 
                     // Second credential can always be deleted.
                     AppCompatImageButton delete = activity.findViewById(R.id.phoneNewDelete);
