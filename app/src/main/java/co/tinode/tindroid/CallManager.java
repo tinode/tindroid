@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -242,14 +243,23 @@ public class CallManager {
                 // This will be ignored on O+ and handled by the channel
                 builder.setPriority(Notification.PRIORITY_MAX);
 
-                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_end),
-                        getActionText(context, R.string.decline_call, R.color.colorNegativeAction), declineIntent(context, topicName, seq))
-                        .build());
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Person caller = new Person.Builder()
+                            .setIcon(Icon.createWithBitmap(avatar))
+                            .setKey(topicName)
+                            .setName(userName)
+                            .build();
+                    builder.setStyle(Notification.CallStyle.forIncomingCall(caller,
+                            declineIntent(context, topicName, seq), answerIntent(context, topicName, seq, audioOnly)));
+                } else {
+                    builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_end),
+                            getActionText(context, R.string.decline_call, R.color.colorNegativeAction), declineIntent(context, topicName, seq))
+                            .build());
 
-                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_white),
-                        getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
-                        .build());
-
+                    builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_white),
+                            getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
+                            .build());
+                }
                 nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, builder.build());
             });
         }).start();
