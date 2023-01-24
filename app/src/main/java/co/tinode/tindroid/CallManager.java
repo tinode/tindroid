@@ -210,8 +210,8 @@ public class CallManager {
 
                 Notification.Builder builder = new Notification.Builder(context);
 
-                builder.setPriority(Notification.PRIORITY_HIGH)
-                        .setOngoing(true)
+                builder.setOngoing(true)
+                        .setFlag(Notification.FLAG_INSISTENT, true)
                         .setVisibility(Notification.VISIBILITY_PUBLIC)
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
 
