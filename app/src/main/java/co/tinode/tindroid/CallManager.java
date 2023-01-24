@@ -178,7 +178,6 @@ public class CallManager {
                                           boolean audioOnly, CallConnection conn) {
         Cache.prepareNewCall(topicName, conn);
 
-        Log.i(TAG, "Init call audioOnly=" + audioOnly);
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
@@ -287,7 +286,7 @@ public class CallManager {
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    private static PendingIntent answerIntent(Context context, String topicName, int seq, boolean audioOnly) {
+    public static Intent answerCallIntent(Context context, String topicName, int seq, boolean audioOnly) {
         Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
         intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
                 | Intent.FLAG_ACTIVITY_NEW_TASK
@@ -297,7 +296,12 @@ public class CallManager {
                 .putExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, true)
                 .putExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
         intent.setClass(context, CallActivity.class);
-        return PendingIntent.getActivity(context, 102, intent,
+        return intent;
+    }
+
+    private static PendingIntent answerIntent(Context context, String topicName, int seq, boolean audioOnly) {
+        return PendingIntent.getActivity(context, 102,
+                answerCallIntent(context, topicName, seq, audioOnly),
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 

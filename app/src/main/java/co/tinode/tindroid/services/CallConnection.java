@@ -1,6 +1,8 @@
 package co.tinode.tindroid.services;
 
 import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.util.Log;
@@ -8,6 +10,7 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import co.tinode.tindroid.CallManager;
+import co.tinode.tindroid.Const;
 
 public class CallConnection extends Connection {
     private static final String TAG = "CallConnection";
@@ -32,7 +35,11 @@ public class CallConnection extends Connection {
 
     @Override
     public void onAnswer() {
-        Log.i(TAG, "onAnswer");
+        Bundle args = getExtras();
+        final String topicName = getAddress().getEncodedSchemeSpecificPart();
+        Intent answer = CallManager.answerCallIntent(mContext, topicName, args.getInt(Const.INTENT_EXTRA_SEQ),
+                args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY));
+        mContext.startActivity(answer);
     }
 
     @Override

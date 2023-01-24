@@ -124,7 +124,9 @@ public class CallActivity extends AppCompatActivity  {
 
     @Override
     public void onDestroy() {
-        mTinode.removeListener(mLoginListener);
+        if (mTinode != null) {
+            mTinode.removeListener(mLoginListener);
+        }
         Cache.endCallInProgress();
 
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
