@@ -33,9 +33,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
@@ -55,7 +57,7 @@ public class PhoneEdit extends FrameLayout {
 
     private final Spinner mSpinner;
     private final AppCompatEditText mTextEdit;
-    private ArrayAdapter<CountryCode> mAdapter;
+    private PhoneNumberAdapter mAdapter;
 
     private CountryCode mSelected = null;
 
@@ -98,7 +100,6 @@ public class PhoneEdit extends FrameLayout {
                         .setTextColor(hasFocus ? colorControlActivated : colorControlNormal);
 
         mSpinner.setOnFocusChangeListener(focusListener);
-
         mTextEdit.addTextChangedListener(new TextWatcher() {
             Boolean editing = false;
             @Override
@@ -140,7 +141,7 @@ public class PhoneEdit extends FrameLayout {
         }
 
         if (countryList != null) {
-            mAdapter = new PhoneNumberAdapter(context, countryList);
+            mAdapter = new PhoneNumberAdapter(context, locale.getCountry(), countryList);
             mSpinner.setAdapter(mAdapter);
             setCountry(locale.getCountry());
         }
@@ -173,45 +174,20 @@ public class PhoneEdit extends FrameLayout {
         }
         is.close();
 
-        try {
-            // Try fully qualified locale first.
-            is = am.open(locale.toString() + ".json", AssetManager.ACCESS_BUFFER);
-        } catch (FileNotFoundException ignored) {
-            try {
-                Log.w(TAG, "Unable to load country names for language '" + locale + "', retrying " +
-                        locale.getLanguage());
-                is = am.open(locale.getLanguage() + ".json", AssetManager.ACCESS_BUFFER);
-            } catch (FileNotFoundException ignored2) {
-                Log.w(TAG, "Unable to load country names for '" + locale.getLanguage() + "', retrying EN");
-                is = am.open("en.json", AssetManager.ACCESS_BUFFER);
-            }
-        }
-
-        data = readJSONString(is);
-        array = new JSONArray(data);
         List<CountryCode> countryList = new ArrayList<>();
-        for (int i = 0, n = array.length(); i < n; i++) {
-            JSONObject obj = array.getJSONObject(i);
-            // Country name
-            String name = obj.getString("name");
-            // Country code
-            String code = obj.getString("code");
-            if (TextUtils.isEmpty(name) || TextUtils.isEmpty(code)) {
-                throw new JSONException("Invalid input in country data");
+        for (Map.Entry<String, String[]> dcode : dialCodes.entrySet()) {
+            String code = dcode.getKey().toUpperCase(Locale.ENGLISH);
+            // Country name in default device language.
+            String countryName = (new Locale("", code)).getDisplayCountry();
+            if (TextUtils.isEmpty(countryName)) {
+                Log.w(TAG, "Country name missing for '" + code + "'");
+            }
+            for (String prefix: dcode.getValue()) {
+                countryList.add(new CountryCode(code, countryName, prefix.trim()));
             }
 
-            code = code.toUpperCase(Locale.ENGLISH);
-            String[] prefixes = dialCodes.get(code);
-            if (prefixes == null) {
-                Log.d(TAG, "Country dial code is missing for '" + code + "'");
-                continue;
-            }
-
-            for (String prefix: prefixes) {
-                countryList.add(new CountryCode(code, name, prefix.trim()));
-            }
-         }
-        is.close();
+            Collections.sort(countryList);
+        }
 
         return countryList;
     }
@@ -281,6 +257,7 @@ public class PhoneEdit extends FrameLayout {
 
     private void changeSelection(CountryCode code) {
         mSelected = code;
+        mAdapter.setSelection(code.isoCode);
         mFormatter = mPhoneNumberUtil.getAsYouTypeFormatter(mSelected.isoCode);
     }
 
@@ -322,7 +299,7 @@ public class PhoneEdit extends FrameLayout {
         return text;
     }
 
-    public static class CountryCode {
+    public static class CountryCode implements Comparable<CountryCode> {
         String isoCode;
         String name;
         String prefix;
@@ -350,11 +327,19 @@ public class PhoneEdit extends FrameLayout {
             }
             return false;
         }
+
+        @Override
+        public int compareTo(CountryCode o) {
+            return this.name.compareTo(o.name);
+        }
     }
 
     public static class PhoneNumberAdapter extends ArrayAdapter<CountryCode> {
-        public PhoneNumberAdapter(Context context, List<CountryCode> countries) {
+        String mSelected;
+
+        public PhoneNumberAdapter(Context context, String selected, List<CountryCode> countries) {
             super(context, R.layout.phone_full, countries);
+            mSelected = selected;
         }
 
         @Override
@@ -390,9 +375,20 @@ public class PhoneEdit extends FrameLayout {
             ((AppCompatTextView) item.findViewById(R.id.country_flag)).setText(country.getFlag());
             if (!selected) {
                 ((TextView) item.findViewById(R.id.country_name)).setText(country.name);
+                if (country.isoCode.equals(mSelected)) {
+                    item.setBackgroundColor(item.getResources().getColor(R.color.colorMessageSelected,
+                            getContext().getTheme()));
+                } else {
+                    item.setBackgroundColor(0x0);
+                }
             }
             ((TextView) item.findViewById(R.id.country_dialcode)).setText(country.prefix);
             return item;
+        }
+
+        void setSelection(String selected) {
+            mSelected = selected;
+            notifyDataSetChanged();
         }
     }
 }
