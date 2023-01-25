@@ -158,8 +158,6 @@ public class SignUpFragment extends Fragment
             mCredMethods = methods;
         }
 
-        mCredMethods = new String[]{"tel"};
-
         activity.runOnUiThread(() -> {
             for (final String method : mCredMethods) {
                 if (TextUtils.isEmpty(method)) {
