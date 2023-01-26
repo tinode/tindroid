@@ -70,7 +70,7 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
             parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
         } else {
             TextView callToAction = parent.findViewById(R.id.call_to_validate);
-            callToAction.setText(getString(R.string.validate_cred, mMethod));
+            callToAction.setText(getString(R.string.enter_confirmation_code));
         }
     }
 

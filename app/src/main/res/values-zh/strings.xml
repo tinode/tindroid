@@ -147,7 +147,6 @@
 
     <string name="email">邮箱</string>
     <string name="email_required">需要邮箱</string>
-    <string name="validate_cred">输入发送给你的验证码对应 %1$s:</string>
     <string name="confirm">确认</string>
     <string name="validation_example">仅数字</string>
     <string name="enter_confirmation_code">输入验证码</string>

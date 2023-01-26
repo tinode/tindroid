@@ -148,7 +148,6 @@
 
     <string name="email">電子郵件地址</string>
     <string name="email_required">需要電子郵件地址</string>
-    <string name="validate_cred">輸入 %1$s 傳送給您的確認碼：</string>
     <string name="confirm">確認</string>
     <string name="validation_example">僅數字</string>
     <string name="enter_confirmation_code">輸入確認碼</string>

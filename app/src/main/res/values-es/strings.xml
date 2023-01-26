@@ -148,7 +148,6 @@
 
     <string name="email">Correo electrónico</string>
     <string name="email_required">Debes introducir una dirección de correo electrónico</string>
-    <string name="validate_cred">Intruduzca el código de confirmación enviado a tu %1$s:</string>
     <string name="confirm">Confirmar</string>
     <string name="validation_example">Sólo números</string>
     <string name="enter_confirmation_code">Introduzca el código de confirmación</string>

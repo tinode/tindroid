@@ -148,7 +148,6 @@
 
     <string name="email">이메일</string>
     <string name="email_required">이메일 필요</string>
-    <string name="validate_cred">전송된 확인코드 입력 %1$s:</string>
     <string name="confirm">확인</string>
     <string name="validation_example">숫자만 입력하세요</string>
     <string name="enter_confirmation_code">확인 코드를 입력하세요</string>

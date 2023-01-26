@@ -13,7 +13,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:text="@string/validate_cred"
+        android:text="@string/enter_confirmation_code"
         android:textAppearance="?android:attr/textAppearanceMedium"/>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -24,8 +24,7 @@
             android:id="@+id/response"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ems="10"
-            android:inputType="text"/>
+            android:inputType="numberDecimal"/>
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
