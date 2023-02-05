@@ -832,9 +832,9 @@ public class AttachmentHandler extends Worker {
                     uploadDetails.width = options.outWidth;
                     uploadDetails.height = options.outHeight;
                 }
-                msgDraft = draftyImage(caption, uploadDetails.mimeType, uploadDetails.previewBits,
-                        uploadDetails.valueRef, uploadDetails.width, uploadDetails.height,
-                        uploadDetails.fileName, uploadDetails.fileSize);
+                byte[] bits = uploadDetails.valueRef != null ? uploadDetails.previewBits : uploadDetails.valueBits;
+                msgDraft = draftyImage(caption, uploadDetails.mimeType, bits, uploadDetails.valueRef,
+                        uploadDetails.width, uploadDetails.height, uploadDetails.fileName, uploadDetails.fileSize);
                 break;
 
             case VIDEO:
