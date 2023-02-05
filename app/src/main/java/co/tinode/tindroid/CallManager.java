@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -177,7 +178,6 @@ public class CallManager {
                                           boolean audioOnly, CallConnection conn) {
         Cache.prepareNewCall(topicName, conn);
 
-        Log.i(TAG, "Init call audioOnly=" + audioOnly);
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
@@ -210,8 +210,8 @@ public class CallManager {
 
                 Notification.Builder builder = new Notification.Builder(context);
 
-                builder.setPriority(Notification.PRIORITY_HIGH)
-                        .setOngoing(true)
+                builder.setOngoing(true)
+                        .setFlag(Notification.FLAG_INSISTENT, true)
                         .setVisibility(Notification.VISIBILITY_PUBLIC)
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
 
@@ -242,14 +242,23 @@ public class CallManager {
                 // This will be ignored on O+ and handled by the channel
                 builder.setPriority(Notification.PRIORITY_MAX);
 
-                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_end),
-                        getActionText(context, R.string.decline_call, R.color.colorNegativeAction), declineIntent(context, topicName, seq))
-                        .build());
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Person caller = new Person.Builder()
+                            .setIcon(Icon.createWithBitmap(avatar))
+                            .setKey(topicName)
+                            .setName(userName)
+                            .build();
+                    builder.setStyle(Notification.CallStyle.forIncomingCall(caller,
+                            declineIntent(context, topicName, seq), answerIntent(context, topicName, seq, audioOnly)));
+                } else {
+                    builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_end),
+                            getActionText(context, R.string.decline_call, R.color.colorNegativeAction), declineIntent(context, topicName, seq))
+                            .build());
 
-                builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_white),
-                        getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
-                        .build());
-
+                    builder.addAction(new Notification.Action.Builder(Icon.createWithResource(context, R.drawable.ic_call_white),
+                            getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
+                            .build());
+                }
                 nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, builder.build());
             });
         }).start();
@@ -277,7 +286,7 @@ public class CallManager {
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    private static PendingIntent answerIntent(Context context, String topicName, int seq, boolean audioOnly) {
+    public static Intent answerCallIntent(Context context, String topicName, int seq, boolean audioOnly) {
         Intent intent = new Intent(CallActivity.INTENT_ACTION_CALL_INCOMING, null);
         intent.setFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION
                 | Intent.FLAG_ACTIVITY_NEW_TASK
@@ -287,7 +296,12 @@ public class CallManager {
                 .putExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, true)
                 .putExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
         intent.setClass(context, CallActivity.class);
-        return PendingIntent.getActivity(context, 102, intent,
+        return intent;
+    }
+
+    private static PendingIntent answerIntent(Context context, String topicName, int seq, boolean audioOnly) {
+        return PendingIntent.getActivity(context, 102,
+                answerCallIntent(context, topicName, seq, audioOnly),
                 PendingIntent.FLAG_CANCEL_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 

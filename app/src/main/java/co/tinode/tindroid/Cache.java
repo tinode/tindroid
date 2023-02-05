@@ -96,14 +96,17 @@ public class Cache {
                     if (MsgServerInfo.parseWhat(info.what) != MsgServerInfo.What.CALL) {
                         return;
                     }
-                    if (MsgServerInfo.parseEvent(info.event) != MsgServerInfo.Event.ACCEPT) {
+
+                    CallInProgress call = Cache.getCallInProgress();
+                    if (call == null || !call.equals(info.src, info.seq) || !Tinode.TOPIC_ME.equals(info.topic)) {
                         return;
                     }
 
-                    CallInProgress call = Cache.getCallInProgress();
-                    if (Tinode.TOPIC_ME.equals(info.topic) && Cache.getTinode().isMe(info.from) &&
-                            call != null && call.equals(info.src, info.seq)) {
-                        // Another client has accepted the call. Dismiss call notification.
+                    // Dismiss call notification.
+                    // Hang-up event received or current user accepted the call from another device.
+                    if (MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.HANG_UP ||
+                            (Cache.getTinode().isMe(info.from) &&
+                                    MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.ACCEPT)) {
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.getAppContext());
                         final Intent intent = new Intent(TindroidApp.getAppContext(),
                                 HangUpBroadcastReceiver.class);
