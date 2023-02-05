@@ -170,10 +170,8 @@ public class AttachmentHandler extends Worker {
 
         // Still no size? Try opening directly.
         if (fsize <= 0) {
-            Log.i(TAG, "getFileDetails size=" + fsize + "; orientation=" + orientation);
             String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
             if (path != null) {
-                Log.i(TAG, "getFileDetails path=" + path);
                 result.filePath = path;
 
                 File file = new File(path);
@@ -650,7 +648,6 @@ public class AttachmentHandler extends Worker {
                         throw new CancellationException();
                     }
 
-                    Log.i(TAG, "Upload result " + msgs[0]);
                     success = msgs[0] != null && msgs[0].ctrl != null && msgs[0].ctrl.code == 200;
 
                     if (success) {
@@ -702,7 +699,7 @@ public class AttachmentHandler extends Worker {
             }
         } catch (CancellationException ignored) {
             result.putString(ARG_ERROR, context.getString(R.string.canceled));
-            Log.i(TAG, "Upload cancelled");
+            Log.d(TAG, "Upload cancelled");
         } catch (IOException | SecurityException | IllegalArgumentException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
