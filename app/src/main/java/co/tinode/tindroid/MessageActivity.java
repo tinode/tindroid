@@ -220,6 +220,10 @@ public class MessageActivity extends AppCompatActivity
         // Intent with parameters passed on start of the activity.
         final Intent intent = getIntent();
 
+        CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
+        intent.putExtra(Intent.EXTRA_TEXT, (String) null);
+
         final Tinode tinode = Cache.getTinode();
         mTinodeListener = new MessageEventListener(tinode.isConnected());
         tinode.addListener(mTinodeListener);
@@ -239,9 +243,6 @@ public class MessageActivity extends AppCompatActivity
         // Resume message sender.
         mMessageSender.resume();
 
-        CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
-        mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
-        intent.putExtra(Intent.EXTRA_TEXT, (String) null);
         Uri attachment = intent.getData();
         String type = intent.getType();
         if (attachment != null && type != null) {

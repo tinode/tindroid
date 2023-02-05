@@ -38,13 +38,15 @@ public class SendToActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         // Get intent, action and MIME type
-        Intent intent = getIntent();
-        String action = intent.getAction();
-        String type = intent.getType();
+        final Intent intent = getIntent();
+        final String action = intent.getAction();
+        final String type = intent.getType();
+        final CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
+        final Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
 
-        if (!Intent.ACTION_SEND.equals(action) || type == null ||
-                intent.getParcelableExtra(Intent.EXTRA_STREAM) == null) {
-            Log.d(TAG, "Unable to share this type of content");
+        if (!Intent.ACTION_SEND.equals(action) || type == null || (uri == null && text == null)) {
+            Log.d(TAG, "Unable to share this type of content: '" + type +
+                    "', uri=" + uri + "; text=" + text);
             finish();
         }
 
@@ -57,9 +59,9 @@ public class SendToActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setTitle(R.string.send_to);
             toolbar.setNavigationOnClickListener(v -> {
-                Intent intent1 = new Intent(SendToActivity.this, ChatsActivity.class);
-                intent1.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(intent1);
+                Intent launcher = new Intent(SendToActivity.this, ChatsActivity.class);
+                launcher.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(launcher);
                 finish();
             });
         }
@@ -73,10 +75,12 @@ public class SendToActivity extends AppCompatActivity {
                 return;
             }
             Intent launcher = new Intent(this, MessageActivity.class);
-            Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
             if (uri != null) {
-                launcher.setDataAndType(uri, intent.getType());
+                launcher.setDataAndType(uri, type);
                 launcher.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } else {
+                launcher.setType(type);
+                launcher.putExtra(Intent.EXTRA_TEXT, text);
             }
             launcher.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
             launcher.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
@@ -136,7 +140,6 @@ public class SendToActivity extends AppCompatActivity {
 
             @Override
             public boolean onQueryTextChange(final String queryText) {
-
                 if (mHandler == null) {
                     mHandler = new Handler();
                 } else {
