@@ -796,6 +796,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
                     input.append(mMessageToSend);
+
                     mMessageToSend = null;
                 }
                 setSendPanelVisible(activity, R.id.sendMessagePanel);
@@ -1352,7 +1353,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             mTopic = null;
         }
 
-        if (changed) {
+        if (changed || reset) {
             Bundle args = getArguments();
             if (args != null) {
                 mMessageToSend = args.getString(MESSAGE_TO_SEND);
