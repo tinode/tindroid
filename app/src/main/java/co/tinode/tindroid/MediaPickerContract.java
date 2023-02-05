@@ -40,7 +40,7 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
             return null;
         }
 
-        Uri result = intent.getData();
+        Uri result = intent != null ? intent.getData() : null;
         return result != null ? result: mediaUri;
     }
 

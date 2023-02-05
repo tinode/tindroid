@@ -38,14 +38,17 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.widgets.OverlaidImageView;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
  */
-public class ImageViewFragment extends Fragment {
+public class ImageViewFragment extends Fragment implements MenuProvider {
     private static final String TAG = "ImageViewFragment";
 
     private enum RemoteState {
@@ -315,7 +318,7 @@ public class ImageViewFragment extends Fragment {
                                     mRemoteState = RemoteState.FAILED;
                                     Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
                                     mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                    setHasOptionsMenu(false);
+                                    ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
                                 }
                             });
                 }
@@ -373,7 +376,7 @@ public class ImageViewFragment extends Fragment {
                                 R.drawable.ic_broken_image,
                         null));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
-            setHasOptionsMenu(false);
+            ((MenuHost) activity).removeMenuProvider(this);
         }
 
         mWorkingMatrix = new Matrix(mMatrix);
@@ -397,7 +400,7 @@ public class ImageViewFragment extends Fragment {
             activity.findViewById(R.id.sendImagePanel).setVisibility(View.VISIBLE);
         }
         activity.findViewById(R.id.annotation).setVisibility(View.GONE);
-        setHasOptionsMenu(false);
+        ((MenuHost) activity).removeMenuProvider(this);
     }
 
     // Setup fields for viewing downloaded image
@@ -415,17 +418,18 @@ public class ImageViewFragment extends Fragment {
         ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
         ((TextView) activity.findViewById(R.id.image_size))
                 .setText(String.format("%s%s", size, UiUtils.bytesToHumanSize(length)));
-        setHasOptionsMenu(true);
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(),
+                Lifecycle.State.RESUMED);
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_download, menu);
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         final Activity activity = getActivity();
         if (activity == null) {
             return false;
@@ -447,11 +451,11 @@ public class ImageViewFragment extends Fragment {
                     filename, null);
             Toast.makeText(activity, savedAt != null ? R.string.image_download_success :
                     R.string.failed_to_save_download, Toast.LENGTH_LONG).show();
-        } else {
-            return super.onOptionsItemSelected(item);
+
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     private void sendImage() {
