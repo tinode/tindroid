@@ -478,11 +478,11 @@ public class Drafty implements Serializable {
         for (Entity anEnt : ent) {
             if (anEnt != null && anEnt.data != null) {
                 Object ref = anEnt.data.get("ref");
-                if (ref != null) {
+                if (ref instanceof String) {
                     result.add((String) ref);
                 }
                 ref = anEnt.data.get("preref");
-                if (ref != null) {
+                if (ref instanceof String) {
                     result.add((String) ref);
                 }
             }
