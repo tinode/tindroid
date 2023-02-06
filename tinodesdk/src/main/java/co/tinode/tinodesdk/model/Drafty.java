@@ -481,6 +481,10 @@ public class Drafty implements Serializable {
                 if (ref != null) {
                     result.add((String) ref);
                 }
+                ref = anEnt.data.get("preref");
+                if (ref != null) {
+                    result.add((String) ref);
+                }
             }
         }
         return result.size() > 0 ? result.toArray(new String[]{}) : null;
