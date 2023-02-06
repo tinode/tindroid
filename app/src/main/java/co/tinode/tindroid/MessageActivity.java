@@ -245,7 +245,7 @@ public class MessageActivity extends AppCompatActivity
 
         Uri attachment = intent.getData();
         String type = intent.getType();
-        if (attachment != null && type != null) {
+        if (attachment != null && type != null && !Utils.MIME_TINODE_PROFILE.equals(type)) {
             // Need to retain access right to the given Uri.
             Bundle args = new Bundle();
             args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, attachment);
