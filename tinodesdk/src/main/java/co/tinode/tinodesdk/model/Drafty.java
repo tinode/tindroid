@@ -463,6 +463,11 @@ public class Drafty implements Serializable {
         return ent;
     }
 
+    @JsonIgnore
+    public Style[] getStyles() {
+        return fmt;
+    }
+
     /**
      * Extract attachment references for use in message header.
      *
