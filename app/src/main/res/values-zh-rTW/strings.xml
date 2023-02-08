@@ -342,4 +342,5 @@
     <string name="action_call">調用</string>
     <string name="unable_to_place_call">無法撥打電話</string>
     <string name="unable_to_answer_call">無法接聽電話</string>
+    <string name="busy_call">忙碌的</string>
 </resources>

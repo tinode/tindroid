@@ -341,10 +341,11 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         // The server notifies us of the call that we've already accepted. Do nothing.
                         return;
                     }
-                case "missed":
+                case "busy":
                 case "declined":
                 case "disconnected":
                 case "finished":
+                case "missed":
                     if (origSeq > 0) {
                         // Dismiss the call UI.
                         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);

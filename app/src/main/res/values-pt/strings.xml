@@ -343,4 +343,5 @@
     <string name="action_call">Chamar</string>
     <string name="unable_to_place_call">Não é possível fazer esta chamada</string>
     <string name="unable_to_answer_call">Não é possível atender esta chamada</string>
+    <string name="busy_call">ocupada</string>
 </resources>

@@ -198,8 +198,11 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     }
 
     protected static int callStatus(boolean incoming, String event) {
-        int comment = 0;
+        int comment;
         switch (event) {
+            case "busy":
+                comment = R.string.busy_call;
+                break;
             case "declined":
                 comment = R.string.declined_call;
                 break;
