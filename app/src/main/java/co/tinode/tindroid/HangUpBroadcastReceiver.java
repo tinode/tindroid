@@ -16,8 +16,6 @@ public class HangUpBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i(TAG, "onReceive " + intent.getAction());
-
         // Clear incoming call notification.
         NotificationManager nm = context.getSystemService(NotificationManager.class);
         nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
@@ -26,7 +24,6 @@ public class HangUpBroadcastReceiver extends BroadcastReceiver {
             String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
             int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
             Topic topic = Cache.getTinode().getTopic(topicName);
-            Log.i(TAG, "Hanging up topic=" + topicName + "; seq=" + seq);
             if (topic != null && seq > 0) {
                 // Send message to server that the call is declined.
                 topic.videoCallHangUp(seq);

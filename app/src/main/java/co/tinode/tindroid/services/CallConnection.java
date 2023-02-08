@@ -35,6 +35,7 @@ public class CallConnection extends Connection {
 
     @Override
     public void onAnswer() {
+        Log.i(TAG, "onAnswer");
         Bundle args = getExtras();
         final String topicName = getAddress().getEncodedSchemeSpecificPart();
         Intent answer = CallManager.answerCallIntent(mContext, topicName, args.getInt(Const.INTENT_EXTRA_SEQ),

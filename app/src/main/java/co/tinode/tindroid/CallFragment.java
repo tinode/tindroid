@@ -582,7 +582,6 @@ public class CallFragment extends Fragment {
         if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
             activity.finishCall();
         }
-        Log.i(TAG, "Calling endCallInProgress");
         Cache.endCallInProgress();
     }
 

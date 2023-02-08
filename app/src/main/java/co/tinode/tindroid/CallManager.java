@@ -133,6 +133,12 @@ public class CallManager {
         extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
         extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
 
+        CallInProgress cip = Cache.getCallInProgress();
+        if (cip != null && cip.equals(caller, seq)) {
+            // The call is already accepted.
+            return;
+        }
+
         final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
         if (topic == null) {
             Log.w(TAG, "Call from un unknown topic " + caller);
@@ -143,8 +149,8 @@ public class CallManager {
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
 
         if (shouldBypassTelecom(context, telecomManager, false)) {
-            // Bypass Telecom where self-managed calls are not supported.
-            Cache.prepareNewCall(caller, null);
+            // Bypass Telecom when self-managed calls are not supported.
+            Cache.prepareNewCall(caller, seq, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
             return;
@@ -166,7 +172,7 @@ public class CallManager {
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
             topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            Cache.prepareNewCall(caller, null);
+            Cache.prepareNewCall(caller, seq, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
         } catch (Exception ex) {
@@ -176,7 +182,7 @@ public class CallManager {
 
     public static void showOutgoingCallUi(Context context, String topicName,
                                           boolean audioOnly, CallConnection conn) {
-        Cache.prepareNewCall(topicName, conn);
+        Cache.prepareNewCall(topicName, 0, conn);
 
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
@@ -211,13 +217,16 @@ public class CallManager {
                 Notification.Builder builder = new Notification.Builder(context);
 
                 builder.setOngoing(true)
-                        .setFlag(Notification.FLAG_INSISTENT, true)
                         .setVisibility(Notification.VISIBILITY_PUBLIC)
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    builder.setFlag(Notification.FLAG_INSISTENT, true);
+                }
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
                 }
+
 
                 int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
                 boolean audioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
@@ -259,7 +268,12 @@ public class CallManager {
                             getActionText(context, R.string.answer_call, R.color.colorPositiveAction), answerIntent(context, topicName, seq, audioOnly))
                             .build());
                 }
-                nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, builder.build());
+
+                Notification notification = builder.build();
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                    notification.flags |= Notification.FLAG_INSISTENT;
+                }
+                nm.notify(NOTIFICATION_TAG_INCOMING_CALL, 0, notification);
             });
         }).start();
     }

@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.content.Intent;
 import android.os.Build;
+import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
@@ -29,6 +30,8 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Shared resources.
  */
 public class Cache {
+    private static final String TAG = "Cache";
+
     private static final String API_KEY = "AQEAAAABAAD_rAp4DJh05a1HAwFT3A6K";
 
     private static final Cache sInstance = new Cache();
@@ -149,16 +152,29 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void prepareNewCall(@NonNull String topic, @Nullable CallConnection conn) {
-        sInstance.mCallInProgress = new CallInProgress(topic, conn);
+    public static void prepareNewCall(@NonNull String topic, int seq, @Nullable CallConnection conn) {
+        if (sInstance.mCallInProgress == null) {
+            sInstance.mCallInProgress = new CallInProgress(topic, seq, conn);
+        } else if (!sInstance.mCallInProgress.equals(topic, seq)) {
+            Log.e(TAG, "Inconsistent prepareNewCall\n\tExisting: " +
+                    sInstance.mCallInProgress + "\n\tNew: " + topic + ":" + seq);
+        }
     }
 
     public static void setCallActive(String topic, int seqId) {
-        sInstance.mCallInProgress.setCallActive(topic, seqId);
+        if (sInstance.mCallInProgress!= null) {
+            sInstance.mCallInProgress.setCallActive(topic, seqId);
+        } else {
+            Log.e(TAG, "Attempt to mark call active with no configured call");
+        }
     }
 
     public static void setCallConnected() {
-        sInstance.mCallInProgress.setCallConnected();
+        if (sInstance.mCallInProgress != null) {
+            sInstance.mCallInProgress.setCallConnected();
+        } else {
+            Log.e(TAG, "Attempt to mark call connected with no configured call");
+        }
     }
 
     public static void endCallInProgress() {
