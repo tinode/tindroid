@@ -55,21 +55,26 @@ public class CallConnectionService extends ConnectionService {
     @Override
     public Connection onCreateIncomingConnection(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
+        if (request == null) {
+            Log.w(TAG, "Dropped incoming call with null ConnectionRequest");
+            return null;
+        }
+
         CallConnection conn = new CallConnection(getApplicationContext());
         conn.setInitializing();
-        boolean audioOnly = false;
-        if (request != null) {
-            conn.setAddress(request.getAddress(), TelecomManager.PRESENTATION_ALLOWED);
-            Bundle extras = request.getExtras();
-            audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-            conn.setExtras(extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS));
-        }
+        final Uri callerUri = request.getAddress();
+        conn.setAddress(callerUri, TelecomManager.PRESENTATION_ALLOWED);
+
+        Bundle extras = request.getExtras();
+        boolean audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+        int seq = extras.getInt(Const.INTENT_EXTRA_SEQ);
+        conn.setExtras(extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS));
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         }
 
-        String topicName = conn.getAddress().getSchemeSpecificPart();
-        Cache.prepareNewCall(topicName, conn);
+        Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, conn);
 
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);

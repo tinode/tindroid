@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -16,12 +17,13 @@ public class CallInProgress {
     // Telephony connection.
     private CallConnection mConnection;
     // Call seq id.
-    private int mSeq = 0;
+    private int mSeq;
     // True if this call is established and connected between this client and the peer.
     private boolean mConnected = false;
 
-    public CallInProgress(@NonNull String topic, @Nullable CallConnection conn) {
+    public CallInProgress(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         mTopic = topic;
+        mSeq = seq;
         mConnection = conn;
     }
 
@@ -39,11 +41,15 @@ public class CallInProgress {
 
     public void setCallConnected() {
         mConnected = true;
+        if (mConnection != null && mConnection.getState() == Connection.STATE_INITIALIZING) {
+            mConnection.setInitialized();
+        }
     }
 
     public void endCall() {
         if (mConnection != null) {
             if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
+                Log.i("CallInProgress", "=== CALL DISCONNECTED");
                 mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
             }
             mConnection.destroy();
@@ -55,4 +61,10 @@ public class CallInProgress {
         return mTopic.equals(topic) && mSeq == seq;
     }
     public boolean isConnected() { return mConnected; }
+
+    @Override
+    @NonNull
+    public String toString() {
+        return mTopic + ":" + mSeq + "@" + mConnection;
+    }
 }
