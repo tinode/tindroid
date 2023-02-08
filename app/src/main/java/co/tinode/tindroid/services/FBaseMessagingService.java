@@ -333,10 +333,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             int origSeq = parseSeqReference(data.get("replace"));
             switch (webrtc) {
                 case "started":
-                    if (!isMe) {
-                        // Show UI for accepting/declining the incoming call.
-                        CallManager.acceptIncomingCall(this, topicName, seq, audioOnly);
-                    }
+                    // Do nothing here: the incoming call is accepted in onData.
                     break;
                 case "accepted":
                     CallInProgress call = Cache.getCallInProgress();
