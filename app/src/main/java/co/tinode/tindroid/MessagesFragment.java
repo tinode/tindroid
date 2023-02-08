@@ -1357,21 +1357,24 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             Bundle args = getArguments();
             if (args != null) {
                 mMessageToSend = args.getString(MESSAGE_TO_SEND);
-                String textAction = args.getString(MESSAGE_TEXT_ACTION);
-                mTextAction = TextUtils.isEmpty(textAction) ? UiUtils.MsgAction.NONE :
-                        UiUtils.MsgAction.valueOf(textAction);
-                mQuotedSeqID = args.getInt(MESSAGE_QUOTED_SEQ_ID);
-                mQuote = (Drafty) args.getSerializable(MESSAGE_QUOTED);
-                mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
-                mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
-
-                // Clear used arguments.
                 args.remove(MESSAGE_TO_SEND);
-                args.remove(MESSAGE_TEXT_ACTION);
-                args.remove(MESSAGE_QUOTED_SEQ_ID);
-                args.remove(MESSAGE_QUOTED);
-                args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
-                args.remove(ForwardToFragment.FORWARDING_FROM_USER);
+
+                if (changed) {
+                    String textAction = args.getString(MESSAGE_TEXT_ACTION);
+                    mTextAction = TextUtils.isEmpty(textAction) ? UiUtils.MsgAction.NONE :
+                            UiUtils.MsgAction.valueOf(textAction);
+                    mQuotedSeqID = args.getInt(MESSAGE_QUOTED_SEQ_ID);
+                    mQuote = (Drafty) args.getSerializable(MESSAGE_QUOTED);
+                    mContentToForward = (Drafty) args.getSerializable(ForwardToFragment.CONTENT_TO_FORWARD);
+                    mForwardSender = (Drafty) args.getSerializable(ForwardToFragment.FORWARDING_FROM_USER);
+
+                    // Clear used arguments.
+                    args.remove(MESSAGE_TEXT_ACTION);
+                    args.remove(MESSAGE_QUOTED_SEQ_ID);
+                    args.remove(MESSAGE_QUOTED);
+                    args.remove(ForwardToFragment.CONTENT_TO_FORWARD);
+                    args.remove(ForwardToFragment.FORWARDING_FROM_USER);
+                }
             }
         }
 

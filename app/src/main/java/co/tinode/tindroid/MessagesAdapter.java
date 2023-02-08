@@ -874,6 +874,17 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     }
                                 }
                             }
+                            if (mutable) {
+                                Drafty.Style[] fmts = msg.content.getStyles();
+                                if (fmts != null) {
+                                    for (Drafty.Style fmt : fmts) {
+                                        if ("QQ".equals(fmt.tp)) {
+                                            mutable = false;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

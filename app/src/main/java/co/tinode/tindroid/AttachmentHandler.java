@@ -139,7 +139,6 @@ public class AttachmentHandler extends Worker {
             mimeType = UiUtils.getMimeType(uri);
         }
         result.mimeType = mimeType;
-
         String[] projection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};
@@ -170,7 +169,7 @@ public class AttachmentHandler extends Worker {
         result.imageOrientation = orientation;
 
         // Still no size? Try opening directly.
-        if (fsize <= 0 || orientation < 0) {
+        if (fsize <= 0) {
             String path = filePath != null ? filePath : UiUtils.getContentPath(context, uri);
             if (path != null) {
                 result.filePath = path;
@@ -206,55 +205,54 @@ public class AttachmentHandler extends Worker {
         head.put("mime", Drafty.MIME_TYPE);
         Storage.Message msg = BaseDb.getInstance().getStore()
                 .msgDraft(Cache.getTinode().getTopic(topicName), content, head);
-        UploadType type = UploadType.parse(operation);
-
-        if (msg != null) {
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
-            assert uri != null;
-
-
-            Data.Builder data = new Data.Builder()
-                    .putString(ARG_OPERATION, operation)
-                    .putString(ARG_LOCAL_URI, uri.toString())
-                    .putLong(ARG_MSG_ID, msg.getDbId())
-                    .putString(ARG_TOPIC_NAME, topicName)
-                    .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
-                    .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
-                    .putString(ARG_MIME_TYPE, args.getString(ARG_MIME_TYPE))
-                    .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
-                    .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH))
-                    .putInt(ARG_IMAGE_WIDTH, args.getInt(ARG_IMAGE_WIDTH))
-                    .putInt(ARG_IMAGE_HEIGHT, args.getInt(ARG_IMAGE_HEIGHT));
-
-            if (type == UploadType.AUDIO || type == UploadType.VIDEO) {
-                byte[] preview = args.getByteArray(ARG_PREVIEW);
-                if (preview != null) {
-                    data.putByteArray(ARG_PREVIEW, preview);
-                }
-                data.putInt(ARG_DURATION, args.getInt(ARG_DURATION));
-                Uri preUri = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
-                if (preUri != null) {
-                    data.putString(ARG_PRE_URI, preUri.toString());
-                }
-                if (type == UploadType.VIDEO && preview != null || preUri != null) {
-                    data.putString(ARG_PRE_MIME_TYPE, args.getString(ARG_PRE_MIME_TYPE));
-                }
-            }
-
-            Constraints constraints = new Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build();
-            OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
-                    .setInputData(data.build())
-                    .setConstraints(constraints)
-                    .addTag(TAG_UPLOAD_WORK)
-                    .build();
-
-            return WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()),
-                    ExistingWorkPolicy.REPLACE, upload);
+        if (msg == null) {
+            Log.w(TAG, "Failed to create draft message");
+            return null;
         }
 
-        return null;
+        UploadType type = UploadType.parse(operation);
+        Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
+        assert uri != null;
+
+        Data.Builder data = new Data.Builder()
+                .putString(ARG_OPERATION, operation)
+                .putString(ARG_LOCAL_URI, uri.toString())
+                .putLong(ARG_MSG_ID, msg.getDbId())
+                .putString(ARG_TOPIC_NAME, topicName)
+                .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
+                .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
+                .putString(ARG_MIME_TYPE, args.getString(ARG_MIME_TYPE))
+                .putString(ARG_IMAGE_CAPTION, args.getString(ARG_IMAGE_CAPTION))
+                .putString(ARG_FILE_PATH, args.getString(ARG_FILE_PATH))
+                .putInt(ARG_IMAGE_WIDTH, args.getInt(ARG_IMAGE_WIDTH))
+                .putInt(ARG_IMAGE_HEIGHT, args.getInt(ARG_IMAGE_HEIGHT));
+
+        if (type == UploadType.AUDIO || type == UploadType.VIDEO) {
+            byte[] preview = args.getByteArray(ARG_PREVIEW);
+            if (preview != null) {
+                data.putByteArray(ARG_PREVIEW, preview);
+            }
+            data.putInt(ARG_DURATION, args.getInt(ARG_DURATION));
+            Uri preUri = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
+            if (preUri != null) {
+                data.putString(ARG_PRE_URI, preUri.toString());
+            }
+            if (type == UploadType.VIDEO && preview != null || preUri != null) {
+                data.putString(ARG_PRE_MIME_TYPE, args.getString(ARG_PRE_MIME_TYPE));
+            }
+        }
+
+        Constraints constraints = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+        OneTimeWorkRequest upload = new OneTimeWorkRequest.Builder(AttachmentHandler.class)
+                .setInputData(data.build())
+                .setConstraints(constraints)
+                .addTag(TAG_UPLOAD_WORK)
+                .build();
+
+        return WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()),
+                ExistingWorkPolicy.REPLACE, upload);
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -650,7 +648,6 @@ public class AttachmentHandler extends Worker {
                         throw new CancellationException();
                     }
 
-                    Log.i(TAG, "Upload result " + msgs[0]);
                     success = msgs[0] != null && msgs[0].ctrl != null && msgs[0].ctrl.code == 200;
 
                     if (success) {
@@ -702,7 +699,7 @@ public class AttachmentHandler extends Worker {
             }
         } catch (CancellationException ignored) {
             result.putString(ARG_ERROR, context.getString(R.string.canceled));
-            Log.i(TAG, "Upload cancelled");
+            Log.d(TAG, "Upload cancelled");
         } catch (IOException | SecurityException | IllegalArgumentException ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
@@ -832,9 +829,9 @@ public class AttachmentHandler extends Worker {
                     uploadDetails.width = options.outWidth;
                     uploadDetails.height = options.outHeight;
                 }
-                msgDraft = draftyImage(caption, uploadDetails.mimeType, uploadDetails.previewBits,
-                        uploadDetails.valueRef, uploadDetails.width, uploadDetails.height,
-                        uploadDetails.fileName, uploadDetails.fileSize);
+                byte[] bits = uploadDetails.valueRef != null ? uploadDetails.previewBits : uploadDetails.valueBits;
+                msgDraft = draftyImage(caption, uploadDetails.mimeType, bits, uploadDetails.valueRef,
+                        uploadDetails.width, uploadDetails.height, uploadDetails.fileName, uploadDetails.fileSize);
                 break;
 
             case VIDEO:
