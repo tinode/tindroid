@@ -348,7 +348,7 @@ public class TheCard implements Serializable, Mergeable {
      */
     public static class Photo implements Serializable, Mergeable {
         // Image bits (preview or full image).
-        @JsonDeserialize(using = Tinode.Base64Deserializer.class)
+        @JsonDeserialize(using = Base64Deserializer.class)
         public byte[] data;
         // Second component of image mime type, i.e. 'png' for 'image/png'.
         public String type;

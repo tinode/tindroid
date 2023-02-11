@@ -3,7 +3,6 @@ package co.tinode.tinodesdk;
 import android.util.Log;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -15,10 +14,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
-import com.fasterxml.jackson.databind.deser.NullValueProvider;
-import com.fasterxml.jackson.databind.deser.std.PrimitiveArrayDeserializers;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.type.LogicalType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +30,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -795,7 +790,7 @@ public class Tinode {
             mNotifier.onInfoMessage(pkt.info);
         }
 
-        // TODO(gene): decide what to do on unknown message type
+        // Unknown message type is silently ignored.
     }
 
     /**
@@ -2673,61 +2668,7 @@ public class Tinode {
         }
     }
 
-    public static class Base64Deserializer extends PrimitiveArrayDeserializers<byte[]> {
-
-        public Base64Deserializer() { super(byte[].class); }
-
-        protected Base64Deserializer(Base64Deserializer base, NullValueProvider nuller, Boolean unwrapSingle) {
-            super(base, nuller, unwrapSingle);
-        }
-
-        @Override
-        protected PrimitiveArrayDeserializers<?> withResolved(NullValueProvider nuller, Boolean unwrapSingle) {
-            return new Base64Deserializer(this, nuller, unwrapSingle);
-        }
-
-        @Override
-        protected byte[] _constructEmpty() {
-            return new byte[0];
-        }
-
-        @Override
-        public LogicalType logicalType() {
-            return LogicalType.Binary;
-        }
-
-        @Override
-        protected byte[] handleSingleElementUnwrapped(JsonParser p, DeserializationContext ctxt) throws IOException {
-            return new byte[0];
-        }
-
-        @Override
-        public byte[] deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            JsonToken t = p.currentToken();
-            // Handling only base64-encoded string.
-            if (t == JsonToken.VALUE_STRING) {
-                try {
-                    return p.getBinaryValue(ctxt.getBase64Variant());
-                } catch (JsonProcessingException e) {
-                    String msg = e.getOriginalMessage();
-                    if (msg.contains("base64")) {
-                        return (byte[]) ctxt.handleWeirdStringValue(byte[].class, p.getText(), msg);
-                    }
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected byte[] _concat(byte[] oldValue, byte[] newValue) {
-            int len1 = oldValue.length;
-            int len2 = newValue.length;
-            byte[] result = Arrays.copyOf(oldValue, len1+len2);
-            System.arraycopy(newValue, 0, result, len1, len2);
-            return result;
-        }
-    }
-
+    // Use nulls instead of throwing an exception when Jackson is unable to parse input.
     private static class NullingDeserializationProblemHandler extends DeserializationProblemHandler {
         @Override
         public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t,
@@ -2763,36 +2704,5 @@ public class Tinode {
             Log.i(TAG, "Weird string value: '" + valueToConvert + "'");
             return  null;
         }
-    /*
-        @Override
-        public Object handleInstantiationProblem(DeserializationContext ctxt, Class<?> instClass,
-                                                 Object argument, Throwable t) {
-            Log.i(TAG, "Instantiation problem: '" + argument + "'");
-            return null;
-        }
-
-        public Object handleMissingInstantiator(DeserializationContext ctxt, Class<?> instClass,
-                                                ValueInstantiator valueInsta, JsonParser p,
-                                                String msg) {
-            Log.i(TAG, "Missing instantiator: '" + msg + "'");
-            return null;
-        }
-
-        @Override
-        public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType,
-                                            String subTypeId, TypeIdResolver idResolver,
-                                            String failureMsg) {
-            Log.i(TAG, "Unknown type ID: '" + failureMsg + "'");
-            return null;
-        }
-
-        @Override
-        public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType,
-                                            TypeIdResolver idResolver,
-                                            String failureMsg) {
-            Log.i(TAG, "Missing type ID: '" + failureMsg + "'");
-            return null;
-        }
-    */
     }
 }
