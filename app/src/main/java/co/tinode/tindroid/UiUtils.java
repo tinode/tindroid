@@ -1372,7 +1372,7 @@ public class UiUtils {
         return null;
     }
 
-    static int parseSeqReference(String ref) {
+    public static int parseSeqReference(String ref) {
         if (TextUtils.isEmpty(ref)) {
             return 0;
         }

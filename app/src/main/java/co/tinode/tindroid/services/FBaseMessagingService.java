@@ -26,7 +26,6 @@ import androidx.core.content.ContextCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.CallInProgress;
-import co.tinode.tindroid.CallManager;
 import co.tinode.tindroid.ChatsActivity;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.HangUpBroadcastReceiver;
@@ -330,7 +329,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 Log.w(TAG, "Invalid seq value '" + seqStr + "'");
                 return;
             }
-            int origSeq = parseSeqReference(data.get("replace"));
+            int origSeq = UiUtils.parseSeqReference(data.get("replace"));
             switch (webrtc) {
                 case "started":
                     // Do nothing here: the incoming call is accepted in onData.
@@ -449,20 +448,5 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
         }
         return result;
-    }
-
-    private static int parseSeqReference(String ref) {
-        if (TextUtils.isEmpty(ref)) {
-            return 0;
-        }
-
-        try {
-            if (ref.length() > 1 && ref.charAt(0) == ':') {
-                return Integer.parseInt(ref.substring(1));
-            }
-            return Integer.parseInt(ref);
-        } catch (NumberFormatException ex) {
-            return 0;
-        }
     }
 }

@@ -20,11 +20,19 @@ public class CallInProgress {
     private int mSeq;
     // True if this call is established and connected between this client and the peer.
     private boolean mConnected = false;
+    // True if the call is outgoing.
+    private boolean mIsOutgoing = false;
 
     public CallInProgress(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         mTopic = topic;
         mSeq = seq;
+        // Incoming calls will have a seq id.
+        mIsOutgoing = seq == 0;
         mConnection = conn;
+    }
+
+    public boolean isOutgoingCall() {
+        return mIsOutgoing;
     }
 
     public void setCallActive(@NonNull String topic, int seqId) {
