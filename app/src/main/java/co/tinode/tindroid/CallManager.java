@@ -176,7 +176,7 @@ public class CallManager {
 
         if (shouldBypassTelecom(context, telecomManager, false)) {
             // Bypass Telecom when self-managed calls are not supported.
-            Cache.prepareNewCall(caller, seq, false, null);
+            Cache.prepareNewCall(caller, seq, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
             return;
@@ -198,7 +198,7 @@ public class CallManager {
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
             topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            Cache.prepareNewCall(caller, seq, false, null);
+            Cache.prepareNewCall(caller, seq, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
         } catch (Exception ex) {
@@ -208,7 +208,7 @@ public class CallManager {
 
     public static void showOutgoingCallUi(Context context, String topicName,
                                           boolean audioOnly, CallConnection conn) {
-        Cache.prepareNewCall(topicName, 0, true, conn);
+        Cache.prepareNewCall(topicName, 0, conn);
 
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
