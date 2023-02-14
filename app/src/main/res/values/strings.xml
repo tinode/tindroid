@@ -323,6 +323,7 @@
     <string name="cancelled_call">cancelled</string>
     <string name="connecting_call">connecting</string>
     <string name="in_progress_call">in progress</string>
+    <string name="busy_call">busy</string>
     <string name="toggle_camera_button">Toggle camera</string>
     <string name="toggle_microphone_button">Mute/unmute call</string>
     <string name="finish_call_button">Finish call</string>

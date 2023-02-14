@@ -799,7 +799,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         result.append("\n");
 
         SpannableStringBuilder second = new SpannableStringBuilder();
-        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
+        boolean success = !Arrays.asList("busy", "declined", "disconnected", "missed")
+                .contains(state);
         icon = AppCompatResources.getDrawable(ctx,
                 incoming ?
                         (success ? R.drawable.ic_arrow_sw : R.drawable.ic_arrow_missed) :

@@ -332,4 +332,5 @@
     <string name="action_call">Llamar</string>
     <string name="unable_to_place_call">No se pudo realizar esta llamada</string>
     <string name="unable_to_answer_call">No se pudo responder esta llamada</string>
+    <string name="busy_call">ocupada</string>
 </resources>

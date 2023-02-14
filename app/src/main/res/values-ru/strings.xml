@@ -313,4 +313,5 @@
     <string name="action_call">Позвонить</string>
     <string name="unable_to_place_call">Невозможно сделать этот звонок</string>
     <string name="unable_to_answer_call">Невозможно ответить на этот звонок</string>
+    <string name="busy_call">занято</string>
 </resources>

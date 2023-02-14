@@ -334,4 +334,5 @@
     <string name="action_call">调用</string>
     <string name="unable_to_place_call">无法拨打电话</string>
     <string name="unable_to_answer_call">无法接听电话</string>
+    <string name="busy_call">忙碌的</string>
 </resources>

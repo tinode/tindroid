@@ -335,4 +335,5 @@
     <string name="action_call">Anruf</string>
     <string name="unable_to_place_call">Dieser Anruf kann nicht getätigt werden</string>
     <string name="unable_to_answer_call">Dieser Anruf kann nicht entgegengenommen werden</string>
+    <string name="busy_call">besetzt</string>
 </resources>

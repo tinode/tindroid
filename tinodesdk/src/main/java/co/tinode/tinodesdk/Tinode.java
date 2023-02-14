@@ -7,11 +7,13 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
@@ -137,6 +139,8 @@ public class Tinode {
         sJsonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         // Skip null fields from serialization
         sJsonMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        // Add handler for various deserialization problems
+        sJsonMapper.addHandler(new NullingDeserializationProblemHandler());
 
         // (De)Serialize dates as RFC3339. The default does not cut it because
         // it represents the time zone as '+0000' instead of the expected 'Z' and
@@ -785,7 +789,7 @@ public class Tinode {
             mNotifier.onInfoMessage(pkt.info);
         }
 
-        // TODO(gene): decide what to do on unknown message type
+        // Unknown message type is silently ignored.
     }
 
     /**
@@ -2683,6 +2687,44 @@ public class Tinode {
 
         private void rejectPromises(Exception ex) throws Exception {
             completePromises(null, ex);
+        }
+    }
+
+    // Use nulls instead of throwing an exception when Jackson is unable to parse input.
+    private static class NullingDeserializationProblemHandler extends DeserializationProblemHandler {
+        @Override
+        public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t,
+                                            JsonParser p, String failureMsg) {
+            Log.i(TAG, "Unexpected token:" + t.name());
+            return null;
+        }
+
+        @Override
+        public Object handleWeirdKey(DeserializationContext ctxt, Class<?> rawKeyType,
+                                     String keyValue, String failureMsg) {
+            Log.i(TAG, "Weird key: '" + keyValue + "'");
+            return  null;
+        }
+
+        @Override
+        public Object handleWeirdNativeValue(DeserializationContext ctxt, JavaType targetType,
+                                             Object valueToConvert, JsonParser p) {
+            Log.i(TAG, "Weird native value: '" + valueToConvert + "'");
+            return  null;
+        }
+
+        @Override
+        public Object handleWeirdNumberValue(DeserializationContext ctxt, Class<?> targetType,
+                                             Number valueToConvert, String failureMsg) {
+            Log.i(TAG, "Weird number value: '" + valueToConvert + "'");
+            return  null;
+        }
+
+        @Override
+        public Object handleWeirdStringValue(DeserializationContext ctxt, Class<?> targetType,
+                                             String valueToConvert, String failureMsg) {
+            Log.i(TAG, "Weird string value: '" + valueToConvert + "'");
+            return  null;
         }
     }
 }

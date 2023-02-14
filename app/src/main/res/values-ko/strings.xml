@@ -332,4 +332,5 @@
     <string name="action_call">전화</string>
     <string name="unable_to_place_call">전화를 걸 수 없습니다</string>
     <string name="unable_to_answer_call">이 전화를 받을 수 없습니다</string>
+    <string name="busy_call">바쁘다</string>
 </resources>

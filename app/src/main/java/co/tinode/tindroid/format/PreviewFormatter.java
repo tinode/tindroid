@@ -193,7 +193,8 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         int duration = getIntVal("duration", data);
         String state = getStringVal("state", data, "");
 
-        boolean success = !Arrays.asList("declined", "disconnected", "missed").contains(state);
+        boolean success = !Arrays.asList("busy", "declined", "disconnected", "missed")
+                .contains(state);
         String status = " " + (duration > 0 ?
                 millisToTime(duration, false).toString() :
                 ctx.getString(callStatus(incoming, state)));
