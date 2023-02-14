@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import androidx.annotation.ColorRes;
 import androidx.annotation.StringRes;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.services.CallConnection;
@@ -38,6 +39,7 @@ import co.tinode.tindroid.services.CallConnectionService;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
+import co.tinode.tinodesdk.model.MsgServerInfo;
 
 import static android.content.Context.TELECOM_SERVICE;
 
@@ -127,17 +129,41 @@ public class CallManager {
         }
     }
 
+    // Dismiss call notification.
+    public static void dismissIncomingCall(Context context, String topicName, int seq) {
+        CallInProgress call = Cache.getCallInProgress();
+        if (call == null || !call.equals(topicName, seq)) {
+            return;
+        }
+
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(context);
+        final Intent intent = new Intent(context, HangUpBroadcastReceiver.class);
+        intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+        intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
+        lbm.sendBroadcast(intent);
+    }
+
     public static void acceptIncomingCall(Context context, String caller, int seq, boolean audioOnly) {
+        CallInProgress cip = Cache.getCallInProgress();
+        if (cip != null) {
+            if (cip.equals(caller, seq)) {
+                // The call is already accepted.
+                Log.w(TAG, "Call already accepted: topic = " + caller + ", seq = " + seq);
+                return;
+            }
+            Log.i(TAG, "Hanging up (" + caller + ", " + seq + "): another call in progress");
+            final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
+            if (topic != null) {
+                topic.videoCallHangUp(seq);
+            }
+            return;
+        }
+
         Bundle extras = new Bundle();
         extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
         extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
         extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
-
-        CallInProgress cip = Cache.getCallInProgress();
-        if (cip != null && cip.equals(caller, seq)) {
-            // The call is already accepted.
-            return;
-        }
 
         final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
         if (topic == null) {
@@ -150,7 +176,7 @@ public class CallManager {
 
         if (shouldBypassTelecom(context, telecomManager, false)) {
             // Bypass Telecom when self-managed calls are not supported.
-            Cache.prepareNewCall(caller, seq, null);
+            Cache.prepareNewCall(caller, seq, false, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
             return;
@@ -172,7 +198,7 @@ public class CallManager {
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
             topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            Cache.prepareNewCall(caller, seq, null);
+            Cache.prepareNewCall(caller, seq, false, null);
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
         } catch (Exception ex) {
@@ -182,7 +208,7 @@ public class CallManager {
 
     public static void showOutgoingCallUi(Context context, String topicName,
                                           boolean audioOnly, CallConnection conn) {
-        Cache.prepareNewCall(topicName, 0, conn);
+        Cache.prepareNewCall(topicName, 0, true, conn);
 
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);

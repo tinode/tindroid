@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 
@@ -10,7 +9,6 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
@@ -66,9 +64,8 @@ public class Cache {
                         return;
                     }
                     String webrtc = data.getStringHeader("webrtc");
-                    if (MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
-                        return;
-                    }
+                    MsgServerData.WebRTC callState = MsgServerData.parseWebRTC(webrtc);
+
                     ComTopic topic = (ComTopic) Cache.getTinode().getTopic(data.topic);
                     if (topic == null) {
                         return;
@@ -79,19 +76,30 @@ public class Cache {
                     Storage.Message msg = topic.getMessage(data.seq);
                     if (msg != null) {
                         webrtc = msg.getStringHeader("webrtc");
-                        if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != MsgServerData.WebRTC.STARTED) {
+                        if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != callState) {
                             return;
                         }
                     }
 
-                    CallInProgress call = Cache.getCallInProgress();
-                    if (call == null) {
-                        CallManager.acceptIncomingCall(TindroidApp.getAppContext(),
-                                data.topic, data.seq, data.getBooleanHeader("aonly"));
-                    } else if (!call.equals(data.topic, data.seq)) {
-                        // Another incoming call. Decline.
-                        topic.videoCallHangUp(data.seq);
+                    switch (callState) {
+                        case STARTED:
+                            CallManager.acceptIncomingCall(TindroidApp.getAppContext(),
+                                    data.topic, data.seq, data.getBooleanHeader("aonly"));
+                            break;
+                        case ACCEPTED:
+                        case DECLINED:
+                        case MISSED:
+                        case DISCONNECTED:
+                            CallInProgress call = Cache.getCallInProgress();
+                            if (call != null && !call.isOutgoingCall()) {
+                                Log.i(TAG, "Dismissing incoming call: topic = " + data.topic + ", seq = " + data.seq);
+                                CallManager.dismissIncomingCall(TindroidApp.getAppContext(), data.topic, data.seq);
+                            }
+                            break;
+                        default:
+                            break;
                     }
+
                 }
 
                 @Override
@@ -110,13 +118,7 @@ public class Cache {
                     if (MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.HANG_UP ||
                             (Cache.getTinode().isMe(info.from) &&
                                     MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.ACCEPT)) {
-                        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(TindroidApp.getAppContext());
-                        final Intent intent = new Intent(TindroidApp.getAppContext(),
-                                HangUpBroadcastReceiver.class);
-                        intent.setAction(Const.INTENT_ACTION_CALL_CLOSE);
-                        intent.putExtra(Const.INTENT_EXTRA_TOPIC, info.src);
-                        intent.putExtra(Const.INTENT_EXTRA_SEQ, info.seq);
-                        lbm.sendBroadcast(intent);
+                        CallManager.dismissIncomingCall(TindroidApp.getAppContext(), info.src, info.seq);
                     }
                 }
             });
@@ -152,9 +154,9 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void prepareNewCall(@NonNull String topic, int seq, @Nullable CallConnection conn) {
+    public static void prepareNewCall(@NonNull String topic, int seq, boolean isOutgoing, @Nullable CallConnection conn) {
         if (sInstance.mCallInProgress == null) {
-            sInstance.mCallInProgress = new CallInProgress(topic, seq, conn);
+            sInstance.mCallInProgress = new CallInProgress(topic, seq, isOutgoing, conn);
         } else if (!sInstance.mCallInProgress.equals(topic, seq)) {
             Log.e(TAG, "Inconsistent prepareNewCall\n\tExisting: " +
                     sInstance.mCallInProgress + "\n\tNew: " + topic + ":" + seq);

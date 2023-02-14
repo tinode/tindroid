@@ -74,7 +74,7 @@ public class CallConnectionService extends ConnectionService {
             conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         }
 
-        Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, conn);
+        Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, false, conn);
 
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);
