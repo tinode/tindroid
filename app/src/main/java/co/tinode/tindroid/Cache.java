@@ -71,13 +71,16 @@ public class Cache {
                         return;
                     }
 
-                    // Check if we have a later version of the message (which means the call
-                    // has been not yet either accepted or finished).
-                    Storage.Message msg = topic.getMessage(data.seq);
-                    if (msg != null) {
-                        webrtc = msg.getStringHeader("webrtc");
-                        if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != callState) {
-                            return;
+                    int effectiveSeq = UiUtils.parseSeqReference(data.getStringHeader("replace"));
+                    if (effectiveSeq > 0) {
+                        // Check if we have a later version of the message (which means the call
+                        // has been not yet either accepted or finished).
+                        Storage.Message msg = topic.getMessage(effectiveSeq);
+                        if (msg != null) {
+                            webrtc = msg.getStringHeader("webrtc");
+                            if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != callState) {
+                                return;
+                            }
                         }
                     }
 
@@ -154,9 +157,9 @@ public class Cache {
         return sInstance.mCallInProgress;
     }
 
-    public static void prepareNewCall(@NonNull String topic, int seq, boolean isOutgoing, @Nullable CallConnection conn) {
+    public static void prepareNewCall(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         if (sInstance.mCallInProgress == null) {
-            sInstance.mCallInProgress = new CallInProgress(topic, seq, isOutgoing, conn);
+            sInstance.mCallInProgress = new CallInProgress(topic, seq, conn);
         } else if (!sInstance.mCallInProgress.equals(topic, seq)) {
             Log.e(TAG, "Inconsistent prepareNewCall\n\tExisting: " +
                     sInstance.mCallInProgress + "\n\tNew: " + topic + ":" + seq);

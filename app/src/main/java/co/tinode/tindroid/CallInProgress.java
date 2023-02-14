@@ -23,10 +23,11 @@ public class CallInProgress {
     // True if the call is outgoing.
     private boolean mIsOutgoing = false;
 
-    public CallInProgress(@NonNull String topic, int seq, boolean isOutgoing, @Nullable CallConnection conn) {
+    public CallInProgress(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         mTopic = topic;
         mSeq = seq;
-        mIsOutgoing = isOutgoing;
+        // Incoming calls will have a seq id.
+        mIsOutgoing = seq == 0;
         mConnection = conn;
     }
 
