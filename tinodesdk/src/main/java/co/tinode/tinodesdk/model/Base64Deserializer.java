@@ -15,7 +15,7 @@ import java.util.Arrays;
 // https://github.com/FasterXML/jackson-databind/issues/3784
 // Once the bug is fixed, this class can be safely removed.
 public class Base64Deserializer extends PrimitiveArrayDeserializers<byte[]> {
-    // This is required! Do not remove.
+    // This is used by Jackson through reflection! Do not remove.
     public Base64Deserializer() {
         super(byte[].class);
     }
