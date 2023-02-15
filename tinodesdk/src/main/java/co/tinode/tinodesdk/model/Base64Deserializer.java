@@ -1,6 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
@@ -16,6 +15,10 @@ import java.util.Arrays;
 // https://github.com/FasterXML/jackson-databind/issues/3784
 // Once the bug is fixed, this class can be safely removed.
 public class Base64Deserializer extends PrimitiveArrayDeserializers<byte[]> {
+    // This is used by Jackson through reflection! Do not remove.
+    public Base64Deserializer() {
+        super(byte[].class);
+    }
 
     protected Base64Deserializer(Base64Deserializer base, NullValueProvider nuller, Boolean unwrapSingle) {
         super(base, nuller, unwrapSingle);
