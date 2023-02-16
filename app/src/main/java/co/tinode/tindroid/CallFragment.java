@@ -690,7 +690,7 @@ public class CallFragment extends Fragment {
     }
 
     // Creates and initializes a peer connection.
-    private void createPeerConnection() {
+    private void createPeerConnection(boolean withDataChannel) {
         PeerConnection.RTCConfiguration rtcConfig =
                 new PeerConnection.RTCConfiguration(mIceServers);
         // TCP candidates are only useful when connecting to a server that supports
@@ -819,11 +819,12 @@ public class CallFragment extends Fragment {
             }
         });
 
-        DataChannel.Init i = new DataChannel.Init();
-        i.ordered = true;
-        mDataChannel = mLocalPeer.createDataChannel("events", i);
-        mDataChannel.registerObserver(new DCObserver(mDataChannel));
-
+        if (withDataChannel) {
+            DataChannel.Init i = new DataChannel.Init();
+            i.ordered = true;
+            mDataChannel = mLocalPeer.createDataChannel("events", i);
+            mDataChannel.registerObserver(new DCObserver(mDataChannel));
+        }
         // Create a local media stream and attach it to the peer connection.
         MediaStream stream = mPeerConnectionFactory.createLocalMediaStream("102");
         stream.addTrack(mLocalAudioTrack);
@@ -841,7 +842,7 @@ public class CallFragment extends Fragment {
         stopSoundEffect();
         rearrangePeerViews(activity, false);
 
-        createPeerConnection();
+        createPeerConnection(true);
         Cache.setCallConnected();
     }
 
@@ -855,7 +856,8 @@ public class CallFragment extends Fragment {
             return;
         }
 
-        createPeerConnection();
+        // Data channel should be created by the peer. Not creating one.
+        createPeerConnection(false);
         //noinspection unchecked
         Map<String, Object> m = (Map<String, Object>) info.payload;
         String type = (String) m.getOrDefault("type", "");
