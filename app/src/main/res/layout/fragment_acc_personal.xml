@@ -29,12 +29,15 @@
             android:layout_height="48sp"
             android:layout_alignEnd="@id/imageAvatar"
             android:layout_alignBottom="@id/imageAvatar"
-            android:layout_margin="2sp"
+            android:layout_marginStart="2sp"
+            android:layout_marginTop="2sp"
+            android:layout_marginEnd="2sp"
+            android:layout_marginBottom="2sp"
             android:background="@drawable/pill_counter"
             android:contentDescription="@string/change_avatar"
             android:gravity="center"
             android:paddingTop="10dp"
-            app:drawableTopCompat="@drawable/ic_add_a_photo" />
+            app:drawableTopCompat="@drawable/ic_photo_plus" />
 
         <LinearLayout
             android:layout_width="match_parent"

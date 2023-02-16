@@ -43,7 +43,7 @@
                 android:contentDescription="@string/change_avatar"
                 android:gravity="center"
                 android:paddingTop="10dp"
-                app:drawableTopCompat="@drawable/ic_add_a_photo" />
+                app:drawableTopCompat="@drawable/ic_photo_plus" />
 
             <LinearLayout
                 android:layout_width="match_parent"

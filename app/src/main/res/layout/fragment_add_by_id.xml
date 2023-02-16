@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -10,11 +11,13 @@
     android:paddingRight="@dimen/activity_horizontal_margin">
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/editIdWrapper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="@string/hint_add_by_id"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp">
+        android:layout_marginBottom="8dp"
+        app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/editId"
@@ -27,10 +30,74 @@
         android:id="@+id/confirm"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="end"
         android:text="@android:string/ok"
         android:textColor="@color/white"
         android:textSize="@dimen/button_text"
+        app:layout_constraintTop_toBottomOf="@id/editIdWrapper"
+        app:layout_constraintEnd_toEndOf="parent"
         app:backgroundTint="@color/button_background" />
 
-</LinearLayout>
+    <TextView
+        android:id="@+id/caption"
+        style="@style/sectionTitleStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/qrFrame"
+        tools:text="My Code"/>
+
+    <ViewFlipper
+        android:id="@+id/qrFrame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_margin="16dp"
+        android:padding="6dp"
+        app:layout_constraintDimensionRatio="w,1:1"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/confirm">
+
+        <ImageView
+            android:id="@+id/qrCodeImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="ContentDescription" />
+
+        <androidx.camera.view.PreviewView
+            android:id="@+id/cameraPreviewView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </ViewFlipper>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_horizontal"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toBottomOf="@id/qrFrame">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/displayCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            android:layout_marginStart="16dp"
+            app:backgroundTint="@color/button_background"
+            app:tint="@color/white"
+            app:srcCompat="@drawable/ic_qr_code"/>
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/scanCode"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="16dp"
+            app:backgroundTint="@color/colorButtonNormal"
+            app:tint="@color/white"
+            app:srcCompat="@drawable/ic_photo_camera" />
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -369,4 +369,6 @@
     <string name="i_have_code">I have code</string>
     <string name="confirmation_code_required">Confirmation code required</string>
     <string name="password_changed">Password changed</string>
+    <string name="my_code">My Code</string>
+    <string name="scan_code">Scan Code</string>
 </resources>
