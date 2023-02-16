@@ -60,16 +60,16 @@ public class VxCard extends TheCard {
         if (!(another instanceof VxCard)) {
             return false;
         }
+
         boolean changed = super.merge(another);
-        VxCard avc = (VxCard) another;
-        if (avc.mImage != null) {
-            mImage = avc.mImage;
-            changed = true;
+        if (changed) {
+            constructBitmap();
         }
         return changed;
     }
 
     public void constructBitmap() {
+        mImage = null;
         if (photo != null && photo.data != null) {
             Bitmap bmp = BitmapFactory.decodeByteArray(photo.data, 0, photo.data.length);
             if (bmp != null) {
@@ -78,8 +78,6 @@ public class VxCard extends TheCard {
                 if (bmp != mImage) {
                     bmp.recycle();
                 }
-            } else {
-                mImage = null;
             }
         }
     }
