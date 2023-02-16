@@ -110,26 +110,24 @@ public class TheCard implements Serializable, Mergeable {
             for (Field f : fields) {
                 Object sf = f.get(src);
                 Object df = f.get(dst);
-                if (sf != null) {
-                    // TODO: handle Collection / Array types.
-                    // Source is provided.
-                    if (df == null) {
-                        // Destination is null, use source.
+                // TODO: handle Collection / Array types.
+                // Source is provided.
+                if (df == null || sf == null) {
+                    // Either source or destination is null, replace.
+                    f.set(dst, sf);
+                    updated = sf == df || updated;
+                } else if (df instanceof Mergeable) {
+                    // Complex mergeable types, use merge().
+                    updated = ((Mergeable) df).merge((Mergeable) sf) || updated;
+                } else if (!df.equals(sf)) {
+                    if (sf instanceof String) {
+                        // String, check for Tinode NULL.
+                        f.set(dst, !Tinode.isNull(sf) ? sf : null);
+                    } else {
+                        // All other non-mergeable types: replace.
                         f.set(dst, sf);
-                        updated = true;
-                    } else if (df instanceof Mergeable) {
-                        // Complex mergeable types, use merge().
-                        updated = ((Mergeable) df).merge((Mergeable) sf) || updated;
-                    } else if (!sf.equals(df)) {
-                        if (sf instanceof String) {
-                            // String, check for Tinode NULL.
-                            f.set(dst, !Tinode.isNull(sf) ? sf : null);
-                        } else {
-                            // All other non-mergeable types: replace.
-                            f.set(dst, sf);
-                        }
-                        updated = true;
                     }
+                    updated = true;
                 }
             }
         } catch (IllegalAccessException ignored) {
@@ -238,7 +236,14 @@ public class TheCard implements Serializable, Mergeable {
             if (!(another instanceof Name)) {
                 return false;
             }
-            return TheCard.merge(this.getClass().getFields(), this, another);
+
+            Name that = (Name) another;
+            surname = that.surname;
+            given = that.given;
+            additional = that.additional;
+            prefix = that.prefix;
+            suffix = that.suffix;
+            return true;
         }
     }
 
@@ -258,7 +263,10 @@ public class TheCard implements Serializable, Mergeable {
             if (!(another instanceof Organization)) {
                 return false;
             }
-            return TheCard.merge(this.getClass().getFields(), this, another);
+            Organization that = (Organization) another;
+            fn = that.fn;
+            title = that.title;
+            return true;
         }
     }
 
@@ -339,7 +347,13 @@ public class TheCard implements Serializable, Mergeable {
             if (!(another instanceof Contact)) {
                 return false;
             }
-            return TheCard.merge(this.getClass().getFields(), this, another);
+
+            Contact that = (Contact) another;
+            type = that.type;
+            name = that.name;
+            uri = that.uri;
+            tp = stringToType(type);
+            return true;
         }
     }
 
@@ -403,7 +417,16 @@ public class TheCard implements Serializable, Mergeable {
             if (!(another instanceof Photo)) {
                 return false;
             }
-            return TheCard.merge(this.getClass().getFields(), this, another);
+
+            // Direct copy. No need to check for nulls.
+            Photo that = (Photo) another;
+            data = that.data;
+            type = that.type;
+            ref  = that.ref;
+            width = that.width;
+            height = that.height;
+            size = that.size;
+            return true;
         }
     }
 
@@ -430,7 +453,12 @@ public class TheCard implements Serializable, Mergeable {
             if (!(another instanceof Birthday)) {
                 return false;
             }
-            return TheCard.merge(this.getClass().getFields(), this, another);
+
+            Birthday that = (Birthday) another;
+            y = that.y;
+            m = that.m;
+            d = that.d;
+            return true;
         }
     }
 }
