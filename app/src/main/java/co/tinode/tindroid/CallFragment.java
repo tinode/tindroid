@@ -167,7 +167,7 @@ public class CallFragment extends Fragment {
         mLayout = v.findViewById(R.id.callMainLayout);
 
         AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(true);
 
         // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
@@ -254,6 +254,7 @@ public class CallFragment extends Fragment {
         if (ctx != null) {
             AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
             if (audioManager != null) {
+                audioManager.setMode(AudioManager.MODE_NORMAL);
                 audioManager.setMicrophoneMute(false);
                 audioManager.setSpeakerphoneOn(false);
             }
