@@ -4,6 +4,7 @@ import android.util.Log;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.extensions.permessage_deflate.PerMessageDeflateExtension;
 import org.java_websocket.handshake.ServerHandshake;
 
 import java.net.URI;
@@ -58,7 +59,8 @@ public class Connection extends WebSocketClient {
 
     @SuppressWarnings("WeakerAccess")
     protected Connection(URI endpoint, String apikey, WsListener listener) {
-        super(normalizeEndpoint(endpoint), new Draft_6455(), wrapApiKey(apikey), CONNECTION_TIMEOUT);
+        super(normalizeEndpoint(endpoint), new Draft_6455(new PerMessageDeflateExtension()),
+                wrapApiKey(apikey), CONNECTION_TIMEOUT);
         setReuseAddr(true);
 
         mListener = listener;
