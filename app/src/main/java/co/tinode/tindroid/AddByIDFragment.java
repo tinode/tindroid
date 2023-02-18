@@ -52,7 +52,7 @@ public class AddByIDFragment extends Fragment {
     private static final int FRAME_CAMERA = 1;
 
     private static final int QRCODE_SCALE = 10;
-    private static final int QRCODE_BORDER = 4;
+    private static final int QRCODE_BORDER = 1;
 
     private static final int QRCODE_FG_COLOR = Color.BLACK;
     private static final int QRCODE_BG_COLOR = Color.WHITE;
