@@ -166,10 +166,6 @@ public class CallFragment extends Fragment {
 
         mLayout = v.findViewById(R.id.callMainLayout);
 
-        AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-        audioManager.setSpeakerphoneOn(true);
-
         // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
         mToggleSpeakerphoneBtn.setOnClickListener(v0 ->
                 toggleSpeakerphone((FloatingActionButton) v0));
@@ -206,6 +202,10 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        audioManager.setSpeakerphoneOn(!mAudioOnly);
+        mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
 
         if (!mTopic.isAttached()) {
             mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
