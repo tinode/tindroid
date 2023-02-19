@@ -72,15 +72,16 @@ public class Cache {
                     }
 
                     int effectiveSeq = UiUtils.parseSeqReference(data.getStringHeader("replace"));
-                    if (effectiveSeq > 0) {
-                        // Check if we have a later version of the message (which means the call
-                        // has been not yet either accepted or finished).
-                        Storage.Message msg = topic.getMessage(effectiveSeq);
-                        if (msg != null) {
-                            webrtc = msg.getStringHeader("webrtc");
-                            if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != callState) {
-                                return;
-                            }
+                    if (effectiveSeq <= 0) {
+                        effectiveSeq = data.seq;
+                    }
+                    // Check if we have a later version of the message (which means the call
+                    // has been not yet either accepted or finished).
+                    Storage.Message msg = topic.getMessage(effectiveSeq);
+                    if (msg != null) {
+                        webrtc = msg.getStringHeader("webrtc");
+                        if (webrtc != null && MsgServerData.parseWebRTC(webrtc) != callState) {
+                            return;
                         }
                     }
 
