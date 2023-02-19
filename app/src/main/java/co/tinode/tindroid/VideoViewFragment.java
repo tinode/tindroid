@@ -280,6 +280,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     @Override
     public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menu.clear();
         menuInflater.inflate(R.menu.menu_download, menu);
     }
 
