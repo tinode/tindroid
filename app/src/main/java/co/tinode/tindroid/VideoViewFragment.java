@@ -39,6 +39,7 @@ import com.google.android.exoplayer2.ui.StyledPlayerView;
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 
+import com.google.android.exoplayer2.video.VideoSize;
 import com.squareup.picasso.Picasso;
 
 import java.io.BufferedOutputStream;
@@ -123,10 +124,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                             // Local video may be ready before menu is ready.
                             mDownloadMenuItem.setEnabled(true);
                         }
-                        Format fmt = mExoPlayer.getVideoFormat();
-                        if (fmt != null) {
-                            mVideoWidth = fmt.width;
-                            mVideoHeight = fmt.height;
+
+                        VideoSize vs = mExoPlayer.getVideoSize();
+                        if (vs.width > 0 && vs.height > 0 ) {
+                            mVideoWidth = vs.width;
+                            mVideoHeight = vs.height;
                         } else {
                             Log.w(TAG, "Unable to read video dimensions");
                         }
