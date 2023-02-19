@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +8,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -28,6 +30,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
@@ -61,8 +65,18 @@ public class AddByIDFragment extends Fragment {
     private final BarcodeScannerOptions mBarcodeScannerOptions =
             new BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build();
 
+    private PreviewView mCameraPreview;
+
     private boolean mIsCameraActive = false;
     private boolean mIsScanning = false;
+
+    private final ActivityResultLauncher<String> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                // Check if permission is granted.
+                if (isGranted) {
+                    startCamera(mCameraPreview);
+                }
+            });
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -111,6 +125,7 @@ public class AddByIDFragment extends Fragment {
         final TextView caption = view.findViewById(R.id.caption);
         caption.setText(R.string.my_code);
 
+        mCameraPreview = view.findViewById(R.id.cameraPreviewView);
         displayCodeButton.setOnClickListener(button -> {
             if (qrFrame.getDisplayedChild() == FRAME_QRCODE) {
                 return;
@@ -129,7 +144,7 @@ public class AddByIDFragment extends Fragment {
             displayCodeButton.setSelected(false);
             scanCodeButton.setSelected(true);
             qrFrame.setDisplayedChild(FRAME_CAMERA);
-            startCamera(view.findViewById(R.id.cameraPreviewView));
+            startCamera(mCameraPreview);
         });
     }
 
@@ -144,6 +159,12 @@ public class AddByIDFragment extends Fragment {
         if (mIsCameraActive) {
             return;
         }
+
+        if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.CAMERA)) {
+            mRequestPermissionLauncher.launch(Manifest.permission.CAMERA);
+            return;
+        }
+
         mIsCameraActive = true;
 
         Context context = requireContext();
