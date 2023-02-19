@@ -8,7 +8,7 @@
     android:orientation="vertical"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin">
+    android:paddingRight="@dimen/activity_horizontal_margin" >
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/editIdWrapper"
@@ -17,6 +17,7 @@
         android:hint="@string/hint_add_by_id"
         android:layout_marginTop="8dp"
         android:layout_marginBottom="8dp"
+        app:layout_constrainedHeight="true"
         app:layout_constraintTop_toTopOf="parent">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -35,6 +36,7 @@
         android:textSize="@dimen/button_text"
         app:layout_constraintTop_toBottomOf="@id/editIdWrapper"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constrainedHeight="true"
         app:backgroundTint="@color/button_background" />
 
     <TextView
@@ -46,20 +48,24 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@id/qrFrame"
+        app:layout_constrainedHeight="true"
+        app:layout_constraintVertical_chainStyle="packed"
         tools:text="My Code"/>
 
     <ViewFlipper
         android:id="@+id/qrFrame"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="48dp"
         android:layout_marginStart="48dp"
         android:layout_marginEnd="48dp"
         android:padding="6dp"
         app:layout_constraintDimensionRatio="w,1:1"
-        app:layout_constraintBottom_toTopOf="@id/buttons"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/confirm">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/buttons"
+        app:layout_constraintTop_toBottomOf="@id/confirm"
+        app:layout_constrainedHeight="true">
 
         <ImageView
             android:id="@+id/qrCodeImageView"
@@ -82,7 +88,8 @@
         android:gravity="center_horizontal"
         android:layout_marginTop="12dp"
         android:layout_marginBottom="12dp"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constrainedHeight="true"
+        app:layout_constraintTop_toBottomOf="@id/qrFrame">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/displayCode"
