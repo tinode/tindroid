@@ -100,7 +100,7 @@ public class AttachmentHandler extends Worker {
 
     private static final String TAG = "AttachmentHandler";
 
-    private final List<LargeFileHelper> mUploaders = Collections.synchronizedList(new ArrayList<>());
+    private LargeFileHelper mUploader = null;
 
     public AttachmentHandler(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
@@ -452,10 +452,8 @@ public class AttachmentHandler extends Worker {
 
     @Override
     public void onStopped() {
-        synchronized (mUploaders) {
-            for (LargeFileHelper lfh : mUploaders) {
-                lfh.cancel();
-            }
+        if (mUploader != null) {
+            mUploader.cancel();
         }
 
         super.onStopped();
@@ -608,32 +606,25 @@ public class AttachmentHandler extends Worker {
                             .putLong(ARG_FILE_SIZE, uploadDetails.fileSize).build());
 
                     // Upload results.
-                    //noinspection unchecked
+                    // noinspection unchecked
                     PromisedReply<ServerMessage>[] uploadResults = (PromisedReply<ServerMessage>[]) new PromisedReply[2];
 
                     // Upload large media.
-                    LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
-                    mUploaders.add(uploader);
-                    uploadResults[0] = uploader.uploadAsync(is, uploadDetails.fileName,
+                    mUploader = Cache.getTinode().getLargeFileHelper();
+                    uploadResults[0] = mUploader.uploadAsync(is, uploadDetails.fileName,
                             uploadDetails.mimeType, uploadDetails.fileSize,
                             topicName, (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
                                     .putLong(ARG_PROGRESS, progress)
                                     .putLong(ARG_FILE_SIZE, size)
                                     .build()));
-                    mUploaders.remove(uploader);
-                    if (uploader.isCanceled()) {
-                        throw new CancellationException();
-                    }
 
                     // Optionally upload video poster.
                     if (uploadDetails.previewRef != null) {
-                        LargeFileHelper posterUploader = Cache.getTinode().getLargeFileHelper();
-                        mUploaders.add(posterUploader);
-                        uploadResults[1] = uploader.uploadAsync(is, uploadDetails.fileName, uploadDetails.mimeType,
-                                uploadDetails.fileSize, topicName, null);
-                        mUploaders.remove(posterUploader);
-                        // Don't care if it's cancelled.
+                        uploadResults[1] = mUploader.uploadAsync(new ByteArrayInputStream(uploadDetails.previewBits),
+                                "poster", uploadDetails.previewMime, uploadDetails.previewSize,
+                                topicName, null);
+                        // ByteArrayInputStream:close() is a noop. No need to call close().
                     } else {
                         uploadResults[1] = null;
                     }
@@ -647,6 +638,8 @@ public class AttachmentHandler extends Worker {
                     } catch (Exception ex) {
                         throw new CancellationException();
                     }
+
+                    mUploader = null;
 
                     success = msgs[0] != null && msgs[0].ctrl != null && msgs[0].ctrl.code == 200;
 
@@ -673,7 +666,7 @@ public class AttachmentHandler extends Worker {
 
                             case VIDEO:
                                 String posterUrl = null;
-                                if (msgs[1] != null && msgs[1].ctrl != null && msgs[1].ctrl.code == 200){
+                                if (msgs[1] != null && msgs[1].ctrl != null && msgs[1].ctrl.code == 200) {
                                     posterUrl = msgs[1].ctrl.getStringParam("url", null);
                                 }
                                 content = draftyVideo(args.getString(ARG_IMAGE_CAPTION), uploadDetails.mimeType,
@@ -958,8 +951,10 @@ public class AttachmentHandler extends Worker {
         String valueRef;
         byte[] valueBits;
 
+        // Video poster.
+        String previewFileName;
+        int previewSize;
         String previewRef;
         byte[] previewBits;
-        int previewSize;
     }
 }
