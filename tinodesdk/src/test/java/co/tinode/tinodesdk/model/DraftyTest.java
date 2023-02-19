@@ -513,7 +513,7 @@ public class DraftyTest {
         };
         assertEquals("Reply 4 has failed", expected, actual);
 
-        // ------- Reply 5 (inline image)
+        // ------- Reply 5 (inline image with in-band bits only)
         src = new Drafty(" ");
         src.fmt = new Drafty.Style[]{
                 new Drafty.Style(0, 1, 0),
@@ -540,6 +540,35 @@ public class DraftyTest {
                         .putData("mime", "image/jpeg"),
         };
         assertEquals("Reply 5 has failed", expected, actual);
+
+        // ------- Reply 6 (inline image with in-band preview and out of band reference)
+        src = new Drafty(" ");
+        src.fmt = new Drafty.Style[]{
+                new Drafty.Style(0, 1, 0),
+        };
+        src.ent = new Drafty.Entity[]{
+                new Drafty.Entity("IM")
+                        .putData("height", 213)
+                        .putData("width", 638)
+                        .putData("name", "roses.jpg")
+                        .putData("val", "<3992, 123456789012345678901234567890123456789012345678901234567890 bytes: ...>")
+                        .putData("ref", "/v0/file/s/77A4SDFXfzY.jpe")
+                        .putData("mime", "image/jpeg"),
+        };
+        actual = src.replyContent(25, 3);
+        expected = new Drafty(" ");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style(0, 1, 0),
+        };
+        expected.ent = new Drafty.Entity[]{
+                new Drafty.Entity("IM")
+                        .putData("height", 213)
+                        .putData("width", 638)
+                        .putData("name", "roses.jpg")
+                        .putData("val", "<3992, 123456789012345678901234567890123456789012345678901234567890 bytes: ...>")
+                        .putData("mime", "image/jpeg"),
+        };
+        assertEquals("Reply 6 has failed", expected, actual);
     }
 
     @Test

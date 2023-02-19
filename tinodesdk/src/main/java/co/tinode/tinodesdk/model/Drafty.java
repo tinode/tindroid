@@ -1529,6 +1529,12 @@ public class Drafty implements Serializable {
                     node.text = new StringBuilder(" ");
                     node.tp = null;
                     node.children = null;
+                } else if (node.isStyle("IM") || node.isStyle("VD")) {
+                    if (node.data != null) {
+                        // Do not rend references to out-of-band large images.
+                        node.data.remove("ref");
+                        node.data.remove("preref");
+                    }
                 }
                 return node;
             }
