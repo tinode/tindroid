@@ -100,7 +100,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-crashlytics:18.3.2'
+    implementation 'com.google.firebase:firebase-crashlytics:18.3.5'
     implementation 'com.google.firebase:firebase-messaging:23.1.1'
 
     // Don't change to 2.7182... The 2.8 is the latest.
