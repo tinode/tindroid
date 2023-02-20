@@ -607,11 +607,11 @@ public class AttachmentHandler extends Worker {
 
                     // Upload results.
                     // noinspection unchecked
-                    PromisedReply<ServerMessage>[] uploadResults = (PromisedReply<ServerMessage>[]) new PromisedReply[2];
+                    PromisedReply<ServerMessage>[] uploadPromises = (PromisedReply<ServerMessage>[]) new PromisedReply[2];
 
                     // Upload large media.
                     mUploader = Cache.getTinode().getLargeFileHelper();
-                    uploadResults[0] = mUploader.uploadAsync(is, uploadDetails.fileName,
+                    uploadPromises[0] = mUploader.uploadAsync(is, uploadDetails.fileName,
                             uploadDetails.mimeType, uploadDetails.fileSize,
                             topicName, (progress, size) -> setProgressAsync(new Data.Builder()
                                     .putAll(result.build())
@@ -621,22 +621,23 @@ public class AttachmentHandler extends Worker {
 
                     // Optionally upload video poster.
                     if (uploadDetails.previewRef != null) {
-                        uploadResults[1] = mUploader.uploadAsync(new ByteArrayInputStream(uploadDetails.previewBits),
+                        uploadPromises[1] = mUploader.uploadAsync(new ByteArrayInputStream(uploadDetails.previewBits),
                                 "poster", uploadDetails.previewMime, uploadDetails.previewSize,
                                 topicName, null);
                         // ByteArrayInputStream:close() is a noop. No need to call close().
                     } else {
-                        uploadResults[1] = null;
+                        uploadPromises[1] = null;
                     }
 
                     ServerMessage[] msgs = new ServerMessage[2];
                     try {
                         // Wait for uploads to finish. This is a long-running blocking call.
-                        Object[] objs = PromisedReply.allOf(uploadResults).getResult();
+                        Object[] objs = PromisedReply.allOf(uploadPromises).getResult();
                         msgs[0] = (ServerMessage) objs[0];
                         msgs[1] = (ServerMessage) objs[1];
                     } catch (Exception ex) {
-                        throw new CancellationException();
+                        store.msgFailed(topic, msgId);
+                        throw ex;
                     }
 
                     mUploader = null;
@@ -693,7 +694,7 @@ public class AttachmentHandler extends Worker {
         } catch (CancellationException ignored) {
             result.putString(ARG_ERROR, context.getString(R.string.canceled));
             Log.d(TAG, "Upload cancelled");
-        } catch (IOException | SecurityException | IllegalArgumentException ex) {
+        } catch (Exception ex) {
             result.putString(ARG_ERROR, ex.getMessage());
             Log.w(TAG, "Failed to upload file", ex);
         } finally {

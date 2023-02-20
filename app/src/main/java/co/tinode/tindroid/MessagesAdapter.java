@@ -637,10 +637,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 holder.mCancelProgress.setOnClickListener(v -> {
                     cancelUpload(msgId);
                     holder.mProgress.setVisibility(View.GONE);
+                    // Show 'canceled'.
+                    holder.mProgressResult.setText(R.string.canceled);
                     holder.mProgressResult.setVisibility(View.VISIBLE);
                 });
             } else if (uploadFailed) {
-                // Show the word 'canceled'.
+                // Show 'failed'.
+                holder.mProgressResult.setText(R.string.failed);
                 holder.mProgressResult.setVisibility(View.VISIBLE);
                 // Hide progress bar.
                 holder.mProgress.setVisibility(View.GONE);
@@ -1032,7 +1035,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         final ProgressBar mProgressBar;
         final AppCompatImageButton mCancelProgress;
         final View mProgress;
-        final View mProgressResult;
+        final TextView mProgressResult;
         final GestureDetector mGestureDetector;
         int seqId = 0;
 
