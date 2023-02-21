@@ -642,8 +642,12 @@ public class CallFragment extends Fragment {
     }
 
     private void sendToPeer(String msg) {
-        mDataChannel.send(new DataChannel.Buffer(
-                ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8)), false));
+        if (mDataChannel != null) {
+            mDataChannel.send(new DataChannel.Buffer(
+                    ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8)), false));
+        } else {
+            Log.w(TAG, "Data channel is null. Peer will not receive the message: '" + msg + "'");
+        }
     }
 
     // Data channel observer for receiving video mute/unmute events.
