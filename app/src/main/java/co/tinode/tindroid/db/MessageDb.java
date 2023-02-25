@@ -778,6 +778,20 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Deletes all records from 'messages' table.
+     *
+     * @param db Database to use.
+     */
+    static void truncateTable(SQLiteDatabase db) {
+        try {
+            // 'DELETE FROM table' in SQLite is equivalent to truncation.
+            db.delete(TABLE_NAME, null, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
+    }
+
+    /**
      * Delete failed messages in a given topic.
      *
      * @param db      Database to use.

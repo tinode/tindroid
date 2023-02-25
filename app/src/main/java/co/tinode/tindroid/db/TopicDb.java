@@ -535,6 +535,20 @@ public class TopicDb implements BaseColumns {
     }
 
     /**
+     * Deletes all records from 'topics' table.
+     *
+     * @param db Database to use.
+     */
+    static void truncateTable(SQLiteDatabase db) {
+        try {
+            // 'DELETE FROM table' in SQLite is equivalent to truncation.
+            db.delete(TABLE_NAME, null, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
+    }
+
+    /**
      * Given topic name, get it's database _id
      *
      * @param db    database

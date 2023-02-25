@@ -272,6 +272,15 @@ public class BaseDb extends SQLiteOpenHelper {
         }
     }
 
+    void clearDb() {
+        SQLiteDatabase db = sInstance.getWritableDatabase();
+        MessageDb.truncateTable(db);
+        SubscriberDb.truncateTable(db);
+        TopicDb.truncateTable(db);
+        UserDb.truncateTable(db);
+        AccountDb.truncateTable(db);
+    }
+
     void updateCredentials(String[] credMethods) {
         if (mAcc != null) {
             if (AccountDb.updateCredentials(sInstance.getWritableDatabase(), credMethods)) {

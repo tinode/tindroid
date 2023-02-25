@@ -2,8 +2,10 @@ package co.tinode.tindroid.db;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 import java.util.Date;
 
@@ -80,6 +82,7 @@ public class UserDb implements BaseColumns {
      */
     static final String DROP_INDEX =
             "DROP INDEX IF EXISTS " + INDEX_NAME;
+    private static final String TAG = "UserDb";
 
     /**
      * Save user to DB
@@ -166,6 +169,20 @@ public class UserDb implements BaseColumns {
      */
     static void deleteAll(SQLiteDatabase db, long accId) {
         db.delete(TABLE_NAME, COLUMN_NAME_ACCOUNT_ID + "=" + accId, null);
+    }
+
+    /**
+     * Deletes all records from 'users' table.
+     *
+     * @param db Database to use.
+     */
+    static void truncateTable(SQLiteDatabase db) {
+        try {
+            // 'DELETE FROM table' in SQLite is equivalent to truncation.
+            db.delete(TABLE_NAME, null, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
     }
 
     /**
