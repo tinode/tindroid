@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -246,83 +247,95 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
     private void loadImage(final Activity activity, final Bundle args) {
         // Check if the bitmap is directly attached.
         int length = 0;
-        Bitmap bmp = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
-        if (bmp == null) {
+        Bitmap preview = args.getParcelable(AttachmentHandler.ARG_SRC_BITMAP);
+        if (preview == null) {
             // Check if bitmap is attached as an array of bytes (received).
             byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
             if (bits != null) {
-                bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                preview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
                 length = bits.length;
             }
         }
 
-        if (bmp == null) {
-            // Preview large image before sending.
-            Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
-            if (uri != null) {
-                // Local image.
-                final ContentResolver resolver = activity.getContentResolver();
-                // Resize image to ensure it's under the maximum in-band size.
-                try {
-                    InputStream is = resolver.openInputStream(uri);
-                    if (is != null) {
-                        bmp = BitmapFactory.decodeStream(is, null, null);
-                        is.close();
-                    }
-                    // Make sure the bitmap is properly oriented in preview.
-                    is = resolver.openInputStream(uri);
-                    if (is != null) {
-                        ExifInterface exif = new ExifInterface(is);
-                        int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
-                                ExifInterface.ORIENTATION_UNDEFINED);
-                        if (bmp != null) {
-                            bmp = UiUtils.rotateBitmap(bmp, orientation);
-                        }
-                        is.close();
-                    }
-                } catch (IOException ex) {
-                    Log.i(TAG, "Failed to read image from " + uri, ex);
+        // Preview large image before sending.
+        Bitmap bmp = null;
+        Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
+        if (uri != null) {
+            // Local image.
+            final ContentResolver resolver = activity.getContentResolver();
+            // Resize image to ensure it's under the maximum in-band size.
+            try {
+                InputStream is = resolver.openInputStream(uri);
+                if (is != null) {
+                    bmp = BitmapFactory.decodeStream(is, null, null);
+                    is.close();
                 }
-            } else {
-                // Remote image.
-                final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
-                if (ref != null) {
-                    mRemoteState = RemoteState.LOADING;
-                    Picasso.get().load(ref)
-                            .error(R.drawable.ic_broken_image)
-                            .into(mImageView, new Callback() {
-                                @Override
-                                public void onSuccess() {
-                                    mRemoteState = RemoteState.SUCCESS;
-
-                                    Activity activity = getActivity();
-                                    if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
-                                        return;
-                                    }
-
-                                    final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
-                                    mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
-                                    mWorkingRect = new RectF(mInitialRect);
-                                    mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
-                                    mWorkingMatrix = new Matrix(mMatrix);
-                                    mImageView.setImageMatrix(mMatrix);
-                                    mImageView.setScaleType(ImageView.ScaleType.MATRIX);
-                                    mImageView.enableOverlay(false);
-
-                                    activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
-                                    setupImagePostview(activity, args, bmp.getByteCount());
-                                }
-
-                                @Override
-                                public void onError(Exception e) {
-                                    mRemoteState = RemoteState.FAILED;
-                                    Log.i(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
-                                    mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                    ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
-                                }
-                            });
+                // Make sure the bitmap is properly oriented in preview.
+                is = resolver.openInputStream(uri);
+                if (is != null) {
+                    ExifInterface exif = new ExifInterface(is);
+                    int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                            ExifInterface.ORIENTATION_UNDEFINED);
+                    if (bmp != null) {
+                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    }
+                    is.close();
                 }
+            } catch (IOException ex) {
+                Log.i(TAG, "Failed to read image from " + uri, ex);
             }
+        } else {
+            // Remote image.
+            final Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
+            if (ref != null) {
+                mRemoteState = RemoteState.LOADING;
+                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                RequestCreator rc = Picasso.get().load(ref)
+                        .error(R.drawable.ic_broken_image);
+                if (preview != null) {
+                    rc = rc.placeholder(new BitmapDrawable(getResources(), preview));
+                    // No need to show preview separately from Picasso.
+                    preview = null;
+                } else {
+                    rc = rc.placeholder(R.drawable.ic_image);
+                }
+
+                rc.into(mImageView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        mRemoteState = RemoteState.SUCCESS;
+                        Log.i(TAG, "Remote load: success" + ref);
+                        Activity activity = getActivity();
+                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                            return;
+                        }
+
+                        final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+                        mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
+                        mWorkingRect = new RectF(mInitialRect);
+                        mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
+                        mWorkingMatrix = new Matrix(mMatrix);
+                        mImageView.setImageMatrix(mMatrix);
+                        mImageView.setScaleType(ImageView.ScaleType.MATRIX);
+                        mImageView.enableOverlay(false);
+
+                        activity.findViewById(R.id.metaPanel).setVisibility(View.VISIBLE);
+                        setupImagePostview(activity, args, bmp.getByteCount());
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        mRemoteState = RemoteState.FAILED;
+                        Log.w(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
+                        mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                        ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
+                    }
+                });
+            }
+        }
+
+        if (bmp == null) {
+            bmp = preview;
         }
 
         if (bmp != null) {
@@ -367,14 +380,11 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
             } else {
                 mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
             }
-        } else if (mRemoteState != RemoteState.SUCCESS) {
-            // Show placeholder or a broken image.
-                mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                mImageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
-                        mRemoteState == RemoteState.LOADING ?
-                                R.drawable.ic_image :
-                                R.drawable.ic_broken_image,
-                        null));
+        } else if (mRemoteState == RemoteState.NONE) {
+            // Local broken image.
+            mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            mImageView.setImageDrawable(ResourcesCompat.getDrawable(getResources(),
+                            R.drawable.ic_broken_image, null));
             activity.findViewById(R.id.metaPanel).setVisibility(View.INVISIBLE);
             ((MenuHost) activity).removeMenuProvider(this);
         }
@@ -424,16 +434,13 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
 
     @Override
     public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        menu.clear();
         inflater.inflate(R.menu.menu_download, menu);
     }
 
     @Override
     public boolean onMenuItemSelected(@NonNull MenuItem item) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return false;
-        }
+        final Activity activity = requireActivity();
 
         if (item.getItemId() == R.id.action_download) {
             // Save image to Gallery.
