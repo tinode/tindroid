@@ -648,7 +648,7 @@ public class CallFragment extends Fragment {
 
     // Data channel observer for receiving video mute/unmute events.
     private class DCObserver implements DataChannel.Observer {
-        private DataChannel mChannel;
+        private final DataChannel mChannel;
         public DCObserver(DataChannel chan) {
             super();
             mChannel = chan;

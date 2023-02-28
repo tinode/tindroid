@@ -193,11 +193,9 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         if (draftyBody != null) {
                             @SuppressLint("ResourceType") @StyleableRes int[] attrs = {android.R.attr.textSize};
                             float fontSize = 14f;
-                            try {
-                                TypedArray ta = obtainStyledAttributes(R.style.TextAppearance_Compat_Notification, attrs);
-                                fontSize = ta.getDimension(0, 14f);
-                                ta.recycle();
-                            } catch (Resources.NotFoundException ignored) {}
+                            try (TypedArray ta = obtainStyledAttributes(R.style.TextAppearance_Compat_Notification, attrs)) {
+                                fontSize = ta.getDimension(0, fontSize);
+                            }
                             body = draftyBody.shorten(MAX_MESSAGE_LENGTH, true)
                                     .format(new FontFormatter(this, fontSize));
                         } else {
