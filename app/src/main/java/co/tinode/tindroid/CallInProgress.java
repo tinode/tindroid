@@ -54,7 +54,7 @@ public class CallInProgress {
         }
     }
 
-    public void endCall() {
+    public synchronized void endCall() {
         if (mConnection != null) {
             if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
                 Log.i("CallInProgress", "=== CALL DISCONNECTED");

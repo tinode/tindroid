@@ -4,6 +4,7 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.NotificationManager;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
@@ -1170,7 +1171,12 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
-        mFilePickerLauncher.launch("*/*");
+        try {
+            mFilePickerLauncher.launch("*/*");
+        } catch (ActivityNotFoundException ex) {
+            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Unable to start file picker", ex);
+        }
     }
 
     private void openMediaSelector(@NonNull final Activity activity) {
