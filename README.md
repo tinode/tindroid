@@ -103,6 +103,7 @@ The app is currently available in the following languages:
 * Chinese (traditional)
 * French
 * German
+* Hindi
 * Korean
 * Portuguese
 * Russian
