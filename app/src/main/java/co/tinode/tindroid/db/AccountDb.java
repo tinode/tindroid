@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 /**
  * List of Tinode accounts.
@@ -21,6 +22,7 @@ public class AccountDb implements BaseColumns {
     private static final String COLUMN_NAME_HOST_URI = "host_uri";
     private static final String COLUMN_NAME_CRED_METHODS = "cred_methods";
     private static final String COLUMN_NAME_DEVICE_ID = "device_id";
+    private static final String TAG = "AccountDb";
 
     /**
      * Statements to drop accounts table and index
@@ -118,6 +120,20 @@ public class AccountDb implements BaseColumns {
         TopicDb.deleteAll(db, acc.id);
         UserDb.deleteAll(db, acc.id);
         db.delete(TABLE_NAME, _ID + "=" + acc.id, null);
+    }
+
+    /**
+     * Deletes all records from 'accounts' table.
+     *
+     * @param db Database to use.
+     */
+    static void truncateTable(SQLiteDatabase db) {
+        try {
+            // 'DELETE FROM table' in SQLite is equivalent to truncation.
+            db.delete(TABLE_NAME, null, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
     }
 
     static StoredAccount getByUid(SQLiteDatabase db, String uid) {

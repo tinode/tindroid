@@ -261,6 +261,20 @@ public class SubscriberDb implements BaseColumns {
     }
 
     /**
+     * Deletes all records from 'subscribers' table.
+     *
+     * @param db Database to use.
+     */
+    static void truncateTable(SQLiteDatabase db) {
+        try {
+            // 'DELETE FROM table' in SQLite is equivalent to truncation.
+            db.delete(TABLE_NAME, null, null);
+        } catch (SQLException ex) {
+            Log.w(TAG, "Delete failed", ex);
+        }
+    }
+
+    /**
      * Get the next available senderId for the given topic. Min Id == 1.
      *
      * @param db      database

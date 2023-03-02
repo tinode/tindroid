@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import java.io.Closeable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
@@ -82,7 +81,9 @@ public class SqlStore implements Storage {
     }
 
     public void logout() {
+        // Clear the database.
         mDbh.setUid(null, null);
+        mDbh.clearDb();
     }
 
     @Override
