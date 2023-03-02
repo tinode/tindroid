@@ -65,10 +65,16 @@ public class CallConnectionService extends ConnectionService {
         final Uri callerUri = request.getAddress();
         conn.setAddress(callerUri, TelecomManager.PRESENTATION_ALLOWED);
 
-        Bundle extras = request.getExtras();
+        Bundle callParams = request.getExtras();
+        Bundle extras = callParams.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS);
+        if (extras == null) {
+            Log.w(TAG, "Dropped incoming due to null extras");
+            return null;
+        }
+
         boolean audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
         int seq = extras.getInt(Const.INTENT_EXTRA_SEQ);
-        conn.setExtras(extras.getBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS));
+        conn.setExtras(extras);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);

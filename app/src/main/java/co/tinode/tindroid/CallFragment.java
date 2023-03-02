@@ -166,10 +166,6 @@ public class CallFragment extends Fragment {
 
         mLayout = v.findViewById(R.id.callMainLayout);
 
-        AudioManager audioManager = (AudioManager) inflater.getContext().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
-        audioManager.setSpeakerphoneOn(true);
-
         // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
         mToggleSpeakerphoneBtn.setOnClickListener(v0 ->
                 toggleSpeakerphone((FloatingActionButton) v0));
@@ -206,6 +202,10 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        audioManager.setSpeakerphoneOn(!mAudioOnly);
+        mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
 
         if (!mTopic.isAttached()) {
             mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
@@ -254,6 +254,7 @@ public class CallFragment extends Fragment {
         if (ctx != null) {
             AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
             if (audioManager != null) {
+                audioManager.setMode(AudioManager.MODE_NORMAL);
                 audioManager.setMicrophoneMute(false);
                 audioManager.setSpeakerphoneOn(false);
             }
@@ -641,13 +642,17 @@ public class CallFragment extends Fragment {
     }
 
     private void sendToPeer(String msg) {
-        mDataChannel.send(new DataChannel.Buffer(
-                ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8)), false));
+        if (mDataChannel != null) {
+            mDataChannel.send(new DataChannel.Buffer(
+                    ByteBuffer.wrap(msg.getBytes(StandardCharsets.UTF_8)), false));
+        } else {
+            Log.w(TAG, "Data channel is null. Peer will not receive the message: '" + msg + "'");
+        }
     }
 
     // Data channel observer for receiving video mute/unmute events.
     private class DCObserver implements DataChannel.Observer {
-        private DataChannel mChannel;
+        private final DataChannel mChannel;
         public DCObserver(DataChannel chan) {
             super();
             mChannel = chan;

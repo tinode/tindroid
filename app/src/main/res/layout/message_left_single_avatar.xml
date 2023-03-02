@@ -53,7 +53,7 @@
                     android:focusable="false"
                     android:maxWidth="270dp"
                     android:minWidth="102dp"
-                    android:paddingStart="8dp"
+                    android:paddingStart="4dp"
                     android:paddingEnd="4dp"
                     android:textColor="?android:textColorPrimary"
                     tools:ignore="RtlSymmetry"

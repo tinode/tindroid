@@ -1,8 +1,10 @@
 package co.tinode.tindroid;
 
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
@@ -13,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
@@ -39,12 +42,22 @@ public class CallActivity extends AppCompatActivity  {
     private ComTopic<VxCard> mTopic;
     private EventListener mLoginListener;
 
+    private final BroadcastReceiver mFinishCallBroadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            CallActivity.this.finishCall();
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
+
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        lbm.registerReceiver(mFinishCallBroadcastReceiver, new IntentFilter(Const.INTENT_ACTION_CALL_CLOSE));
 
         final Intent intent = getIntent();
         final String action = intent != null ? intent.getAction() : null;
@@ -128,6 +141,9 @@ public class CallActivity extends AppCompatActivity  {
             mTinode.removeListener(mLoginListener);
         }
         Cache.endCallInProgress();
+
+        LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
+        lbm.unregisterReceiver(mFinishCallBroadcastReceiver);
 
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                 WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |

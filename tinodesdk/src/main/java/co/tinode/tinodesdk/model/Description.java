@@ -15,6 +15,8 @@ public class Description<DP, DR> implements Serializable {
     public Date updated;
     public Date touched;
 
+    public Boolean online;
+
     public Defacs defacs;
     public Acs acs;
     public int seq;
@@ -144,6 +146,11 @@ public class Description<DP, DR> implements Serializable {
             changed = mergePriv(desc.priv) || changed;
         }
 
+        if (desc.online != null && desc.online != online) {
+            online = desc.online;
+            changed = true;
+        }
+
         if (desc.seen != null) {
             if (seen == null) {
                 seen = desc.seen;
@@ -222,6 +229,11 @@ public class Description<DP, DR> implements Serializable {
                 changed = mergePriv((DR)sub.priv) || changed;
             } catch (ClassCastException ignored) {}
 
+        }
+
+        if (sub.online != null && sub.online != online) {
+            online = sub.online;
+            changed = true;
         }
 
         if (sub.seen != null) {

@@ -123,7 +123,10 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
         if (sub.priv != null) {
             priv = sub.priv;
         }
-        online = sub.online;
+
+        if (sub.online != null) {
+            online = sub.online;
+        }
 
         if ((topic == null || topic.equals("")) && sub.topic != null && !sub.topic.equals("")) {
             topic = sub.topic;

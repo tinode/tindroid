@@ -226,14 +226,31 @@ public class IncomingCallFragment extends Fragment
         activity.acceptCall();
     }
 
+    private void finishCall() {
+        final CallActivity activity = (CallActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            // We are done. Just quit.
+            return;
+        }
+        activity.finishCall();
+    }
+
     private class InfoListener implements Tinode.EventListener {
         @Override
         public void onInfoMessage(MsgServerInfo info) {
             if (mTopicName.equals(info.topic) && mSeq == info.seq) {
-                if (MsgServerInfo.parseWhat(info.what) == MsgServerInfo.What.CALL &&
-                        MsgServerInfo.parseEvent(info.event) == MsgServerInfo.Event.HANG_UP) {
-                    Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
-                    declineCall();
+                MsgServerInfo.Event event = MsgServerInfo.parseEvent(info.event);
+                if (MsgServerInfo.parseWhat(info.what) == MsgServerInfo.What.CALL) {
+                    switch(event) {
+                        case HANG_UP:
+                            Log.d(TAG, "Remote hangup: " + info.topic + ":" + info.seq);
+                            declineCall();
+                            break;
+                        case ACCEPT:
+                            Log.d(TAG, "Accepted by another device: " + info.topic + ":" + info.seq);
+                            finishCall();
+                            break;
+                    }
                 }
             }
         }

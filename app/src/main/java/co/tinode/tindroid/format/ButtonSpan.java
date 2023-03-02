@@ -11,6 +11,7 @@ import android.text.style.LineHeightSpan;
 import android.text.style.ReplacementSpan;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StyleableRes;
 
 // Span used to represent clickable buttons in Drafty forms.
 public class ButtonSpan extends ReplacementSpan implements LineHeightSpan {
@@ -48,7 +49,8 @@ public class ButtonSpan extends ReplacementSpan implements LineHeightSpan {
     ButtonSpan(final Context context, final float fontSize, float dipSize) {
         mDipSize = dipSize;
 
-        int[] attrs = {android.R.attr.textColorPrimary, android.R.attr.colorButtonNormal};
+        @SuppressLint("ResourceType") @StyleableRes int[] attrs =
+                {android.R.attr.textColorPrimary, android.R.attr.colorButtonNormal};
         TypedArray colors = context.obtainStyledAttributes(attrs);
         mTextColor = colors.getColor(0, 0x7bc9c2);
         @SuppressLint("ResourceType")

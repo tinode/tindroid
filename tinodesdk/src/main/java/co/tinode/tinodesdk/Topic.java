@@ -68,7 +68,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected Listener<DP, DR, SP, SR> mListener = null;
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
-    protected boolean mOnline = false;
+
     // ID of the last applied delete transaction. Different from 'clear' which is the highest known.
     protected int mMaxDel = 0;
     // Topic status: true if topic is deleted by remote, false otherwise.
@@ -99,9 +99,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected Topic(Tinode tinode, Subscription<SP, SR> sub) {
         this(tinode, sub.topic);
         mDesc.merge(sub);
-        if (sub.online != null) {
-            mOnline = sub.online;
-        }
     }
 
     protected Topic(Tinode tinode, String name, Description<DP, DR> desc) {
@@ -266,9 +263,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
         }
 
-        if (sub.online != null) {
-            mOnline = sub.online;
-        }
         return changed;
     }
 
@@ -773,14 +767,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @return true if topic is online, false otherwise.
      */
     public boolean getOnline() {
-        return mOnline;
+        return mDesc.online != null ? mDesc.online : false;
     }
 
     protected void setOnline(boolean online) {
-        if (online != mOnline) {
-            mOnline = online;
+        if (mDesc.online == null || online != mDesc.online) {
+            mDesc.online = online;
             if (mListener != null) {
-                mListener.onOnline(mOnline);
+                mListener.onOnline(mDesc.online);
             }
         }
     }
