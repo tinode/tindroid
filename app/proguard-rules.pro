@@ -42,3 +42,6 @@
 # Apparently it's OK to ignore warnings about missing classes:
 # https://github.com/square/okhttp/issues/3922
 -dontwarn okhttp3.internal.platform.ConscryptPlatform
+
+# Apparently mangling breaks references to material resources.
+-keep class com.google.android.material.R$drawable { *; }
