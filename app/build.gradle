@@ -102,7 +102,7 @@ dependencies {
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-crashlytics:18.3.5'
-    implementation 'com.google.firebase:firebase-messaging:23.1.1'
+    implementation 'com.google.firebase:firebase-messaging:23.1.2'
     implementation 'com.google.mlkit:barcode-scanning:17.0.3'
 
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.15'
