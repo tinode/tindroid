@@ -370,5 +370,7 @@
     <string name="confirmation_code_required">Confirmation code required</string>
     <string name="password_changed">Password changed</string>
     <string name="my_code">My Code</string>
-    <string name="scan_code">Scan Code</string>
+    <string name="scan_code">Scan code</string>
+    <string name="hint_enter_code">Configuration code</string>
+    <string name="code_required">Code required</string>
 </resources>

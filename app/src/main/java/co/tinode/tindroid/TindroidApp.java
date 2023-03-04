@@ -33,7 +33,6 @@ import android.os.HandlerThread;
 import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
-import android.util.JsonReader;
 import android.util.Log;
 
 import com.android.installreferrer.api.InstallReferrerClient;
@@ -51,7 +50,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 
@@ -68,12 +66,8 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
-import okhttp3.Call;
-import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
 
 /**
  * A class for providing global context for database access
@@ -405,61 +399,22 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     }
 
     private void fetchClientConfig(String referrerUrl) {
-        final String tinodeHosts = "https://hosts.tinode.co/id/";
         Log.i(TAG, "Got InstallReferrer URL: " + referrerUrl);
 
         if (TextUtils.isEmpty(referrerUrl)) {
             return;
         }
 
+        // https://play.google.com/store/apps/details?id=co.tinode.tindroidx&referrer=utm_source%3Dtinode%26utm_term%3Dshort_code
         Uri ref = Uri.parse(referrerUrl);
-        String source = ref.getQueryParameter("");
-        String short_code = ref.getQueryParameter("");
+        String source = ref.getQueryParameter("utm_source");
+        String short_code = ref.getQueryParameter("utm_term");
         if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
             Log.i(TAG, "InstallReferrer code is unavailable");
             return;
         }
-        OkHttpClient httpClient = new OkHttpClient();
-        Request req = new Request.Builder().url(tinodeHosts + short_code).build();
 
-        try (Response resp = httpClient.newCall(req).execute()) {
-            if (!resp.isSuccessful()) {
-                Log.i(TAG, "Client config request failed " + resp.code());
-                return;
-            }
-
-            ResponseBody body = resp.body();
-            if (body == null) {
-                Log.i(TAG, "Received empty client config");
-                return;
-            }
-
-            /*
-            {
-                "id": "AB6WU",
-                "api_url": "https://api.tinode.co",
-                "tos_url": "https://tinode.co/terms.html",
-                "privacy_url": "https://tinode.co/privacy.html",
-                "service_name": "Tinode",
-                "icon_small": "small/tn-60480b81.png",
-                "icon_large": "large/tn-60480b82.png",
-                "assets_base": "https://storage.googleapis.com/hosts.tinode.co/"
-            }
-            */
-            Map<String, String> config = new HashMap<>();
-            JsonReader reader = new JsonReader(body.charStream());
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String name = reader.nextName();
-                String value = reader.nextString();
-                config.put(name, value);
-            }
-            reader.endObject();
-
-        } catch (IOException ex) {
-            Log.i(TAG, "Failed to fetch client config", ex);
-        }
-
+        ClientConfig.fetchClientConfig(this, short_code);
     }
 
     // Read saved account credentials and try to connect to server using them.

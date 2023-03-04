@@ -874,6 +874,7 @@ public class UiUtils {
         }
 
         final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
+        //noinspection ConstantConditions
         bkg.setBounds(0, 0, width, height);
         result.setBounds(0, 0, width, height);
 
