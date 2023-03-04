@@ -76,7 +76,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         final LoginActivity parent = (LoginActivity) requireActivity();
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();

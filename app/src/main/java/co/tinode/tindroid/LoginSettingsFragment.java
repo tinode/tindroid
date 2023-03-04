@@ -75,7 +75,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
                 break;
             case Utils.PREFS_HOST_NAME:
                 preference.setSummary(getString(R.string.settings_host_name_explained,
-                        sharedPreferences.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context))));
+                        sharedPreferences.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName())));
                 break;
             default:
                 Log.w(TAG, "Unknown preference '" + key + "'");

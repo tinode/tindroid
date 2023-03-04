@@ -30,10 +30,16 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.JsonReader;
 import android.util.Log;
 
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerClient.InstallReferrerResponse;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
@@ -45,7 +51,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -60,8 +68,12 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
+import okhttp3.Call;
+import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 /**
  * A class for providing global context for database access
@@ -73,6 +85,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
     private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
+    private static final String PREF_FIRST_RUN = "firstRun";
     private static TindroidApp sContext;
 
     private static ContentObserver sContactsObserver = null;
@@ -102,8 +115,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         return sAppBuild;
     }
 
-    public static String getDefaultHostName(Context context) {
-        return context.getResources().getString(isEmulator() ?
+    public static String getDefaultHostName() {
+        return sContext.getResources().getString(isEmulator() ?
                 R.string.emulator_host_name :
                 R.string.default_host_name);
     }
@@ -199,7 +212,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         if (TextUtils.isEmpty(pref.getString(Utils.PREFS_HOST_NAME, null))) {
             // No preferences found. Save default values.
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString(Utils.PREFS_HOST_NAME, getDefaultHostName(this));
+            editor.putString(Utils.PREFS_HOST_NAME, getDefaultHostName());
             editor.putBoolean(Utils.PREFS_USE_TLS, getDefaultTLS());
             editor.apply();
         }
@@ -270,6 +283,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
+        // Check if the app was installed from an URL with attributed installation source.
+        // If yes, get the config from hosts.tinode.co.
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
+        if (prefs.getBoolean(PREF_FIRST_RUN, true)) {
+            Executors.newSingleThreadExecutor().execute(() ->
+                    getInstallReferrerFromClient(InstallReferrerClient.newBuilder(this).build()));
+        }
+
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
@@ -332,6 +353,115 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         return sVideoCache;
     }
 
+    // Check if the app was installed from an URL with attributed installation source.
+    private void handleInstallReferrer() {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
+        if (!prefs.getBoolean(PREF_FIRST_RUN, true)) {
+            return;
+        }
+
+        Executors.newSingleThreadExecutor().execute(() ->
+                getInstallReferrerFromClient(InstallReferrerClient.newBuilder(this).build()));
+    }
+
+    private void getInstallReferrerFromClient(InstallReferrerClient referrerClient) {
+        referrerClient.startConnection(new InstallReferrerStateListener() {
+            @SuppressLint("ApplySharedPref")
+            @Override
+            public void onInstallReferrerSetupFinished(int responseCode) {
+                switch (responseCode) {
+                    case InstallReferrerResponse.OK:
+                        ReferrerDetails response;
+                        try {
+                            response = referrerClient.getInstallReferrer();
+                        } catch (RemoteException ex) {
+                            Log.w(TAG, "Unable to retrieve installation source", ex);
+                            return;
+                        }
+
+                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
+                        prefs.edit().putBoolean(PREF_FIRST_RUN, false).commit();
+
+                        fetchClientConfig(response.getInstallReferrer());
+
+                        referrerClient.endConnection();
+                        break;
+
+                    case InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                        // API not available on the current Play Store app.
+                        Log.w(TAG, "InstallReferrer API not available");
+                        break;
+
+                    case InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                        // Connection couldn't be established.
+                        Log.w(TAG, "Failed to connect to PlayStore: InstallReferrer unavailable");
+                        break;
+                }
+            }
+
+            @Override
+            public void onInstallReferrerServiceDisconnected() { }
+        });
+    }
+
+    private void fetchClientConfig(String referrerUrl) {
+        final String tinodeHosts = "https://hosts.tinode.co/id/";
+        Log.i(TAG, "Got InstallReferrer URL: " + referrerUrl);
+
+        if (TextUtils.isEmpty(referrerUrl)) {
+            return;
+        }
+
+        Uri ref = Uri.parse(referrerUrl);
+        String source = ref.getQueryParameter("");
+        String short_code = ref.getQueryParameter("");
+        if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
+            Log.i(TAG, "InstallReferrer code is unavailable");
+            return;
+        }
+        OkHttpClient httpClient = new OkHttpClient();
+        Request req = new Request.Builder().url(tinodeHosts + short_code).build();
+
+        try (Response resp = httpClient.newCall(req).execute()) {
+            if (!resp.isSuccessful()) {
+                Log.i(TAG, "Client config request failed " + resp.code());
+                return;
+            }
+
+            ResponseBody body = resp.body();
+            if (body == null) {
+                Log.i(TAG, "Received empty client config");
+                return;
+            }
+
+            /*
+            {
+                "id": "AB6WU",
+                "api_url": "https://api.tinode.co",
+                "tos_url": "https://tinode.co/terms.html",
+                "privacy_url": "https://tinode.co/privacy.html",
+                "service_name": "Tinode",
+                "icon_small": "small/tn-60480b81.png",
+                "icon_large": "large/tn-60480b82.png",
+                "assets_base": "https://storage.googleapis.com/hosts.tinode.co/"
+            }
+            */
+            Map<String, String> config = new HashMap<>();
+            JsonReader reader = new JsonReader(body.charStream());
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                String value = reader.nextString();
+                config.put(name, value);
+            }
+            reader.endObject();
+
+        } catch (IOException ex) {
+            Log.i(TAG, "Failed to fetch client config", ex);
+        }
+
+    }
+
     // Read saved account credentials and try to connect to server using them.
     // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
     @SuppressLint("StaticFieldLeak")
@@ -375,7 +505,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     try {
                         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
                         // Sync call throws on error.
-                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName(TindroidApp.this)),
+                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
                                 pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
                                 false).getResult();
                         if (!tinode.isAuthenticated()) {
