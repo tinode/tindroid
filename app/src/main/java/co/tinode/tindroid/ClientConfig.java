@@ -7,6 +7,8 @@ import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +36,42 @@ public class ClientConfig {
     private static final String KEY_ICON_SMALL = "icon_small";
     private static final String KEY_ICON_LARGE = "icon_large";
     private static final String KEY_ASSET_BASE = "assets_base";
+
+    private static Map<String, String> sRawConfig = null;
+
+    public String id;
+    public String api_url;
+    public String tos_url;
+    public String privacy_url;
+    public String service_name;
+    public String icon_small;
+    public String icon_large;
+
+    private static ClientConfig sConfig = null;
+
+    private ClientConfig() {}
+
+    public static ClientConfig getConfig(Context context) {
+        if (sConfig == null) {
+            if (sRawConfig == null) {
+                try {
+                    loadConfig(context);
+                    if (sRawConfig != null) {
+                        sConfig = new ClientConfig();
+                        sConfig.id = sRawConfig.get(KEY_ID);
+                        sConfig.api_url = sRawConfig.get(KEY_API_URL);
+                        sConfig.tos_url = sRawConfig.get(KEY_TOS_URL);
+                        sConfig.privacy_url = sRawConfig.get(KEY_PRIVACY_URL);
+                        sConfig.service_name = sRawConfig.get(KEY_SERVICE_NAME);
+                        sConfig.icon_small = sRawConfig.get(KEY_ICON_SMALL);
+                        sConfig.icon_large = sRawConfig.get(KEY_ICON_LARGE);
+                    }
+                } catch (IOException ignored) {}
+            }
+        }
+
+        return sConfig;
+    }
 
     static void fetchClientConfig(Context context, String short_code) {
         OkHttpClient httpClient = new OkHttpClient();
@@ -74,20 +112,25 @@ public class ClientConfig {
             }
             String iconSmall = config.get(KEY_ICON_SMALL);
             if (!TextUtils.isEmpty(assetBase)) {
-                saveAsset(context, httpClient, assetBase + iconSmall, "icon_small");
+                saveAsset(context, httpClient, assetBase + iconSmall, KEY_ICON_SMALL);
             }
             String iconLarge = config.get(KEY_ICON_LARGE);
             if (!TextUtils.isEmpty(assetBase)) {
-                saveAsset(context, httpClient, assetBase + iconLarge, "icon_large");
+                saveAsset(context, httpClient, assetBase + iconLarge, KEY_ICON_LARGE);
             }
+            sRawConfig = config;
         } catch (IOException ex) {
             Log.i(TAG, "Failed to fetch client config", ex);
         }
     }
 
     static Map<String, String> readConfig(Context context, byte[] input) throws IOException {
+        return readConfig(context, new ByteArrayInputStream(input));
+    }
+
+    static Map<String, String> readConfig(Context context, InputStream input) throws IOException {
         Map<String, String> config = new HashMap<>();
-        JsonReader reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(input)));
+        JsonReader reader = new JsonReader(new InputStreamReader(input));
         reader.beginObject();
         while (reader.hasNext()) {
             String name = reader.nextName();
@@ -130,7 +173,16 @@ public class ClientConfig {
         }
     }
 
-    static void loadConfig() {
-        
+    private static void loadConfig(Context context) throws IOException {
+        try (FileInputStream fis = context.openFileInput(CONFIG_FILE_NAME)) {
+            sRawConfig = readConfig(context, fis);
+        }
+        if (sRawConfig == null) {
+            return;
+        }
+        File asset = new File(context.getFilesDir(), KEY_ICON_SMALL);
+        sRawConfig.put(KEY_ICON_SMALL, asset.getAbsolutePath());
+        asset = new File(context.getFilesDir(), KEY_ICON_LARGE);
+        sRawConfig.put(KEY_ICON_LARGE, asset.getAbsolutePath());
     }
 }
