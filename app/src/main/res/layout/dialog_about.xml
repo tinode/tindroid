@@ -16,6 +16,7 @@
             android:layout_height="@dimen/spacer_text" />
 
         <TextView
+            android:id="@+id/appTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -99,6 +100,7 @@
         </LinearLayout>
 
         <ImageView
+            android:id="@+id/imageLogo"
             android:layout_width="128sp"
             android:layout_height="128sp"
             android:layout_gravity="center"
@@ -113,6 +115,7 @@
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
         <TextView
+            android:id="@+id/appHomePage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
@@ -121,5 +124,30 @@
             android:padding="8dp"
             android:textAppearance="?android:attr/textAppearanceMedium" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/byTinode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"
+        android:gravity="center_horizontal"
+        android:paddingBottom="4dp">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/logo_src"
+            android:contentDescription="@string/tinode_logo"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tinode"
+            android:textSize="@dimen/button_text"
+            android:enabled="true" />
     </LinearLayout>
 </RelativeLayout>

@@ -1,12 +1,14 @@
 package co.tinode.tindroid;
 
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -16,7 +18,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
@@ -27,20 +33,14 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class LoginFragment extends Fragment implements View.OnClickListener {
-
+public class LoginFragment extends Fragment implements MenuProvider, View.OnClickListener {
     private static final String TAG = "LoginFragment";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        setHasOptionsMenu(true);
-
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
@@ -54,9 +54,27 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
 
         if (!TextUtils.isEmpty(login)) {
+            Log.i(TAG, "Login not empty");
             TextView loginView = fragment.findViewById(R.id.editLogin);
             if (loginView != null) {
                 loginView.setText(login);
+            }
+        } else if (UiUtils.isAppFirstRun(activity)) {
+            Log.i(TAG, "First run");
+            View branding = fragment.findViewById(R.id.brandingSetup);
+            branding.setVisibility(View.VISIBLE);
+            branding.setOnClickListener(v ->
+                    ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_BRANDING, null));
+        } else {
+            Log.i(TAG, "NOT first run");
+            BrandingConfig config;
+            if ((config = BrandingConfig.getConfig(activity)) != null) {
+                Bitmap logo = BrandingConfig.getLargeIcon(activity);
+                if (logo != null) {
+                    ((AppCompatImageView) fragment.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+                    ((TextView) fragment.findViewById(R.id.appTitle)).setText(config.service_name);
+                    fragment.findViewById(R.id.byTinode).setVisibility(View.VISIBLE);
+                }
             }
         }
 
@@ -66,12 +84,11 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         return fragment;
     }
 
-
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_login, menu);
-        super.onCreateOptionsMenu(menu, inflater);
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this,
+                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     /**
@@ -80,10 +97,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
      * @param v ignored
      */
     public void onClick(View v) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
-            return;
-        }
+        final LoginActivity parent = (LoginActivity) requireActivity();
 
         if (v.getId() == R.id.forgotPassword) {
             parent.showFragment(LoginActivity.FRAGMENT_RESET, null);
@@ -156,5 +170,15 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 return null;
                             }
                         });
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menuInflater.inflate(R.menu.menu_login, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        return false;
     }
 }

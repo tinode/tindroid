@@ -1,9 +1,18 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.RemoteException;
 import android.text.TextUtils;
 import android.util.JsonReader;
 import android.util.Log;
+
+import com.android.installreferrer.api.InstallReferrerClient;
+import com.android.installreferrer.api.InstallReferrerStateListener;
+import com.android.installreferrer.api.ReferrerDetails;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -22,7 +31,7 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
-public class ClientConfig {
+public class BrandingConfig {
     private static final String TAG = "ClientConfig";
     private static final String HOSTS = "https://hosts.tinode.co/id/";
     private static final int CHUNK_SIZE = 2048;
@@ -47,17 +56,17 @@ public class ClientConfig {
     public String icon_small;
     public String icon_large;
 
-    private static ClientConfig sConfig = null;
+    private static BrandingConfig sConfig = null;
 
-    private ClientConfig() {}
+    private BrandingConfig() {}
 
-    public static ClientConfig getConfig(Context context) {
+    public static BrandingConfig getConfig(Context context) {
         if (sConfig == null) {
             if (sRawConfig == null) {
                 try {
                     loadConfig(context);
                     if (sRawConfig != null) {
-                        sConfig = new ClientConfig();
+                        sConfig = new BrandingConfig();
                         sConfig.id = sRawConfig.get(KEY_ID);
                         sConfig.api_url = sRawConfig.get(KEY_API_URL);
                         sConfig.tos_url = sRawConfig.get(KEY_TOS_URL);
@@ -73,7 +82,24 @@ public class ClientConfig {
         return sConfig;
     }
 
-    static void fetchClientConfig(Context context, String short_code) {
+    public static Bitmap getSmallIcon(Context context) {
+        BrandingConfig conf = getConfig(context);
+        if (conf == null || TextUtils.isEmpty(conf.icon_small)) {
+            return null;
+        }
+        return BitmapFactory.decodeFile(conf.icon_small);
+    }
+
+    public static Bitmap getLargeIcon(Context context) {
+        BrandingConfig conf = getConfig(context);
+        if (conf == null || TextUtils.isEmpty(conf.icon_large)) {
+            return null;
+        }
+        return BitmapFactory.decodeFile(conf.icon_large);
+    }
+
+    static void fetchConfigFromServer(final Context context, String short_code) {
+
         OkHttpClient httpClient = new OkHttpClient();
         Request req = new Request.Builder().url(HOSTS + short_code).build();
 
@@ -105,7 +131,7 @@ public class ClientConfig {
             try (FileOutputStream fos = context.openFileOutput(CONFIG_FILE_NAME, Context.MODE_PRIVATE)) {
                 fos.write(json.getBytes());
             }
-            Map<String, String> config = readConfig(context, json.getBytes());
+            Map<String, String> config = readConfig(json.getBytes());
             String assetBase = config.get(KEY_ASSET_BASE);
             if (TextUtils.isEmpty(assetBase)) {
                 return;
@@ -119,16 +145,18 @@ public class ClientConfig {
                 saveAsset(context, httpClient, assetBase + iconLarge, KEY_ICON_LARGE);
             }
             sRawConfig = config;
+
+            UiUtils.doneAppFirstRun(context);
         } catch (IOException ex) {
             Log.i(TAG, "Failed to fetch client config", ex);
         }
     }
 
-    static Map<String, String> readConfig(Context context, byte[] input) throws IOException {
-        return readConfig(context, new ByteArrayInputStream(input));
+    static Map<String, String> readConfig(byte[] input) throws IOException {
+        return readConfig(new ByteArrayInputStream(input));
     }
 
-    static Map<String, String> readConfig(Context context, InputStream input) throws IOException {
+    static Map<String, String> readConfig(InputStream input) throws IOException {
         Map<String, String> config = new HashMap<>();
         JsonReader reader = new JsonReader(new InputStreamReader(input));
         reader.beginObject();
@@ -175,7 +203,7 @@ public class ClientConfig {
 
     private static void loadConfig(Context context) throws IOException {
         try (FileInputStream fis = context.openFileInput(CONFIG_FILE_NAME)) {
-            sRawConfig = readConfig(context, fis);
+            sRawConfig = readConfig(fis);
         }
         if (sRawConfig == null) {
             return;
@@ -184,5 +212,58 @@ public class ClientConfig {
         sRawConfig.put(KEY_ICON_SMALL, asset.getAbsolutePath());
         asset = new File(context.getFilesDir(), KEY_ICON_LARGE);
         sRawConfig.put(KEY_ICON_LARGE, asset.getAbsolutePath());
+    }
+
+    // Check if the app was installed from an URL with attributed installation source.
+
+    static void getInstallReferrerFromClient(Context context, InstallReferrerClient referrerClient) {
+        referrerClient.startConnection(new InstallReferrerStateListener() {
+            @SuppressLint("ApplySharedPref")
+            @Override
+            public void onInstallReferrerSetupFinished(int responseCode) {
+                switch (responseCode) {
+
+                    case InstallReferrerClient.InstallReferrerResponse.OK:
+                        ReferrerDetails response;
+                        try {
+                            response = referrerClient.getInstallReferrer();
+                        } catch (RemoteException ex) {
+                            Log.w(TAG, "Unable to retrieve installation source", ex);
+                            return;
+                        }
+
+                        String referrerUrl = response.getInstallReferrer();
+                        Log.i(TAG, "Got InstallReferrer URL: " + referrerUrl);
+
+                        if (!TextUtils.isEmpty(referrerUrl)) {
+                            // https://play.google.com/store/apps/details?id=co.tinode.tindroidx&referrer=utm_source%3Dtinode%26utm_term%3Dshort_code
+                            Uri ref = Uri.parse(referrerUrl);
+                            String source = ref.getQueryParameter("utm_source");
+                            String short_code = ref.getQueryParameter("utm_term");
+                            if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
+                                Log.i(TAG, "InstallReferrer code is unavailable");
+                            } else {
+                                fetchConfigFromServer(context, short_code);
+                            }
+                        }
+
+                        referrerClient.endConnection();
+                        break;
+
+                    case InstallReferrerClient.InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
+                        // API not available on the current Play Store app.
+                        Log.w(TAG, "InstallReferrer API not available");
+                        break;
+
+                    case InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE:
+                        // Connection couldn't be established.
+                        Log.w(TAG, "Failed to connect to PlayStore: InstallReferrer unavailable");
+                        break;
+                }
+            }
+
+            @Override
+            public void onInstallReferrerServiceDisconnected() { }
+        });
     }
 }

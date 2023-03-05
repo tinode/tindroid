@@ -11,20 +11,20 @@
     tools:context=".LoginFragment">
 
     <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/imageLogo"
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:src="@drawable/logo_src"
         android:layout_alignParentStart="true"
-        android:id="@+id/imageLogo"
         android:layout_alignParentTop="true"
         android:contentDescription="@string/tinode_logo"/>
 
     <TextView
+        android:id="@+id/appTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:text="@string/app_description"
-        android:id="@+id/appTitle"
         android:layout_below="@+id/imageLogo"
         android:layout_marginBottom="8dp"
         android:layout_centerHorizontal="true" />
@@ -82,4 +82,53 @@
         android:layout_below="@+id/signIn"
         android:layout_centerHorizontal="true" />
 
+    <LinearLayout
+        android:id="@+id/brandingSetup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:gravity="center_horizontal"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:src="@drawable/ic_qr_code"
+            android:contentDescription="@string/configure_connection"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/configure_connection"
+            android:textSize="@dimen/button_text"
+            android:enabled="true" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/byTinode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:visibility="gone"
+        android:gravity="center_horizontal">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="8dp"
+            android:src="@drawable/logo_src"
+            android:contentDescription="@string/tinode_logo"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tinode"
+            android:textSize="@dimen/button_text"
+            android:enabled="true" />
+    </LinearLayout>
 </RelativeLayout>

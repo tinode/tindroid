@@ -9,6 +9,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
@@ -81,6 +82,7 @@ import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -124,6 +126,8 @@ public class UiUtils {
     private static final int LOGO_LAYER_TYPING = 2;
     // If StoredMessage activity is visible, this is the current topic in that activity.
     private static String sVisibleTopic = null;
+
+    private static final String PREF_FIRST_RUN = "firstRun";
 
     public enum MsgAction {
         NONE, REPLY, FORWARD, EDIT
@@ -1464,6 +1468,16 @@ public class UiUtils {
             }
         }
         return methods;
+    }
+
+    static boolean isAppFirstRun(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getBoolean(PREF_FIRST_RUN, true);
+    }
+
+    static void doneAppFirstRun(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean(PREF_FIRST_RUN, false).apply();
     }
 
     interface ProgressIndicator {

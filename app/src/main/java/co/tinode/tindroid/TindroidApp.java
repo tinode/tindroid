@@ -30,15 +30,11 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.RemoteException;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.installreferrer.api.InstallReferrerClient;
-import com.android.installreferrer.api.InstallReferrerClient.InstallReferrerResponse;
-import com.android.installreferrer.api.InstallReferrerStateListener;
-import com.android.installreferrer.api.ReferrerDetails;
 import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
@@ -79,7 +75,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
     private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
-    private static final String PREF_FIRST_RUN = "firstRun";
     private static TindroidApp sContext;
 
     private static ContentObserver sContactsObserver = null;
@@ -279,10 +274,10 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     public void onStart(@NonNull LifecycleOwner owner) {
         // Check if the app was installed from an URL with attributed installation source.
         // If yes, get the config from hosts.tinode.co.
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
-        if (prefs.getBoolean(PREF_FIRST_RUN, true)) {
+        if (UiUtils.isAppFirstRun(sContext)) {
             Executors.newSingleThreadExecutor().execute(() ->
-                    getInstallReferrerFromClient(InstallReferrerClient.newBuilder(this).build()));
+                    BrandingConfig.getInstallReferrerFromClient(sContext,
+                            InstallReferrerClient.newBuilder(this).build()));
         }
 
         // Check if the app has an account already. If so, initialize the shared connection with the server.
@@ -345,76 +340,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         }
 
         return sVideoCache;
-    }
-
-    // Check if the app was installed from an URL with attributed installation source.
-    private void handleInstallReferrer() {
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
-        if (!prefs.getBoolean(PREF_FIRST_RUN, true)) {
-            return;
-        }
-
-        Executors.newSingleThreadExecutor().execute(() ->
-                getInstallReferrerFromClient(InstallReferrerClient.newBuilder(this).build()));
-    }
-
-    private void getInstallReferrerFromClient(InstallReferrerClient referrerClient) {
-        referrerClient.startConnection(new InstallReferrerStateListener() {
-            @SuppressLint("ApplySharedPref")
-            @Override
-            public void onInstallReferrerSetupFinished(int responseCode) {
-                switch (responseCode) {
-                    case InstallReferrerResponse.OK:
-                        ReferrerDetails response;
-                        try {
-                            response = referrerClient.getInstallReferrer();
-                        } catch (RemoteException ex) {
-                            Log.w(TAG, "Unable to retrieve installation source", ex);
-                            return;
-                        }
-
-                        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(sContext);
-                        prefs.edit().putBoolean(PREF_FIRST_RUN, false).commit();
-
-                        fetchClientConfig(response.getInstallReferrer());
-
-                        referrerClient.endConnection();
-                        break;
-
-                    case InstallReferrerResponse.FEATURE_NOT_SUPPORTED:
-                        // API not available on the current Play Store app.
-                        Log.w(TAG, "InstallReferrer API not available");
-                        break;
-
-                    case InstallReferrerResponse.SERVICE_UNAVAILABLE:
-                        // Connection couldn't be established.
-                        Log.w(TAG, "Failed to connect to PlayStore: InstallReferrer unavailable");
-                        break;
-                }
-            }
-
-            @Override
-            public void onInstallReferrerServiceDisconnected() { }
-        });
-    }
-
-    private void fetchClientConfig(String referrerUrl) {
-        Log.i(TAG, "Got InstallReferrer URL: " + referrerUrl);
-
-        if (TextUtils.isEmpty(referrerUrl)) {
-            return;
-        }
-
-        // https://play.google.com/store/apps/details?id=co.tinode.tindroidx&referrer=utm_source%3Dtinode%26utm_term%3Dshort_code
-        Uri ref = Uri.parse(referrerUrl);
-        String source = ref.getQueryParameter("utm_source");
-        String short_code = ref.getQueryParameter("utm_term");
-        if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
-            Log.i(TAG, "InstallReferrer code is unavailable");
-            return;
-        }
-
-        ClientConfig.fetchClientConfig(this, short_code);
     }
 
     // Read saved account credentials and try to connect to server using them.

@@ -25,12 +25,18 @@ public class AboutDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final Activity activity = requireActivity();
 
+        BrandingConfig branding = BrandingConfig.getConfig(activity);
+
         String serverUrl = Cache.getTinode().getHttpOrigin();
         if (TextUtils.isEmpty(serverUrl)) {
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
-            String hostname = pref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
-            String scheme = pref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS()) ? "https://" : "http://";
-            serverUrl = scheme + hostname;
+            if (branding != null && !TextUtils.isEmpty(branding.api_url)) {
+                serverUrl = branding.api_url;
+            } else {
+                SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+                String hostname = pref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
+                String scheme = pref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS()) ? "https://" : "http://";
+                serverUrl = scheme + hostname;
+            }
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
