@@ -31,7 +31,7 @@ public class BrandingFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 // Check if permission is granted.
                 if (isGranted) {
-                    mQrScanner.startCamera(mCameraPreview);
+                    mQrScanner.startCamera(BrandingFragment.this, mCameraPreview);
                 }
             });
 
@@ -61,12 +61,20 @@ public class BrandingFragment extends Fragment {
         if (mQrScanner == null) {
             mQrScanner = new QRCodeScanner(activity, URI_PREFIX, this::configIDReceived);
         }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
             mRequestPermissionLauncher.launch(Manifest.permission.CAMERA);
             return;
         }
-        mQrScanner.startCamera(mCameraPreview);
+
+        mQrScanner.startCamera(this, mCameraPreview);
     }
 
     private void configIDReceived(String brandId) {

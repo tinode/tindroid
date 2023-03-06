@@ -47,7 +47,7 @@ public class QRCodeScanner {
         mSuccessListener = listener;
     }
 
-    public void startCamera(PreviewView previewView) {
+    public void startCamera(final LifecycleOwner lifecycleOwner, PreviewView previewView) {
         if (mIsCameraActive) {
             return;
         }
@@ -58,6 +58,7 @@ public class QRCodeScanner {
                 ProcessCameraProvider.getInstance(mParent);
         cameraProviderFuture.addListener(
                 () -> {
+                    Log.i(TAG, "cameraProviderFuture.listener");
                     try {
                         mCameraProvider = cameraProviderFuture.get();
                         Preview.Builder builder = new Preview.Builder();
@@ -66,7 +67,7 @@ public class QRCodeScanner {
                         mCameraProvider.unbindAll();
                         ImageAnalysis analysisUseCase = new ImageAnalysis.Builder().build();
                         analysisUseCase.setAnalyzer(mQRCodeAnalysisExecutor, this::scanBarcodes);
-                        mCameraProvider.bindToLifecycle((LifecycleOwner) mParent, CameraSelector.DEFAULT_BACK_CAMERA,
+                        mCameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA,
                                 previewUseCase, analysisUseCase);
                     } catch (ExecutionException | InterruptedException e) {
                         Log.e(TAG, "Unable to initialize camera", e);
@@ -88,6 +89,8 @@ public class QRCodeScanner {
 
     @OptIn(markerClass = ExperimentalGetImage.class)
     private void scanBarcodes(final ImageProxy imageProxy) {
+        Log.i(TAG, "scanBarcodes");
+
         Image mediaImage = imageProxy.getImage();
         if (mediaImage == null || mIsScanning || !mIsCameraActive) {
             imageProxy.close();

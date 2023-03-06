@@ -45,7 +45,7 @@ public class AddByIDFragment extends Fragment {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 // Check if permission is granted.
                 if (isGranted) {
-                    mQrScanner.startCamera(mCameraPreview);
+                    mQrScanner.startCamera(AddByIDFragment.this, mCameraPreview);
                 }
             });
 
@@ -127,7 +127,7 @@ public class AddByIDFragment extends Fragment {
                 return;
             }
 
-            mQrScanner.startCamera(mCameraPreview);
+            mQrScanner.startCamera(this, mCameraPreview);
         });
     }
 

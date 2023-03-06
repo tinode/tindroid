@@ -98,7 +98,8 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:src="@drawable/ic_qr_code"
-            android:contentDescription="@string/configure_connection"/>
+            android:contentDescription="@string/configure_connection"
+            app:tint="@color/colorAccent" />
 
         <TextView
             android:layout_width="wrap_content"
