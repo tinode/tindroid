@@ -1,7 +1,9 @@
 package co.tinode.tindroid;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -73,7 +75,11 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
                 if (logo != null) {
                     ((AppCompatImageView) fragment.findViewById(R.id.imageLogo)).setImageBitmap(logo);
                     ((TextView) fragment.findViewById(R.id.appTitle)).setText(config.service_name);
-                    fragment.findViewById(R.id.byTinode).setVisibility(View.VISIBLE);
+
+                    View byTinode = fragment.findViewById(R.id.byTinode);
+                    byTinode.setVisibility(View.VISIBLE);
+                    byTinode.setOnClickListener(arg ->
+                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://tinode.co"))));
                 }
             }
         }
@@ -92,7 +98,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
     }
 
     /**
-     * Either [Signin] or [Forgot password] pressed.
+     * Either [Sign in] or [Forgot password] pressed.
      *
      * @param v ignored
      */
