@@ -195,9 +195,9 @@
     <string name="block_and_report">Заблокировать и сообщить о нарушении</string>
     <string name="confirm_contact_ban">Заблокировать %1$s?</string>
     <string name="confirm_report">Заблокировать и сообщить о нарушении %1$s?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Пользовательское соглашение</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Обратная связь</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Политика конфиденциальности</a>]]></string>
+    <string name="terms_of_use">Пользовательское соглашение</string>
+    <string name="contact_us">Обратная связь</string>
+    <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="incognito_mode_enabled">Режим инкогнито</string>
     <string name="about_the_app">О приложении</string>
 

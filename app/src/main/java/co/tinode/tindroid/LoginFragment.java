@@ -78,8 +78,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
 
                     View byTinode = fragment.findViewById(R.id.byTinode);
                     byTinode.setVisibility(View.VISIBLE);
-                    byTinode.setOnClickListener(arg ->
-                            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://tinode.co"))));
+                    UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
                 }
             }
         }

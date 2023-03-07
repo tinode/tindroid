@@ -41,6 +41,7 @@ public class BrandingConfig {
     private static final String KEY_API_URL = "api_url";
     private static final String KEY_TOS_URL = "tos_url";
     private static final String KEY_PRIVACY_URL = "privacy_url";
+    private static final String KEY_CONTACT_US_URL = "contact_url";
     private static final String KEY_SERVICE_NAME = "service_name";
     private static final String KEY_ICON_SMALL = "icon_small";
     private static final String KEY_ICON_LARGE = "icon_large";
@@ -50,8 +51,9 @@ public class BrandingConfig {
 
     public String id;
     public String api_url;
-    public String tos_url;
-    public String privacy_url;
+    public String tos_uri;
+    public String privacy_uri;
+    public String contact_us_uri;
     public String service_name;
     public String icon_small;
     public String icon_large;
@@ -69,8 +71,9 @@ public class BrandingConfig {
                         sConfig = new BrandingConfig();
                         sConfig.id = sRawConfig.get(KEY_ID);
                         sConfig.api_url = sRawConfig.get(KEY_API_URL);
-                        sConfig.tos_url = sRawConfig.get(KEY_TOS_URL);
-                        sConfig.privacy_url = sRawConfig.get(KEY_PRIVACY_URL);
+                        sConfig.tos_uri = sRawConfig.get(KEY_TOS_URL);
+                        sConfig.privacy_uri = sRawConfig.get(KEY_PRIVACY_URL);
+                        sConfig.contact_us_uri = sRawConfig.get(KEY_CONTACT_US_URL);
                         sConfig.service_name = sRawConfig.get(KEY_SERVICE_NAME);
                         sConfig.icon_small = sRawConfig.get(KEY_ICON_SMALL);
                         sConfig.icon_large = sRawConfig.get(KEY_ICON_LARGE);

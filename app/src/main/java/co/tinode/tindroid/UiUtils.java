@@ -74,6 +74,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -1468,6 +1469,19 @@ public class UiUtils {
             }
         }
         return methods;
+    }
+
+    // Click on a view to open the given URL.
+    static void clickToBrowseURL(View view, String url) {
+        Uri uri =  Uri.parse(url);
+        if (uri == null) {
+            return;
+        }
+        view.setOnClickListener(arg -> view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri)));
+    }
+
+    static void clickToBrowseURL(@NonNull View view, @StringRes int url) {
+        clickToBrowseURL(view, view.getResources().getString(R.string.tinode_url));
     }
 
     static boolean isAppFirstRun(Context context) {

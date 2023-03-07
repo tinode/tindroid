@@ -3,12 +3,15 @@
     <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
     <string name="tinode_url" translatable="false">https://tinode.co</string>
     <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
-
+    <string name="contact_us_uri" translatable="false">mailto:support@tinode.co</string>
+    <string name="terms_of_use_uri" translatable="false">https://tinode.co/terms.html</string>
+    <string name="privacy_policy_uri" translatable="false">https://tinode.co/privacy.html</string>
     <string name="app_name" translatable="false">Tinode</string>
     <string name="app_name_full" translatable="false">Tinode Chat</string>
-    <string name="app_version">Version</string>
     <string name="copyright" translatable="false">© 2014 – 2023 Tinode</string>
     <string name="tinode" translatable="false">Tinode</string>
+
+    <string name="app_version">Version</string>
 
     <string name="login_hint">Login</string>
     <string name="password_hint">Password</string>
@@ -231,9 +234,9 @@
     <string name="block_and_report">Block and report</string>
     <string name="confirm_contact_ban">Block %1$s?</string>
     <string name="confirm_report">Block and report %1$s?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contact Us</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Privacy Policy</a>]]></string>
+    <string name="terms_of_use">Terms of Use</string>
+    <string name="contact_us">Contact Us</string>
+    <string name="privacy_policy">Privacy Policy</string>
     <string name="button_hint_start_new_chat">Start new chat</string>
     <string name="app_server">Server</string>
     <string name="full_name_required">Full name required</string>

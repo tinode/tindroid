@@ -65,8 +65,7 @@ public class AboutDialogFragment extends DialogFragment {
 
             View byTinode = dialog.findViewById(R.id.byTinode);
             byTinode.setVisibility(View.VISIBLE);
-            byTinode.setOnClickListener(arg ->
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://tinode.co"))));
+            UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(activity);
