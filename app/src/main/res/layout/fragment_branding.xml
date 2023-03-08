@@ -59,7 +59,6 @@
         android:layout_marginTop="48dp"
         android:layout_marginStart="48dp"
         android:layout_marginEnd="48dp"
-        android:padding="6dp"
         app:layout_constraintDimensionRatio="w,1:1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -67,5 +66,16 @@
         app:layout_constrainedHeight="true">
 
     </androidx.camera.view.PreviewView>
+
+    <co.tinode.tindroid.widgets.CircleProgressView
+        android:id="@+id/progressCircle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:gravity="center"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

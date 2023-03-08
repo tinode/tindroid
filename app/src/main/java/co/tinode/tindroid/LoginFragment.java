@@ -1,9 +1,9 @@
 package co.tinode.tindroid;
 
-import android.content.Intent;
+import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -20,6 +20,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
@@ -51,49 +52,55 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
         }
 
         View fragment = inflater.inflate(R.layout.fragment_login, container, false);
-
-        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
-        String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
-
-        if (!TextUtils.isEmpty(login)) {
-            Log.i(TAG, "Login not empty");
-            TextView loginView = fragment.findViewById(R.id.editLogin);
-            if (loginView != null) {
-                loginView.setText(login);
-            }
-        } else if (UiUtils.isAppFirstRun(activity)) {
-            Log.i(TAG, "First run");
-            View branding = fragment.findViewById(R.id.brandingSetup);
-            branding.setVisibility(View.VISIBLE);
-            branding.setOnClickListener(v ->
-                    ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_BRANDING, null));
-        } else {
-            Log.i(TAG, "NOT first run");
-            BrandingConfig config;
-            if ((config = BrandingConfig.getConfig(activity)) != null) {
-                Bitmap logo = BrandingConfig.getLargeIcon(activity);
-                if (logo != null) {
-                    ((AppCompatImageView) fragment.findViewById(R.id.imageLogo)).setImageBitmap(logo);
-                    ((TextView) fragment.findViewById(R.id.appTitle)).setText(config.service_name);
-
-                    View byTinode = fragment.findViewById(R.id.byTinode);
-                    byTinode.setVisibility(View.VISIBLE);
-                    UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
-                }
-            }
-        }
-
         fragment.findViewById(R.id.signIn).setOnClickListener(this);
         fragment.findViewById(R.id.forgotPassword).setOnClickListener(this);
-
         return fragment;
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((MenuHost) requireActivity()).addMenuProvider(this,
+        Activity activity = requireActivity();
+        ((MenuHost) activity).addMenuProvider(this,
                 getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        initBranding(activity);
+    }
+
+    @Override
+    public void onResume() {
+        Activity activity = requireActivity();
+        initBranding(activity);
+        super.onResume();
+    }
+
+    private void initBranding(Activity activity) {
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+        String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
+
+        if (!TextUtils.isEmpty(login)) {
+            TextView loginView = activity.findViewById(R.id.editLogin);
+            if (loginView != null) {
+                loginView.setText(login);
+            }
+        } else if (UiUtils.isAppFirstRun(activity)) {
+            View branding = activity.findViewById(R.id.brandingSetup);
+            branding.setVisibility(View.VISIBLE);
+            branding.setOnClickListener(v ->
+                    ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_BRANDING, null));
+        } else {
+            BrandingConfig config;
+            if ((config = BrandingConfig.getConfig(activity)) != null) {
+                Bitmap logo = BrandingConfig.getLargeIcon(activity);
+                if (logo != null) {
+                    ((AppCompatImageView) activity.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+                    ((TextView) activity.findViewById(R.id.appTitle)).setText(config.service_name);
+
+                    View byTinode = activity.findViewById(R.id.byTinode);
+                    byTinode.setVisibility(View.VISIBLE);
+                    UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+                }
+            }
+        }
     }
 
     /**

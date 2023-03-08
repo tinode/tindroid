@@ -1,12 +1,14 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
 import java.util.concurrent.Executors;
@@ -18,6 +20,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.view.PreviewView;
 import androidx.fragment.app.Fragment;
+import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tindroid.widgets.QRCodeScanner;
 
 public class BrandingFragment extends Fragment {
@@ -86,8 +89,25 @@ public class BrandingFragment extends Fragment {
     }
 
     private void configIDReceived(String brandId) {
-        Context context = requireContext();
+        final Activity activity = requireActivity();
+        activity.findViewById(R.id.confirm).setEnabled(false);
+        mQrScanner.stopCamera();
+
+        // Hide soft keyboard.
+        View view = activity.getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+
+        // Show spinner.
+        CircleProgressView spinner = activity.findViewById(R.id.progressCircle);
+        // spinner.setVisibility(View.VISIBLE);
+        spinner.show();
+
         Executors.newSingleThreadExecutor().execute(() ->
-                BrandingConfig.fetchConfigFromServer(context, brandId));
+                BrandingConfig.fetchConfigFromServer(activity, brandId,
+                        config -> activity.runOnUiThread(() ->
+                                ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_LOGIN, null))));
     }
 }

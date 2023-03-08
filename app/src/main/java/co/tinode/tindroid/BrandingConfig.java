@@ -2,6 +2,7 @@ package co.tinode.tindroid;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
@@ -14,6 +15,8 @@ import com.android.installreferrer.api.InstallReferrerClient;
 import com.android.installreferrer.api.InstallReferrerStateListener;
 import com.android.installreferrer.api.ReferrerDetails;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -24,8 +27,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
+import androidx.preference.PreferenceManager;
+import co.tinode.tindroid.account.Utils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -67,18 +73,19 @@ public class BrandingConfig {
             if (sRawConfig == null) {
                 try {
                     loadConfig(context);
-                    if (sRawConfig != null) {
-                        sConfig = new BrandingConfig();
-                        sConfig.id = sRawConfig.get(KEY_ID);
-                        sConfig.api_url = sRawConfig.get(KEY_API_URL);
-                        sConfig.tos_uri = sRawConfig.get(KEY_TOS_URL);
-                        sConfig.privacy_uri = sRawConfig.get(KEY_PRIVACY_URL);
-                        sConfig.contact_us_uri = sRawConfig.get(KEY_CONTACT_US_URL);
-                        sConfig.service_name = sRawConfig.get(KEY_SERVICE_NAME);
-                        sConfig.icon_small = sRawConfig.get(KEY_ICON_SMALL);
-                        sConfig.icon_large = sRawConfig.get(KEY_ICON_LARGE);
-                    }
                 } catch (IOException ignored) {}
+            }
+
+            if (sRawConfig != null) {
+                sConfig = new BrandingConfig();
+                sConfig.id = sRawConfig.get(KEY_ID);
+                sConfig.api_url = sRawConfig.get(KEY_API_URL);
+                sConfig.tos_uri = sRawConfig.get(KEY_TOS_URL);
+                sConfig.privacy_uri = sRawConfig.get(KEY_PRIVACY_URL);
+                sConfig.contact_us_uri = sRawConfig.get(KEY_CONTACT_US_URL);
+                sConfig.service_name = sRawConfig.get(KEY_SERVICE_NAME);
+                sConfig.icon_small = sRawConfig.get(KEY_ICON_SMALL);
+                sConfig.icon_large = sRawConfig.get(KEY_ICON_LARGE);
             }
         }
 
@@ -101,7 +108,7 @@ public class BrandingConfig {
         return BitmapFactory.decodeFile(conf.icon_large);
     }
 
-    static void fetchConfigFromServer(final Context context, String short_code) {
+    static void fetchConfigFromServer(final Context context, String short_code, ReadyListener listener) {
 
         OkHttpClient httpClient = new OkHttpClient();
         Request req = new Request.Builder().url(HOSTS + short_code).build();
@@ -147,11 +154,27 @@ public class BrandingConfig {
             if (!TextUtils.isEmpty(assetBase)) {
                 saveAsset(context, httpClient, assetBase + iconLarge, KEY_ICON_LARGE);
             }
-            sRawConfig = config;
+            setRawConfig(context, config);
+
+            String apiUrl = config.get(KEY_API_URL);
+            if (!TextUtils.isEmpty(apiUrl)) {
+                Uri apiUri = Uri.parse(apiUrl);
+                String scheme = apiUri.getScheme();
+                SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+                sharedPreferences.edit()
+                        .putString(Utils.PREFS_HOST_NAME, apiUri.getAuthority())
+                        .putBoolean(Utils.PREFS_USE_TLS,
+                                scheme != null && "https".equals(scheme.toLowerCase(Locale.ROOT)))
+                        .apply();
+            }
 
             UiUtils.doneAppFirstRun(context);
         } catch (IOException ex) {
             Log.i(TAG, "Failed to fetch client config", ex);
+        }
+
+        if (listener != null) {
+            listener.onReady(getConfig(context));
         }
     }
 
@@ -159,7 +182,7 @@ public class BrandingConfig {
         return readConfig(new ByteArrayInputStream(input));
     }
 
-    static Map<String, String> readConfig(InputStream input) throws IOException {
+    static @Nullable Map<String, String> readConfig(InputStream input) throws IOException {
         Map<String, String> config = new HashMap<>();
         JsonReader reader = new JsonReader(new InputStreamReader(input));
         reader.beginObject();
@@ -170,7 +193,7 @@ public class BrandingConfig {
         }
         reader.endObject();
         reader.close();
-        return config;
+        return config.isEmpty() ? null : config;
     }
 
     static void saveAsset(Context context, OkHttpClient  client, String url, String dstFileName) {
@@ -205,18 +228,24 @@ public class BrandingConfig {
     }
 
     private static void loadConfig(Context context) throws IOException {
+        Map<String, String> config;
         try (FileInputStream fis = context.openFileInput(CONFIG_FILE_NAME)) {
-            sRawConfig = readConfig(fis);
+            config = readConfig(fis);
         }
-        if (sRawConfig == null) {
-            return;
+
+        if (config != null) {
+            setRawConfig(context, config);
         }
+    }
+
+    private static void setRawConfig(Context context, Map<String, String> config) {
+        sRawConfig = config;
+
         File asset = new File(context.getFilesDir(), KEY_ICON_SMALL);
         sRawConfig.put(KEY_ICON_SMALL, asset.getAbsolutePath());
         asset = new File(context.getFilesDir(), KEY_ICON_LARGE);
         sRawConfig.put(KEY_ICON_LARGE, asset.getAbsolutePath());
     }
-
     // Check if the app was installed from an URL with attributed installation source.
 
     static void getInstallReferrerFromClient(Context context, InstallReferrerClient referrerClient) {
@@ -246,7 +275,7 @@ public class BrandingConfig {
                             if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
                                 Log.i(TAG, "InstallReferrer code is unavailable");
                             } else {
-                                fetchConfigFromServer(context, short_code);
+                                fetchConfigFromServer(context, short_code, null);
                             }
                         }
 
@@ -268,5 +297,9 @@ public class BrandingConfig {
             @Override
             public void onInstallReferrerServiceDisconnected() { }
         });
+    }
+
+    public interface ReadyListener {
+        public void onReady(BrandingConfig config);
     }
 }

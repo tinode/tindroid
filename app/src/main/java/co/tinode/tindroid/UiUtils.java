@@ -45,6 +45,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
@@ -80,6 +81,7 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -1471,6 +1473,31 @@ public class UiUtils {
         return methods;
     }
 
+    static void fillAboutTinode(View view, String serverUrl, BrandingConfig branding) {
+        ((TextView) view.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
+        ((TextView) view.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
+                TindroidApp.getAppBuild()));
+        ((TextView) view.findViewById(R.id.app_server)).setText(serverUrl);
+        if (branding != null) {
+            Bitmap logo = BrandingConfig.getLargeIcon(view.getContext());
+            if (logo != null) {
+                ((ImageView) view.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+            }
+            if (!TextUtils.isEmpty(branding.service_name)) {
+                ((TextView) view.findViewById(R.id.appTitle)).setText(branding.service_name);
+            }
+            if (!TextUtils.isEmpty(branding.tos_uri)) {
+                String homePage = Uri.parse(branding.tos_uri).getAuthority();
+                if (!TextUtils.isEmpty(homePage)) {
+                    ((TextView) view.findViewById(R.id.appHomePage)).setText(homePage);
+                }
+            }
+
+            View byTinode = view.findViewById(R.id.byTinode);
+            byTinode.setVisibility(View.VISIBLE);
+            UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+        }
+    }
     // Click on a view to open the given URL.
     static void clickToBrowseURL(View view, String url) {
         Uri uri =  Uri.parse(url);

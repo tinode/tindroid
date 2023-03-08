@@ -58,7 +58,6 @@ public class QRCodeScanner {
                 ProcessCameraProvider.getInstance(mParent);
         cameraProviderFuture.addListener(
                 () -> {
-                    Log.i(TAG, "cameraProviderFuture.listener");
                     try {
                         mCameraProvider = cameraProviderFuture.get();
                         Preview.Builder builder = new Preview.Builder();
@@ -89,8 +88,6 @@ public class QRCodeScanner {
 
     @OptIn(markerClass = ExperimentalGetImage.class)
     private void scanBarcodes(final ImageProxy imageProxy) {
-        Log.i(TAG, "scanBarcodes");
-
         Image mediaImage = imageProxy.getImage();
         if (mediaImage == null || mIsScanning || !mIsCameraActive) {
             imageProxy.close();
