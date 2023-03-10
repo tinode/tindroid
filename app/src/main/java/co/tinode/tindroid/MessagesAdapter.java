@@ -1266,7 +1266,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         builder = builder
                                 .appendQueryParameter("seq", "" + mSeqId)
                                 .appendQueryParameter("uid", Cache.getTinode().getMyId());
-                        mActivity.startActivity(new Intent(Intent.ACTION_VIEW, builder.build()));
+                        Intent viewIntent = new Intent(Intent.ACTION_VIEW, builder.build());
+                        if (viewIntent.resolveActivity(mActivity.getPackageManager()) != null) {
+                            mActivity.startActivity(viewIntent);
+                        } else {
+                            Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             } catch (MalformedURLException ignored) {
@@ -1286,7 +1291,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 String scheme = url.getProtocol();
                 if ("http".equals(scheme) || "https".equals(scheme)) {
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
-                    mActivity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString())));
+                    Intent viewIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString()));
+                    if (viewIntent.resolveActivity(mActivity.getPackageManager()) != null) {
+                        mActivity.startActivity(viewIntent);
+                    } else {
+                        Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    }
                 }
             } catch (MalformedURLException ignored) {
                 return false;
