@@ -46,9 +46,9 @@ public class WaveDrawable extends Drawable implements Runnable {
     // Amplitude values received from the caller and resampled to range 0..1.
     private float[] mBuffer;
     // Count of amplitude values actually added to the buffer.
-    private int mContains;
+    private int mContains = 0;
     // Entry point in mBuffer (mBuffer is a circular buffer).
-    private int mIndex;
+    private int mIndex = 0;
     // Array of 4 values for each amplitude bar: startX, startY, stopX, stopY.
     private float[] mBars = null;
     // Canvas width which fits whole number of bars.
@@ -124,6 +124,9 @@ public class WaveDrawable extends Drawable implements Runnable {
             mIndex = 0;
             mContains = mBuffer.length;
             recalcBars(1.0f);
+        } else {
+            mIndex = 0;
+            mContains = 0;
         }
         invalidateSelf();
     }
@@ -260,7 +263,7 @@ public class WaveDrawable extends Drawable implements Runnable {
         }
 
         if (mContains < mBuffer.length) {
-            mBuffer[mIndex + mContains] = amplitude;
+            mBuffer[mContains] = amplitude;
             mContains++;
         } else {
             mIndex ++;
