@@ -37,6 +37,7 @@ import co.tinode.tindroid.services.CallConnection;
 import co.tinode.tindroid.services.CallConnectionService;
 
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.MsgServerInfo;
@@ -57,11 +58,15 @@ public class CallManager {
 
         Tinode tinode = Cache.getTinode();
         String myID = tinode.getMyId();
-        VxCard card = (VxCard) tinode.getMeTopic().getPub();
-        String accLabel = null;
+        MeTopic<VxCard> me = tinode.getMeTopic();
+        VxCard card = null;
+        if (me != null) {
+            card = (VxCard) tinode.getMeTopic().getPub();
+        }
+        String accLabel = context.getString(R.string.current_user);
         Icon icon = null;
         if (card != null) {
-            accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : context.getString(R.string.current_user);
+            accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
             Bitmap avatar = card.getBitmap();
             if (avatar != null) {
                 icon = Icon.createWithBitmap(avatar);
