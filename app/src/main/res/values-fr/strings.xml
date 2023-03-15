@@ -339,8 +339,8 @@
     <string name="phone_number_required">Numéro de téléphone valide requis</string>
     <string name="phone_number_hint">Numéro de téléphone portable</string>
     <string name="unable_to_use_service">Service indisponible pour le moment. Veuillez réessayer plus tard.</string>
-    <string name="email_colon">E-mail :</string>
-    <string name="phone_colon">Téléphone :</string>
+    <string name="email_colon">E-mail :</string>
+    <string name="phone_colon">Téléphone :</string>
     <string name="current_email">Courriel actuel</string>
     <string name="new_email">Nouvel e-mail</string>
     <string name="email_msg_explained">Nous enverrons un message avec le code de confirmation à l\'adresse ci-dessus.</string>

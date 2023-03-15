@@ -127,8 +127,6 @@
     <string name="contacts_section_directory">निर्देशिका</string>
     <string name="email">ईमेल</string>
     <string name="email_required">ईमेल (अनिवार्य</string>
-    <string name="validate_cred">%1$s द्वारा आपको भेजा गया पुष्टिकरण कोड दर्ज करें:</string>
-    <string name="validate_cred_title">संपर्क की पुष्टि करें</string>
     <string name="confirm">पुष्टि करना</string>
     <string name="validation_example">केवल संख्याएं</string>
     <string name="enter_confirmation_code">पुष्टि कोड दर्ज करें</string>
@@ -147,11 +145,8 @@
     <string name="new_message">नया सन्देश</string>
     <string name="new_message_channel_description">नया संदेश मिला</string>
     <string name="request_pass_reset_title">नया संदेश मिला</string>
-    <string name="request_pass_reset">%1$s द्वारा कोड का अनुरोध करें:</string>
-    <string name="validated_address_to_use">कोड भेजने के लिए %1$s को मान्य किया गया</string>
     <string name="request">अनुरोध</string>
     <string name="forgot_password">पासवर्ड भूल गए</string>
-    <string name="enter_valid_address">मान्य %1$s दर्ज करें</string>
     <string name="invalid_or_unknown_credential">मान्य %1$s दर्ज करें</string>
     <string name="password_reset_message_sent">अमान्य या अज्ञात पता</string>
     <string name="user_not_found">नहीं मिला</string>
@@ -304,7 +299,6 @@
     <string name="video_call_channel_name">वीडियो कॉल्स</string>
     <string name="video_call_channel_description">वीडियो और ऑडियो कॉल</string>
     <string name="tinode_video_call">टिनोड वीडियो कॉल</string>
-
     <string name="answer_call">उत्तर</string>
     <string name="decline_call">पतन</string>
     <string name="document_preview">दस्तावेज़ पूर्वावलोकन</string>
