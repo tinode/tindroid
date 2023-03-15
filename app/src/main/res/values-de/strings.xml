@@ -336,4 +336,26 @@
     <string name="unable_to_place_call">Dieser Anruf kann nicht getätigt werden</string>
     <string name="unable_to_answer_call">Dieser Anruf kann nicht entgegengenommen werden</string>
     <string name="busy_call">besetzt</string>
+
+    <string name="phone_sms_explained">Wir senden eine SMS mit Bestätigungscode an die oben genannte Nummer.</string>
+    <string name="phone_number_required">Gültige Telefonnummer erforderlich</string>
+    <string name="phone_number_hint">Handynummer</string>
+    <string name="unable_to_use_service">Dienst derzeit nicht verfügbar. Bitte versuchen Sie es später noch einmal.</string>
+    <string name="email_colon">E-Mail:</string>
+    <string name="phone_colon">Telefon:</string>
+    <string name="current_email">Aktuelle E-Mail</string>
+    <string name="new_email">Neue E-Mail</string>
+    <string name="email_msg_explained">Wir senden eine Nachricht mit Bestätigungscode an die oben genannte Adresse.</string>
+    <string name="current_phone">Aktuelle Telefonnummer</string>
+    <string name="request_code">Anfrage</string>
+    <string name="change_email">E-Mail ändern</string>
+    <string name="change_phone_num">Telefonnummer ändern</string>
+    <string name="change_credential">Anmeldeinformationen ändern</string>
+    <string name="confirmation_code_sent">Bestätigungscode gesendet</string>
+    <string name="request_pass_reset_code">Code zum Zurücksetzen des Passworts anfordern</string>
+    <string name="i_have_code">Ich habe Code</string>
+    <string name="confirmation_code_required">Bestätigungscode erforderlich</string>
+    <string name="password_changed">Passwort geändert</string>
+    <string name="my_code">Mein Code</string>
+    <string name="scan_code">Code scannen</string>
 </resources>

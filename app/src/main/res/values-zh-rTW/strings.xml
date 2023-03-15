@@ -334,4 +334,26 @@
     <string name="unable_to_place_call">無法撥打電話</string>
     <string name="unable_to_answer_call">無法接聽電話</string>
     <string name="busy_call">忙碌的</string>
+
+    <string name="phone_sms_explained">我們將發送帶有確認碼的短信至上述號碼。</string>
+    <string name="phone_number_required">需要有效的電話號碼</string>
+    <string name="phone_number_hint">手機號碼</string>
+    <string name="unable_to_use_service">此時服務不可用。 請稍後再試。</string>
+    <string name="email_colon">電子郵箱：</string>
+    <string name="phone_colon">電話：</string>
+    <string name="current_email">當前郵箱</string>
+    <string name="new_email">新郵件</string>
+    <string name="email_msg_explained">我們將向上述地址發送一條帶有確認碼的消息。</string>
+    <string name="current_phone">當前電話號碼</string>
+    <string name="request_code">請求</string>
+    <string name="change_email">更改電子郵件</string>
+    <string name="change_phone_num">更改電話號碼</string>
+    <string name="change_credential">更改憑證</string>
+    <string name="confirmation_code_sent">確認碼已發送</string>
+    <string name="request_pass_reset_code">請求密碼重置碼</string>
+    <string name="i_have_code">我有代碼</string>
+    <string name="confirmation_code_required">需要確認碼</string>
+    <string name="password_changed">密碼已更改</string>
+    <string name="my_code">我的代碼</string>
+    <string name="scan_code">掃碼</string>
 </resources>

@@ -335,4 +335,26 @@
     <string name="unable_to_place_call">Não é possível fazer esta chamada</string>
     <string name="unable_to_answer_call">Não é possível atender esta chamada</string>
     <string name="busy_call">ocupada</string>
+
+    <string name="phone_sms_explained">Enviaremos um SMS com o código de confirmação para o número acima.</string>
+    <string name="phone_number_required">É necessário um número de telefone válido</string>
+    <string name="phone_number_hint">Número de celular</string>
+    <string name="unable_to_use_service">Serviço indisponível no momento. Tente novamente mais tarde.</string>
+    <string name="email_colon">E-mail:</string>
+    <string name="phone_colon">Telefone:</string>
+    <string name="current_email">E-mail atual</string>
+    <string name="new_email">Novo e-mail</string>
+    <string name="email_msg_explained">Enviaremos uma mensagem com o código de confirmação para o endereço acima.</string>
+    <string name="current_phone">Número de telefone atual</string>
+    <string name="request_code">Pedido</string>
+    <string name="change_email">Alterar e-mail</string>
+    <string name="change_phone_num">Alterar número de telefone</string>
+    <string name="change_credential">Alterar credencial</string>
+    <string name="confirmation_code_sent">Código de confirmação enviado</string>
+    <string name="request_pass_reset_code">Solicitar código de redefinição de senha</string>
+    <string name="i_have_code">Tenho um código</string>
+    <string name="confirmation_code_required">Código de confirmação necessário</string>
+    <string name="password_changed">Senha alterada</string>
+    <string name="my_code">Meu código</string>
+    <string name="scan_code">Escanear Código</string>
 </resources>

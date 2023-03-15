@@ -304,7 +304,6 @@
     <string name="broken_video">"अमान्य या अज्ञात वीडियो प्रारूप। "</string>
     <string name="unable_to_play_video">"इस वीडियो को चलाने में असमर्थ. "</string>
     <string name="select_image_or_video">"छवि या वीडियो चुनें "</string>
-    <string name="tap_to_select">"चुनने के लिए टैप करें "</string>
     <string name="video_call_channel_name">"वीडियो कॉल्स "</string>
     <string name="video_call_channel_description">"वीडियो और ऑडियो कॉल "</string>
     <string name="tinode_video_call">"टिनोड वीडियो कॉल "</string>
@@ -316,4 +315,26 @@
     <string name="unable_to_place_call">"यह कॉल करने में असमर्थ "</string>
     <string name="unable_to_answer_call">"इस कॉल का उत्तर देने में असमर्थ "</string>
     <string name="busy_call">"व्यस्त "</string>
+
+    <string name = "phone_sms_explained"> हम उपरोक्त नंबर पर पुष्टिकरण कोड के साथ एक एसएमएस भेजेंगे।</string>
+    <string name="phone_number_required">वैध फ़ोन नंबर आवश्यक है</string>
+    <string name="phone_number_hint">मोबाइल फ़ोन नंबर</string>
+    <string name="unable_to_use_service">इस समय सेवा उपलब्ध नहीं है। कृपया बाद में पुन: प्रयास करें।</string>
+    <string name="email_colon">ईमेल:</string>
+    <string name="phone_colon">फोन:</string>
+    <string name="current_email">वर्तमान ईमेल</string>
+    <string name="new_email">नया ईमेल</string>
+    <string name="email_msg_explained">हम ऊपर दिए गए पते पर पुष्टिकरण कोड के साथ एक संदेश भेजेंगे।</string>
+    <string name="current_phone">वर्तमान फोन नंबर</string>
+    <string name="request_code">अनुरोध</string>
+    <string name="change_email">ईमेल बदलें</string>
+    <string name="change_phone_num">फ़ोन नंबर बदलें</string>
+    <string name="change_credential">क्रेडेंशियल बदलें</string>
+    <string name="confirmation_code_sent">पुष्टि कोड भेजा गया</string>
+    <string name="request_pass_reset_code">पासवर्ड रीसेट कोड का अनुरोध करें</string>
+    <string name="i_have_code">मेरे पास कोड है</string>
+    <string name="confirmation_code_required">पुष्टिकरण कोड आवश्यक है</string>
+    <string name="password_changed">पासवर्ड बदल गया</string>
+    <string name="my_code">मेरा कोड</string>
+    <string name="scan_code">स्कैन कोड</string>
 </resources>

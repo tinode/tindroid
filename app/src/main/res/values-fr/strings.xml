@@ -334,4 +334,26 @@
     <string name="unable_to_place_call">Impossible de passer cet appel</string>
     <string name="unable_to_answer_call">Impossible de répondre à cet appel</string>
     <string name="busy_call">occupée</string>
+
+    <string name="phone_sms_explained">Nous enverrons un SMS avec le code de confirmation au numéro ci-dessus.</string>
+    <string name="phone_number_required">Numéro de téléphone valide requis</string>
+    <string name="phone_number_hint">Numéro de téléphone portable</string>
+    <string name="unable_to_use_service">Service indisponible pour le moment. Veuillez réessayer plus tard.</string>
+    <string name="email_colon">E-mail :</string>
+    <string name="phone_colon">Téléphone :</string>
+    <string name="current_email">Courriel actuel</string>
+    <string name="new_email">Nouvel e-mail</string>
+    <string name="email_msg_explained">Nous enverrons un message avec le code de confirmation à l\'adresse ci-dessus.</string>
+    <string name="current_phone">Numéro de téléphone actuel</string>
+    <string name="request_code">Demande</string>
+    <string name="change_email">Modifier l\'adresse e-mail</string>
+    <string name="change_phone_num">Modifier le numéro de téléphone</string>
+    <string name="change_credential">Modifier les informations d\'identification</string>
+    <string name="confirmation_code_sent">Code de confirmation envoyé</string>
+    <string name="request_pass_reset_code">Demander le code de réinitialisation du mot de passe</string>
+    <string name="i_have_code">J\'ai du code</string>
+    <string name="confirmation_code_required">Code de confirmation requis</string>
+    <string name="password_changed">Mot de passe modifié</string>
+    <string name="my_code">Mon code</string>
+    <string name="scan_code">Scanner le code</string>
 </resources>
