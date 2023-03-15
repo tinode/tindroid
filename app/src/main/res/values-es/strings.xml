@@ -333,4 +333,26 @@
     <string name="unable_to_place_call">No se pudo realizar esta llamada</string>
     <string name="unable_to_answer_call">No se pudo responder esta llamada</string>
     <string name="busy_call">ocupada</string>
+
+    <string name="phone_sms_explained">Enviaremos un SMS con el código de confirmación al número de arriba.</string>
+    <string name="phone_number_required">Se requiere un número de teléfono válido</string>
+    <string name="phone_number_hint">Número de teléfono móvil</string>
+    <string name="unable_to_use_service">Servicio no disponible en este momento. Vuelva a intentarlo más tarde.</string>
+    <string name="email_colon">Correo electrónico:</string>
+    <string name="phone_colon">Teléfono:</string>
+    <string name="current_email">Correo electrónico actual</string>
+    <string name="new_email">Nuevo correo electrónico</string>
+    <string name="email_msg_explained">Enviaremos un mensaje con el código de confirmación a la dirección anterior.</string>
+    <string name="current_phone">Número de teléfono actual</string>
+    <string name="request_code">Solicitud</string>
+    <string name="change_email">Cambiar correo electrónico</string>
+    <string name="change_phone_num">Cambiar número de teléfono</string>
+    <string name="change_credential">Cambiar credencial</string>
+    <string name="confirmation_code_sent">Código de confirmación enviado</string>
+    <string name="request_pass_reset_code">Solicitar código de restablecimiento de contraseña</string>
+    <string name="i_have_code">Tengo código</string>
+    <string name="confirmation_code_required">Código de confirmación requerido</string>
+    <string name="password_changed">Contraseña cambiada</string>
+    <string name="my_code">Mi código</string>
+    <string name="scan_code">Escanear código</string>
 </resources>

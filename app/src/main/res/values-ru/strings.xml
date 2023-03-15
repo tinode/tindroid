@@ -314,4 +314,26 @@
     <string name="unable_to_place_call">Невозможно сделать этот звонок</string>
     <string name="unable_to_answer_call">Невозможно ответить на этот звонок</string>
     <string name="busy_call">занято</string>
+
+    <string name="phone_sms_explained">Мы отправим SMS с кодом подтверждения на указанный выше номер.</string>
+    <string name="phone_number_required">Требуется действительный номер телефона</string>
+    <string name="phone_number_hint">Номер мобильного телефона</string>
+    <string name="unable_to_use_service">Временно недоступно. Повторите попытку позже.</string>
+    <string name="email_colon">Емейл:</string>
+    <string name="phone_colon">Телефон:</string>
+    <string name="current_email">Текущий адрес электронной почты</string>
+    <string name="new_email">Новый адрес электронной почты</string>
+    <string name="email_msg_explained">Мы отправим сообщение с кодом подтверждения на указанный выше адрес.</string>
+    <string name="current_phone">Текущий номер телефона</string>
+    <string name="request_code">Запрос</string>
+    <string name="change_email">Изменить адрес электронной почты</string>
+    <string name="change_phone_num">Изменить номер телефона</string>
+    <string name="change_credential">Изменить учетные данные</string>
+    <string name="confirmation_code_sent">Код подтверждения отправлен</string>
+    <string name="request_pass_reset_code">Запросить код сброса пароля</string>
+    <string name="i_have_code">У меня есть код</string>
+    <string name="confirmation_code_required">Требуется код подтверждения</string>
+    <string name="password_changed">Пароль изменен</string>
+    <string name="my_code">Мой код</string>
+    <string name="scan_code">Сканировать код</string>
 </resources>
