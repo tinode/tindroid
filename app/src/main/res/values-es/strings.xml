@@ -216,9 +216,9 @@
     <string name="block_and_report">Bloquear y reportar</string>
     <string name="confirm_contact_ban">¿Bloquear a %1$s?</string>
     <string name="confirm_report">¿Bloquear y reportar a %1$s?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Términos de uso</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Contáctanos</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Política de privacidad</a>]]></string>
+    <string name="terms_of_use">Términos de uso</string>
+    <string name="contact_us">Contáctanos</string>
+    <string name="privacy_policy">Política de privacidad</string>
     <string name="button_hint_start_new_chat">Iniciar un nuevo chat</string>
     <string name="app_server">Servidor</string>
     <string name="full_name_required">Debes introducir tu nombre completo</string>

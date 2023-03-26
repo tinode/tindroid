@@ -123,7 +123,7 @@ public class SignUpFragment extends Fragment
         final LoginActivity parent = (LoginActivity) requireActivity();
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();
@@ -256,7 +256,7 @@ public class SignUpFragment extends Fragment
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
+        String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final ImageView avatar = parent.findViewById(R.id.imageAvatar);

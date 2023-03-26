@@ -1,17 +1,12 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.media.Image;
-import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,39 +14,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.mlkit.vision.barcode.BarcodeScanner;
-import com.google.mlkit.vision.barcode.BarcodeScannerOptions;
-import com.google.mlkit.vision.barcode.BarcodeScanning;
-import com.google.mlkit.vision.barcode.common.Barcode;
-import com.google.mlkit.vision.common.InputImage;
-
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.camera.core.CameraSelector;
-import androidx.camera.core.ExperimentalGetImage;
-import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageProxy;
-import androidx.camera.core.Preview;
-import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.core.content.ContextCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
+import co.tinode.tindroid.widgets.QRCodeScanner;
 import io.nayuki.qrcodegen.QrCode;
 
 public class AddByIDFragment extends Fragment {
-    private final static String TAG = "AddByIDFragment";
-
+    private static final String TOPIC_URI_PREFIX = "tinode:topic/";
     private static final int FRAME_QRCODE = 0;
     private static final int FRAME_CAMERA = 1;
 
@@ -61,20 +37,15 @@ public class AddByIDFragment extends Fragment {
     private static final int QRCODE_FG_COLOR = Color.BLACK;
     private static final int QRCODE_BG_COLOR = Color.WHITE;
 
-    private final ExecutorService mQRCodeAnalysisExecutor = Executors.newSingleThreadExecutor();
-    private final BarcodeScannerOptions mBarcodeScannerOptions =
-            new BarcodeScannerOptions.Builder().setBarcodeFormats(Barcode.FORMAT_QR_CODE).build();
+    private QRCodeScanner mQrScanner = null;
 
     private PreviewView mCameraPreview;
-
-    private boolean mIsCameraActive = false;
-    private boolean mIsScanning = false;
 
     private final ActivityResultLauncher<String> mRequestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 // Check if permission is granted.
                 if (isGranted) {
-                    startCamera(mCameraPreview);
+                    mQrScanner.startCamera(AddByIDFragment.this, mCameraPreview);
                 }
             });
 
@@ -95,7 +66,7 @@ public class AddByIDFragment extends Fragment {
                 if (TextUtils.isEmpty(id)) {
                     editor.setError(getString(R.string.id_required));
                 } else {
-                    goToTopic(activity, id);
+                    goToTopic(id);
                 }
             }
         });
@@ -103,7 +74,7 @@ public class AddByIDFragment extends Fragment {
         final String myID = Cache.getTinode().getMyId();
         final ViewFlipper qrFrame = view.findViewById(R.id.qrFrame);
         final ImageView qrCodeImageView = view.findViewById(R.id.qrCodeImageView);
-        generateQRCode(qrCodeImageView, "tinode:topic/" + myID);
+        generateQRCode(qrCodeImageView, TOPIC_URI_PREFIX + myID);
 
         ColorStateList buttonColor = new ColorStateList(
                 new int[][]{
@@ -134,7 +105,9 @@ public class AddByIDFragment extends Fragment {
             displayCodeButton.setSelected(true);
             scanCodeButton.setSelected(false);
             qrFrame.setDisplayedChild(FRAME_QRCODE);
-            mIsCameraActive = false;
+            if (mQrScanner != null) {
+                mQrScanner.stopCamera();
+            }
         });
         scanCodeButton.setOnClickListener(button -> {
             if (qrFrame.getDisplayedChild() == FRAME_CAMERA) {
@@ -144,85 +117,25 @@ public class AddByIDFragment extends Fragment {
             displayCodeButton.setSelected(false);
             scanCodeButton.setSelected(true);
             qrFrame.setDisplayedChild(FRAME_CAMERA);
-            startCamera(mCameraPreview);
+
+            if (mQrScanner == null) {
+                mQrScanner = new QRCodeScanner(activity, TOPIC_URI_PREFIX, this::goToTopic);
+            }
+
+            if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
+                mRequestPermissionLauncher.launch(Manifest.permission.CAMERA);
+                return;
+            }
+
+            mQrScanner.startCamera(this, mCameraPreview);
         });
     }
 
-    private void goToTopic(final Activity activity, String id) {
-        Intent it = new Intent(activity, MessageActivity.class);
+    private void goToTopic(String id) {
+        Intent it = new Intent(requireActivity(), MessageActivity.class);
         it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         it.putExtra(Const.INTENT_EXTRA_TOPIC, id);
         startActivity(it);
-    }
-
-    private void startCamera(PreviewView previewView) {
-        if (mIsCameraActive) {
-            return;
-        }
-
-        if (!UiUtils.isPermissionGranted(getActivity(), Manifest.permission.CAMERA)) {
-            mRequestPermissionLauncher.launch(Manifest.permission.CAMERA);
-            return;
-        }
-
-        mIsCameraActive = true;
-
-        Context context = requireContext();
-        ListenableFuture<ProcessCameraProvider> cameraProviderFuture =
-                ProcessCameraProvider.getInstance(requireContext());
-        cameraProviderFuture.addListener(
-                () -> {
-                    try {
-                        ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                        Preview.Builder builder = new Preview.Builder();
-                        Preview previewUseCase = builder.build();
-                        previewUseCase.setSurfaceProvider(previewView.getSurfaceProvider());
-                        cameraProvider.unbindAll();
-                        ImageAnalysis analysisUseCase = new ImageAnalysis.Builder().build();
-                        analysisUseCase.setAnalyzer(mQRCodeAnalysisExecutor, this::scanBarcodes);
-                        cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA,
-                                previewUseCase, analysisUseCase);
-                    } catch (ExecutionException | InterruptedException e) {
-                        Log.e(TAG, "Unable to initialize camera", e);
-                    }
-                },
-                ContextCompat.getMainExecutor(context));
-    }
-
-    @OptIn(markerClass = ExperimentalGetImage.class)
-    private void scanBarcodes(final ImageProxy imageProxy) {
-        Image mediaImage = imageProxy.getImage();
-        if (mediaImage == null || mIsScanning || !mIsCameraActive) {
-            imageProxy.close();
-            return;
-        }
-
-        InputImage image = InputImage.fromMediaImage(mediaImage,
-                imageProxy.getImageInfo().getRotationDegrees());
-        BarcodeScanner scanner = BarcodeScanning.getClient(mBarcodeScannerOptions);
-        mIsScanning = true;
-        scanner.process(image)
-                .addOnSuccessListener(barcodes -> {
-                    imageProxy.close();
-                    mIsScanning = false;
-                    for (Barcode barcode: barcodes) {
-                        String rawValue = barcode.getRawValue();
-                        if (rawValue == null) {
-                            return;
-                        }
-                        if (rawValue.startsWith("tinode:topic/")) {
-                            String id = rawValue.substring("tinode:topic/".length());
-                            if (!TextUtils.isEmpty(id)) {
-                                goToTopic(requireActivity(), id);
-                            }
-                        }
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    imageProxy.close();
-                    mIsScanning = false;
-                    Log.w(TAG, "Scanner error", e);
-                });
     }
 
     private void generateQRCode(ImageView view, String uri) {

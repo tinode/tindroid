@@ -104,6 +104,9 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                 new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                        if (parent.isFinishing() || parent.isDestroyed()) {
+                            return null;
+                        }
                         if (msg.ctrl.code >= 300) {
                             // Credential still unconfirmed.
                             parent.reportError(null, confirm, R.id.response, R.string.invalid_confirmation_code);
@@ -118,6 +121,9 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
                 new PromisedReply.FailureListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
+                        if (parent.isFinishing() || parent.isDestroyed()) {
+                            return null;
+                        }
                         parent.reportError(err, confirm, 0, R.string.failed_credential_confirmation);
                         // Something went wrong like a duplicate credential or expired token.
                         // Go back to login, nothing we can do here.

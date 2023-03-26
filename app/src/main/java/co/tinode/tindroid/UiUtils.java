@@ -9,6 +9,7 @@ import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
@@ -44,6 +45,7 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
@@ -73,14 +75,17 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
+import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -124,6 +129,8 @@ public class UiUtils {
     private static final int LOGO_LAYER_TYPING = 2;
     // If StoredMessage activity is visible, this is the current topic in that activity.
     private static String sVisibleTopic = null;
+
+    private static final String PREF_FIRST_RUN = "firstRun";
 
     public enum MsgAction {
         NONE, REPLY, FORWARD, EDIT
@@ -874,6 +881,7 @@ public class UiUtils {
         }
 
         final LayerDrawable result = new LayerDrawable(new Drawable[]{bkg, filter, fg});
+        //noinspection ConstantConditions
         bkg.setBounds(0, 0, width, height);
         result.setBounds(0, 0, width, height);
 
@@ -1463,6 +1471,54 @@ public class UiUtils {
             }
         }
         return methods;
+    }
+
+    static void fillAboutTinode(View view, String serverUrl, BrandingConfig branding) {
+        ((TextView) view.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
+        ((TextView) view.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
+                TindroidApp.getAppBuild()));
+        ((TextView) view.findViewById(R.id.app_server)).setText(serverUrl);
+        if (branding != null) {
+            Bitmap logo = BrandingConfig.getLargeIcon(view.getContext());
+            if (logo != null) {
+                ((ImageView) view.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+            }
+            if (!TextUtils.isEmpty(branding.service_name)) {
+                ((TextView) view.findViewById(R.id.appTitle)).setText(branding.service_name);
+            }
+            if (!TextUtils.isEmpty(branding.tos_uri)) {
+                String homePage = Uri.parse(branding.tos_uri).getAuthority();
+                if (!TextUtils.isEmpty(homePage)) {
+                    ((TextView) view.findViewById(R.id.appHomePage)).setText(homePage);
+                }
+            }
+
+            View byTinode = view.findViewById(R.id.byTinode);
+            byTinode.setVisibility(View.VISIBLE);
+            UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+        }
+    }
+    // Click on a view to open the given URL.
+    static void clickToBrowseURL(View view, String url) {
+        Uri uri =  Uri.parse(url);
+        if (uri == null) {
+            return;
+        }
+        view.setOnClickListener(arg -> view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri)));
+    }
+
+    static void clickToBrowseURL(@NonNull View view, @StringRes int url) {
+        clickToBrowseURL(view, view.getResources().getString(R.string.tinode_url));
+    }
+
+    static boolean isAppFirstRun(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        return prefs.getBoolean(PREF_FIRST_RUN, true);
+    }
+
+    static void doneAppFirstRun(Context context) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        prefs.edit().putBoolean(PREF_FIRST_RUN, false).apply();
     }
 
     interface ProgressIndicator {

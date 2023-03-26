@@ -2,7 +2,9 @@ package co.tinode.tindroid;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.appcompat.app.ActionBar;
@@ -23,10 +25,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
 
     @Override
     public void onCreatePreferences(Bundle bundle, String rootKey) {
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         setHasOptionsMenu(false);
 
@@ -39,7 +38,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
 
         addPreferencesFromResource(R.xml.login_preferences);
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
         onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_HOST_NAME);
         onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_USE_TLS);
     }
@@ -65,8 +64,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         Preference preference = findPreference(key);
-        Context context = getContext();
-        if (preference == null || context == null) {
+        if (preference == null) {
             return;
         }
 
@@ -74,11 +72,21 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
             case Utils.PREFS_USE_TLS:
                 break;
             case Utils.PREFS_HOST_NAME:
+                String hostName = TindroidApp.getDefaultHostName();
+                if (TextUtils.isEmpty(hostName)) {
+                    BrandingConfig config = BrandingConfig.getConfig(requireContext());
+                    if (config != null && !TextUtils.isEmpty(config.api_url)) {
+                        Uri serverUri = Uri.parse(config.api_url);
+                        if (serverUri != null) {
+                            hostName = serverUri.getAuthority();
+                        }
+                    }
+                }
                 preference.setSummary(getString(R.string.settings_host_name_explained,
-                        sharedPreferences.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(context))));
+                        sharedPreferences.getString(Utils.PREFS_HOST_NAME, hostName)));
                 break;
             default:
-                Log.w(TAG, "Unknown preference '" + key + "'");
+                Log.i(TAG, "Unknown preference '" + key + "'");
                 // do nothing.
         }
     }

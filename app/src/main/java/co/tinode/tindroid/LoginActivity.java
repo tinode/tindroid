@@ -54,6 +54,8 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     static final String FRAGMENT_RESET = "reset";
     static final String FRAGMENT_CREDENTIALS = "cred";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
+
+    static final String FRAGMENT_BRANDING = "branding";
     static final String PREFS_LAST_LOGIN = "pref_lastLogin";
 
     private AvatarViewModel mAvatarVM;
@@ -107,6 +109,10 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     }
 
     void reportError(final Exception err, final Button button, final int attachTo, final int errId) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
         String message = getText(errId).toString();
         String errMessage = err != null ? err.getMessage() : "";
 
@@ -189,6 +195,9 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
                         args = new Bundle();
                     }
                     args.putBoolean(AttachmentHandler.ARG_AVATAR, true);
+                    break;
+                case FRAGMENT_BRANDING:
+                    fragment = new BrandingFragment();
                     break;
                 default:
                     throw new IllegalArgumentException();

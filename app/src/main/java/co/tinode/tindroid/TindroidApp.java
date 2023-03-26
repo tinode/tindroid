@@ -34,6 +34,7 @@ import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.installreferrer.api.InstallReferrerClient;
 import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
@@ -46,6 +47,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Date;
 import java.util.Map;
+import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.DefaultLifecycleObserver;
@@ -102,8 +104,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         return sAppBuild;
     }
 
-    public static String getDefaultHostName(Context context) {
-        return context.getResources().getString(isEmulator() ?
+    public static String getDefaultHostName() {
+        return sContext.getResources().getString(isEmulator() ?
                 R.string.emulator_host_name :
                 R.string.default_host_name);
     }
@@ -199,7 +201,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         if (TextUtils.isEmpty(pref.getString(Utils.PREFS_HOST_NAME, null))) {
             // No preferences found. Save default values.
             SharedPreferences.Editor editor = pref.edit();
-            editor.putString(Utils.PREFS_HOST_NAME, getDefaultHostName(this));
+            editor.putString(Utils.PREFS_HOST_NAME, getDefaultHostName());
             editor.putBoolean(Utils.PREFS_USE_TLS, getDefaultTLS());
             editor.apply();
         }
@@ -270,6 +272,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     @Override
     public void onStart(@NonNull LifecycleOwner owner) {
+        // Check if the app was installed from an URL with attributed installation source.
+        // If yes, get the config from hosts.tinode.co.
+        if (UiUtils.isAppFirstRun(sContext)) {
+            Executors.newSingleThreadExecutor().execute(() ->
+                    BrandingConfig.getInstallReferrerFromClient(sContext,
+                            InstallReferrerClient.newBuilder(this).build()));
+        }
+
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
@@ -375,7 +385,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     try {
                         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
                         // Sync call throws on error.
-                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName(TindroidApp.this)),
+                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
                                 pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
                                 false).getResult();
                         if (!tinode.isAuthenticated()) {
