@@ -357,4 +357,7 @@
     <string name="password_changed">Senha alterada</string>
     <string name="my_code">Meu código</string>
     <string name="scan_code">Escanear Código</string>
+    <string name="hint_enter_code">Código de configuração</string>
+    <string name="code_required">Código necessário</string>
+    <string name="configure_connection">Configurar conexão</string>
 </resources>

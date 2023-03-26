@@ -336,4 +336,7 @@
     <string name="password_changed">Пароль изменен</string>
     <string name="my_code">Мой код</string>
     <string name="scan_code">Сканировать код</string>
+    <string name="hint_enter_code">Код конфигурации</string>
+    <string name="code_required">Требуется код</string>
+    <string name="configure_connection">Настроить подключение</string>
 </resources>

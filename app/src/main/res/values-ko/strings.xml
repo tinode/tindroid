@@ -355,4 +355,7 @@
     <string name="password_changed">암호 변경됨</string>
     <string name="my_code">내 코드</string>
     <string name="scan_code">코드 스캔</string>
+    <string name="hint_enter_code">구성 코드</string>
+    <string name="code_required">필요한 코드</string>
+    <string name="configure_connection">연결 설정</string>
 </resources>

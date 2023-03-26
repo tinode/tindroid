@@ -356,4 +356,7 @@
     <string name="password_changed">密碼已更改</string>
     <string name="my_code">我的代碼</string>
     <string name="scan_code">掃碼</string>
+    <string name="hint_enter_code">配置代碼</string>
+    <string name="code_required">需要代碼</string>
+    <string name="configure_connection">配置連接</string>
 </resources>
