@@ -1,12 +1,15 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -16,7 +19,11 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatImageView;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tinodesdk.PromisedReply;
@@ -27,20 +34,14 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class LoginFragment extends Fragment implements View.OnClickListener {
-
+public class LoginFragment extends Fragment implements MenuProvider, View.OnClickListener {
     private static final String TAG = "LoginFragment";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        setHasOptionsMenu(true);
-
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return null;
-        }
+        AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
@@ -49,41 +50,64 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         }
 
         View fragment = inflater.inflate(R.layout.fragment_login, container, false);
+        fragment.findViewById(R.id.signIn).setOnClickListener(this);
+        fragment.findViewById(R.id.forgotPassword).setOnClickListener(this);
+        return fragment;
+    }
 
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        Activity activity = requireActivity();
+        ((MenuHost) activity).addMenuProvider(this,
+                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        initBranding(activity);
+    }
+
+    @Override
+    public void onResume() {
+        Activity activity = requireActivity();
+        initBranding(activity);
+        super.onResume();
+    }
+
+    private void initBranding(Activity activity) {
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
 
         if (!TextUtils.isEmpty(login)) {
-            TextView loginView = fragment.findViewById(R.id.editLogin);
+            TextView loginView = activity.findViewById(R.id.editLogin);
             if (loginView != null) {
                 loginView.setText(login);
             }
+        } else if (UiUtils.isAppFirstRun(activity)) {
+            View branding = activity.findViewById(R.id.brandingSetup);
+            branding.setVisibility(View.VISIBLE);
+            branding.setOnClickListener(v ->
+                    ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_BRANDING, null));
+        } else {
+            BrandingConfig config;
+            if ((config = BrandingConfig.getConfig(activity)) != null) {
+                Bitmap logo = BrandingConfig.getLargeIcon(activity);
+                if (logo != null) {
+                    ((AppCompatImageView) activity.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+                    ((TextView) activity.findViewById(R.id.appTitle)).setText(config.service_name);
+
+                    View byTinode = activity.findViewById(R.id.byTinode);
+                    byTinode.setVisibility(View.VISIBLE);
+                    UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+                }
+            }
         }
-
-        fragment.findViewById(R.id.signIn).setOnClickListener(this);
-        fragment.findViewById(R.id.forgotPassword).setOnClickListener(this);
-
-        return fragment;
-    }
-
-
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        inflater.inflate(R.menu.menu_login, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     /**
-     * Either [Signin] or [Forgot password] pressed.
+     * Either [Sign in] or [Forgot password] pressed.
      *
      * @param v ignored
      */
     public void onClick(View v) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
-            return;
-        }
+        final LoginActivity parent = (LoginActivity) requireActivity();
 
         if (v.getId() == R.id.forgotPassword) {
             parent.showFragment(LoginActivity.FRAGMENT_RESET, null);
@@ -108,7 +132,7 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
         signIn.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
-        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
+        final String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
         final Tinode tinode = Cache.getTinode();
         // This is called on the websocket thread.
@@ -156,5 +180,15 @@ public class LoginFragment extends Fragment implements View.OnClickListener {
                                 return null;
                             }
                         });
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menuInflater.inflate(R.menu.menu_login, menu);
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        return false;
     }
 }

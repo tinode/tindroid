@@ -35,10 +35,8 @@ public class AccAboutFragment extends Fragment {
         toolbar.setTitle(R.string.about_the_app);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
-        ((TextView) fragment.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
-        ((TextView) fragment.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
-                TindroidApp.getAppBuild()));
-        ((TextView) fragment.findViewById(R.id.app_server)).setText(Cache.getTinode().getHttpOrigin());
+        UiUtils.fillAboutTinode(fragment, Cache.getTinode().getHttpOrigin(),
+                BrandingConfig.getConfig(activity));
 
         return fragment;
     }

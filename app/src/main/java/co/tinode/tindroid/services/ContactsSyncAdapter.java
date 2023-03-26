@@ -278,10 +278,8 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             }
 
             try {
-                final SharedPreferences sharedPref =
-                        PreferenceManager.getDefaultSharedPreferences(mContext);
-                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME,
-                        TindroidApp.getDefaultHostName(mContext));
+                final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
                 boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);

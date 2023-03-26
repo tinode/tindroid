@@ -218,11 +218,11 @@
     <string name="block_and_report">Bloquear e reportar</string>
     <string name="confirm_contact_ban">Bloquear %1$s?</string>
     <string name="confirm_report">Bloquear e reportar %1$s?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Nutzungsbedingungen</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">Kontakt</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">Datenschutzerklärung</a>]]></string>
-    <string name="button_hint_start_new_chat">Eine neue Unterhaltung beginnen</string>
-    <string name="app_server">Server</string>
+    <string name="terms_of_use">Termos de uso</string>
+    <string name="contact_us">Contate-nos</string>
+    <string name="privacy_policy">Política de Privacidade</string>
+    <string name="button_hint_start_new_chat">Iniciar novo bate-papo</string>
+    <string name="app_server">Servidor</string>
     <string name="full_name_required">Nome completo requerido</string>
     <string name="default_contact_name">Usuário Tinode %1$s</string>
     <string name="permission_missing">Sem permissão</string>

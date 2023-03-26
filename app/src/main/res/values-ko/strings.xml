@@ -216,9 +216,9 @@
     <string name="block_and_report">차단 후 신고</string>
     <string name="confirm_contact_ban">%1$s를 차단하시겠습니까?</string>
     <string name="confirm_report">%1$s를 차단 후 신고하시겠습니까?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">이용 약관</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">문의하기</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"https://tinode.co/privacy.html\">개인 정보 정책</a>]]></string>
+    <string name="terms_of_use">이용 약관</string>
+    <string name="contact_us">문의하기</string>
+    <string name="privacy_policy">개인 정보 정책</string>
     <string name="button_hint_start_new_chat">새로운 대화 시작</string>
     <string name="app_server">서버</string>
     <string name="full_name_required">이름 필요</string>

@@ -1,10 +1,14 @@
 package co.tinode.tindroid;
 
 import android.content.Intent;
+import android.content.res.Resources;
+import android.net.Uri;
 import android.os.Bundle;
-import android.text.Html;
-import android.text.method.LinkMovementMethod;
-import android.text.method.MovementMethod;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.UnderlineSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +17,7 @@ import android.widget.TextView;
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -38,20 +43,18 @@ public class AccHelpFragment extends Fragment {
         toolbar.setTitle(R.string.help);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
+        BrandingConfig config = BrandingConfig.getConfig(activity);
+
         // Make policy links clickable.
-        MovementMethod movementInstance = LinkMovementMethod.getInstance();
-        TextView link = fragment.findViewById(R.id.contactUs);
-        link.setText(Html.fromHtml(getString(R.string.contact_us),
-                Html.FROM_HTML_MODE_COMPACT));
-        link.setMovementMethod(movementInstance);
-        link = fragment.findViewById(R.id.termsOfUse);
-        link.setText(Html.fromHtml(getString(R.string.terms_of_use),
-                Html.FROM_HTML_MODE_COMPACT));
-        link.setMovementMethod(movementInstance);
-        link = fragment.findViewById(R.id.privacyPolicy);
-        link.setText(Html.fromHtml(getString(R.string.privacy_policy),
-                Html.FROM_HTML_MODE_COMPACT));
-        link.setMovementMethod(movementInstance);
+        makeViewClickable(activity, fragment.findViewById(R.id.contactUs), R.string.contact_us,
+                config != null && !TextUtils.isEmpty(config.contact_us_uri) ?
+                        config.contact_us_uri : getString(R.string.contact_us_uri));
+        makeViewClickable(activity, fragment.findViewById(R.id.termsOfUse), R.string.terms_of_use,
+                config != null && !TextUtils.isEmpty(config.tos_uri) ?
+                        config.tos_uri : getString(R.string.terms_of_use_uri));
+        makeViewClickable(activity, fragment.findViewById(R.id.privacyPolicy), R.string.privacy_policy,
+                config != null && !TextUtils.isEmpty(config.privacy_uri) ?
+                        config.privacy_uri : getString(R.string.privacy_policy_uri));
 
         fragment.findViewById(R.id.aboutTheApp).setOnClickListener(v ->
                 ((ChatsActivity) activity).showFragment(ChatsActivity.FRAGMENT_ACC_ABOUT, null));
@@ -62,5 +65,21 @@ public class AccHelpFragment extends Fragment {
         });
 
         return fragment;
+    }
+
+    private void makeViewClickable(AppCompatActivity activity, TextView link,
+                                   @StringRes int string_id, String uriString) {
+        final Uri uri = Uri.parse(uriString);
+        if (uri == null) {
+            return;
+        }
+
+        Resources res = getResources();
+        SpannableStringBuilder text = new SpannableStringBuilder(res.getString(string_id));
+        text.setSpan(new ForegroundColorSpan(res.getColor(R.color.colorAccent, activity.getTheme())),
+                0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        text.setSpan(new UnderlineSpan(), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        link.setText(text);
+        link.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, uri)));
     }
 }

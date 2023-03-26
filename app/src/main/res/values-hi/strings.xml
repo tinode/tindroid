@@ -196,9 +196,9 @@
     <string name="block_and_report">ब्लॉक करें और रिपोर्ट करें</string>
     <string name="confirm_contact_ban">%1$s को अवरोधित करें?</string>
     <string name="confirm_report">%1$s को अवरोधित करें और रिपोर्ट करें?</string>
-    <string name="terms_of_use"><![CDATA[<a href=\"https://tinode.co/terms.html\">Terms of Use</a>]]></string>
-    <string name="contact_us"><![CDATA[<a href=\"mailto:support@tinode.co\">हमसे संपर्क करें</a>]]></string>
-    <string name="privacy_policy"><![CDATA[<a href=\"mailto:support@tinode.co\">हमसे संपर्क करें</a>]]></string>
+    <string name="terms_of_use">उपयोग की शर्तें</string>
+    <string name="contact_us">हमसे संपर्क करें</string>
+    <string name="privacy_policy">हमसे संपर्क करें</string>
     <string name="button_hint_start_new_chat">नई चैट शुरू करें</string>
     <string name="app_server">सर्वर</string>
     <string name="full_name_required">पूरा नाम आवश्यक है</string>
@@ -307,7 +307,6 @@
     <string name="unable_to_place_call">यह कॉल करने में असमर्थ</string>
     <string name="unable_to_answer_call">इस कॉल का उत्तर देने में असमर्थ</string>
     <string name="busy_call">व्यस्त</string>
-
     <string name = "phone_sms_explained"> हम उपरोक्त नंबर पर पुष्टिकरण कोड के साथ एक एसएमएस भेजेंगे।</string>
     <string name="phone_number_required">वैध फ़ोन नंबर आवश्यक है</string>
     <string name="phone_number_hint">मोबाइल फ़ोन नंबर</string>
