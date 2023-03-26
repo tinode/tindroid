@@ -121,9 +121,6 @@ public class SignUpFragment extends Fragment
         super.onResume();
 
         final LoginActivity parent = (LoginActivity) requireActivity();
-        if (parent.isFinishing() || parent.isDestroyed()) {
-            return;
-        }
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName(parent));
@@ -141,6 +138,9 @@ public class SignUpFragment extends Fragment
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 Log.w(TAG, "Failed to connect", err);
+                if (parent.isFinishing() || parent.isDestroyed()) {
+                    return null;
+                }
                 parent.runOnUiThread(() -> {
                     parent.findViewById(R.id.signUp).setEnabled(false);
                     Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
@@ -152,6 +152,11 @@ public class SignUpFragment extends Fragment
 
     // Configure email or phone field.
     private void setupCredentials(Activity activity, String[] methods) {
+        // This is called on a network thread. Make sure the activity is still alive.
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
         if (methods == null || methods.length == 0) {
             mCredMethods = new String[]{"email"};
         } else {

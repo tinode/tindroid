@@ -103,7 +103,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:23.1.2'
     implementation 'com.google.mlkit:barcode-scanning:17.0.3'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.15'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:8.13.8'
 
     // Don't change to 2.7182... The 2.8 is the latest.
     // noinspection GradleDependency
@@ -116,7 +116,7 @@ dependencies {
     annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.6.0'
 
     // noinspection GradleDependency: does not compile with 2.x (even for API 33).
-    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.0'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
 }
 
 configurations {
