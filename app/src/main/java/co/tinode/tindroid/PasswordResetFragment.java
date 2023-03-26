@@ -17,6 +17,8 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.List;
 
 import androidx.annotation.NonNull;
@@ -30,7 +32,6 @@ import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.AuthScheme;
-import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 public class PasswordResetFragment extends Fragment implements MenuProvider {
@@ -83,6 +84,9 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                if (parent.isFinishing() || parent.isDestroyed()) {
+                    return null;
+                }
                 List<String> methods = UiUtils.getRequiredCredMethods(tinode, "auth");
                 setupCredentials(parent, methods.toArray(new String[]{}));
                 return null;
@@ -91,6 +95,9 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 Log.w(TAG, "Failed to connect", err);
+                if (parent.isFinishing() || parent.isDestroyed()) {
+                    return null;
+                }
                 parent.runOnUiThread(() -> {
                     parent.findViewById(R.id.requestCode).setEnabled(false);
                     parent.findViewById(R.id.haveCode).setEnabled(false);
@@ -143,16 +150,16 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         return false;
     }
 
-    private String validateCredential(LoginActivity parent, String method) {
+    private String validateCredential(LoginActivity parent, @Nullable String method) {
         String value = null;
-        if (method.equals("tel")) {
+        if ("tel".equals(method)) {
             final PhoneEdit phone = parent.findViewById(R.id.phone);
             if (!phone.isNumberValid()) {
                 phone.setError(getText(R.string.phone_number_required));
             } else {
                 value = phone.getPhoneNumberE164();
             }
-        } else if (method.equals("email")) {
+        } else if ("email".equals(method)) {
             value = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim().toLowerCase();
             if (value.isEmpty()) {
                 ((EditText) parent.findViewById(R.id.email)).setError(getString(R.string.email_required));
@@ -178,6 +185,9 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                if (parent.isFinishing() || parent.isDestroyed()) {
+                                    return null;
+                                }
                                 parent.runOnUiThread(() -> {
                                     readyToEnterCode();
                                     Toast.makeText(parent, R.string.confirmation_code_sent, Toast.LENGTH_SHORT).show();
@@ -206,7 +216,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
     private void clickConfirm(View button) {
         final LoginActivity parent = (LoginActivity) requireActivity();
 
-        String method = mCredMethods[0];
+        String method = mCredMethods != null && mCredMethods.length > 0 ? mCredMethods[0] : null;
         final String value = validateCredential(parent, method);
         if (TextUtils.isEmpty(value)) {
             return;
@@ -224,6 +234,9 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        if (parent.isFinishing() || parent.isDestroyed()) {
+                            return null;
+                        }
                         parent.runOnUiThread(() -> {
                             Toast.makeText(parent, R.string.password_changed, Toast.LENGTH_LONG).show();
                             parent.getSupportFragmentManager().popBackStack();

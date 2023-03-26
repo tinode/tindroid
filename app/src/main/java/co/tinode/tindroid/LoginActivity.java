@@ -107,6 +107,10 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     }
 
     void reportError(final Exception err, final Button button, final int attachTo, final int errId) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
         String message = getText(errId).toString();
         String errMessage = err != null ? err.getMessage() : "";
 
