@@ -115,6 +115,15 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         return val instanceof int[] && Arrays.stream((int[]) val).anyMatch(value -> seq == value);
     }
 
+    public int[] getPinned() {
+        Object val = getAux("pins");
+        if (val instanceof int[]) {
+            int[] pinned = (int[]) val;
+            return pinned.length > 0 ? pinned : null;
+        }
+        return null;
+    }
+
     /**
      * Checks if the topic is archived. Not all topics support archiving.
      * @return true if the topic is archived, false otherwise.

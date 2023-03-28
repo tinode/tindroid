@@ -440,7 +440,8 @@ public class MessageActivity extends AppCompatActivity
                 .withDesc()
                 .withSub()
                 .withLaterData(MESSAGES_TO_LOAD)
-                .withDel();
+                .withDel()
+                .withAux();
 
         if (mTopic.isOwner()) {
             builder = builder.withTags();

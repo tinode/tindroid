@@ -5,13 +5,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="2dp"
+    android:paddingTop="3dp"
+    android:paddingBottom="1dp"
     android:visibility="visible"
     android:background="?android:colorBackground"
     android:elevation="2dp">
 
     <androidx.appcompat.widget.AppCompatImageButton
-        android:id="@+id/cancelPreview"
+        android:id="@+id/unpinMessage"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless"

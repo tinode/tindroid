@@ -21,11 +21,6 @@ public class DotSelectorDrawable extends Drawable {
     private int mDotCount;
     private int mSelected;
 
-    public DotSelectorDrawable() {
-        mPaintSelected = new Paint();
-        mPaintNormal = new Paint();
-    }
-
     public DotSelectorDrawable(Resources res, int dots, int selected) {
         super();
 

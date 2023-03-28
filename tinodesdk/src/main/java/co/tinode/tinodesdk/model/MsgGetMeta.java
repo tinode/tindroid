@@ -201,6 +201,9 @@ public class MsgGetMeta implements Serializable {
         if ((mSet & CRED_SET) != 0) {
             parts.add(CRED);
         }
+        if ((mSet & AUX_SET) != 0) {
+            parts.add(AUX);
+        }
 
         if (!parts.isEmpty()) {
             sb.append(parts.get(0));

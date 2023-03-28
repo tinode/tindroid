@@ -81,6 +81,7 @@ import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.DotSelectorDrawable;
 import co.tinode.tindroid.widgets.MovableActionButton;
 import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
@@ -315,6 +316,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 }
             }
         });
+
+        view.findViewById(R.id.unpinMessage).setOnClickListener(v ->
+                Log.i(TAG, "Unpin current message!"));
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -772,6 +776,19 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         Acs acs = mTopic.getAccessMode();
         if (acs == null || !acs.isModeDefined()) {
             return;
+        }
+
+        int[] pinned = new int[]{12,13,15};//Topic.getPinned();
+        if (pinned == null) {
+            activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
+        } else {
+            activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
+            ((ImageView) activity.findViewById(R.id.dotSelector))
+                    .setImageDrawable(new DotSelectorDrawable(getResources(), pinned.length, 0));
+            AppCompatImageButton unpin = activity.findViewById(R.id.unpinMessage);
+            unpin.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
+            activity.findViewById(R.id.staticPin).setVisibility(mTopic.isManager() ? View.GONE : View.VISIBLE);
+            ((TextView) activity.findViewById(R.id.contentPreview)).setText("Hello");
         }
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
