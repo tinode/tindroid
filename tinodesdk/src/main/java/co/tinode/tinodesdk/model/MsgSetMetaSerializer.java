@@ -44,6 +44,13 @@ public class MsgSetMetaSerializer extends StdSerializer<MsgSetMeta<?,?>> {
         } else if (value.nulls[MsgSetMeta.NULL_CRED]) {
             gen.writeStringField("cred", Tinode.NULL_VALUE);
         }
+
+        if (value.aux != null && !value.aux.isEmpty()) {
+            gen.writeObjectField("aux", value.aux);
+        } else if (value.nulls[MsgSetMeta.NULL_AUX]) {
+            gen.writeStringField("aux", Tinode.NULL_VALUE);
+        }
+
         gen.writeEndObject();
     }
 }

@@ -48,4 +48,19 @@
         android:title="@string/action_copy"
         app:showAsAction="ifRoom"/>
 
+    <item
+        android:id="@+id/action_pin"
+        android:icon="@drawable/ic_pin"
+        android:orderInCategory="106"
+        android:title="@string/action_pin"
+        android:visible="false"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_unpin"
+        android:icon="@drawable/ic_pin_off"
+        android:orderInCategory="107"
+        android:title="@string/action_unpin"
+        android:visible="false"
+        app:showAsAction="ifRoom"/>
 </menu>

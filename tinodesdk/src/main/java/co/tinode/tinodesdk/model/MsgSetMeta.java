@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.Serializable;
+import java.util.Map;
 
 /**
  * Payload for setting meta params, a combination of MetaSetDesc, MetaSetSub, tags, credential.
@@ -15,7 +16,7 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
     static final int NULL_SUB = 1;
     static final int NULL_TAGS = 2;
     static final int NULL_CRED = 3;
-
+    static final int NULL_AUX = 4;
     // Keep track of NULL assignments to fields.
     @JsonIgnore
     final boolean[] nulls = new boolean[]{false, false, false, false};
@@ -24,6 +25,7 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
     public MetaSetSub sub = null;
     public String[] tags = null;
     public Credential cred = null;
+    public Map<String,Object> aux = null;
 
     public MsgSetMeta() {}
 
@@ -71,6 +73,12 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
         public Builder<Pu,Pr> with(Credential cred) {
             msm.cred = cred;
             msm.nulls[NULL_CRED] = cred == null;
+            return this;
+        }
+
+        public Builder<Pu,Pr> with(Map<String,Object> aux) {
+            msm.aux = aux;
+            msm.nulls[NULL_AUX] = aux == null;
             return this;
         }
 

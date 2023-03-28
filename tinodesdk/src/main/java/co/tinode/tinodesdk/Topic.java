@@ -63,6 +63,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     // Server-provided values:
     // Tags: user and topic discovery
     protected String[] mTags;
+    // Auxiliary data.
+    protected Map<String,Object> mAux;
     // The topic is subscribed/online.
     protected int mAttached = 0;
     protected Listener<DP, DR, SP, SR> mListener = null;
@@ -555,6 +557,23 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     public void setTags(String[] tags) {
         mTags = tags;
+    }
+
+    public Map<String, Object> getAux() {
+        return mAux;
+    }
+    public Object getAux(String key) {
+        return mAux != null ? mAux.get(key) : null;
+    }
+    public void setAux(Map<String, Object> aux) {
+        mAux = aux;
+    }
+
+    public void setAux(String key, Object value) {
+        if (mAux == null) {
+            mAux = new HashMap<>();
+        }
+        mAux.put(key, value);
     }
 
     public DP getPub() {
@@ -2276,6 +2295,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         /**
+         * {meta what="aux"} message received
+         */
+        default void onMetaAux(Map<String,Object> aux) {
+        }
+
+        /**
          * {meta what="sub"} message received and all subs were processed
          */
         default void onSubsUpdated() {
@@ -2418,6 +2443,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         public MetaGetBuilder withTags() {
             meta.setTags();
+            return this;
+        }
+
+        public MetaGetBuilder withAux() {
+            meta.setAux();
             return this;
         }
 

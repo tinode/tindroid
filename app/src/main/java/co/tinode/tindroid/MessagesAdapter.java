@@ -210,6 +210,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         showMessageForwardSelector(selected[0]);
                     }
                     return true;
+                } else if (id == R.id.action_pin || id == R.id.action_unpin) {
+                    if (selected != null) {
+                        sendPinMessage(selected[0], id == R.id.action_pin);
+                    }
+                    return true;
                 }
 
                 return false;
@@ -383,6 +388,25 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 updateSelectionMode();
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void sendPinMessage(int pos, boolean pin) {
+        StoredMessage msg = getMessage(pos);
+        if (msg == null) {
+            return;
+        }
+        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(mTopicName);
+        topic.pinMessage(msg.seq, pin)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        toggleSelectionAt(pos);
+                        notifyItemChanged(pos);
+                        mActivity.runOnUiThread(() -> updateSelectionMode());
+                        return null;
+                    }
+                }, new UiUtils.ToastFailureListener(mActivity));
     }
 
     private String messageFrom(StoredMessage msg) {
@@ -857,10 +881,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 Menu menu = mSelectionMode.getMenu();
                 boolean mutable = false;
                 boolean repliable = false;
+                boolean pinned = false;
                 if (selected == 1) {
                     StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
                     if (msg != null && msg.status == BaseDb.Status.SYNCED) {
                         repliable = true;
+                        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(mTopicName);
+                        pinned = (topic != null && topic.isPinned(msg.seq));
                         if (msg.content != null && msg.isMine()) {
                             mutable = true;
                             String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
@@ -890,6 +917,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 menu.findItem(R.id.action_edit).setVisible(mutable);
                 menu.findItem(R.id.action_reply).setVisible(repliable);
                 menu.findItem(R.id.action_forward).setVisible(repliable);
+                menu.findItem(R.id.action_pin).setVisible(!pinned);
+                menu.findItem(R.id.action_unpin).setVisible(pinned);
             }
         }
     }

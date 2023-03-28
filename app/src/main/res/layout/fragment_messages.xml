@@ -8,6 +8,10 @@
     android:background="@drawable/message_view_bkg"
     tools:context=".MessagesFragment">
 
+    <include layout="@layout/fragment_pinned"
+        android:id="@+id/pinned_messages"
+        android:visibility="visible" />
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
         android:layout_width="0dp"
@@ -15,7 +19,7 @@
         app:layout_constraintBottom_toTopOf="@id/sendMessageFragment"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/pinned_messages">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/messages_container"

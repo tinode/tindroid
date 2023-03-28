@@ -30,4 +30,5 @@
     <dimen name="local_video_frame">144dp</dimen>
     <dimen name="swipe_to_accept">56dp</dimen>
     <dimen name="swipe_to_reject">48dp</dimen>
+    <dimen name="pinned_view_corners">8dp</dimen>
 </resources>

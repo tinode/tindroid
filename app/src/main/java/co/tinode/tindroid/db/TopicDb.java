@@ -100,6 +100,10 @@ public class TopicDb implements BaseColumns {
      */
     public static final String COLUMN_NAME_TAGS = "tags";
     /**
+     * Auxiliary topic data, key-value map.
+     */
+    public static final String COLUMN_NAME_AUX = "aux";
+    /**
      * Timestamp when the topic was last online.
      */
     public static final String COLUMN_NAME_LAST_SEEN = "last_seen";
@@ -143,12 +147,13 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_MAX_LOCAL_SEQ = 16;
     static final int COLUMN_IDX_NEXT_UNSENT_SEQ = 17;
     static final int COLUMN_IDX_TAGS = 18;
-    static final int COLUMN_IDX_LAST_SEEN = 19;
-    static final int COLUMN_IDX_LAST_SEEN_UA = 20;
-    static final int COLUMN_IDX_CREDS = 21;
-    static final int COLUMN_IDX_PUBLIC = 22;
-    static final int COLUMN_IDX_TRUSTED = 23;
-    static final int COLUMN_IDX_PRIVATE = 24;
+    static final int COLUMN_IDX_AUX = 19;
+    static final int COLUMN_IDX_LAST_SEEN = 20;
+    static final int COLUMN_IDX_LAST_SEEN_UA = 21;
+    static final int COLUMN_IDX_CREDS = 22;
+    static final int COLUMN_IDX_PUBLIC = 23;
+    static final int COLUMN_IDX_TRUSTED = 24;
+    static final int COLUMN_IDX_PRIVATE = 25;
     /**
      * SQL statement to create Messages table
      */
@@ -174,6 +179,7 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_MAX_LOCAL_SEQ + " INT," +
                     COLUMN_NAME_NEXT_UNSENT_SEQ + " INT," +
                     COLUMN_NAME_TAGS + " TEXT," +
+                    COLUMN_NAME_AUX + " TEXT," +
                     COLUMN_NAME_LAST_SEEN + " INT," +
                     COLUMN_NAME_LAST_SEEN_UA + " TEXT," +
                     COLUMN_NAME_CREDS + " TEXT," +
@@ -231,6 +237,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_TAGS, BaseDb.serializeStringArray(topic.getTags()));
+        values.put(COLUMN_NAME_AUX, BaseDb.serialize(topic.getAux()));
         if (topic.getLastSeen() != null) {
             values.put(COLUMN_NAME_LAST_SEEN, topic.getLastSeen().getTime());
         }
@@ -295,6 +302,7 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_ACCESSMODE, BaseDb.serializeMode(topic.getAccessMode()));
         values.put(COLUMN_NAME_DEFACS, BaseDb.serializeDefacs(topic.getDefacs()));
         values.put(COLUMN_NAME_TAGS, BaseDb.serializeStringArray(topic.getTags()));
+        values.put(COLUMN_NAME_AUX, BaseDb.serialize(topic.getAux()));
         if (topic.getLastSeen() != null) {
             values.put(COLUMN_NAME_LAST_SEEN, topic.getLastSeen().getTime());
         }

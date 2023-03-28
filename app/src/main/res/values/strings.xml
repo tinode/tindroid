@@ -377,4 +377,7 @@
     <string name="hint_enter_code">Configuration code</string>
     <string name="code_required">Code required</string>
     <string name="configure_connection">Configure connection</string>
+    <string name="action_pin">Pin</string>
+    <string name="action_unpin">Unpin</string>
+    <string name="pinned_messages">Pinned messages</string>
 </resources>

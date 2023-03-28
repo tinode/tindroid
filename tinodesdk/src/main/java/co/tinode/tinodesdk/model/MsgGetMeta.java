@@ -23,14 +23,14 @@ public class MsgGetMeta implements Serializable {
     private static final int DEL_SET = 0x08;
     private static final int TAGS_SET = 0x10;
     private static final int CRED_SET = 0x20;
-
+    private static final int AUX_SET = 0x40;
     private static final String DESC = "desc";
     private static final String SUB = "sub";
     private static final String DATA = "data";
     private static final String DEL = "del";
     private static final String TAGS = "tags";
     private static final String CRED = "cred";
-
+    private static final String AUX = "aux";
     @JsonIgnore
     private int mSet = 0;
 
@@ -52,7 +52,8 @@ public class MsgGetMeta implements Serializable {
      * @param sub request subscriptions
      * @param data request data messages
      */
-    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del, Boolean tags, Boolean cred) {
+    public MsgGetMeta(MetaGetDesc desc, MetaGetSub sub, MetaGetData data, MetaGetData del,
+                      Boolean tags, Boolean cred, Boolean aux) {
         this.desc = desc;
         this.sub = sub;
         this.data = data;
@@ -62,6 +63,9 @@ public class MsgGetMeta implements Serializable {
         }
         if (cred != null && cred) {
             this.mSet |= CRED_SET;
+        }
+        if (aux != null && aux) {
+            this.mSet |= AUX_SET;
         }
         buildWhat();
     }
@@ -89,7 +93,8 @@ public class MsgGetMeta implements Serializable {
                 " data=[" + (data != null ? data.toString() : "null") + "]," +
                 " del=[" + (del != null ? del.toString() : "null") + "]" +
                 " tags=[" + ((mSet & TAGS_SET) != 0 ? "set" : "null") + "]" +
-                " cred=[" + ((mSet & CRED_SET) != 0 ? "set" : "null") + "]";
+                " cred=[" + ((mSet & CRED_SET) != 0 ? "set" : "null") + "]" +
+                " aux=[" + ((mSet & AUX_SET) != 0 ? "set" : "null") + "]";
     }
 
 
@@ -164,6 +169,12 @@ public class MsgGetMeta implements Serializable {
     // Do not add @JsonIgnore here.
     public void setCred() {
         mSet |= CRED_SET;
+        buildWhat();
+    }
+
+    // Do not add @JsonIgnore here.
+    public void setAux() {
+        mSet |= AUX_SET;
         buildWhat();
     }
 

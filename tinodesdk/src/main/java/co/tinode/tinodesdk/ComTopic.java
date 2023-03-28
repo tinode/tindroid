@@ -1,9 +1,12 @@
 package co.tinode.tinodesdk;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetDesc;
-import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -64,6 +67,52 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
     public String getComment() {
         PrivateType p = super.getPriv();
         return p != null ? p.getComment() : null;
+    }
+
+    /**
+     * Set message as pinned or unpinned by adding it to aux.pins array.
+     *
+     * @param seq - seq ID of the message to pin or un-pin.
+     * @param pin - true to pin the message, false to un-pin.
+     *
+     * @return Promise to be resolved/rejected when the server responds to request.
+     */
+    public PromisedReply<ServerMessage> pinMessage(int seq, boolean pin) {
+        Object val = getAux("pins");
+        int[] pinned;
+        if (val instanceof int[]) {
+            pinned = (int[]) val;
+        } else {
+            pinned = new int[]{-1};
+        }
+
+        boolean changed = false;
+        if (Arrays.stream(pinned).anyMatch(value -> seq == value)) {
+            if (pin) {
+                if (Arrays.stream(pinned).noneMatch(value -> seq == value)) {
+                    changed = true;
+                    pinned = Arrays.copyOf(pinned, pinned.length + 1);
+                    pinned[pinned.length - 1] = seq;
+                }
+            } else {
+                int[] filtered = Arrays.stream(pinned).filter(value -> seq != value).toArray();
+                changed = filtered.length != pinned.length;
+                pinned = filtered;
+            }
+        }
+
+        if (changed) {
+            Map<String, Object> aux = new HashMap<>();
+            aux.put("pins", pinned.length > 0?  pinned : Tinode.NULL_VALUE);
+            return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(aux).build());
+        }
+
+        return new PromisedReply<>((ServerMessage) null);
+    }
+
+    public boolean isPinned(int seq) {
+        Object val = getAux("pins");
+        return val instanceof int[] && Arrays.stream((int[]) val).anyMatch(value -> seq == value);
     }
 
     /**

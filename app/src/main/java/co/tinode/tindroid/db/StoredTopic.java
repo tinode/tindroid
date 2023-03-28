@@ -50,7 +50,7 @@ public class StoredTopic implements LocalData.Payload {
         topic.setMaxDel(c.getInt(TopicDb.COLUMN_IDX_MAX_DEL));
 
         topic.setTags(BaseDb.deserializeStringArray(c.getString(TopicDb.COLUMN_IDX_TAGS)));
-
+        topic.setAux(BaseDb.deserialize(c.getString(TopicDb.COLUMN_IDX_AUX)));
         try {
             topic.setLastSeen(new Date(c.getLong(TopicDb.COLUMN_IDX_LAST_SEEN)),
                     c.getString(TopicDb.COLUMN_IDX_LAST_SEEN_UA));
