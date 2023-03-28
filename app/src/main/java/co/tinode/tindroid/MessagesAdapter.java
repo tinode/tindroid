@@ -21,7 +21,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
@@ -762,40 +761,45 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 int replySeq = UiUtils.parseSeqReference(m.getStringHeader("reply"));
                 if (replySeq > 0) {
                     // A reply message was clicked. Scroll original into view and animate.
-                    final int pos = findInCursor(mCursor, replySeq);
-                    if (pos >= 0) {
-                        StoredMessage mm = getMessage(pos);
-                        if (mm != null) {
-                            LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-                            if (lm != null &&
-                                    pos >= lm.findFirstCompletelyVisibleItemPosition() &&
-                                    pos <= lm.findLastCompletelyVisibleItemPosition()) {
-                                // Completely visible, animate now.
-                                animateMessageBubble(
-                                        (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                        mm.isMine(), false);
-                            } else {
-                                // Scroll then animate.
-                                mRecyclerView.clearOnScrollListeners();
-                                mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                                    @Override
-                                    public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                                        super.onScrollStateChanged(recyclerView, newState);
-                                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                                            recyclerView.removeOnScrollListener(this);
-                                            animateMessageBubble(
-                                                    (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                                    mm.isMine(), false);
-                                        }
-                                    }
-                                });
-                                mRecyclerView.smoothScrollToPosition(pos);
-                            }
-                        }
-                    }
+                    scrollToAndAnimate(replySeq);
                 }
             }
         });
+    }
+
+    // Scroll to and animate message bubble.
+    void scrollToAndAnimate(int seq) {
+        final int pos = findInCursor(mCursor, seq);
+        if (pos >= 0) {
+            StoredMessage mm = getMessage(pos);
+            if (mm != null) {
+                LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+                if (lm != null &&
+                        pos >= lm.findFirstCompletelyVisibleItemPosition() &&
+                        pos <= lm.findLastCompletelyVisibleItemPosition()) {
+                    // Completely visible, animate now.
+                    animateMessageBubble(
+                            (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                            mm.isMine(), false);
+                } else {
+                    // Scroll then animate.
+                    mRecyclerView.clearOnScrollListeners();
+                    mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                        @Override
+                        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                            super.onScrollStateChanged(recyclerView, newState);
+                            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                                recyclerView.removeOnScrollListener(this);
+                                animateMessageBubble(
+                                        (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                                        mm.isMine(), false);
+                            }
+                        }
+                    });
+                    mRecyclerView.smoothScrollToPosition(pos);
+                }
+            }
+        }
     }
 
     @Override

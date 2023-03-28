@@ -1,8 +1,13 @@
 package co.tinode.tinodesdk;
 
+import android.util.Log;
+
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.IntPredicate;
+import java.util.function.ToIntFunction;
 
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -117,8 +122,12 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
 
     public int[] getPinned() {
         Object val = getAux("pins");
-        if (val instanceof int[]) {
-            int[] pinned = (int[]) val;
+        if (val instanceof List) {
+            int[] pinned = ((List<?>) val).stream()
+                    .mapToInt((ToIntFunction<Object>) value ->
+                            value instanceof Number ? ((Number) value).intValue() : 0)
+                    .filter(value -> value > 0)
+                    .toArray();
             return pinned.length > 0 ? pinned : null;
         }
         return null;

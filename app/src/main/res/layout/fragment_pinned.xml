@@ -16,8 +16,10 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:paddingStart="2dp"
-        android:paddingEnd="2dp"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
         app:srcCompat="@drawable/ic_close"
         app:tint="?android:textColorPrimary" />
 
@@ -26,8 +28,9 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:contentDescription="@string/pinned_messages"
-        android:paddingStart="2dp"
-        android:paddingEnd="2dp"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp"
+        android:visibility="gone"
         app:srcCompat="@drawable/ic_pin"
         app:tint="?android:textColorSecondary" />
 
@@ -40,17 +43,10 @@
         android:paddingEnd="2dp"
         tools:ignore="ContentDescription" />
 
-    <TextView
-        android:id="@+id/contentPreview"
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/previewPager"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="start"
         android:background="@drawable/rounded_corners_r"
-        android:ellipsize="end"
-        android:lines="1"
-        android:padding="12dp"
-        android:paddingStart="8dp"
-        android:textColor="?android:textColorPrimary"
-        tools:ignore="RtlSymmetry"
-        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing as amet" />
+        tools:ignore="RtlSymmetry" />
 </LinearLayout>

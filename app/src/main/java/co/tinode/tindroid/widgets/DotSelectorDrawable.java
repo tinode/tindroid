@@ -18,6 +18,7 @@ import co.tinode.tindroid.R;
 public class DotSelectorDrawable extends Drawable {
     private final Paint mPaintSelected;
     private final Paint mPaintNormal;
+    private final Paint mPaintDebug;
     private int mDotCount;
     private int mSelected;
 
@@ -36,19 +37,23 @@ public class DotSelectorDrawable extends Drawable {
         mPaintNormal.setAntiAlias(true);
         mPaintNormal.setDither(true);
         mPaintNormal.setColor(res.getColor(R.color.colorGray, null));
+
+        mPaintDebug = new Paint();
+        mPaintDebug.setColor(res.getColor(R.color.colorPillCounter, null));
     }
 
     @Override
     public void draw(@NonNull Canvas canvas) {
         Rect bounds = getBounds();
-        float offset = 4f;
-        float radius = Math.min(bounds.width() / 4.0f, (bounds.height() - offset) / (mDotCount + offset));
+        float yStep = (float) bounds.height() / (mDotCount + 1);
+        float radius = Math.min(bounds.width() / 4.0f, yStep - 4f);
         int x = bounds.centerX();
-        int yStart = (int) (bounds.top + radius + offset);
+        int yStart = (int) (bounds.top + yStep);
+        int selected = mDotCount - mSelected - 1;
         for (int i = 0; i < mDotCount; i++) {
-            canvas.drawCircle(x, yStart + (radius * 2 + offset) * i,
-                    radius + (i == mSelected ? 1 : 0),
-                    i == mSelected ? mPaintSelected : mPaintNormal);
+            canvas.drawCircle(x, yStart + yStep * i,
+                    radius + (i == selected ? 1 : 0),
+                    i == selected ? mPaintSelected : mPaintNormal);
         }
     }
 

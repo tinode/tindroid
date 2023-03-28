@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -395,6 +396,13 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 mListener.onMetaTags(mTags);
             }
         }
+
+        if (meta.isAuxSet()) {
+            update(meta.aux);
+            if (mListener != null) {
+                mListener.onMetaAux(mAux);
+            }
+        }
     }
 
     /**
@@ -409,6 +417,40 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
+    /**
+     * Update topic parameters from a tags array.
+     *
+     * @param aux updated auxiliary topic data.
+     */
+    protected void update(Map<String,Object> aux) {
+        this.mAux = mergeMaps(this.mAux, aux);
+        if (mStore != null) {
+            mStore.topicUpdate(this);
+        }
+    }
+
+    private static @Nullable Map<String, Object> mergeMaps(@Nullable Map<String, Object> dst,
+                                                          @Nullable Map<String, Object> src) {
+        if (dst == null) {
+            return src;
+        }
+
+        if (src == null) {
+            return dst;
+        }
+
+        for (Map.Entry<String, Object> e : src.entrySet()) {
+            String key = e.getKey();
+            Object value = e.getValue();
+            if (value instanceof String && Tinode.NULL_VALUE.equals((String) value)) {
+                dst.remove(key);
+            } else if (value != null) {
+                dst.put(key, value);
+            }
+        }
+
+        return dst;
+    }
     /**
      * Assign pointer to cache.
      * Called by Tinode from {@link Tinode#startTrackingTopic(Topic)}
@@ -1956,7 +1998,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.tags != null) {
             routeMetaTags(meta.tags);
         }
-
+        if (meta.aux != null) {
+            routeMetaAux(meta.aux);
+        }
         if (mListener != null) {
             mListener.onMeta(meta);
         }
@@ -2049,6 +2093,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         if (mListener != null) {
             mListener.onMetaTags(tags);
+        }
+    }
+
+    protected void routeMetaAux(Map<String, Object> aux) {
+        update(aux);
+
+        if (mListener != null) {
+            mListener.onMetaAux(aux);
         }
     }
 
@@ -2149,6 +2201,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             case READ:
             case RECV:
                 // Explicitly ignore message-related notifications. They are handled in the 'me' topic.
+                break;
+            case AUX:
+                // Auxiliary data update.
+                getMeta(getMetaGetBuilder().withAux().build());
                 break;
             default:
                 Log.i(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");

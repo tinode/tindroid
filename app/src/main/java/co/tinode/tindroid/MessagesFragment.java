@@ -47,6 +47,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -70,6 +71,8 @@ import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
 import androidx.work.Data;
 import androidx.work.Operation;
 import androidx.work.WorkInfo;
@@ -88,6 +91,7 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
@@ -128,6 +132,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
+
+    private int mSelectedPin = -1;
 
     private FloatingActionButton mGoToLatest;
 
@@ -317,8 +323,39 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             }
         });
 
+        // Form with pinned messages.
         view.findViewById(R.id.unpinMessage).setOnClickListener(v ->
-                Log.i(TAG, "Unpin current message!"));
+                Log.i(TAG, "Unpin message " + mSelectedPin));
+        final ViewPager2 viewPager = view.findViewById(R.id.previewPager);
+        viewPager.setAdapter(new FragmentStateAdapter(activity) {
+            @NonNull
+            @Override
+            public Fragment createFragment(int position) {
+                Bundle args = new Bundle();
+                Fragment frag = new PinnedMessageFragment(mMessagesAdapter);
+                if (mTopic != null && mTopic.getPinned() != null) {
+                    int[] pinned = mTopic.getPinned();
+                    args.putString(PinnedMessageFragment.ARG_TOPIC_NAME, mTopicName);
+                    args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[position]);
+                }
+                frag.setArguments(args);
+                return frag;
+            }
+
+            @Override
+            public int getItemCount() {
+                return mTopic != null && mTopic.getPinned() != null ? mTopic.getPinned().length : 0;
+            }
+        });
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                mSelectedPin = position;
+                ImageView dots = activity.findViewById(R.id.dotSelector);
+                ((DotSelectorDrawable) dots.getDrawable()).setSelected(position);
+            }
+        });
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -778,7 +815,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
-        int[] pinned = new int[]{12,13,15};//Topic.getPinned();
+        int[] pinned = mTopic.getPinned();
         if (pinned == null) {
             activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
         } else {
@@ -788,7 +825,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             AppCompatImageButton unpin = activity.findViewById(R.id.unpinMessage);
             unpin.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.staticPin).setVisibility(mTopic.isManager() ? View.GONE : View.VISIBLE);
-            ((TextView) activity.findViewById(R.id.contentPreview)).setText("Hello");
         }
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
@@ -1574,6 +1610,41 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             // Reset scratch counters.
             mBucketIndex = 0;
             mSamplesPerBucket = 0;
+        }
+    }
+
+    public static class PinnedMessageFragment extends Fragment {
+        static final String ARG_CONTENT_ID = "content_id";
+        static final String ARG_TOPIC_NAME = "topic_name";
+
+        final WeakReference<MessagesAdapter> mAdapterRef;
+
+        PinnedMessageFragment(MessagesAdapter adapter) {
+            mAdapterRef = new WeakReference<>(adapter);
+        }
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            return inflater.inflate(R.layout.fragment_pinned_page, container, false);
+        }
+
+        @Override
+        public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+            Bundle args = getArguments();
+            if (args != null) {
+                String topicName = args.getString(ARG_TOPIC_NAME);
+                Topic topic = Cache.getTinode().getTopic(topicName);
+                int seq = args.getInt(ARG_CONTENT_ID);
+                Storage.Message msg = topic != null && seq > 0 ? topic.getMessage(seq) : null;
+                Drafty content = msg != null ? msg.getContent() : null;
+                if (content != null) {
+                    ((TextView) view).setText(content.format(new SendReplyFormatter((TextView) view)));
+                    MessagesAdapter adapter = mAdapterRef.get();
+                    if (adapter != null) {
+                        view.setOnClickListener(v -> ((MessagesAdapter) adapter).scrollToAndAnimate(seq));
+                    }
+                }
+            }
         }
     }
 }

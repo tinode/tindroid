@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Presence notification.
  */
 public class MsgServerPres implements Serializable {
-    public enum What {ON, OFF, UPD, GONE, TERM, ACS, MSG, UA, RECV, READ, DEL, TAGS, UNKNOWN}
+    public enum What {ON, OFF, UPD, GONE, TERM, ACS, MSG, UA, RECV, READ, DEL, TAGS, AUX, UNKNOWN}
 
     public String topic;
     public String src;
@@ -49,6 +49,8 @@ public class MsgServerPres implements Serializable {
             return What.DEL;
         } else if (what.equals("tags")) {
             return What.TAGS;
+        }  else if (what.equals("aux")) {
+            return What.AUX;
         }
         return What.UNKNOWN;
     }

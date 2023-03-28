@@ -41,6 +41,10 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
         return tags != null || nulls[NULL_TAGS];
 
     }
+    public boolean isAuxSet() {
+        return aux != null || nulls[NULL_AUX];
+
+    }
     public boolean isCredSet() {
         return cred != null || nulls[NULL_CRED];
     }
