@@ -8,7 +8,7 @@
     android:ellipsize="end"
     android:lines="1"
     android:textColor="?android:textColorPrimary"
-    android:minHeight="36dp"
+    android:minHeight="42dp"
     android:gravity="center_vertical"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:clickable="true"

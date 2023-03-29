@@ -1,10 +1,13 @@
 package co.tinode.tinodesdk.model;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
@@ -21,7 +24,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 public class MsgClientSet<Pu,Pr> implements Serializable {
     // Keep track of NULL assignments to fields.
     @JsonIgnore
-    final boolean[] nulls = new boolean[]{false, false, false, false};
+    final boolean[] nulls = new boolean[]{false, false, false, false, false};
 
     public String id;
     public String topic;
@@ -30,11 +33,13 @@ public class MsgClientSet<Pu,Pr> implements Serializable {
     public MetaSetSub sub;
     public String[] tags;
     public Credential cred;
+    public Map<String, Object> aux;
 
     public MsgClientSet() {}
 
     public MsgClientSet(String id, String topic, MsgSetMeta<Pu,Pr> meta) {
-        this(id, topic, meta.desc, meta.sub, meta.tags, meta.cred);
+        this(id, topic, meta.desc, meta.sub, meta.tags, meta.cred, meta.aux);
+        Log.i("MsgClientSet", "Aux: " + meta.aux);
         System.arraycopy(meta.nulls, 0, nulls, 0, meta.nulls.length);
     }
 
@@ -44,13 +49,15 @@ public class MsgClientSet<Pu,Pr> implements Serializable {
     }
 
     protected MsgClientSet(String id, String topic, MetaSetDesc<Pu, Pr> desc,
-                        MetaSetSub sub, String[] tags, Credential cred) {
+                           MetaSetSub sub, String[] tags, Credential cred,
+                           Map<String, Object> aux) {
         this.id = id;
         this.topic = topic;
         this.desc = desc;
         this.sub = sub;
         this.tags = tags;
         this.cred = cred;
+        this.aux = aux;
     }
 
     public static class Builder<Pu,Pr> {
@@ -80,7 +87,13 @@ public class MsgClientSet<Pu,Pr> implements Serializable {
             msm.nulls[MsgSetMeta.NULL_CRED] = cred == null;
         }
 
+        public void with(Map<String,Object> aux) {
+            msm.aux = aux;
+            msm.nulls[MsgSetMeta.NULL_AUX] = aux == null;
+        }
+
         public MsgClientSet<Pu,Pr> build() {
+            Log.i("MsgClientSet.build()", "Aux: " + msm.aux);
             return msm;
         }
     }

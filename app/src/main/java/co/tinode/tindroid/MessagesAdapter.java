@@ -245,7 +245,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return null;
     }
 
-    private static int findInCursor(Cursor cur, int seq) {
+    private static int findInCursor(@NonNull Cursor cur, int seq) {
         int low = 0;
         int high = cur.getCount() - 1;
 
@@ -389,23 +389,24 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void sendPinMessage(int pos, boolean pin) {
         StoredMessage msg = getMessage(pos);
         if (msg == null) {
             return;
         }
-        final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(mTopicName);
-        topic.pinMessage(msg.seq, pin)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        toggleSelectionAt(pos);
-                        notifyItemChanged(pos);
-                        mActivity.runOnUiThread(() -> updateSelectionMode());
-                        return null;
-                    }
-                }, new UiUtils.ToastFailureListener(mActivity));
+        mActivity.sendPinMessage(msg.seq, pin);
+    }
+
+    void pinnedStateChanged(int seq) {
+        if (mSelectedItems == null) {
+            return;
+        }
+        int pos = findInCursor(mCursor, seq);
+        mActivity.runOnUiThread(() -> {
+            toggleSelectionAt(pos);
+            notifyItemChanged(pos);
+            updateSelectionMode();
+        });
     }
 
     private String messageFrom(StoredMessage msg) {

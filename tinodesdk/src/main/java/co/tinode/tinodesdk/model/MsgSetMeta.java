@@ -19,7 +19,7 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
     static final int NULL_AUX = 4;
     // Keep track of NULL assignments to fields.
     @JsonIgnore
-    final boolean[] nulls = new boolean[]{false, false, false, false};
+    final boolean[] nulls = new boolean[NULL_AUX + 1];
 
     public MetaSetDesc<Pu,Pr> desc = null;
     public MetaSetSub sub = null;

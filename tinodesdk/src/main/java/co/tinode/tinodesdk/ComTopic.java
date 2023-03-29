@@ -2,11 +2,12 @@ package co.tinode.tinodesdk;
 
 import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import co.tinode.tinodesdk.model.Description;
@@ -84,31 +85,30 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
      */
     public PromisedReply<ServerMessage> pinMessage(int seq, boolean pin) {
         Object val = getAux("pins");
-        int[] pinned;
-        if (val instanceof int[]) {
-            pinned = (int[]) val;
+        List<Integer> pinned;
+        if (val instanceof List) {
+            pinned = new ArrayList<>((List) val);
         } else {
-            pinned = new int[]{-1};
+            pinned = new ArrayList<>();
         }
 
         boolean changed = false;
-        if (Arrays.stream(pinned).anyMatch(value -> seq == value)) {
-            if (pin) {
-                if (Arrays.stream(pinned).noneMatch(value -> seq == value)) {
-                    changed = true;
-                    pinned = Arrays.copyOf(pinned, pinned.length + 1);
-                    pinned[pinned.length - 1] = seq;
+        if (pin) {
+            if (!pinned.contains(seq)) {
+                changed = true;
+                if (pinned.size() == Tinode.MAX_PINNED_COUNT) {
+                    pinned.remove(0);
                 }
-            } else {
-                int[] filtered = Arrays.stream(pinned).filter(value -> seq != value).toArray();
-                changed = filtered.length != pinned.length;
-                pinned = filtered;
+                pinned.add(seq);
             }
+        } else {
+            changed = pinned.removeIf(val1 -> val1 == seq);
         }
 
         if (changed) {
             Map<String, Object> aux = new HashMap<>();
-            aux.put("pins", pinned.length > 0?  pinned : Tinode.NULL_VALUE);
+            Log.i("ComTopic", "Pinned=" + Arrays.toString(pinned.toArray()));
+            aux.put("pins", pinned.size() > 0?  pinned.toArray() : Tinode.NULL_VALUE);
             return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(aux).build());
         }
 
@@ -117,7 +117,15 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
 
     public boolean isPinned(int seq) {
         Object val = getAux("pins");
-        return val instanceof int[] && Arrays.stream((int[]) val).anyMatch(value -> seq == value);
+        return val instanceof List && ((List) val).contains(seq);
+    }
+
+    public int pinnedIndex(int seq) {
+        Object val = getAux("pins");
+        if (val instanceof List) {
+            return ((List) val).indexOf(seq);
+        }
+        return -1;
     }
 
     public int[] getPinned() {
@@ -131,6 +139,14 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
             return pinned.length > 0 ? pinned : null;
         }
         return null;
+    }
+
+    public int pinnedCount() {
+        Object val = getAux("pins");
+        if (val instanceof List) {
+            return ((List) val).size();
+        }
+        return 0;
     }
 
     /**

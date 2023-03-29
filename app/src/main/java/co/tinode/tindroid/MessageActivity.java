@@ -55,6 +55,7 @@ import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
+import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.AlreadySubscribedException;
 import co.tinode.tinodesdk.ComTopic;
@@ -752,6 +753,21 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
+    void sendPinMessage(int seq, boolean pin) {
+        mTopic.pinMessage(seq, pin)
+                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                        final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                                findFragmentByTag(FRAGMENT_MESSAGES);
+                        if (fragment != null && fragment.isVisible()) {
+                            fragment.pinnedStateChanged(seq, pin);
+                        }
+                        return null;
+                    }
+                }, new UiUtils.ToastFailureListener(this));
+    }
+
     void runMessagesLoader() {
         final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
                 findFragmentByTag(FRAGMENT_MESSAGES);
@@ -1023,6 +1039,16 @@ public class MessageActivity extends AppCompatActivity
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
                 if (fragment instanceof DataSetChangeListener) {
                     ((DataSetChangeListener) fragment).notifyDataSetChanged();
+                }
+            });
+        }
+
+        @Override
+        public void onMetaAux(Map<String,Object> aux) {
+            runOnUiThread(() -> {
+                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
+                if (fragment instanceof MessagesFragment) {
+                    ((MessagesFragment) fragment).pinnedStateChanged(-1, true);
                 }
             });
         }

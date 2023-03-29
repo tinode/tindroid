@@ -134,6 +134,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     private SwipeRefreshLayout mRefresher;
 
     private int mSelectedPin = -1;
+    private FragmentStateAdapter mPinnedAdapter = null;
 
     private FloatingActionButton mGoToLatest;
 
@@ -323,39 +324,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             }
         });
 
-        // Form with pinned messages.
-        view.findViewById(R.id.unpinMessage).setOnClickListener(v ->
-                Log.i(TAG, "Unpin message " + mSelectedPin));
-        final ViewPager2 viewPager = view.findViewById(R.id.previewPager);
-        viewPager.setAdapter(new FragmentStateAdapter(activity) {
-            @NonNull
-            @Override
-            public Fragment createFragment(int position) {
-                Bundle args = new Bundle();
-                Fragment frag = new PinnedMessageFragment(mMessagesAdapter);
-                if (mTopic != null && mTopic.getPinned() != null) {
-                    int[] pinned = mTopic.getPinned();
-                    args.putString(PinnedMessageFragment.ARG_TOPIC_NAME, mTopicName);
-                    args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[position]);
-                }
-                frag.setArguments(args);
-                return frag;
-            }
-
-            @Override
-            public int getItemCount() {
-                return mTopic != null && mTopic.getPinned() != null ? mTopic.getPinned().length : 0;
-            }
-        });
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                mSelectedPin = position;
-                ImageView dots = activity.findViewById(R.id.dotSelector);
-                ((DotSelectorDrawable) dots.getDrawable()).setSelected(position);
-            }
-        });
+        setupPinnedMessages(view, activity);
 
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
@@ -786,6 +755,51 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         });
 
         return audio;
+    }
+
+    // Form with pinned messages.
+    private void setupPinnedMessages(View view, MessageActivity activity) {
+        // The [X] unpin button.
+        view.findViewById(R.id.unpinMessage).setOnClickListener(v -> {
+            // Click on the [ X ] button to unpin current message.
+            int[] pinned = mTopic.getPinned();
+            if (pinned != null) {
+                ((MessageActivity) requireActivity()).sendPinMessage(pinned[mSelectedPin], false);
+            }
+        });
+
+        final ViewPager2 viewPager = view.findViewById(R.id.previewPager);
+        mPinnedAdapter = new FragmentStateAdapter(activity) {
+            @NonNull
+            @Override
+            public Fragment createFragment(int position) {
+                Bundle args = new Bundle();
+                Fragment frag = new PinnedMessageFragment(mMessagesAdapter);
+                if (mTopic != null && mTopic.getPinned() != null) {
+                    int[] pinned = mTopic.getPinned();
+                    args.putString(PinnedMessageFragment.ARG_TOPIC_NAME, mTopicName);
+                    args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[position]);
+                }
+                frag.setArguments(args);
+                return frag;
+            }
+
+            @Override
+            public int getItemCount() {
+                return mTopic != null && mTopic.getPinned() != null ? mTopic.getPinned().length : 0;
+            }
+        };
+        viewPager.setAdapter(mPinnedAdapter);
+
+        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                mSelectedPin = position;
+                ImageView dots = activity.findViewById(R.id.dotSelector);
+                ((DotSelectorDrawable) dots.getDrawable()).setSelected(position);
+            }
+        });
     }
 
     private void updateFormValues() {
@@ -1356,6 +1370,25 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     void showReply(Activity activity, Drafty quote, int seq) {
         handleQuotedText(activity, UiUtils.MsgAction.REPLY, null, quote, seq);
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    void pinnedStateChanged(int seq, boolean pin) {
+        Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+        mMessagesAdapter.pinnedStateChanged(seq);
+        int count = mTopic.pinnedCount();
+        if (mSelectedPin > count) {
+            mSelectedPin = 0;
+        }
+        requireActivity().runOnUiThread(() -> {
+            if (count == 0) {
+                activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
+            }
+            mPinnedAdapter.notifyDataSetChanged();
+        });
     }
 
     private void handleQuotedText(Activity activity, UiUtils.MsgAction action,

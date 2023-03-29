@@ -82,7 +82,7 @@ public class Tinode {
     private static final String TAG = "Tinode";
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.22";
+    private static final String VERSION = "0.23";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     public static final String USER_NEW = "new";
@@ -132,6 +132,8 @@ public class Tinode {
     private static final ObjectMapper sJsonMapper;
     protected static final TypeFactory sTypeFactory;
     protected static final SimpleDateFormat sDateFormat;
+
+    protected static final int MAX_PINNED_COUNT = 5;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -1668,6 +1670,7 @@ public class Tinode {
         if (meta.desc != null && meta.desc.attachments != null && meta.desc.attachments.length > 0) {
             msg.extra = new MsgClientExtra(meta.desc.attachments);
         }
+        Log.i("setMeta", "msg.set.aux: " + msg.set.aux);
         return sendWithPromise(msg, msg.set.id);
     }
 

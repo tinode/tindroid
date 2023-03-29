@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
@@ -442,7 +443,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         for (Map.Entry<String, Object> e : src.entrySet()) {
             String key = e.getKey();
             Object value = e.getValue();
-            if (value instanceof String && Tinode.NULL_VALUE.equals((String) value)) {
+            if (Tinode.NULL_VALUE.equals(value)) {
                 dst.remove(key);
             } else if (value != null) {
                 dst.put(key, value);
@@ -450,6 +451,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         return dst;
+    }
+    public static String mapToString(Map<String, ?> map) {
+        return map.keySet().stream()
+                .map(key -> key + "=" + map.get(key))
+                .collect(Collectors.joining(", ", "{", "}"));
     }
     /**
      * Assign pointer to cache.
