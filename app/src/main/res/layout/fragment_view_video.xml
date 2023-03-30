@@ -53,7 +53,6 @@
         card_view:cardUseCompatPadding="true">
 
         <LinearLayout
-            android:id="@+id/sendVideoPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"

@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">invité</string>
     <string name="modeRequested">demandé</string>
-    <string name="modeUndefined">non défini</string>
     <string name="modePending">en attente</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">Mettre en sourdine</string>
     <string name="action_unmute">Unmute conversation</string>
     <string name="action_clear_messages">Effacer tous les messages</string>
-    <string name="action_view_contact">Voir le contact</string>
     <string name="action_new_chat">Nouvelle conversation</string>
     <string name="action_about">A propos</string>
     <string name="action_search">Rechercher</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">Image d\'avatar</string>
     <string name="select_image">Sélectionner une image</string>
-    <string name="select_file">Sélectioner un fichier</string>
     <string name="image_is_unavailable">Image indisponible </string>
     <string name="error_login_failed">Echec de la connexion: </string>
-    <string name="error_connection_failed">La connexion a échoué: </string>
     <string name="login_required">Connexion requise</string>
     <string name="password_required">Mot de passe requis</string>
     <string name="error_new_account_failed">Echec de la création de compte:</string>
@@ -76,7 +72,6 @@
     <string name="no_members">Pas de membres du groupe</string>
     <string name="add_one_member">Ajouter au moins un membre du groupe</string>
     <string name="add_members">Ajouter les membres</string>
-    <string name="leave_group">Quitter le groupe</string>
     <string name="id">ID:</string>
     <string name="topic_muted">En sourdine</string>
     <string name="permissions">Permissions</string>
@@ -95,7 +90,6 @@
     <string name="auth_permissions">Utilisateurs authentifiés</string>
     <string name="anon_permissions">Utilisateurs anonymes</string>
     <string name="topic_private">Informations supplémentaires (visibles uniquement par vous)</string>
-    <string name="edit_topic">Modifier le groupe</string>
     <string name="edit_permissions">Modifier les permissions</string>
 
     <string name="permission_owner">Contrôle total (propriétaire)</string>
@@ -119,7 +113,6 @@
     <string name="confirm_delete_topic">Voulez-vous vraiment effacer cette conversation pour tout le monde?</string>
     <string name="confirm_delete_multiple_topics">Voulez-vous vraiment effacer ces conversations?</string>
     <string name="modeWriteOnly">Mode écriture</string>
-    <string name="owner_cannot_unsubscribe">Le propriétaire ne peut pas se désinscrire</string>
     <string name="read_receipts_enabled">Envoyer les accusés de réception</string>
     <string name="typing_notifications_enabled">Afficher les notifications de saisie</string>
     <string name="logout">Se déconnecter</string>
@@ -127,12 +120,10 @@
     <string name="account_settings">Paramètres du compte</string>
     <string name="enter_new_password">Tapez le nouveau mot de passe</string>
     <string name="confirm_logout">Êtes-vous sûr de vouloir vous déconnecter?</string>
-    <string name="edit_account">Modifier le nom du compte</string>
     <string name="invalid_login">Nom d\'utilisateur invalide</string>
 
     <string name="download_attachment">Enregistrer</string>
     <string name="broken_image">Format de l\'image inconnu ou invalide</string>
-    <string name="file_manager_not_found">Gestionnaire de fichier introuvable</string>
     <string name="attachment_too_large">La taille du fichier %1$s dépasse la limite de %2$s</string>
 
     <string name="failed_to_download">Echec de téléchargement du fichier</string>
@@ -140,7 +131,6 @@
     <string name="failed_to_open_file">Aucune application pour ouvrir ce type de fichier</string>
     <string name="failed_empty_password">Pas de changement: mot de passe vide</string>
     <string name="failed_credential_confirmation">Code de confirmation incorrect</string>
-    <string name="failed_to_create_topic">Echec de création du sujet</string>
 
     <string name="contacts_section_contacts">Contacts</string>
     <string name="contacts_section_directory">Dossier</string>
@@ -168,7 +158,6 @@
     <string name="request">Demande</string>
     <string name="forgot_password">Mot de passe oublié</string>
     <string name="invalid_or_unknown_credential">Adresse inconnue ou invalide</string>
-    <string name="password_reset_message_sent">Message avec instructions envoyé</string>
     <string name="user_not_found">Non trouvé</string>
     <string name="topic_tags">Balises, liste séparée par des virgules</string>
     <string name="sender_unknown">Inconnu</string>
@@ -193,7 +182,6 @@
     <string name="file_name_label">Nom du fichier:</string>
     <string name="content_type_label">Type de contenu:</string>
     <string name="image_size_label">Taille:</string>
-    <string name="must_subscribe_first">Doit d\'abord s\'abonner</string>
     <string name="topic_blocked">Bloqué</string>
     <string name="topic_archived">Archivé</string>
     <string name="action_unarchive">Désarchiver</string>
@@ -201,8 +189,6 @@
     <string name="tags_management">Balises</string>
     <string name="contacts">Contacts</string>
     <string name="manage">Gérer</string>
-    <string name="delete">Effacer</string>
-    <string name="add_credential_title">Ajouter contact</string>
     <string name="delete_credential_title">Effacer contact</string>
     <string name="delete_credential_confirmation">Êtes-vous sûr de vouloir effacer %1$s:%2$s?</string>
     <string name="leave_conversation">Quitter la conversation</string>
@@ -284,7 +270,6 @@
     <string name="hint_contact_name">Nom du contact</string>
     <string name="account_security_explained">Mot de passe, autorisations, suppression de compte</string>
     <string name="hint_topic_title">Nom du groupe</string>
-    <string name="cannot_reply">Impossible de répondre à ce message</string>
     <string name="record_audio_button_hint">Appui long pour enregistrer un message vocal</string>
     <string name="audio">L\'audio</string>
     <string name="unable_to_play_audio">Impossible de lire ce message audio</string>
@@ -307,7 +292,6 @@
     <string name="disconnected_call">déconnecté</string>
     <string name="toggle_camera_button">Basculer la caméra</string>
     <string name="toggle_microphone_button">Basculer le microphone</string>
-    <string name="voice_calls_limited">Vous ne pourrez pas recevoir certains appels vocaux entrants.</string>
     <string name="copied_to_clipboard">Copié dans le presse-papiers</string>
     <string name="image_preview">Aperçu de l\'image</string>
     <string name="image_download_success">Image enregistrée dans la galerie</string>
@@ -332,7 +316,6 @@
     <string name="document_preview">Aperçu du document</string>
     <string name="action_call">Appeler</string>
     <string name="unable_to_place_call">Impossible de passer cet appel</string>
-    <string name="unable_to_answer_call">Impossible de répondre à cet appel</string>
     <string name="busy_call">occupée</string>
 
     <string name="phone_sms_explained">Nous enverrons un SMS avec le code de confirmation au numéro ci-dessus.</string>

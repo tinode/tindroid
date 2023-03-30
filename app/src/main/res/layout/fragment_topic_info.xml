@@ -62,7 +62,6 @@
             tools:text="Some private notes" />
 
         <LinearLayout
-            android:id="@+id/topicAddressWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical">
@@ -284,7 +283,6 @@
                 tools:ignore="SmallSp" />
 
             <TextView
-                android:id="@+id/membersTitle"
                 style="@style/sectionTitleStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"

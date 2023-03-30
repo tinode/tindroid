@@ -61,7 +61,6 @@
                     android:text="@string/general" />
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/editTitleWrapper"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
@@ -107,7 +106,6 @@
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <LinearLayout
-                    android:id="@+id/channelSwitch"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
@@ -141,7 +139,6 @@
                     android:text="@string/tags_management" />
 
                 <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/tagEditor"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"

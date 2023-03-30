@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">已邀請</string>
     <string name="modeRequested">已請求</string>
-    <string name="modeUndefined">未定義</string>
     <string name="modePending">待處理</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">將對話靜音</string>
     <string name="action_unmute">將對話解除靜音</string>
     <string name="action_clear_messages">清除所有訊息</string>
-    <string name="action_view_contact">檢視聯絡人</string>
     <string name="action_new_chat">新對話</string>
     <string name="action_about">關於</string>
     <string name="action_search">搜尋</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">大頭貼</string>
     <string name="select_image">選擇圖片</string>
-    <string name="select_file">選擇檔案</string>
     <string name="image_is_unavailable">圖片無法使用</string>
     <string name="error_login_failed">登入失敗：</string>
-    <string name="error_connection_failed">連線失敗：</string>
     <string name="login_required">需要登入</string>
     <string name="password_required">需要密碼</string>
     <string name="error_new_account_failed">註冊失敗：</string>
@@ -77,7 +73,6 @@
     <string name="no_members">無群組成員</string>
     <string name="add_one_member">請至少新增一名群組成員</string>
     <string name="add_members">新增成員</string>
-    <string name="leave_group">離開群組</string>
     <string name="id">ID：</string>
     <string name="topic_muted">已靜音</string>
     <string name="permissions">權限</string>
@@ -96,7 +91,6 @@
     <string name="auth_permissions">已驗證的使用者</string>
     <string name="anon_permissions">匿名使用者</string>
     <string name="topic_private">額外資訊 (僅您可見)</string>
-    <string name="edit_topic">編輯主題</string>
     <string name="edit_permissions">編輯權限</string>
 
     <string name="permission_owner">完全控制 (擁有者)</string>
@@ -120,7 +114,6 @@
     <string name="confirm_delete_topic">您確定要刪除所有人的對話嗎？</string>
     <string name="confirm_delete_multiple_topics">您確定要刪除這些對話嗎？</string>
     <string name="modeWriteOnly">唯寫</string>
-    <string name="owner_cannot_unsubscribe">擁有者無法取消訂閱</string>
     <string name="read_receipts_enabled">傳送已讀提示</string>
     <string name="typing_notifications_enabled">顯示輸入中提示</string>
     <string name="logout">登出</string>
@@ -128,12 +121,10 @@
     <string name="account_settings">帳號設定</string>
     <string name="enter_new_password">輸入新的密碼</string>
     <string name="confirm_logout">您確定要登出嗎？</string>
-    <string name="edit_account">編輯帳號名稱</string>
     <string name="invalid_login">登入無效</string>
 
     <string name="download_attachment">儲存</string>
     <string name="broken_image">未知或無效的圖片格式</string>
-    <string name="file_manager_not_found">找不到檔案總管</string>
     <string name="attachment_too_large">檔案大小 %1$s 超出 %2$s 限制。</string>
 
     <string name="failed_to_download">無法下載檔案</string>
@@ -141,7 +132,6 @@
     <string name="failed_to_open_file">沒有其他應用程式可以檢視此類型的檔案</string>
     <string name="failed_empty_password">未修改：密碼欄為空</string>
     <string name="failed_credential_confirmation">確認碼錯誤</string>
-    <string name="failed_to_create_topic">建立主題失敗</string>
 
     <string name="contacts_section_contacts">手機聯絡人</string>
     <string name="contacts_section_directory">目錄</string>
@@ -169,7 +159,6 @@
     <string name="request">要求</string>
     <string name="forgot_password">忘記密碼</string>
     <string name="invalid_or_unknown_credential">無效或未知的位址</string>
-    <string name="password_reset_message_sent">已傳送包含流程的訊息</string>
     <string name="user_not_found">找不到</string>
     <string name="topic_tags">標籤，以逗號分隔</string>
     <string name="sender_unknown">未知</string>
@@ -194,7 +183,6 @@
     <string name="file_name_label">檔名：</string>
     <string name="content_type_label">類型：</string>
     <string name="image_size_label">大小：</string>
-    <string name="must_subscribe_first">必須先訂閱</string>
     <string name="topic_blocked">已封鎖</string>
     <string name="topic_archived">已封存</string>
     <string name="action_unarchive">取消封存</string>
@@ -202,8 +190,6 @@
     <string name="tags_management">標籤</string>
     <string name="contacts">連略人</string>
     <string name="manage">管理</string>
-    <string name="delete">刪除</string>
-    <string name="add_credential_title">新增聯絡人</string>
     <string name="delete_credential_title">刪除聯絡人</string>
     <string name="delete_credential_confirmation">您確定要移除 %1$s:%2$s 嗎？</string>
     <string name="leave_conversation">離開對話</string>
@@ -284,7 +270,6 @@
     <string name="hint_search_contacts">聯繫人搜索</string>
     <string name="hint_contact_name">聯繫人姓名</string>
     <string name="report_channel">廣播投訴</string>
-    <string name="cannot_reply">無法回复此消息</string>
     <string name="audio">聲音的</string>
     <string name="deleted">已刪除</string>
     <string name="record_audio_button_hint">按住可錄製語音留言</string>
@@ -307,7 +292,6 @@
     <string name="disconnected_call">通話中斷</string>
     <string name="toggle_camera_button">切換相機</string>
     <string name="toggle_microphone_button">切換麥克風</string>
-    <string name="voice_calls_limited">您將無法接聽某些來電。</string>
     <string name="copied_to_clipboard">拷貝成功</string>
     <string name="image_preview">圖像預覽</string>
     <string name="image_download_success">圖片已保存到圖庫</string>
@@ -332,7 +316,6 @@
     <string name="document_preview">文檔預覽</string>
     <string name="action_call">調用</string>
     <string name="unable_to_place_call">無法撥打電話</string>
-    <string name="unable_to_answer_call">無法接聽電話</string>
     <string name="busy_call">忙碌的</string>
 
     <string name="phone_sms_explained">我們將發送帶有確認碼的短信至上述號碼。</string>

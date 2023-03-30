@@ -29,7 +29,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
@@ -113,7 +112,6 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 Player.Listener.super.onPlaybackStateChanged(playbackState);
                 switch(playbackState) {
                     case Player.STATE_IDLE:
-                        break;
                     case Player.STATE_BUFFERING:
                         break;
                     case Player.STATE_READY:
@@ -158,7 +156,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         mPosterView = view.findViewById(R.id.poster);
         mProgressView = view.findViewById(R.id.loading);
 
-        mVideoView = (StyledPlayerView) view.findViewById(R.id.video);
+        mVideoView = view.findViewById(R.id.video);
         mVideoView.setPlayer(mExoPlayer);
 
         // Send message on button click.
@@ -251,6 +249,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         File temp = File.createTempFile("VID_" + System.currentTimeMillis(),
                                 ".video", activity.getCacheDir());
                         temp.deleteOnExit();
+                        // Retarded lint: the new method is available from API 26 only.
+                        @SuppressWarnings("IOStreamConstructor")
                         OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
                         out.close();
@@ -364,7 +364,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             File temp = File.createTempFile(prefix, suffix, ctx.getCacheDir());
             temp.deleteOnExit();
             fileUri = Uri.fromFile(temp);
-            OutputStream os = new FileOutputStream(temp);
+            // Retarded lint: the new method is available from API 26 only.
+            @SuppressWarnings("IOStreamConstructor") OutputStream os = new FileOutputStream(temp);
             os.write(bits);
             os.close();
         } catch (IOException ex) {

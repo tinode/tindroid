@@ -299,7 +299,7 @@ public class PhoneEdit extends FrameLayout {
     }
 
     public static class CountryCode implements Comparable<CountryCode> {
-        String isoCode;
+        final String isoCode;
         String name;
         String prefix;
 

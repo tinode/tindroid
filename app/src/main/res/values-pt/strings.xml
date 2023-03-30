@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">convidado</string>
     <string name="modeRequested">requisitado</string>
-    <string name="modeUndefined">anônimo</string>
     <string name="modePending">pendente</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">Silenciar conversa</string>
     <string name="action_unmute">Reativar conversa</string>
     <string name="action_clear_messages">Limpar todas as conversas</string>
-    <string name="action_view_contact">Contatos</string>
     <string name="action_new_chat">Nova conversa</string>
     <string name="action_about">Sobre</string>
     <string name="action_search">Procurar</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">Foto do perfil</string>
     <string name="select_image">Selecionar imagem</string>
-    <string name="select_file">Selecionar arquivo</string>
     <string name="image_is_unavailable">Imagem indisponível</string>
     <string name="error_login_failed">Falha no login: </string>
-    <string name="error_connection_failed">Falha na conexão: </string>
     <string name="login_required">Login</string>
     <string name="password_required">Senha</string>
     <string name="error_new_account_failed">Falha no registro da conta:</string>
@@ -77,7 +73,6 @@
     <string name="no_members">Grupo sem membros</string>
     <string name="add_one_member">Adicione pelo menos um membro no grupo</string>
     <string name="add_members">Adicionar membro</string>
-    <string name="leave_group">Sair do grupo</string>
     <string name="id">ID:</string>
     <string name="topic_muted">Silenciado</string>
     <string name="permissions">Permissões</string>
@@ -96,7 +91,6 @@
     <string name="auth_permissions">Usuário autenticado</string>
     <string name="anon_permissions">Usuário anônimo</string>
     <string name="topic_private">Tópico privado (visível apenas para você)</string>
-    <string name="edit_topic">Editar grupo</string>
     <string name="edit_permissions">Editar permissão</string>
 
     <string name="permission_owner">Controle total (dono)</string>
@@ -120,7 +114,6 @@
     <string name="confirm_delete_topic">Deseja realmente remover essa conversa para todos?</string>
     <string name="confirm_delete_multiple_topics">Deseja realmente remover todos esses tópicos?</string>
     <string name="modeWriteOnly">Apenas escrever</string>
-    <string name="owner_cannot_unsubscribe">O dono não pode sair</string>
     <string name="read_receipts_enabled">Enviar confirmação de leitura</string>
     <string name="typing_notifications_enabled">Mostrar notificação de digitação</string>
     <string name="logout">Sair</string>
@@ -128,12 +121,10 @@
     <string name="account_settings">Configurações da conta</string>
     <string name="enter_new_password">Entre com a nova senha</string>
     <string name="confirm_logout">Você tem certeza que deseja sair?</string>
-    <string name="edit_account">Editar nome da conta</string>
     <string name="invalid_login">Login inválido</string>
 
     <string name="download_attachment">salvar</string>
     <string name="broken_image">Formato de imagem inválido</string>
-    <string name="file_manager_not_found">Imagem não encontrada</string>
     <string name="attachment_too_large">O tamanho do arquivo %1$s excedeu o limite de tamanho %2$s.</string>
 
     <string name="failed_to_download">Falha para realizar download do arquivo</string>
@@ -141,7 +132,6 @@
     <string name="failed_to_open_file">Falha para abrir o arquivo desse tipo</string>
     <string name="failed_empty_password">Sem mudança: senha em branco</string>
     <string name="failed_credential_confirmation">Código de confirmação incorreto</string>
-    <string name="failed_to_create_topic">Falha para criar conversa</string>
 
     <string name="contacts_section_contacts">Contatos do telefone</string>
     <string name="contacts_section_directory">Pasta</string>
@@ -170,7 +160,6 @@
     <string name="request">Solicitar</string>
     <string name="forgot_password">Esqueceu da senha?</string>
     <string name="invalid_or_unknown_credential">Endereço desconhecido ou inválido</string>
-    <string name="password_reset_message_sent">Mensagem com as instruções enviada</string>
     <string name="user_not_found">Não encontrado</string>
     <string name="topic_tags">Tags, lista separada por vírgula</string>
     <string name="sender_unknown">Desconhecido</string>
@@ -196,7 +185,6 @@
     <string name="file_name_label">Nome do arquivo:</string>
     <string name="content_type_label">Tipo do conteúdo:</string>
     <string name="image_size_label">Tamanho:</string>
-    <string name="must_subscribe_first">Necessário ser inscrito</string>
     <string name="topic_blocked">Bloqueado</string>
     <string name="topic_archived">Arquivado</string>
     <string name="action_unarchive">Não arquivado</string>
@@ -204,8 +192,6 @@
     <string name="tags_management">Tags</string>
     <string name="contacts">Contatos</string>
     <string name="manage">Gerenciar</string>
-    <string name="delete">Remover</string>
-    <string name="add_credential_title">Adicionar contato</string>
     <string name="delete_credential_title">Deletar contato</string>
     <string name="delete_credential_confirmation">Deseja realmente remover %1$s:%2$s?</string>
     <string name="leave_conversation">Sair da conversa</string>
@@ -286,7 +272,6 @@
     <string name="hint_search_contacts">Procurar contatos</string>
     <string name="hint_contact_name">Name do contato</string>
     <string name="report_channel">Reportar canal</string>
-    <string name="cannot_reply">Não é possível responder essa mensagem</string>
     <string name="lock_recording_for_long_messages">Gravação bloqueada para mensagens longas</string>
     <string name="deleted">Removido</string>
     <string name="pause_audio_button_hint">Pausar áudio</string>
@@ -309,7 +294,6 @@
     <string name="disconnected_call">desconectada</string>
     <string name="toggle_camera_button">Alternar câmera</string>
     <string name="toggle_microphone_button">Chamada Mute/Unmute</string>
-    <string name="voice_calls_limited">Você não está disponível para receber algumas mensagens de voz.</string>
     <string name="copied_to_clipboard">Copiado para área de transferência</string>
     <string name="image_preview">Prévia da imagem</string>
     <string name="image_download_success">Imagem salva para galeria</string>
@@ -333,7 +317,6 @@
     <string name="document_preview">Visualização do documento</string>
     <string name="action_call">Chamar</string>
     <string name="unable_to_place_call">Não é possível fazer esta chamada</string>
-    <string name="unable_to_answer_call">Não é possível atender esta chamada</string>
     <string name="busy_call">ocupada</string>
 
     <string name="phone_sms_explained">Enviaremos um SMS com o código de confirmação para o número acima.</string>

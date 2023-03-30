@@ -151,7 +151,6 @@
         card_view:cardUseCompatPadding="true">
 
         <LinearLayout
-            android:id="@+id/sendAttachmentPanel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"

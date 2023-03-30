@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">已邀请</string>
     <string name="modeRequested">已请求</string>
-    <string name="modeUndefined">未定义</string>
     <string name="modePending">等待</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">静默回话</string>
     <string name="action_unmute">静默回话取消</string>
     <string name="action_clear_messages">删除所有消息</string>
-    <string name="action_view_contact">查看通讯录</string>
     <string name="action_new_chat">新建聊天</string>
     <string name="action_about">关于</string>
     <string name="action_search">搜索</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">头像</string>
     <string name="select_image">选择图片</string>
-    <string name="select_file">选择文件</string>
     <string name="image_is_unavailable">图片不存在</string>
     <string name="error_login_failed">登录失败: </string>
-    <string name="error_connection_failed">连接失败: </string>
     <string name="login_required">需要登录</string>
     <string name="password_required">需要密码</string>
     <string name="error_new_account_failed">账户注册失败:</string>
@@ -77,7 +73,6 @@
     <string name="no_members">编组成员不存在</string>
     <string name="add_one_member">至少添加一位编组成员</string>
     <string name="add_members">添加成员</string>
-    <string name="leave_group">离开编组</string>
     <string name="topic_muted">静音</string>
     <string name="permissions">权限</string>
     <string name="your_permissions">你的</string>
@@ -95,7 +90,6 @@
     <string name="auth_permissions">已验证用户</string>
     <string name="anon_permissions">匿名用户</string>
     <string name="topic_private">额外信息 (私有)</string>
-    <string name="edit_topic">编辑编组</string>
     <string name="edit_permissions">编辑权限</string>
 
     <string name="permission_owner">完全控制 (所有者)</string>
@@ -119,7 +113,6 @@
     <string name="confirm_delete_topic">真的要为所有人删除该会话吗?</string>
     <string name="confirm_delete_multiple_topics">您真的要删除这些聊天吗?</string>
     <string name="modeWriteOnly">只写</string>
-    <string name="owner_cannot_unsubscribe">管理者无法退群</string>
     <string name="read_receipts_enabled">发送已读回执</string>
     <string name="typing_notifications_enabled">显示输入提示</string>
     <string name="logout">登出</string>
@@ -127,12 +120,10 @@
     <string name="account_settings">账户设置</string>
     <string name="enter_new_password">输入新密码</string>
     <string name="confirm_logout">确定要登出?</string>
-    <string name="edit_account">编辑用户名</string>
     <string name="invalid_login">登录无效</string>
 
     <string name="download_attachment">保存</string>
     <string name="broken_image">未知或无效的图片格式</string>
-    <string name="file_manager_not_found">未找到文件管理器</string>
     <string name="attachment_too_large">文件大小 %1$s 超过 %2$s 限制.</string>
 
     <string name="failed_to_download">下载文件失败</string>
@@ -140,7 +131,6 @@
     <string name="failed_to_open_file">没有应用程序可查看该类型文件</string>
     <string name="failed_empty_password">未改变: 因为密码为空</string>
     <string name="failed_credential_confirmation">验证码错误</string>
-    <string name="failed_to_create_topic">创建编组失败</string>
 
     <string name="contacts_section_contacts">手机联系人</string>
     <string name="contacts_section_directory">目录</string>
@@ -168,7 +158,6 @@
     <string name="request">请求</string>
     <string name="forgot_password">忘记密码</string>
     <string name="invalid_or_unknown_credential">无效或未知地址</string>
-    <string name="password_reset_message_sent">发送带有说明的消息</string>
     <string name="user_not_found">未找到</string>
     <string name="topic_tags">标签列表,以逗号分隔</string>
     <string name="sender_unknown">未知</string>
@@ -193,7 +182,6 @@
     <string name="file_name_label">文件名称:</string>
     <string name="content_type_label">内容类型:</string>
     <string name="image_size_label">Size:</string>
-    <string name="must_subscribe_first">请先加入</string>
     <string name="topic_blocked">已禁用</string>
     <string name="topic_archived">已存档</string>
     <string name="action_unarchive">取消存档</string>
@@ -201,8 +189,6 @@
     <string name="tags_management">标签 (内容发现)</string>
     <string name="contacts">联系人</string>
     <string name="manage">管理删除</string>
-    <string name="delete">删除</string>
-    <string name="add_credential_title">添加联系人</string>
     <string name="delete_credential_title">删除联系人</string>
     <string name="delete_credential_confirmation">确定要删除吗 %1$s:%2$s?</string>
     <string name="leave_conversation">离开会话</string>
@@ -285,7 +271,6 @@
     <string name="hint_search_contacts">联系人搜索</string>
     <string name="hint_contact_name">联系人姓名</string>
     <string name="report_channel">广播投诉</string>
-    <string name="cannot_reply">无法回复此消息</string>
     <string name="record_audio_button_hint">按住可录制语音留言</string>
     <string name="audio">声音的</string>
     <string name="unable_to_play_audio">无法播放此音频消息</string>
@@ -308,7 +293,6 @@
     <string name="disconnected_call">通话中断</string>
     <string name="toggle_camera_button">切换相机</string>
     <string name="toggle_microphone_button">切换麦克风</string>
-    <string name="voice_calls_limited">您将无法接听某些来电。</string>
     <string name="copied_to_clipboard">复制成功</string>
     <string name="image_preview">图像预览</string>
     <string name="image_download_success">图片已保存到画廊</string>
@@ -333,7 +317,6 @@
     <string name="document_preview">文档预览</string>
     <string name="action_call">调用</string>
     <string name="unable_to_place_call">无法拨打电话</string>
-    <string name="unable_to_answer_call">无法接听电话</string>
     <string name="busy_call">忙碌的</string>
 
     <string name="phone_sms_explained">我们将发送带有确认码的短信至上述号码。</string>

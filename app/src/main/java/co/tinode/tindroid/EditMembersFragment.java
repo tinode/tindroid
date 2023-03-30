@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.Manifest;
 import android.app.Activity;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;

@@ -264,7 +264,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
         searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
-            public boolean onMenuItemActionExpand(MenuItem menuItem) {
+            public boolean onMenuItemActionExpand(@NonNull MenuItem menuItem) {
                 searchView.setIconified(false);
                 searchView.requestFocus();
                 searchView.requestFocusFromTouch();
@@ -272,7 +272,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             }
 
             @Override
-            public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+            public boolean onMenuItemActionCollapse(@NonNull MenuItem menuItem) {
                 searchView.clearFocus();
                 mSearchTerm = null;
                 return true;

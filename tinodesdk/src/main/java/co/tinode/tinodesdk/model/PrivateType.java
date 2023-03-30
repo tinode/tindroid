@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -57,9 +56,7 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
             return false;
         }
         PrivateType apt = (PrivateType) another;
-        for (Map.Entry<String, Object> e : apt.entrySet()) {
-            put(e.getKey(), e.getValue());
-        }
+        this.putAll(apt);
         return apt.size() > 0;
     }
 }

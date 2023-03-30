@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">초대</string>
     <string name="modeRequested">요청</string>
-    <string name="modeUndefined">불확실</string>
     <string name="modePending">보류</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">대화 음소거</string>
     <string name="action_unmute">대화 음소거 해제</string>
     <string name="action_clear_messages">대화내용 전체삭제</string>
-    <string name="action_view_contact">연락처 보기</string>
     <string name="action_new_chat">새로운 대화</string>
     <string name="action_about">정보</string>
     <string name="action_search">검색</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">아바타 사진</string>
     <string name="select_image">사진 선택</string>
-    <string name="select_file">파일 선택</string>
     <string name="image_is_unavailable">이미지 사용 불가능</string>
     <string name="error_login_failed">로그인 실패:</string>
-    <string name="error_connection_failed">연결 실패:</string>
     <string name="login_required">로그인 필수</string>
     <string name="password_required">비밀번호 필수</string>
     <string name="error_new_account_failed">계정 등록 실패:</string>
@@ -77,7 +73,6 @@
     <string name="no_members">그룹 멤버가 없습니다.</string>
     <string name="add_one_member">한명 이상의 그룹 회원 추가</string>
     <string name="add_members">멤버 추가</string>
-    <string name="leave_group">그룹 나가기</string>
     <string name="id">아이디:</string>
     <string name="topic_muted">음소거</string>
     <string name="permissions">권한</string>
@@ -96,7 +91,6 @@
     <string name="auth_permissions">인증된 사용자</string>
     <string name="anon_permissions">익명의 사용자</string>
     <string name="topic_private">추가 정보(나만 보기)</string>
-    <string name="edit_topic">주제 수정</string>
     <string name="edit_permissions">권한 수정</string>
 
     <string name="permission_owner">모든 권한(관리자)</string>
@@ -120,7 +114,6 @@
     <string name="confirm_delete_topic">이 대화를 모두 삭제하시겠습니까?</string>
     <string name="confirm_delete_multiple_topics">이 대화를 정말로 삭제하시겠습니까?</string>
     <string name="modeWriteOnly">쓰기전용</string>
-    <string name="owner_cannot_unsubscribe">관리자가 탈퇴할 수 없습니다.</string>
     <string name="read_receipts_enabled">읽은 내역 보내기</string>
     <string name="typing_notifications_enabled">입력 중 표시</string>
     <string name="logout">로그아웃</string>
@@ -128,12 +121,10 @@
     <string name="account_settings">계정 설정</string>
     <string name="enter_new_password">새로운 비밀번호 입력</string>
     <string name="confirm_logout">로그아웃 하시겠습니까?</string>
-    <string name="edit_account">계정 이름 수정</string>
     <string name="invalid_login">유효하지 않은 로그인</string>
 
     <string name="download_attachment">저장</string>
     <string name="broken_image">올바르지 않은 이미지 형식</string>
-    <string name="file_manager_not_found">파일 매니저를 찾을 수 없습니다.</string>
     <string name="attachment_too_large">파일크기 %1$s가 %2$s를 초과합니다.</string>
 
     <string name="failed_to_download">파일을 다운로드 하는데 실패했습니다</string>
@@ -141,7 +132,6 @@
     <string name="failed_to_open_file">이 형식의 파일을 볼 수 있는 애플리케이션이 없습니다.</string>
     <string name="failed_empty_password">변경되지 않음 : 비밀번호 입력안됨</string>
     <string name="failed_credential_confirmation">잘못된 확인코드</string>
-    <string name="failed_to_create_topic">그룹 생성에 실패했습니다.</string>
 
     <string name="contacts_section_contacts">핸드폰 연락처</string>
     <string name="contacts_section_directory">목차</string>
@@ -169,7 +159,6 @@
     <string name="request">요청</string>
     <string name="forgot_password">비밀번호를 잊어버렸다</string>
     <string name="invalid_or_unknown_credential">유효하지 않거나 알려지지 않은 주소</string>
-    <string name="password_reset_message_sent">지시사항이 포함된 메세지</string>
     <string name="user_not_found">찾을 수 없습니다.</string>
     <string name="topic_tags">태그, 쉼표로 구분</string>
     <string name="sender_unknown">알려지지 않은</string>
@@ -194,7 +183,6 @@
     <string name="file_name_label">파일 이름:</string>
     <string name="content_type_label">컨텐츠 타입:</string>
     <string name="image_size_label">크기:</string>
-    <string name="must_subscribe_first">가입 먼저하세요.</string>
     <string name="topic_blocked">차단됨</string>
     <string name="topic_archived">보관됨</string>
     <string name="action_unarchive">보관되지 않음</string>
@@ -202,8 +190,6 @@
     <string name="tags_management">태그</string>
     <string name="contacts">연락처</string>
     <string name="manage">관리</string>
-    <string name="delete">삭제</string>
-    <string name="add_credential_title">연락처 추가</string>
     <string name="delete_credential_title">연락처 삭제</string>
     <string name="delete_credential_confirmation">%1$s:%2$s를 삭제하시겠습니까?</string>
     <string name="leave_conversation">대화 나가기</string>
@@ -283,7 +269,6 @@
     <string name="hint_search_contacts">연락처 검색</string>
     <string name="hint_contact_name">담당자 이름</string>
     <string name="report_channel">채널에 대한 불만</string>
-    <string name="cannot_reply">이 메시지에 회신할 수 없습니다</string>
     <string name="audio">오디오</string>
     <string name="record_audio_button_hint">길게 눌러 음성 메시지 녹음</string>
     <string name="unable_to_play_audio">이 음성 메시지를 재생할 수 없습니다</string>
@@ -306,7 +291,6 @@
     <string name="disconnected_call">중단</string>
     <string name="toggle_camera_button">카메라 토글</string>
     <string name="toggle_microphone_button">마이크 토글</string>
-    <string name="voice_calls_limited">일부 수신 음성 전화를 받을 수 없습니다.</string>
     <string name="copied_to_clipboard">클립보드에 복사 되었습니다</string>
     <string name="image_preview">이미지 미리보기</string>
     <string name="image_download_success">갤러리에 저장된 이미지</string>
@@ -331,7 +315,6 @@
     <string name="document_preview">문서 미리보기</string>
     <string name="action_call">전화</string>
     <string name="unable_to_place_call">전화를 걸 수 없습니다</string>
-    <string name="unable_to_answer_call">이 전화를 받을 수 없습니다</string>
     <string name="busy_call">바쁘다</string>
 
     <string name="phone_sms_explained">확인 코드가 포함된 SMS를 위 번호로 보내드리겠습니다.</string>

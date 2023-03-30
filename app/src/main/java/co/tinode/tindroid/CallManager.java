@@ -40,7 +40,6 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
-import co.tinode.tinodesdk.model.MsgServerInfo;
 
 import static android.content.Context.TELECOM_SERVICE;
 

@@ -20,7 +20,6 @@
     <string name="settings_host_name_explained">Соединение с сервером \'%1$s\'</string>
 
     <string name="action_clear_messages">Очистить историю сообщений</string>
-    <string name="action_view_contact">Посмотреть</string>
     <string name="action_new_chat">Новый чат</string>
     <string name="action_about">О приложении</string>
     <string name="action_search">Искать</string>
@@ -33,14 +32,12 @@
     <string name="action_delete_group">Удалить чат…</string>
     <string name="avatar">Аватарка</string>
     <string name="select_image">Выбрать картинку</string>
-    <string name="select_file">Выбрать файл</string>
     <string name="image_is_unavailable">Изображение недоступно</string>
     <string name="error_login_failed">Ошибка входа:</string>
     <string name="no_chats">Чатов нет\n\n¯\\_(ツ)_/¯</string>
     <string name="error_new_account_failed">Ошибка регистрации:</string>
     <string name="password_required">Введите пароль</string>
     <string name="login_required">Введите логин</string>
-    <string name="error_connection_failed">Нет связи:</string>
     <string name="invalid_confirmation_code">Код неверен</string>
     <string name="email_rejected">Емейл неверен</string>
     <string name="login_rejected">Логин неверен</string>
@@ -92,14 +89,11 @@
     <string name="permission_join">Подписка</string>
     <string name="permission_delete">Удалять сообщения</string>
     <string name="permission_approve">Администратор</string>
-    <string name="password_reset_message_sent">Сообщение с инструкциями отправлено</string>
-    <string name="owner_cannot_unsubscribe">Владелец не может выйти из группы</string>
     <string name="options_menu">Настройки</string>
     <string name="no_members">Участников нет</string>
     <string name="no_connection">Нет связи с интернетом</string>
     <string name="name_required">Введите название группы</string>
     <string name="modeWriteOnly">только запись</string>
-    <string name="modeUndefined">не определено</string>
     <string name="modeRequested">запрошено</string>
     <string name="modeReadOnly">только чтение</string>
     <string name="modePending">обрабатывается</string>
@@ -109,7 +103,6 @@
     <string name="modeAdmin">администратор</string>
     <string name="make_owner">Сделать владельцем</string>
     <string name="logout">Выйти</string>
-    <string name="leave_group">Выйти из чата</string>
     <string name="invalid_login">Неверный логин</string>
     <string name="invalid_or_unknown_credential">Неверный или неизвестный адрес</string>
     <string name="action_mute">Отключить уведомления</string>
@@ -120,11 +113,9 @@
     <string name="confirm_delete_multiple_topics">Вы действительно хотите удалить эти чаты?</string>
     <string name="group_members">Участники чата</string>
     <string name="forgot_password">Напоминание пароля</string>
-    <string name="failed_to_create_topic">Ошибка создания чата</string>
     <string name="failed_to_download">Не удалось скачать файл</string>
     <string name="failed_to_save_download">Ошибка сохранения файла</string>
     <string name="failed_to_open_file">Неизвестный тип файла</string>
-    <string name="file_manager_not_found">Нет возможности просмотра файлов</string>
     <string name="confirm_logout">Вы действительно хотите выйти из приложения?</string>
     <string name="confirm_member_ban">Удалить %1$s из \"%2$s\" и заблокировать?</string>
     <string name="confirm_member_removal">Удалить %1$s из \"%2$s\"?</string>
@@ -133,9 +124,7 @@
     <string name="default_permissions">Права доступа по умолчанию</string>
     <string name="download_attachment">сохранить</string>
     <string name="download_title">Tinode скачать</string>
-    <string name="edit_account">Редактировать аккаунт</string>
     <string name="edit_permissions">Редактировать права доступа</string>
-    <string name="edit_topic">Редакировать чат</string>
     <string name="email">Емейл</string>
     <string name="email_required">Требуется емейл</string>
     <string name="full_name_required">Полное имя обязательно</string>
@@ -174,7 +163,6 @@
     <string name="file_name_label">Имя файла:</string>
     <string name="content_type_label">Тип:</string>
     <string name="image_size_label">Размер:</string>
-    <string name="must_subscribe_first">Сначала нужно подписаться</string>
     <string name="topic_blocked">Заблокировано</string>
     <string name="topic_archived">В архиве</string>
     <string name="action_unarchive">Восстановить</string>
@@ -182,8 +170,6 @@
     <string name="tags_management">Теги для поиска</string>
     <string name="contacts">Контакты</string>
     <string name="manage">Редактировать</string>
-    <string name="delete">Удалить</string>
-    <string name="add_credential_title">Контакты</string>
     <string name="delete_credential_title">Удалить контакт</string>
     <string name="delete_credential_confirmation">Удалить контакт %1$s:%2$s?</string>
     <string name="leave_conversation">Выйти из чата</string>
@@ -264,7 +250,6 @@
     <string name="badge_staff">Администрация</string>
     <string name="badge_verified">Верифицированный</string>
     <string name="badge_danger">Подозрительный</string>
-    <string name="cannot_reply">Невозможно ответить на это сообщение</string>
     <string name="record_audio_button_hint">Удерживайте для записи голосового сообщения</string>
     <string name="audio">Аудио</string>
     <string name="button_hint_start_audio">Начать запись аудио</string>
@@ -287,7 +272,6 @@
     <string name="action_video_call">Видео звонок</string>
     <string name="outgoing_call">Исходящий звонок</string>
     <string name="incoming_call">Входящий звонок</string>
-    <string name="voice_calls_limited">Вы не сможете принимать некоторые входящие звонки.</string>
     <string name="copied_to_clipboard">Скопировано в буфер обмена</string>
     <string name="image_preview">Превью картинки</string>
     <string name="image_download_success">Изображение сохранено в галерее</string>
@@ -312,7 +296,6 @@
     <string name="document_preview">Предварительный просмотр документа</string>
     <string name="action_call">Позвонить</string>
     <string name="unable_to_place_call">Невозможно сделать этот звонок</string>
-    <string name="unable_to_answer_call">Невозможно ответить на этот звонок</string>
     <string name="busy_call">занято</string>
 
     <string name="phone_sms_explained">Мы отправим SMS с кодом подтверждения на указанный выше номер.</string>

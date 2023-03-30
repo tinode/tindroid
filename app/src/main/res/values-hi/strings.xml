@@ -25,14 +25,12 @@
     <string name="modeBlocked">अवरोधित</string>
     <string name="modeInvited">आमंत्रित</string>
     <string name="modeRequested">का अनुरोध किया</string>
-    <string name="modeUndefined">अपरिभाषित</string>
     <string name="modePending">लंबित</string>
     <string name="action_settings">समायोजन</string>
     <string name="action_delete">मिटाना</string>
     <string name="action_mute">बधिर वार्तालाप</string>
     <string name="action_unmute">बातचीत अनम्यूट करें</string>
     <string name="action_clear_messages">सभी संदेश साफ़ करें</string>
-    <string name="action_view_contact">संपर्क देखें</string>
     <string name="action_new_chat">नई चैट</string>
     <string name="action_about">के बारे में</string>
     <string name="action_search">खोज</string>
@@ -46,10 +44,8 @@
     <string name="action_video_call">वीडियो कॉल</string>
     <string name="avatar">अवतार चित्र</string>
     <string name="select_image">छवि चुने</string>
-    <string name="select_file">फ़ाइल का चयन करें</string>
     <string name="image_is_unavailable">छवि अनुपलब्ध है</string>
     <string name="error_login_failed">लॉगिन विफल:</string>
-    <string name="error_connection_failed">कनेक्शन विफल:</string>
     <string name="login_required">लॉगिन आवश्यक</string>
     <string name="password_required">पासवर्ड आवश्यक</string>
     <string name="error_new_account_failed">खाता पंजीकरण विफल:</string>
@@ -66,7 +62,6 @@
     <string name="no_members">कोई समूह सदस्य नहीं</string>
     <string name="add_one_member">कम से कम एक समूह सदस्य जोड़ें</string>
     <string name="add_members">सदस्यों को जोड़ें</string>
-    <string name="leave_group">समूह छोड़ दें</string>
     <string name="id">पहचान:</string>
     <string name="topic_muted">म्यूट किए गए</string>
     <string name="permissions">अनुमतियां</string>
@@ -82,7 +77,6 @@
     <string name="auth_permissions">प्रमाणीकृत उपयोगकर्ता</string>
     <string name="anon_permissions">अनाम उपयोगकर्ता</string>
     <string name="topic_private">अतिरिक्त जानकारी (केवल आपको दिखाई देने वाली)</string>
-    <string name="edit_topic">समूह संपादित करें</string>
     <string name="edit_permissions">अनुमतियाँ संपादित करें</string>
     <string name="permission_owner">पूर्ण नियंत्रण (स्वामी)</string>
     <string name="permission_join">जोड़ना</string>
@@ -103,7 +97,6 @@
     <string name="confirm_delete_topic">क्या आप वास्तव में इस वार्तालाप को सभी के लिए हटाना चाहते हैं?</string>
     <string name="confirm_delete_multiple_topics">क्या आप वाकई इन चैट को हटाना चाहते हैं?</string>
     <string name="modeWriteOnly">राइट-केवल</string>
-    <string name="owner_cannot_unsubscribe">स्वामी सदस्यता समाप्त नहीं कर सकता</string>
     <string name="read_receipts_enabled">पठन रसीद भेजें</string>
     <string name="typing_notifications_enabled">टाइपिंग सूचनाएं दिखाएं</string>
     <string name="logout">लॉग आउट</string>
@@ -111,18 +104,15 @@
     <string name="account_settings">अकाउंट सेटिंग</string>
     <string name="enter_new_password">नया पासवर्ड दर्ज करें</string>
     <string name="confirm_logout">क्या आप लॉग आउट करना चाहते हैं?</string>
-    <string name="edit_account">खाता नाम संपादित करें</string>
     <string name="invalid_login">लॉगिन अमान्य है</string>
     <string name="download_attachment">बचाना</string>
     <string name="broken_image">अज्ञात या अमान्य छवि प्रारूप</string>
-    <string name="file_manager_not_found">फ़ाइल मैनेजर नहीं मिला</string>
     <string name="attachment_too_large">फ़ाइल का आकार %1$s %2$s सीमा से अधिक है।</string>
     <string name="failed_to_download">फ़ाइल डाउनलोड करने में विफल</string>
     <string name="failed_to_save_download">डाउनलोड की गई फ़ाइल सहेजने में विफल</string>
     <string name="failed_to_open_file">कोई भी ऐप्लिकेशन इस प्रकार की फ़ाइल नहीं देख सकता</string>
     <string name="failed_empty_password">नहीं बदला गया: खाली पासवर्ड</string>
     <string name="failed_credential_confirmation">ग़लत पुष्टिकरण कोड</string>
-    <string name="failed_to_create_topic">बातचीत बनाने में विफल</string>
     <string name="contacts_section_contacts">फोन संपर्क</string>
     <string name="contacts_section_directory">निर्देशिका</string>
     <string name="email">ईमेल</string>
@@ -148,7 +138,6 @@
     <string name="request">अनुरोध</string>
     <string name="forgot_password">पासवर्ड भूल गए</string>
     <string name="invalid_or_unknown_credential">मान्य %1$s दर्ज करें</string>
-    <string name="password_reset_message_sent">अमान्य या अज्ञात पता</string>
     <string name="user_not_found">नहीं मिला</string>
     <string name="topic_tags">टैग, अल्पविराम से अलग की गई सूची</string>
     <string name="sender_unknown">अज्ञात</string>
@@ -174,7 +163,6 @@
     <string name="file_name_label">फ़ाइल का नाम:</string>
     <string name="content_type_label">फ़ाइल का नाम:</string>
     <string name="image_size_label">आकार:</string>
-    <string name="must_subscribe_first">पहले सब्सक्राइब करना होगा</string>
     <string name="topic_blocked">अवरोधित</string>
     <string name="topic_archived">संग्रहीत</string>
     <string name="action_unarchive">संग्रह से निकालें</string>
@@ -182,8 +170,6 @@
     <string name="tags_management">टैग</string>
     <string name="contacts">संपर्क</string>
     <string name="manage">प्रबंधित करना</string>
-    <string name="delete">मिटाना</string>
-    <string name="add_credential_title">संपर्क जोड़ें</string>
     <string name="delete_credential_title">संपर्क मिटा दें</string>
     <string name="delete_credential_confirmation">क्या आप वाकई %1$s:%2$s को हटाना चाहते हैं?</string>
     <string name="leave_conversation">बातचीत को छोड़ दो</string>
@@ -263,7 +249,6 @@
     <string name="hint_search_contacts">संपर्क खोजें</string>
     <string name="report_channel">रिपोर्ट चैनल</string>
     <string name="hint_contact_name">संपर्क नाम</string>
-    <string name="cannot_reply">इस संदेश का उत्तर देने में असमर्थ</string>
     <string name="record_audio_button_hint">ध्वनि संदेश रिकॉर्ड करने के लिए दबाए रखें</string>
     <string name="audio">ऑडियो</string>
     <string name="unable_to_play_audio">यह ऑडियो संदेश चलाने में असमर्थ</string>
@@ -284,7 +269,6 @@
     <string name="toggle_microphone_button">म्यूट/अनम्यूट कॉल</string>
     <string name="finish_call_button">कॉल समाप्त करें</string>
     <string name="video_calls_unavailable">वीडियो कॉल अनुपलब्ध</string>
-    <string name="voice_calls_limited">आप कुछ इनकमिंग वॉयस कॉल प्राप्त नहीं कर पाएंगे।</string>
     <string name="copied_to_clipboard">क्लिपबोर्ड पर नकल</string>
     <string name="image_preview">छवि पूर्वावलोकन</string>
     <string name="image_download_success">छवि को गैलरी में सहेजा गया</string>
@@ -305,7 +289,6 @@
     <string name="action_call">पुकारना</string>
     <string name="tinode_audio_call">टिनोड कॉल</string>
     <string name="unable_to_place_call">यह कॉल करने में असमर्थ</string>
-    <string name="unable_to_answer_call">इस कॉल का उत्तर देने में असमर्थ</string>
     <string name="busy_call">व्यस्त</string>
     <string name = "phone_sms_explained"> हम उपरोक्त नंबर पर पुष्टिकरण कोड के साथ एक एसएमएस भेजेंगे।</string>
     <string name="phone_number_required">वैध फ़ोन नंबर आवश्यक है</string>

@@ -202,7 +202,7 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) requireContext().getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(!mAudioOnly);
         mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
@@ -997,10 +997,10 @@ public class CallFragment extends Fragment {
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
     static class IceCandidateAux implements Serializable {
-        public String type;
-        public int sdpMLineIndex;
-        public String sdpMid;
-        public String candidate;
+        public final String type;
+        public final int sdpMLineIndex;
+        public final String sdpMid;
+        public final String candidate;
 
         IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) {
             this.type = type;

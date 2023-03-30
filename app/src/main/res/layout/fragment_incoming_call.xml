@@ -57,7 +57,6 @@
         app:srcCompat="@drawable/disk" />
 
     <TableLayout
-        android:id="@+id/swipeToAcceptPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="100dp"
@@ -95,7 +94,6 @@
     </TableLayout>
 
     <TableLayout
-        android:id="@+id/swipeToRejectPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="90dp"

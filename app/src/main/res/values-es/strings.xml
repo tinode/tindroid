@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">invitado</string>
     <string name="modeRequested">solicitado</string>
-    <string name="modeUndefined">indefinido</string>
     <string name="modePending">pendiente</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">Silenciar conversación</string>
     <string name="action_unmute">Anular el silencio</string>
     <string name="action_clear_messages">Borrar todos los mensajes</string>
-    <string name="action_view_contact">Ver contacto</string>
     <string name="action_new_chat">Nuevo chat</string>
     <string name="action_about">Acerca</string>
     <string name="action_search">Buscar</string>
@@ -52,10 +50,8 @@
 
     <string name="avatar">Imagen de avatar</string>
     <string name="select_image">Selecionar imagen</string>
-    <string name="select_file">Seleccionar archivo</string>
     <string name="image_is_unavailable">La imagen no está disponible</string>
     <string name="error_login_failed">Error de inicio de sesión: </string>
-    <string name="error_connection_failed">La conexión falló: </string>
     <string name="login_required">Debes introducir tu nombre de usuario</string>
     <string name="password_required">Debes introducir tu contraseña</string>
     <string name="error_new_account_failed">El registro de cuenta falló:</string>
@@ -77,7 +73,6 @@
     <string name="no_members">No hay miembros en el grupo</string>
     <string name="add_one_member">Debes añadir al menos un miembro del grupo</string>
     <string name="add_members">Añadir miembros</string>
-    <string name="leave_group">Dejar el grupo</string>
     <string name="id">ID:</string>
     <string name="topic_muted">Silenciado</string>
     <string name="permissions">Permisos</string>
@@ -96,7 +91,6 @@
     <string name="auth_permissions">Usuarios autenticados</string>
     <string name="anon_permissions">Usuarios anónimos</string>
     <string name="topic_private">Información adicional (sólo visible para ti)</string>
-    <string name="edit_topic">Editar tema</string>
     <string name="edit_permissions">Editar permisos</string>
 
     <string name="permission_owner">Control total (propietario)</string>
@@ -120,7 +114,6 @@
     <string name="confirm_delete_topic">¿Estás seguro de que quieres eliminar esta conversación para todos?</string>
     <string name="confirm_delete_multiple_topics">¿Estás seguro de que quieres eliminar estos temas?</string>
     <string name="modeWriteOnly">sólo-lectura</string>
-    <string name="owner_cannot_unsubscribe">El propietario no puede darse de baja</string>
     <string name="read_receipts_enabled">Enviar recibos de lectura</string>
     <string name="typing_notifications_enabled">Mostrar notificaciones de escritura</string>
     <string name="logout">Cerrar sesión</string>
@@ -128,12 +121,10 @@
     <string name="account_settings">Ajustes de la cuenta</string>
     <string name="enter_new_password">Introduzca una nueva contraseña</string>
     <string name="confirm_logout">¿Estás seguro de que quieres cerrar sesión?</string>
-    <string name="edit_account">Editar nombre de la cuenta</string>
     <string name="invalid_login">El nombre de usuario no es válido</string>
 
     <string name="download_attachment">descargar</string>
     <string name="broken_image">Formato de imagen desconocido o inválido</string>
-    <string name="file_manager_not_found">Administrador de archivos no encontrado</string>
     <string name="attachment_too_large">El tamaño del archivo %1$s excede el límite de %2$s.</string>
 
     <string name="failed_to_download">Error al descargar el archivo</string>
@@ -141,7 +132,6 @@
     <string name="failed_to_open_file">Ninguna aplicación puede abrir el archivo de este tipo</string>
     <string name="failed_empty_password">Sin cambios: contraseña vacía</string>
     <string name="failed_credential_confirmation">El código de confirmación es incorrecto.</string>
-    <string name="failed_to_create_topic">Error al crear tema</string>
 
     <string name="contacts_section_contacts">Contactos del teléfono</string>
     <string name="contacts_section_directory">Directorio</string>
@@ -169,7 +159,6 @@
     <string name="request">Solicitar</string>
     <string name="forgot_password">¿Olvidaste tu contraseña?</string>
     <string name="invalid_or_unknown_credential">Dirección inválida o desconocida</string>
-    <string name="password_reset_message_sent">Mensaje con instrucciones ha sido enviado</string>
     <string name="user_not_found">Usuario no encontrado</string>
     <string name="topic_tags">Etiquetas, lista separada por comas</string>
     <string name="sender_unknown">Desconicido</string>
@@ -194,7 +183,6 @@
     <string name="file_name_label">Nombre del archivo:</string>
     <string name="content_type_label">Tipo de contenido:</string>
     <string name="image_size_label">Tamaño:</string>
-    <string name="must_subscribe_first">Debes suscribirte primero</string>
     <string name="topic_blocked">Bloqueado</string>
     <string name="topic_archived">Archivado</string>
     <string name="action_unarchive">Desarchivar</string>
@@ -202,8 +190,6 @@
     <string name="tags_management">Etiquetas</string>
     <string name="contacts">Contactos</string>
     <string name="manage">Gestionar</string>
-    <string name="delete">Eliminar</string>
-    <string name="add_credential_title">Añadir contacto</string>
     <string name="delete_credential_title">Eliminar contacto</string>
     <string name="delete_credential_confirmation">¿Estás seguro de que quieres eliminar a %1$s:%2$s?</string>
     <string name="leave_conversation">Dejar conversación</string>
@@ -284,7 +270,6 @@
     <string name="hint_search_contacts">Búsqueda de contacto</string>
     <string name="hint_contact_name">Nombre de contacto</string>
     <string name="report_channel">Quejarse del canal</string>
-    <string name="cannot_reply">No se puede responder a este mensaje</string>
     <string name="record_audio_button_hint">Mantenga presionado para grabar un mensaje de voz</string>
     <string name="audio">Audio</string>
     <string name="unable_to_play_audio">No se puede reproducir este mensaje de audio</string>
@@ -307,7 +292,6 @@
     <string name="disconnected_call">interrumpida</string>
     <string name="toggle_camera_button">Alternar cámara</string>
     <string name="toggle_microphone_button">Alternar micrófono</string>
-    <string name="voice_calls_limited">No podrá recibir algunas llamadas de voz entrantes.</string>
     <string name="copied_to_clipboard">Copiar al portapapeles</string>
     <string name="image_preview">Vista previa de la imagen</string>
     <string name="image_download_success">Imagen guardada en la galería</string>
@@ -331,7 +315,6 @@
     <string name="document_preview">Vista previa del documento</string>
     <string name="action_call">Llamar</string>
     <string name="unable_to_place_call">No se pudo realizar esta llamada</string>
-    <string name="unable_to_answer_call">No se pudo responder esta llamada</string>
     <string name="busy_call">ocupada</string>
 
     <string name="phone_sms_explained">Enviaremos un SMS con el código de confirmación al número de arriba.</string>

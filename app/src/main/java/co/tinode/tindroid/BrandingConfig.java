@@ -300,6 +300,6 @@ public class BrandingConfig {
     }
 
     public interface ReadyListener {
-        public void onReady(BrandingConfig config);
+        void onReady(BrandingConfig config);
     }
 }

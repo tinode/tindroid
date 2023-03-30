@@ -18,7 +18,6 @@ import co.tinode.tindroid.R;
 public class DotSelectorDrawable extends Drawable {
     private final Paint mPaintSelected;
     private final Paint mPaintNormal;
-    private final Paint mPaintDebug;
     private int mDotCount;
     private int mSelected;
 
@@ -37,9 +36,6 @@ public class DotSelectorDrawable extends Drawable {
         mPaintNormal.setAntiAlias(true);
         mPaintNormal.setDither(true);
         mPaintNormal.setColor(res.getColor(R.color.colorGray, null));
-
-        mPaintDebug = new Paint();
-        mPaintDebug.setColor(res.getColor(R.color.colorPillCounter, null));
     }
 
     @Override

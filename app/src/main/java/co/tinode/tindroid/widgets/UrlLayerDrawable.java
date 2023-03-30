@@ -15,9 +15,7 @@ import java.util.HashMap;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import androidx.core.content.res.ResourcesCompat;
 import co.tinode.tindroid.Const;
-import co.tinode.tindroid.UiUtils;
 
 /**
  * LayerDrawable with some of the layers set by Picasso.

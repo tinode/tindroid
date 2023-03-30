@@ -17,8 +17,8 @@ public class AuthScheme implements Serializable {
     public static final String LOGIN_RESET = "reset";
     public static final String LOGIN_CODE = "code";
 
-    public String scheme;
-    public String secret;
+    public final String scheme;
+    public final String secret;
 
     public AuthScheme(String scheme, String secret) {
         this.scheme = scheme;

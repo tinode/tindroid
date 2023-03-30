@@ -361,7 +361,7 @@ public class BaseDb extends SQLiteOpenHelper {
             }
         }
 
-        public int value;
+        public final int value;
 
         Status(int v) {
             value = v;

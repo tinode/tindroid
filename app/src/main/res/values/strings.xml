@@ -42,7 +42,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">invited</string>
     <string name="modeRequested">requested</string>
-    <string name="modeUndefined">undefined</string>
     <string name="modePending">pending</string>
 
     <!-- Menu actions -->
@@ -51,7 +50,6 @@
     <string name="action_mute">Mute conversation</string>
     <string name="action_unmute">Unmute conversation</string>
     <string name="action_clear_messages">Clear all messages</string>
-    <string name="action_view_contact">View contact</string>
     <string name="action_new_chat">New chat</string>
     <string name="action_about">About</string>
     <string name="action_search">Search</string>
@@ -66,10 +64,8 @@
 
     <string name="avatar">Avatar picture</string>
     <string name="select_image">Select image</string>
-    <string name="select_file">Select file</string>
     <string name="image_is_unavailable">Image is unavailable</string>
     <string name="error_login_failed">Login failed: </string>
-    <string name="error_connection_failed">Connection failed: </string>
     <string name="login_required">Login required</string>
     <string name="password_required">Password required</string>
     <string name="error_new_account_failed">Account registration failed:</string>
@@ -91,7 +87,6 @@
     <string name="no_members">No group members</string>
     <string name="add_one_member">Add at least one group member</string>
     <string name="add_members">Add members</string>
-    <string name="leave_group">Leave group</string>
     <string name="id">ID:</string>
     <string name="topic_muted">Muted</string>
     <string name="permissions">Permissions</string>
@@ -110,7 +105,6 @@
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
     <string name="topic_private">Additional info (visible to you only)</string>
-    <string name="edit_topic">Edit group</string>
     <string name="edit_permissions">Edit Permissions</string>
 
     <string name="permission_owner">Full control (owner)</string>
@@ -134,7 +128,6 @@
     <string name="confirm_delete_topic">Do you really want to delete this conversation for everyone?</string>
     <string name="confirm_delete_multiple_topics">Do you really want to delete these chats?</string>
     <string name="modeWriteOnly">write-only</string>
-    <string name="owner_cannot_unsubscribe">Owner cannot unsubscribe</string>
     <string name="read_receipts_enabled">Send read receipts</string>
     <string name="typing_notifications_enabled">Show typing notifications</string>
     <string name="logout">Logout</string>
@@ -142,13 +135,11 @@
     <string name="account_settings">Account settings</string>
     <string name="enter_new_password">Enter new password</string>
     <string name="confirm_logout">Are you sure you want to logout?</string>
-    <string name="edit_account">Edit account name</string>
     <string name="invalid_login">Login is invalid</string>
 
     <string name="default_attachment_name" translatable="false">file_attachment</string>
     <string name="download_attachment">save</string>
     <string name="broken_image">Unknown or invalid image format</string>
-    <string name="file_manager_not_found">File manager not found</string>
     <string name="attachment_too_large">The file size %1$s exceeds the %2$s limit.</string>
 
     <string name="failed_to_download">Failed to download the file</string>
@@ -156,7 +147,6 @@
     <string name="failed_to_open_file">No application can view the file of this type</string>
     <string name="failed_empty_password">Not changed: empty password</string>
     <string name="failed_credential_confirmation">Incorrect confirmation code</string>
-    <string name="failed_to_create_topic">Failed to create conversation</string>
 
     <string name="contacts_section_contacts">Phone Contacts</string>
     <string name="contacts_section_directory">Directory</string>
@@ -185,7 +175,6 @@
     <string name="request">Request</string>
     <string name="forgot_password">Forgot password</string>
     <string name="invalid_or_unknown_credential">Invalid or unknown address</string>
-    <string name="password_reset_message_sent">Message with instructions sent</string>
     <string name="user_not_found">Not found</string>
     <string name="topic_tags">Tags, comma separated list</string>
     <string name="sender_unknown">Unknown</string>
@@ -212,7 +201,6 @@
     <string name="file_name_label">File name:</string>
     <string name="content_type_label">Content type:</string>
     <string name="image_size_label">Size:</string>
-    <string name="must_subscribe_first">Must subscribe first</string>
     <string name="topic_blocked">Blocked</string>
     <string name="topic_archived">Archived</string>
     <string name="action_unarchive">Unarchive</string>
@@ -220,8 +208,6 @@
     <string name="tags_management">Tags</string>
     <string name="contacts">Contacts</string>
     <string name="manage">Manage</string>
-    <string name="delete">Delete</string>
-    <string name="add_credential_title">Add contact</string>
     <string name="delete_credential_title">Delete contact</string>
     <string name="delete_credential_confirmation">Are you sure you want to remove %1$s:%2$s?</string>
     <string name="leave_conversation">Leave Conversation</string>
@@ -307,7 +293,6 @@
     <string name="hint_search_contacts">Search contacts</string>
     <string name="report_channel">Report channel</string>
     <string name="hint_contact_name">Contact name</string>
-    <string name="cannot_reply">Unable to reply to this message</string>
 
     <string name="record_audio_button_hint">Hold to record a voice message</string>
     <string name="audio">Audio</string>
@@ -331,7 +316,6 @@
     <string name="toggle_microphone_button">Mute/unmute call</string>
     <string name="finish_call_button">Finish call</string>
     <string name="video_calls_unavailable">Video calls unavailable</string>
-    <string name="voice_calls_limited">You will not be able to receive some incoming voice calls.</string>
     <string name="copied_to_clipboard">Copied to clipboard</string>
     <string name="image_preview">Image preview</string>
     <string name="image_download_success">Image saved to gallery</string>
@@ -352,7 +336,6 @@
     <string name="action_call">Call</string>
     <string name="tinode_audio_call">Tinode Call</string>
     <string name="unable_to_place_call">Unable to make this call</string>
-    <string name="unable_to_answer_call">Unable to answer this call</string>
     <string name="phone_sms_explained">We will send an SMS with confirmation code to the number above.</string>
     <string name="phone_number_required">Valid phone number required</string>
     <string name="phone_number_hint">Mobile phone number</string>

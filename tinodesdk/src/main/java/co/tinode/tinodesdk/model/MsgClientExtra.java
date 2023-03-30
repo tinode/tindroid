@@ -11,5 +11,5 @@ public class MsgClientExtra {
     }
 
     // Array of out-of-band attachments which have to be exempted from GC.
-    public String[] attachments;
+    public final String[] attachments;
 }

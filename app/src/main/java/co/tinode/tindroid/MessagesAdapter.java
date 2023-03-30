@@ -1267,7 +1267,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         mMediaControl.seekToWhenReady(aca.seekTo);
                     }
                 }
-            } catch (IOException | ClassCastException ignored) {
+            } catch (ClassCastException ignored) {
                 Toast.makeText(mActivity, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
                 return false;
             }
