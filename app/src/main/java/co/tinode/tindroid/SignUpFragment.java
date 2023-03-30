@@ -169,16 +169,20 @@ public class SignUpFragment extends Fragment
                     continue;
                 }
 
+                View field = null;
                 if (method.equals("tel")) {
-                    activity.findViewById(R.id.phone).setVisibility(View.VISIBLE);
+                    field = activity.findViewById(R.id.phone);
                 } else if (method.equals("email")) {
-                    activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                    field = activity.findViewById(R.id.emailWrapper);
                 } else {
                     // TODO: show generic text prompt for unknown method.
                     Log.i(TAG, "Show generic validation field for " + method);
                 }
 
-                activity.findViewById(R.id.newLogin).requestFocus();
+                if (field != null) {
+                    field.setVisibility(View.VISIBLE);
+                    activity.findViewById(R.id.newLogin).requestFocus();
+                }
             }
         });
     }
