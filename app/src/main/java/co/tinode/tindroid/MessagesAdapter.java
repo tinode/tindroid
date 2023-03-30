@@ -245,7 +245,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return null;
     }
 
-    private static int findInCursor(@NonNull Cursor cur, int seq) {
+    private static int findInCursor(@Nullable Cursor cur, int seq) {
+        if (seq <= 0 || cur == null || cur.isClosed()) {
+            return -1;
+        }
+
         int low = 0;
         int high = cur.getCount() - 1;
 
@@ -398,14 +402,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     void pinnedStateChanged(int seq) {
-        if (mSelectedItems == null) {
+        int pos = findInCursor(mCursor, seq);
+        if (pos < 0) {
             return;
         }
-        int pos = findInCursor(mCursor, seq);
         mActivity.runOnUiThread(() -> {
-            toggleSelectionAt(pos);
             notifyItemChanged(pos);
-            updateSelectionMode();
+            if (mSelectedItems != null) {
+                toggleSelectionAt(pos);
+                updateSelectionMode();
+            }
         });
     }
 
@@ -771,34 +777,36 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     // Scroll to and animate message bubble.
     void scrollToAndAnimate(int seq) {
         final int pos = findInCursor(mCursor, seq);
-        if (pos >= 0) {
-            StoredMessage mm = getMessage(pos);
-            if (mm != null) {
-                LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
-                if (lm != null &&
-                        pos >= lm.findFirstCompletelyVisibleItemPosition() &&
-                        pos <= lm.findLastCompletelyVisibleItemPosition()) {
-                    // Completely visible, animate now.
-                    animateMessageBubble(
-                            (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                            mm.isMine(), false);
-                } else {
-                    // Scroll then animate.
-                    mRecyclerView.clearOnScrollListeners();
-                    mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-                        @Override
-                        public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
-                            super.onScrollStateChanged(recyclerView, newState);
-                            if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                                recyclerView.removeOnScrollListener(this);
-                                animateMessageBubble(
-                                        (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
-                                        mm.isMine(), false);
-                            }
+        if (pos < 0) {
+            return;
+        }
+
+        StoredMessage mm = getMessage(pos);
+        if (mm != null) {
+            LinearLayoutManager lm = (LinearLayoutManager) mRecyclerView.getLayoutManager();
+            if (lm != null &&
+                    pos >= lm.findFirstCompletelyVisibleItemPosition() &&
+                    pos <= lm.findLastCompletelyVisibleItemPosition()) {
+                // Completely visible, animate now.
+                animateMessageBubble(
+                        (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                        mm.isMine(), false);
+            } else {
+                // Scroll then animate.
+                mRecyclerView.clearOnScrollListeners();
+                mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+                    @Override
+                    public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                        super.onScrollStateChanged(recyclerView, newState);
+                        if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                            recyclerView.removeOnScrollListener(this);
+                            animateMessageBubble(
+                                    (ViewHolder) mRecyclerView.findViewHolderForAdapterPosition(pos),
+                                    mm.isMine(), false);
                         }
-                    });
-                    mRecyclerView.smoothScrollToPosition(pos);
-                }
+                    }
+                });
+                mRecyclerView.smoothScrollToPosition(pos);
             }
         }
     }
@@ -886,13 +894,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 Menu menu = mSelectionMode.getMenu();
                 boolean mutable = false;
                 boolean repliable = false;
-                boolean pinned = false;
+                Boolean pinned = null;
                 if (selected == 1) {
                     StoredMessage msg = getMessage(mSelectedItems.keyAt(0));
                     if (msg != null && msg.status == BaseDb.Status.SYNCED) {
                         repliable = true;
                         final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(mTopicName);
-                        pinned = (topic != null && topic.isPinned(msg.seq));
+                        if (topic != null && topic.isManager()) {
+                            pinned = topic.isPinned(msg.seq);
+                        }
                         if (msg.content != null && msg.isMine()) {
                             mutable = true;
                             String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
@@ -922,8 +932,13 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 menu.findItem(R.id.action_edit).setVisible(mutable);
                 menu.findItem(R.id.action_reply).setVisible(repliable);
                 menu.findItem(R.id.action_forward).setVisible(repliable);
-                menu.findItem(R.id.action_pin).setVisible(!pinned);
-                menu.findItem(R.id.action_unpin).setVisible(pinned);
+                if (pinned != null) {
+                    menu.findItem(R.id.action_pin).setVisible(!pinned);
+                    menu.findItem(R.id.action_unpin).setVisible(pinned);
+                } else {
+                    menu.findItem(R.id.action_pin).setVisible(false);
+                    menu.findItem(R.id.action_unpin).setVisible(false);
+                }
             }
         }
     }

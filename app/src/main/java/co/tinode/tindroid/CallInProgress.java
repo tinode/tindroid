@@ -2,7 +2,6 @@ package co.tinode.tindroid;
 
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,7 +20,7 @@ public class CallInProgress {
     // True if this call is established and connected between this client and the peer.
     private boolean mConnected = false;
     // True if the call is outgoing.
-    private boolean mIsOutgoing = false;
+    private boolean mIsOutgoing;
 
     public CallInProgress(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         mTopic = topic;
@@ -57,7 +56,6 @@ public class CallInProgress {
     public synchronized void endCall() {
         if (mConnection != null) {
             if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
-                Log.i("CallInProgress", "=== CALL DISCONNECTED");
                 mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
             }
             mConnection.destroy();

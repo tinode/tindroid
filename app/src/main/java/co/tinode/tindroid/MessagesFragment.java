@@ -788,6 +788,18 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             public int getItemCount() {
                 return mTopic != null && mTopic.getPinned() != null ? mTopic.getPinned().length : 0;
             }
+
+            @Override
+            public long getItemId(int position) {
+                int[] pinned = mTopic.getPinned();
+                return pinned[position];
+            }
+
+            @Override
+            public boolean containsItem(long itemId) {
+                int[] pinned = mTopic.getPinned();
+                return Arrays.stream(pinned).anyMatch(value -> value == itemId);
+            }
         };
         viewPager.setAdapter(mPinnedAdapter);
 
@@ -797,7 +809,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 super.onPageSelected(position);
                 mSelectedPin = position;
                 ImageView dots = activity.findViewById(R.id.dotSelector);
-                ((DotSelectorDrawable) dots.getDrawable()).setSelected(position);
+                DotSelectorDrawable drawable = (DotSelectorDrawable) dots.getDrawable();
+                if (drawable != null) {
+                    drawable.setSelected(position);
+                }
             }
         });
     }
@@ -1384,7 +1399,11 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             mSelectedPin = 0;
         }
         requireActivity().runOnUiThread(() -> {
-            if (count == 0) {
+            if (count > 0) {
+                activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
+                ((ImageView) activity.findViewById(R.id.dotSelector))
+                        .setImageDrawable(new DotSelectorDrawable(getResources(), count, 0));
+            } else {
                 activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
             }
             mPinnedAdapter.notifyDataSetChanged();
@@ -1674,7 +1693,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     ((TextView) view).setText(content.format(new SendReplyFormatter((TextView) view)));
                     MessagesAdapter adapter = mAdapterRef.get();
                     if (adapter != null) {
-                        view.setOnClickListener(v -> ((MessagesAdapter) adapter).scrollToAndAnimate(seq));
+                        view.setOnClickListener(v -> adapter.scrollToAndAnimate(seq));
                     }
                 }
             }

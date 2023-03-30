@@ -23,8 +23,6 @@ public class CallConnectionService extends ConnectionService {
     @Override
     public Connection onCreateOutgoingConnection(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
-        Log.i(TAG, "onCreateOutgoingConnection");
-
         CallConnection conn = new CallConnection(getApplicationContext());
         conn.setInitializing();
         boolean audioOnly = false;
@@ -96,14 +94,12 @@ public class CallConnectionService extends ConnectionService {
     public void onCreateIncomingConnectionFailed(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
         super.onCreateIncomingConnectionFailed(connectionManagerPhoneAccount, request);
-        Log.i(TAG, "Create incoming call failed");
     }
 
     @Override
     public void onCreateOutgoingConnectionFailed(@Nullable PhoneAccountHandle connectionManagerPhoneAccount,
                                                  @Nullable ConnectionRequest request) {
         super.onCreateOutgoingConnectionFailed(connectionManagerPhoneAccount, request);
-        Log.i(TAG, "Create outgoing call failed");
     }
 
     public static class TinodeVideoProvider extends Connection.VideoProvider {

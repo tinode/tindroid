@@ -1670,7 +1670,6 @@ public class Tinode {
         if (meta.desc != null && meta.desc.attachments != null && meta.desc.attachments.length > 0) {
             msg.extra = new MsgClientExtra(meta.desc.attachments);
         }
-        Log.i("setMeta", "msg.set.aux: " + msg.set.aux);
         return sendWithPromise(msg, msg.set.id);
     }
 

@@ -1,13 +1,9 @@
 package co.tinode.tinodesdk;
 
-import android.util.Log;
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
 import co.tinode.tinodesdk.model.Description;
@@ -87,6 +83,7 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         Object val = getAux("pins");
         List<Integer> pinned;
         if (val instanceof List) {
+            // Creating a copy, otherwise changes here will affect values saved in topic.
             pinned = new ArrayList<>((List) val);
         } else {
             pinned = new ArrayList<>();
@@ -102,13 +99,12 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
                 pinned.add(seq);
             }
         } else {
-            changed = pinned.removeIf(val1 -> val1 == seq);
+            changed = pinned.removeIf(pseq -> pseq == seq);
         }
 
         if (changed) {
             Map<String, Object> aux = new HashMap<>();
-            Log.i("ComTopic", "Pinned=" + Arrays.toString(pinned.toArray()));
-            aux.put("pins", pinned.size() > 0?  pinned.toArray() : Tinode.NULL_VALUE);
+            aux.put("pins", pinned.size() > 0 ? pinned : Tinode.NULL_VALUE);
             return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(aux).build());
         }
 

@@ -1,12 +1,9 @@
 package co.tinode.tinodesdk.model;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Map;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -39,7 +36,6 @@ public class MsgClientSet<Pu,Pr> implements Serializable {
 
     public MsgClientSet(String id, String topic, MsgSetMeta<Pu,Pr> meta) {
         this(id, topic, meta.desc, meta.sub, meta.tags, meta.cred, meta.aux);
-        Log.i("MsgClientSet", "Aux: " + meta.aux);
         System.arraycopy(meta.nulls, 0, nulls, 0, meta.nulls.length);
     }
 
@@ -93,7 +89,6 @@ public class MsgClientSet<Pu,Pr> implements Serializable {
         }
 
         public MsgClientSet<Pu,Pr> build() {
-            Log.i("MsgClientSet.build()", "Aux: " + msm.aux);
             return msm;
         }
     }

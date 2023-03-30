@@ -52,8 +52,6 @@ public class AccCredFragment extends Fragment implements ChatsActivity.FormUpdat
         mOldValue = args.getString("oldValue");
         mNewValue = args.getString("newValue");
 
-        Log.i(TAG, "args: " + mMethod + "; " + mOldValue + "; " + mNewValue);
-
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle("email".equals(mMethod) ? R.string.change_email :
                 "tel".equals(mMethod) ? R.string.change_phone_num : R.string.change_credential);
