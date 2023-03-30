@@ -44,6 +44,7 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 * Integration with Android's stock Contacts.
 * Invite contacts to the app by SMS or email.
 * Transport Level Security - https/wss.
+* Pinning important messages to the top of a conversation.
 * Offline mode.
 
 ## Not done yet:
