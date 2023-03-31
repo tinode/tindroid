@@ -122,20 +122,26 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
 
         activity.runOnUiThread(() -> {
             String method = mCredMethods[0];
+            View emailWrapper = activity.findViewById(R.id.emailWrapper);
+            if (emailWrapper != null) {
+                View willSendEmail = activity.findViewById(R.id.will_send_email);
+                View phone = activity.findViewById(R.id.phone);
+                View willSendSMS = activity.findViewById(R.id.will_send_sms);
 
-            if (method.equals("tel")) {
-                activity.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
-                activity.findViewById(R.id.will_send_email).setVisibility(View.GONE);
-                activity.findViewById(R.id.phone).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.will_send_sms).setVisibility(View.VISIBLE);
-            } else if (method.equals("email")) {
-                activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.will_send_email).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.phone).setVisibility(View.GONE);
-                activity.findViewById(R.id.will_send_sms).setVisibility(View.GONE);
-            } else {
-                // TODO: show generic text prompt for unknown method.
-                Log.i(TAG, "Show generic validation field for " + method);
+                if (method.equals("tel")) {
+                    emailWrapper.setVisibility(View.GONE);
+                    willSendEmail.setVisibility(View.GONE);
+                    phone.setVisibility(View.VISIBLE);
+                    willSendSMS.setVisibility(View.VISIBLE);
+                } else if (method.equals("email")) {
+                    emailWrapper.setVisibility(View.VISIBLE);
+                    willSendEmail.setVisibility(View.VISIBLE);
+                    phone.setVisibility(View.GONE);
+                    willSendSMS.setVisibility(View.GONE);
+                } else {
+                    // TODO: show generic text prompt for unknown method.
+                    Log.i(TAG, "Show generic validation field for " + method);
+                }
             }
         });
     }
