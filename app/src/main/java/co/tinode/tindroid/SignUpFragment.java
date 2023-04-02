@@ -213,6 +213,10 @@ public class SignUpFragment extends Fragment
             return;
         }
 
+        if (mCredMethods == null) {
+            mCredMethods = new String[]{"email"};
+        }
+
         final ArrayList<Credential> credentials = new ArrayList<>();
         if (Arrays.asList(mCredMethods).contains("email")) {
             final String email = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim();
@@ -320,7 +324,7 @@ public class SignUpFragment extends Fragment
                 .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                if (!SignUpFragment.this.isVisible()) {
+                                if (!SignUpFragment.this.isVisible() || parent.isFinishing() || parent.isDestroyed()) {
                                     return null;
                                 }
                                 parent.runOnUiThread(() -> {
