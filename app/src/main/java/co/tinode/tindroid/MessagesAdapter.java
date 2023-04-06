@@ -38,7 +38,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -401,7 +400,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mActivity.sendPinMessage(msg.seq, pin);
     }
 
-    void pinnedStateChanged(int seq) {
+    void updateSelectedOnPinnedChange(int seq) {
         int pos = findInCursor(mCursor, seq);
         if (pos < 0) {
             return;
@@ -1285,7 +1284,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 String actionType = UiUtils.getStringVal("act", data, null);
                 String actionValue = UiUtils.getStringVal("val", data, null);
                 String name = UiUtils.getStringVal("name", data, null);
-                // StoredMessage msg = getMessage(mPosition);
                 if ("pub".equals(actionType)) {
                     Drafty newMsg = new Drafty(UiUtils.getStringVal("title", data, null));
                     Map<String, Object> json = new HashMap<>();

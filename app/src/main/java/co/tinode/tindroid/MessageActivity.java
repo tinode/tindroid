@@ -711,6 +711,9 @@ public class MessageActivity extends AppCompatActivity
                         public void onFinally() {
                             // Updates message list with "delivered" or "failed" icon.
                             runMessagesLoader();
+                            if (seq > 0 && mTopic.isPinned(seq)) {
+                                pinnedStateChanged(seq);
+                            }
                         }
                     });
             return true;
@@ -753,11 +756,7 @@ public class MessageActivity extends AppCompatActivity
                 .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
-                                findFragmentByTag(FRAGMENT_MESSAGES);
-                        if (fragment != null && fragment.isVisible()) {
-                            fragment.pinnedStateChanged(seq, pin);
-                        }
+                        pinnedStateChanged(seq);
                         return null;
                     }
                 }, new UiUtils.ToastFailureListener(this));
@@ -768,6 +767,14 @@ public class MessageActivity extends AppCompatActivity
                 findFragmentByTag(FRAGMENT_MESSAGES);
         if (fragment != null && fragment.isVisible()) {
             fragment.runMessagesLoader(mTopicName);
+        }
+    }
+
+    void pinnedStateChanged(int seq) {
+        final MessagesFragment fragment = (MessagesFragment) getSupportFragmentManager().
+                findFragmentByTag(FRAGMENT_MESSAGES);
+        if (fragment != null && fragment.isVisible()) {
+            fragment.pinnedStateChanged(seq);
         }
     }
 
@@ -1040,12 +1047,7 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public void onMetaAux(Map<String,Object> aux) {
-            runOnUiThread(() -> {
-                Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                if (fragment instanceof MessagesFragment) {
-                    ((MessagesFragment) fragment).pinnedStateChanged(-1, true);
-                }
-            });
+            runOnUiThread(() -> pinnedStateChanged(-1));
         }
 
         @Override
