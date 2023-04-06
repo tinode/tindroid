@@ -549,7 +549,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
         mMessagesAdapter.updateSelectedOnPinnedChange(seq);
         int count = mTopic.pinnedCount();
-        if (mSelectedPin > count) {
+        if (mSelectedPin >= count) {
             mSelectedPin = 0;
         }
         requireActivity().runOnUiThread(() -> {
@@ -791,7 +791,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             // Click on the [ X ] button to unpin current message.
             int[] pinned = mTopic.getPinned();
             if (pinned != null) {
-                ((MessageActivity) requireActivity()).sendPinMessage(pinned[mSelectedPin], false);
+                ((MessageActivity) requireActivity()).sendPinMessage(pinned[pinned.length - mSelectedPin - 1],
+                        false);
             }
         });
 
@@ -1654,7 +1655,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             if (mTopic != null && mTopic.getPinned() != null) {
                 int[] pinned = mTopic.getPinned();
                 args.putString(PinnedMessageFragment.ARG_TOPIC_NAME, mTopicName);
-                args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[position]);
+                // Reverse order: most recent pin is added as first item.
+                args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[pinned.length - position - 1]);
             }
             frag.setArguments(args);
             mFragments.put(position, new WeakReference<>(frag));
@@ -1669,7 +1671,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         @Override
         public long getItemId(int position) {
             int[] pinned = mTopic.getPinned();
-            return pinned[position];
+            return pinned[pinned.length - position - 1];
         }
 
         @Override
