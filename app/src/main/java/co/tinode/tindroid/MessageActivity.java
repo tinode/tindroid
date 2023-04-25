@@ -533,20 +533,19 @@ public class MessageActivity extends AppCompatActivity
         if (id == R.id.action_view_contact) {
             showFragment(FRAGMENT_INFO, null, true);
             return true;
-        } else if (id == R.id.action_archive) {
-            if (mTopic != null) {
+        } else if (mTopic != null) {
+            if (id == R.id.action_archive) {
                 mTopic.updateArchived(true);
-            }
-            return true;
-
-        } else if (id == R.id.action_unarchive) {
-            if (mTopic != null) {
+                return true;
+            } else if (id == R.id.action_unarchive) {
                 mTopic.updateArchived(false);
+                return true;
+            } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
+                CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+                return true;
             }
-            return true;
-        } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
-            CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
-            return true;
+        } else {
+            Toast.makeText(this, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
 
         return false;

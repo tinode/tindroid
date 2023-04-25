@@ -107,6 +107,9 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
             @Override
             public PromisedReply<ServerMessage> onFailure(final Exception err) {
                 activity.runOnUiThread(() -> {
+                    if (!isAdded()) {
+                        return;
+                    }
                     if (err instanceof NotConnectedException) {
                         Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     } else {
