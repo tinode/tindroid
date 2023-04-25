@@ -95,10 +95,10 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 Log.w(TAG, "Failed to connect", err);
-                if (parent.isFinishing() || parent.isDestroyed()) {
-                    return null;
-                }
                 parent.runOnUiThread(() -> {
+                    if (parent.isFinishing() || parent.isDestroyed() || !isVisible()) {
+                        return;
+                    }
                     parent.findViewById(R.id.requestCode).setEnabled(false);
                     parent.findViewById(R.id.haveCode).setEnabled(false);
                     Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
