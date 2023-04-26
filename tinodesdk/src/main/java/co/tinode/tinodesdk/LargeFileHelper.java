@@ -17,6 +17,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -87,8 +89,16 @@ public class LargeFileHelper {
             // File section.
             out.writeBytes(TWO_HYPHENS + BOUNDARY + LINE_END);
             // Content-Disposition: form-data; name="file"; filename="1519014549699.pdf"
-            out.writeBytes("Content-Disposition: form-data; name=\"file\"; filename=\"" + filename + "\"" + LINE_END);
-
+            out.writeBytes("Content-Disposition: form-data; name=\"file\"; ");
+            String encFileName = URLEncoder.encode(filename, "UTF-8");
+            if (filename.equals(encFileName)) {
+                // Plain ASCII file name.
+                out.writeBytes("filename=\"" + filename + "\"");
+            } else {
+                // URL-encoded file name.
+                out.writeBytes("filename*=UTF-8''" + encFileName);
+            }
+            out.writeBytes(LINE_END);
             // Content-Type: application/pdf
             out.writeBytes("Content-Type: " + mimetype + LINE_END);
             out.writeBytes("Content-Transfer-Encoding: binary" + LINE_END);
