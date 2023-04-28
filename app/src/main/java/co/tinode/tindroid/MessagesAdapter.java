@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -1267,9 +1268,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                 .appendQueryParameter("seq", "" + mSeqId)
                                 .appendQueryParameter("uid", Cache.getTinode().getMyId());
                         Intent viewIntent = new Intent(Intent.ACTION_VIEW, builder.build());
-                        if (viewIntent.resolveActivity(mActivity.getPackageManager()) != null) {
+                        try {
                             mActivity.startActivity(viewIntent);
-                        } else {
+                        } catch (ActivityNotFoundException ignored) {
+                            Log.w(TAG, "No application can open the URL");
                             Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                         }
                     }
@@ -1292,9 +1294,10 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 if ("http".equals(scheme) || "https".equals(scheme)) {
                     // As a security measure refuse to follow URLs with non-http(s) protocols.
                     Intent viewIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url.toString()));
-                    if (viewIntent.resolveActivity(mActivity.getPackageManager()) != null) {
+                    try {
                         mActivity.startActivity(viewIntent);
-                    } else {
+                    } catch (ActivityNotFoundException ignored) {
+                        Log.w(TAG, "No application can open the url " + url);
                         Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                     }
                 }

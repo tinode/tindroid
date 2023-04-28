@@ -134,6 +134,7 @@ public class MessageActivity extends AppCompatActivity
                         try {
                             startActivity(intent);
                         } catch (ActivityNotFoundException ignored) {
+                            Log.w(TAG, "No application can view downloaded file");
                             startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
                         }
                     }

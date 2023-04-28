@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
@@ -9,6 +10,7 @@ import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.UnderlineSpan;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +29,8 @@ import androidx.fragment.app.Fragment;
  * Fragment for editing current user details.
  */
 public class AccHelpFragment extends Fragment {
+    private static final String TAG = "AccHelpFragment";
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -80,6 +84,12 @@ public class AccHelpFragment extends Fragment {
                 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         text.setSpan(new UnderlineSpan(), 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         link.setText(text);
-        link.setOnClickListener(v -> startActivity(new Intent(Intent.ACTION_VIEW, uri)));
+        link.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            } catch (ActivityNotFoundException ignored) {
+                Log.w(TAG, "No application can open the URL");
+            }
+        });
     }
 }
