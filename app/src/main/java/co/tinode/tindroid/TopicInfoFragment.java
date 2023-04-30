@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -274,9 +275,9 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                         String lookupKey = ContactsManager.getLookupKey(activity.getContentResolver(), uid);
                         intent = new Intent(Intent.ACTION_VIEW,
                                 Uri.withAppendedPath(ContactsContract.Contacts.CONTENT_LOOKUP_URI, lookupKey));
-                        if (intent.resolveActivity(activity.getPackageManager()) != null) {
+                        try {
                             startActivity(intent);
-                        } else {
+                        } catch (ActivityNotFoundException ignored) {
                             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                             Log.i(TAG, "Unable to find contact manager");
                         }

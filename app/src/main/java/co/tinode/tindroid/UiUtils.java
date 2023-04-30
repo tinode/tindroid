@@ -5,6 +5,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
@@ -1503,7 +1504,13 @@ public class UiUtils {
         if (uri == null) {
             return;
         }
-        view.setOnClickListener(arg -> view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri)));
+        view.setOnClickListener(arg -> {
+            try {
+                view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, uri));
+            } catch (ActivityNotFoundException ignored) {
+                Log.w(TAG, "No application can open the URL");
+            }
+        });
     }
 
     static void clickToBrowseURL(@NonNull View view, @StringRes int url) {

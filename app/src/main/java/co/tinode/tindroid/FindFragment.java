@@ -3,12 +3,14 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.app.SearchManager;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -308,9 +310,10 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
         int id = item.getItemId();
         if (id == R.id.action_add_contact) {
             intent = new Intent(Intent.ACTION_INSERT, ContactsContract.Contacts.CONTENT_URI);
-            if (intent.resolveActivity(activity.getPackageManager()) != null) {
+            try {
                 startActivity(intent);
-            } else {
+            } catch (ActivityNotFoundException ignored) {
+                Log.w(TAG, "No application can add contact");
                 Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_LONG).show();
             }
             return true;

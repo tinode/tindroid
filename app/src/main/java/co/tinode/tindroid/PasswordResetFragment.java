@@ -180,7 +180,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
     private void clickRequest(View button) {
         final LoginActivity parent = (LoginActivity) requireActivity();
 
-        String method = mCredMethods[0];
+        String method = mCredMethods != null && mCredMethods.length > 0 ? mCredMethods[0] : null;
         final String value = validateCredential(parent, method);
         if (TextUtils.isEmpty(value)) {
             return;

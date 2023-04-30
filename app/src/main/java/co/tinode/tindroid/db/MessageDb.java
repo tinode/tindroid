@@ -412,9 +412,10 @@ public class MessageDb implements BaseColumns {
                     " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
                     COLUMN_NAME_EFFECTIVE_SEQ + "=" + effSeq, null);
     }
+
     /**
      * Get a list of the latest message for every topic, sent or received.
-     * See explanation here: https://stackoverflow.com/a/2111420
+     * <a href="https://stackoverflow.com/a/2111420">See explanation here</a>
      */
     static Cursor getLatestMessages(SQLiteDatabase db) {
         final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +
