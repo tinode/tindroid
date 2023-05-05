@@ -1,12 +1,18 @@
 package co.tinode.tinodesdk.model;
 
+import android.widget.LinearLayout;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -92,7 +98,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     /**
      * Convert List of IDs to multiple ranges.
      */
-    public static MsgRange[] listToRanges(final List<Integer> list) {
+    public static MsgRange[] toRanges(@Nullable final List<Integer> list) {
         if (list == null || list.size() == 0) {
             return null;
         }
@@ -118,6 +124,34 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     }
 
     /**
+     * Convert array of IDs to multiple ranges.
+     */
+    public static MsgRange[] toRanges(final int[] list) {
+        if (list == null || list.length == 0) {
+            return null;
+        }
+
+        // Make sure the IDs are sorted in ascending order.
+        Arrays.sort(list);
+
+        ArrayList<MsgRange> ranges = new ArrayList<>();
+        MsgRange curr = new MsgRange(list[0]);
+        ranges.add(curr);
+        for (int i = 1; i < list.length; i++) {
+            if (!curr.tryExtending(list[i])) {
+                curr.normalize();
+                // Start a new range
+                curr = new MsgRange(list[i]);
+                ranges.add(curr);
+            }
+        }
+
+        // No need to sort the ranges. They are already sorted.
+
+        return ranges.toArray(new MsgRange[0]);
+    }
+
+    /**
      * Collapse multiple possibly overlapping ranges into as few ranges non-overlapping
      * ranges as possible: [1..6],[2..4],[5..7] -> [1..7].
      *
@@ -126,40 +160,42 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
      * @param ranges ranges to collapse
      * @return non-overlapping ranges.
      */
-    public static MsgRange[] collapse(MsgRange[] ranges) {
-        if (ranges.length > 1) {
-            int prev = 0;
-            for (int i = 1; i < ranges.length; i++) {
-                if (ranges[prev].low == ranges[i].low) {
-                    // Same starting point.
+    public static MsgRange[] collapse(@NotNull MsgRange[] ranges) {
+        if (ranges.length < 2) {
+            return ranges;
+        }
 
-                    // Earlier range is guaranteed to be wider or equal to the later range,
-                    // collapse two ranges into one (by doing nothing)
-                    continue;
-                }
+        int prev = 0;
+        for (int i = 1; i < ranges.length; i++) {
+            if (ranges[prev].low == ranges[i].low) {
+                // Same starting point.
 
-                // Check for full or partial overlap
-                int prev_hi = ranges[prev].getUpper();
-                if (prev_hi >= ranges[i].low) {
-                    // Partial overlap: previous hi is above or equal to current low.
-                    int curr_hi = ranges[i].getUpper();
-                    if (curr_hi > prev_hi) {
-                        // Current range extends further than previous, extend previous.
-                        ranges[prev].hi = curr_hi;
-                    }
-                    // Otherwise the next range is fully within the previous range, consume it by doing nothing.
-                    continue;
-                }
-
-                // No overlap. Just copy the values.
-                prev ++;
-                ranges[prev] = ranges[i];
+                // Earlier range is guaranteed to be wider or equal to the later range,
+                // collapse two ranges into one (by doing nothing)
+                continue;
             }
 
-            // Clip array.
-            if (prev + 1 < ranges.length) {
-                ranges = Arrays.copyOfRange(ranges, 0, prev + 1);
+            // Check for full or partial overlap
+            int prev_hi = ranges[prev].getUpper();
+            if (prev_hi >= ranges[i].low) {
+                // Partial overlap: previous hi is above or equal to current low.
+                int curr_hi = ranges[i].getUpper();
+                if (curr_hi > prev_hi) {
+                    // Current range extends further than previous, extend previous.
+                    ranges[prev].hi = curr_hi;
+                }
+                // Otherwise the next range is fully within the previous range, consume it by doing nothing.
+                continue;
             }
+
+            // No overlap. Just copy the values.
+            prev ++;
+            ranges[prev] = ranges[i];
+        }
+
+        // Clip array.
+        if (prev + 1 < ranges.length) {
+            ranges = Arrays.copyOfRange(ranges, 0, prev + 1);
         }
 
         return ranges;
@@ -168,7 +204,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     /**
      * Get maximum enclosing range. The input array must be sorted.
      */
-    public static MsgRange enclosing(MsgRange[] ranges) {
+    public static MsgRange enclosing(@Nullable final MsgRange[] ranges) {
         if (ranges == null || ranges.length == 0) {
             return null;
         }
@@ -184,8 +220,57 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
         return first;
     }
 
+    /**
+     * Find gaps in the given array of non-overlapping ranges. The input must be sorted and overlaps removed.
+     */
+    public static @NotNull MsgRange[] gaps(@NotNull MsgRange[] ranges) {
+        if (ranges.length < 2) {
+            return new MsgRange[0];
+        }
+
+        List<MsgRange> gaps = new LinkedList<>();
+        for (int i = 1; i < ranges.length; i++) {
+            if (ranges[i-1].getUpper() < ranges[i].getLower()) {
+                // Gap found
+                gaps.add(new MsgRange(ranges[i-1].getUpper(), ranges[i].getLower()));
+            }
+        }
+
+        return gaps.toArray(new MsgRange[0]);
+    }
+
     // Comparable which does not crash on null values. Nulls are treated as 0.
     private static int nullableCompare(Integer x, Integer y) {
         return (x == null ? 0 : x) - (y == null ? 0 : y);
+    }
+
+    /**
+     * Cut 'clip' range out of the 'src' range.
+     *
+     * @param src source range to subtract from.
+     * @param clip range to subtract.
+     * @return array with 0, 1 or 2 elements.
+     */
+    public static @NotNull MsgRange[] clip(@NotNull MsgRange src, @NotNull MsgRange clip) {
+        if (clip.getUpper() < src.getLower() || clip.getLower() >= src.getUpper()) {
+            // Clip is completely outside of src, no intersection.
+            return new MsgRange[]{src};
+        }
+
+        if (clip.low <= src.low) {
+            if (clip.getUpper() >= src.getUpper()) {
+                // The source range is completely inside the clipping range.
+                return new MsgRange[0];
+            }
+            // Partial clipping at the top.
+            return new MsgRange[]{new MsgRange(src.getLower(), clip.getUpper())};
+        }
+
+        // Range on the lower end.
+        MsgRange lower = new MsgRange(src.getLower(), clip.getLower());
+        if (clip.getUpper() < src.getUpper()) {
+            return new MsgRange[]{lower, new MsgRange(clip.getUpper(), src.getUpper())};
+        }
+        return new MsgRange[]{lower};
     }
 }

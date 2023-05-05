@@ -67,6 +67,7 @@ import androidx.work.WorkManager;
 
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.MessageDb;
+import co.tinode.tindroid.db.SqlStore;
 import co.tinode.tindroid.db.StoredMessage;
 import co.tinode.tindroid.format.CopyFormatter;
 import co.tinode.tindroid.format.FullFormatter;
@@ -81,6 +82,8 @@ import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgGetMeta;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
@@ -238,13 +241,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         return span;
     }
 
-    private static StoredMessage getMessage(Cursor cur, int position, int previewLength) {
-        if (cur.moveToPosition(position)) {
-            return StoredMessage.readMessage(cur, previewLength);
-        }
-        return null;
-    }
-
     private static int findInCursor(@Nullable Cursor cur, int seq) {
         if (seq <= 0 || cur == null || cur.isClosed()) {
             return -1;
@@ -394,7 +390,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     private void sendPinMessage(int pos, boolean pin) {
-        StoredMessage msg = getMessage(pos);
+        StoredMessage msg = getMessage(mCursor, pos, 0);
         if (msg == null) {
             return;
         }
@@ -840,8 +836,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // Must match position-to-item of getItemId.
     private StoredMessage getMessage(int position) {
-        if (mCursor != null && !mCursor.isClosed()) {
-            return getMessage(mCursor, position, -1);
+        return getMessage(mCursor, position, -1);
+    }
+
+    private static StoredMessage getMessage(@Nullable Cursor cur, int position, int previewLength) {
+        if (cur != null && !cur.isClosed() && cur.moveToPosition(position)) {
+            return StoredMessage.readMessage(cur, previewLength);
         }
         return null;
     }
@@ -1027,14 +1027,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
     }
 
-    boolean loadNextPage() {
-        if (getItemCount() == mPagesToLoad * MESSAGES_TO_LOAD) {
-            mPagesToLoad++;
-            runLoader(false);
-            return true;
+    // Increase the number of loaded messages by one page.
+    // Returns null if request was satisfied by loading the full page from disk,
+    // MetaGetBuilder if more messages have to be fetched from the server.
+    MsgGetMeta loadOlderPage() {
+        final Topic topic = Cache.getTinode().getTopic(mTopicName);
+        int count = getItemCount();
+        if (count == mPagesToLoad * MESSAGES_TO_LOAD) {
+            // Check if there are gaps in the next page.
+            final StoredMessage msg = getMessage(mCursor,count - 1, 0);
+            final SqlStore store = BaseDb.getInstance().getStore();
+            MsgRange[] missing = store.getMissingRanges(topic, msg.seq, MESSAGES_TO_LOAD, false);
+            if (missing == null) {
+                mPagesToLoad++;
+                runLoader(false);
+                return null;
+            } else {
+                return topic.getMetaGetBuilder().withData(missing, MESSAGES_TO_LOAD).build();
+            }
         }
 
-        return false;
+        return topic.getMetaGetBuilder().withEarlierData(MESSAGES_TO_LOAD).build();
     }
 
     private void cancelUpload(long msgId) {
@@ -1163,8 +1176,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         @Override
-        public void onLoadFinished(@NonNull Loader<Cursor> loader,
-                                   Cursor cursor) {
+        public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 swapCursor(cursor, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
             }

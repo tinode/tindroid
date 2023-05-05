@@ -151,6 +151,14 @@ public class MsgGetMeta implements Serializable {
         buildWhat();
     }
 
+    public void setData(MsgRange[] ranges, Integer limit) {
+        if (ranges != null || limit != null) {
+            data = new MetaGetData(ranges, limit);
+        }
+        mSet |= DATA_SET;
+        buildWhat();
+    }
+
     // Do not add @JsonIgnore here.
     public void setDel(Integer since, Integer limit) {
         if (since != null || limit != null) {

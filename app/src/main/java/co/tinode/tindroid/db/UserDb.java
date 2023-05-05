@@ -204,10 +204,8 @@ public class UserDb implements BaseColumns {
         // Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
         if (c != null) {
-            if (c.getCount() > 0) {
-                if (c.moveToFirst()) {
-                    id = c.getLong(0);
-                }
+            if (c.moveToFirst()) {
+                id = c.getLong(0);
             }
             c.close();
         }
@@ -227,11 +225,9 @@ public class UserDb implements BaseColumns {
 
         Cursor c = db.rawQuery(sql, null);
         if (c != null) {
-            if (c.getCount() > 0) {
+            if (c.moveToFirst()) {
                 user = new User<>(uid);
-                if (c.moveToFirst()) {
-                    StoredUser.deserialize(user, c);
-                }
+                StoredUser.deserialize(user, c);
             }
             c.close();
         }

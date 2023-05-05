@@ -195,13 +195,22 @@ public interface Storage {
     @SuppressWarnings("UnusedReturnValue")
     boolean msgReadByRemote(Subscription sub, int read);
 
+    /**
+     * Returns message ranges present in DB.
+     *
+     * @param topic topic to query.
+     * @param ranges message ranges to test for presence in the local cache.
+     * @return those message ranges which are present in the local cache.
+     */
+    MsgRange[] msgIsCached(Topic topic, MsgRange[] ranges);
+
     /** Get seq IDs of the stored messages as a MsgRange, inclusive-exclusive [low, hi) */
     MsgRange getCachedMessagesRange(Topic topic);
     /**
-     * Get the maximum seq ID range of the messages missing in cache, inclusive-exclusive [low, hi).
-     * Returns null if all messages are present or no messages are found.
+     * Get the ranges of the messages missing in cache, inclusive-exclusive [low, hi).
+     * Returns empty array if all messages are present or no messages are found.
      */
-    MsgRange getNextMissingRange(Topic topic);
+    MsgRange[] getMissingRanges(Topic topic, int startFrom, int pageSize, boolean newer);
     /** Local user reported messages as read */
     @SuppressWarnings("UnusedReturnValue")
     boolean setRead(Topic topic, int read);

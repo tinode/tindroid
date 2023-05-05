@@ -135,6 +135,8 @@ public class Tinode {
 
     protected static final int MAX_PINNED_COUNT = 5;
 
+    static final int DEFAULT_MESSAGE_PAGE = 24;
+
     static {
         sJsonMapper = new ObjectMapper();
         // Silently ignore unknown properties
@@ -857,9 +859,9 @@ public class Tinode {
                     if (!topic.isAttached()) {
                         try {
                             // noinspection unchecked
-                            topic.subscribe(null, builder.withLaterDel(24).build()).getResult();
+                            topic.subscribe(null, builder.withLaterDel(DEFAULT_MESSAGE_PAGE).build()).getResult();
                             // Wait for the messages to download.
-                            topic.getMeta(builder.reset().withLaterData(24).build()).getResult();
+                            topic.getMeta(builder.reset().withLaterData(DEFAULT_MESSAGE_PAGE).build()).getResult();
 
                             // Notify the server than the message was received.
                             topic.noteRecv();

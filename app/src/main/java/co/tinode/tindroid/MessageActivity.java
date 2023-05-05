@@ -28,8 +28,11 @@ import com.google.firebase.messaging.RemoteMessage;
 import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
@@ -38,6 +41,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -57,10 +61,12 @@ import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
+import co.tinode.tinodesdk.Storage;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
+import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.MsgServerData;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerPres;
@@ -926,6 +932,47 @@ public class MessageActivity extends AppCompatActivity
             runOnUiThread(() -> mTypingAnimationTimer =
                     UiUtils.toolbarTypingIndicator(MessageActivity.this, mTypingAnimationTimer, -1));
             runMessagesLoader();
+        }
+
+        @Override
+        public void onAllMessagesReceived(Integer count) {
+            // Make sure all pinned messages are cached.
+            int[] pinned = mTopic.getPinned();
+            if (pinned == null || pinned.length == 0) {
+                // No pinned messages.
+                return;
+            }
+            MsgRange[] pinsArray = MsgRange.toRanges(pinned);
+            final Storage store = BaseDb.getInstance().getStore();
+            MsgRange[] found = store.msgIsCached(mTopic, pinsArray);
+            List<MsgRange> missing = null;
+            if (found == null || found.length <= pinned.length) {
+                missing = Arrays.stream(pinsArray).collect(Collectors.toList());
+                if (found != null) {
+                    for (MsgRange f : found) {
+                        List<MsgRange> tmp = new LinkedList<>();
+                        for (MsgRange pin : missing) {
+                            MsgRange p = new MsgRange(pin);
+                            MsgRange[] clipped = MsgRange.clip(p, f);
+                            if (clipped.length > 0) {
+                                tmp.add(clipped[0]);
+                                if (clipped.length > 1) {
+                                    tmp.add(clipped[1]);
+                                }
+                            }
+                        }
+
+                        missing = tmp;
+                        if (missing.size() == 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (missing != null && missing.size() > 0) {
+                mTopic.getMeta(mTopic.getMetaGetBuilder()
+                        .withData(missing.toArray(new MsgRange[0]), MESSAGES_TO_LOAD).build());
+            }
         }
 
         @Override

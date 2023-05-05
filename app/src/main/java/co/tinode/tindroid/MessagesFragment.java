@@ -99,6 +99,7 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.AcsHelper;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MetaSetSub;
+import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -311,7 +312,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 int itemCount = adapter.getItemCount();
                 int pos = mMessageViewLayoutManager.findLastVisibleItemPosition();
                 if (itemCount - pos < 4) {
-                    ((MessagesAdapter) adapter).loadNextPage();
+                    ((MessagesAdapter) adapter).loadOlderPage();
                 }
             }
 
@@ -326,15 +327,14 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             }
         });
 
-        setupPinnedMessages(view, activity);
-
         mRefresher = view.findViewById(R.id.swipe_refresher);
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
         mRecyclerView.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(() -> {
-            if (!mMessagesAdapter.loadNextPage() && !StoredTopic.isAllDataLoaded(mTopic)) {
+            MsgGetMeta query = mMessagesAdapter.loadOlderPage();
+            if (query != null) {
                 try {
-                    mTopic.getMeta(mTopic.getMetaGetBuilder().withEarlierData(MESSAGES_TO_LOAD).build())
+                    mTopic.getMeta(query)
                             .thenApply(
                                     new PromisedReply.SuccessListener<ServerMessage>() {
                                         @Override
@@ -786,6 +786,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     // Form with pinned messages.
     private void setupPinnedMessages(View view, MessageActivity activity) {
+        if (mPinnedAdapter != null) {
+            return;
+        }
+
         // The [X] unpin button.
         view.findViewById(R.id.unpinMessage).setOnClickListener(v -> {
             // Click on the [ X ] button to unpin current message.
@@ -845,6 +849,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         if (pinned == null) {
             activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
         } else {
+            setupPinnedMessages(activity.findViewById(android.R.id.content), activity);
+
             activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
             ((ImageView) activity.findViewById(R.id.dotSelector))
                     .setImageDrawable(new DotSelectorDrawable(getResources(), pinned.length, 0));

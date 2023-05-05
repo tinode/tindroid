@@ -152,6 +152,15 @@ public class SqlStore implements Storage {
     }
 
     @Override
+    public MsgRange[] msgIsCached(Topic topic, MsgRange[] ranges) {
+        StoredTopic st = (StoredTopic) topic.getLocal();
+        if (st != null && st.id > 0) {
+            return MessageDb.getCachedRanges(mDbh.getReadableDatabase(), st.id, ranges);
+        }
+        return null;
+    }
+
+    @Override
     public MsgRange getCachedMessagesRange(Topic topic) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null) {
@@ -161,10 +170,10 @@ public class SqlStore implements Storage {
     }
 
     @Override
-    public MsgRange getNextMissingRange(Topic topic) {
+    public MsgRange[] getMissingRanges(Topic topic, int startFrom, int pageSize, boolean newer) {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.id > 0) {
-            return MessageDb.getNextMissingRange(mDbh.getReadableDatabase(), st.id);
+            return MessageDb.getMissingRanges(mDbh.getReadableDatabase(), st.id, startFrom, pageSize, newer);
         }
         return null;
     }

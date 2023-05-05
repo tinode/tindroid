@@ -10,8 +10,14 @@ import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 import androidx.loader.content.CursorLoader;
 import co.tinode.tinodesdk.Topic;
@@ -474,6 +480,95 @@ public class MessageDb implements BaseColumns {
     }
 
     /**
+     * Using provided <code>ranges</code>, find those which are present in the database.
+     *
+     * @param db      database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from;
+     * @param ranges ranges to search for presence in the DB.
+     * @return ranges of missing IDs present in the database.
+     */
+    static MsgRange[] getCachedRanges(SQLiteDatabase db, long topicId, MsgRange[] ranges) {
+        List<String> constr = new LinkedList<>();
+        for (MsgRange r : ranges) {
+            if (r.hi != null) {
+                // Find deleted ranges.
+                constr.add("(" + COLUMN_NAME_SEQ + "<" + r.hi + " AND " + COLUMN_NAME_HIGH + ">" + r.low + ")");
+                // Find normal entries.
+                constr.add("(" + COLUMN_NAME_SEQ + "<" + r.hi + " AND " + COLUMN_NAME_SEQ + ">=" + r.low +
+                        " AND " + COLUMN_NAME_HIGH + " IS NULL)");
+            } else {
+                // Find deleted ranges.
+                constr.add("(" + COLUMN_NAME_SEQ + "<=" + r.low + " AND " + COLUMN_NAME_HIGH + ">" + r.low + ")");
+                // Find normal entries.
+                constr.add("(" + COLUMN_NAME_SEQ + "=" + r.low + " AND " + COLUMN_NAME_HIGH + " IS NULL)");
+            }
+        }
+        final String sql =
+                "SELECT " + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HIGH +
+                    " FROM " + TABLE_NAME +
+                    " WHERE (" + String.join(" OR ", constr) + ")" +
+                    " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId;
+
+        Cursor c = db.rawQuery(sql, null);
+        List<MsgRange> found = new LinkedList<>();
+        if (c != null) {
+            if (c.moveToFirst()) {
+                do {
+                    MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
+                            new MsgRange(c.getInt(0), c.getInt(0));
+                    found.add(range);
+                } while (c.moveToNext());
+            }
+            c.close();
+        }
+        Collections.sort(found);
+        return MsgRange.collapse(found.toArray(new MsgRange[]{}));
+    }
+
+    /**
+     * Find the ranges of messages missing from the DB.
+     *
+     * @param db      database to select from;
+     * @param topicId Tinode topic ID (topics._id) to select from;
+     * @param startFrom seq ID to search from (exclusive).
+     * @param pageSize maximum number of messages to cover by the ranges.
+     * @param newer if <code>true</code>, find newer messages, otherwise older.
+     * @return range of missing IDs if found, null if either all messages are present or no messages are found.
+     */
+    static @Nullable MsgRange[] getMissingRanges(SQLiteDatabase db, long topicId, int startFrom,
+                                                 int pageSize, boolean newer) {
+        String sql = "SELECT " + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HIGH +
+                " FROM " + TABLE_NAME +
+                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId + " AND " +
+                "IFNULL(" + COLUMN_NAME_HIGH + "," + COLUMN_NAME_SEQ + "+1)";
+        if (newer) {
+            sql += ">" + startFrom;
+            sql += " ORDER BY " + COLUMN_NAME_SEQ + " ASC";
+        } else {
+            sql += "<" + startFrom;
+            sql += " ORDER BY " + COLUMN_NAME_SEQ + " DESC";
+        }
+        sql += " LIMIT " + pageSize;
+
+        Cursor c = db.rawQuery(sql, null);
+        List<MsgRange> found = new LinkedList<>();
+        if (c != null) {
+            if (c.moveToFirst()) {
+                do {
+                    MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
+                            new MsgRange(c.getInt(0), c.getInt(0));
+                    found.add(range);
+                } while (c.moveToNext());
+            }
+            c.close();
+        }
+        Collections.sort(found);
+        MsgRange[] gaps = MsgRange.gaps(MsgRange.collapse(found.toArray(new MsgRange[0])));
+        Log.i(TAG, "Found gaps:" + Arrays.toString(gaps));
+        return gaps.length > 0 ? gaps : null;
+    }
+
+    /**
      * Find the latest missing range of messages for fetching from the server.
      *
      * @param db      database to select from;
@@ -492,6 +587,7 @@ public class MessageDb implements BaseColumns {
                 " AND m1." + COLUMN_NAME_SEQ + ">1" +
                 " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
 
+        Log.i(TAG, "getNextMissingRange " + sqlHigh);
         Cursor c = db.rawQuery(sqlHigh, null);
         if (c != null) {
             if (c.moveToFirst()) {
@@ -504,6 +600,7 @@ public class MessageDb implements BaseColumns {
             // No gap is found.
             return null;
         }
+        Log.i(TAG, "getNextMissingRange high=" + high);
         // Find the first present message with ID less than the 'high'.
         final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
                 " FROM " + TABLE_NAME +

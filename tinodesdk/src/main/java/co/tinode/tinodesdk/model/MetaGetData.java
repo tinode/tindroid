@@ -18,6 +18,7 @@ public class MetaGetData implements Serializable {
     // Exclusive (open): ID < before.
     public Integer before;
     public Integer limit;
+    public MsgRange[] ranges;
 
     public MetaGetData() {}
 
@@ -27,9 +28,14 @@ public class MetaGetData implements Serializable {
         this.limit = limit;
     }
 
+    public MetaGetData(MsgRange[] ranges, Integer limit) {
+        this.ranges = ranges;
+        this.limit = limit;
+    }
+
     @NotNull
     @Override
     public String toString() {
-        return "since=" + since + ", before=" + before + ", limit=" + limit;
+        return "since=" + since + ", before=" + before + ", ranges=" + ranges + ", limit=" + limit;
     }
 }

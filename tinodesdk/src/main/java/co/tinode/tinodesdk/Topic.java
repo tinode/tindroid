@@ -669,16 +669,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     public void setDeleted(boolean status) {
         mDeleted = status;
     }
-    public MsgRange getCachedMessagesRange() {
+    public @Nullable MsgRange getCachedMessagesRange() {
         return mStore == null ? null : mStore.getCachedMessagesRange(this);
     }
 
-    public MsgRange getMissingMessageRange() {
+    public @Nullable MsgRange[] getMissingMessageRanges(int startFrom, int limit, boolean newer) {
         if (mStore == null) {
             return null;
         }
         // If topic has messages, fetch the next missing message range (could be null)
-        return mStore.getNextMissingRange(this);
+        return mStore.getMissingRanges(this, startFrom, limit, newer);
     }
 
     /* Access mode management */
@@ -1573,7 +1573,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param hard hard-delete messages
      */
     public PromisedReply<ServerMessage> delMessages(final List<Integer> list, final boolean hard) {
-        return delMessages(MsgRange.listToRanges(list), hard);
+        return delMessages(MsgRange.toRanges(list), hard);
     }
 
     /**
@@ -2396,7 +2396,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          *
          * @param since  messages newer than this;
          * @param before older than this
-         * @param limit  number of messages to fetch
+         * @param limit  maximum number of messages to fetch
          */
         public MetaGetBuilder withData(Integer since, Integer before, Integer limit) {
             meta.setData(since, before, limit);
@@ -2404,10 +2404,21 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         /**
+         * Add query parameters to fetch messages within given ranges.
+         *
+         * @param ranges  message ranges to fetch;
+         * @param limit  maximum number of messages to fetch
+         */
+        public MetaGetBuilder withData(MsgRange[] ranges, Integer limit) {
+            meta.setData(ranges, limit);
+            return this;
+        }
+
+        /**
          * Add query parameters to fetch messages newer than the latest saved message.
          */
         public MetaGetBuilder withLaterData() {
-            return withLaterData(null);
+            return withLaterData(Tinode.DEFAULT_MESSAGE_PAGE);
         }
 
         /**
@@ -2417,11 +2428,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          */
         public MetaGetBuilder withLaterData(Integer limit) {
             MsgRange r = topic.getCachedMessagesRange();
-
-            if (r == null || r.hi <= 1) {
-                return withData(null, null, limit);
+            if (r != null) {
+                return withData(r.hi, null, limit);
             }
-            return withData(r.hi, null, limit);
+            return withData(null, null, limit);
         }
 
         /**
@@ -2430,11 +2440,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * @param limit number of messages to fetch
          */
         public MetaGetBuilder withEarlierData(Integer limit) {
-            MsgRange r = topic.getMissingMessageRange();
-            if (r == null) {
-                return withData(null, null, limit);
+            MsgRange r = topic.getCachedMessagesRange();
+            if (r != null) {
+                return withData(null, r.low, limit);
             }
-            return withData(r.low, r.hi, limit);
+            return withData(0, null, limit);
         }
 
         /**
@@ -2442,7 +2452,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
          * messages to fetch.
          */
         public MetaGetBuilder withData() {
-            return withLaterData(null);
+            return withLaterData(Tinode.DEFAULT_MESSAGE_PAGE);
         }
 
         public MetaGetBuilder withDesc(Date ims) {
