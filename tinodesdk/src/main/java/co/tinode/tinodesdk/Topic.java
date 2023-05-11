@@ -2442,7 +2442,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         public MetaGetBuilder withEarlierData(Integer limit) {
             MsgRange r = topic.getCachedMessagesRange();
             if (r != null) {
-                return withData(null, r.low, limit);
+                return r.low > 1 ? withData(null, r.low, limit) : this;
             }
             return withData(0, null, limit);
         }
