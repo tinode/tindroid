@@ -436,7 +436,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                         break;
 
                     case ACS: // access mode changed
-                        if (topic.updateAccessMode(pres.dacs) && mStore != null) {
+                        if (pres.tgt == null && topic.updateAccessMode(pres.dacs) && mStore != null) {
+                            // tgt is null means permissions are for the current user.
                             mStore.topicUpdate(topic);
                         }
                         break;
