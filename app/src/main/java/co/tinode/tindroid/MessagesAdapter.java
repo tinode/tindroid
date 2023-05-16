@@ -1030,7 +1030,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     // Increase the number of loaded messages by one page.
     // Returns null if request was satisfied by loading the full page from disk,
     // MetaGetBuilder if more messages have to be fetched from the server.
-    MsgGetMeta loadOlderPage() {
+    MsgGetMeta loadPreviousPage() {
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
         int count = getItemCount();
         if (count == mPagesToLoad * MESSAGES_TO_LOAD) {

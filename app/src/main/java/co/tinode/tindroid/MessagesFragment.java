@@ -82,7 +82,6 @@ import androidx.work.WorkManager;
 
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.SqlStore;
-import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
@@ -312,7 +311,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 int itemCount = adapter.getItemCount();
                 int pos = mMessageViewLayoutManager.findLastVisibleItemPosition();
                 if (itemCount - pos < 4) {
-                    ((MessagesAdapter) adapter).loadOlderPage();
+                    ((MessagesAdapter) adapter).loadPreviousPage();
                 }
             }
 
@@ -331,7 +330,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         mMessagesAdapter = new MessagesAdapter(activity, mRefresher);
         mRecyclerView.setAdapter(mMessagesAdapter);
         mRefresher.setOnRefreshListener(() -> {
-            MsgGetMeta query = mMessagesAdapter.loadOlderPage();
+            MsgGetMeta query = mMessagesAdapter.loadPreviousPage();
             if (query != null) {
                 try {
                     mTopic.getMeta(query)
