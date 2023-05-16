@@ -15,7 +15,7 @@ import com.android.installreferrer.api.InstallReferrerClient;
 import com.android.installreferrer.api.InstallReferrerStateListener;
 import com.android.installreferrer.api.ReferrerDetails;
 
-import org.jetbrains.annotations.Nullable;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -265,7 +265,6 @@ public class BrandingConfig {
                         }
 
                         String referrerUrl = response.getInstallReferrer();
-                        Log.i(TAG, "Got InstallReferrer URL: " + referrerUrl);
 
                         if (!TextUtils.isEmpty(referrerUrl)) {
                             // https://play.google.com/store/apps/details?id=co.tinode.tindroidx&referrer=utm_source%3Dtinode%26utm_term%3Dshort_code

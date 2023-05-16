@@ -96,7 +96,6 @@ public class Cache {
                         case DISCONNECTED:
                             CallInProgress call = Cache.getCallInProgress();
                             if (call != null && !call.isOutgoingCall()) {
-                                Log.i(TAG, "Dismissing incoming call: topic = " + data.topic + ", seq = " + data.seq);
                                 CallManager.dismissIncomingCall(TindroidApp.getAppContext(), data.topic, data.seq);
                             }
                             break;

@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import android.widget.LinearLayout;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 

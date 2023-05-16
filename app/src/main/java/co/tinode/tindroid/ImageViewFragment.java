@@ -304,7 +304,6 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                     @Override
                     public void onSuccess() {
                         mRemoteState = RemoteState.SUCCESS;
-                        Log.i(TAG, "Remote load: success" + ref);
                         Activity activity = getActivity();
                         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                             return;

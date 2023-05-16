@@ -10,7 +10,7 @@ import android.provider.BaseColumns;
 import android.text.TextUtils;
 import android.util.Log;
 
-import org.jetbrains.annotations.Nullable;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -564,58 +564,7 @@ public class MessageDb implements BaseColumns {
         }
         Collections.sort(found);
         MsgRange[] gaps = MsgRange.gaps(MsgRange.collapse(found.toArray(new MsgRange[0])));
-        Log.i(TAG, "Found gaps:" + Arrays.toString(gaps));
         return gaps.length > 0 ? gaps : null;
-    }
-
-    /**
-     * Find the latest missing range of messages for fetching from the server.
-     *
-     * @param db      database to select from;
-     * @param topicId Tinode topic ID (topics._id) to select from;
-     * @return range of missing IDs if found, null if either all messages are present or no messages are found.
-     */
-    static MsgRange getNextMissingRange(SQLiteDatabase db, long topicId) {
-        int high = 0;
-        // Find the greatest seq present in the DB.
-        final String sqlHigh = "SELECT MAX(m1." + COLUMN_NAME_SEQ + ") AS highest" +
-                " FROM " + TABLE_NAME + " AS m1" +
-                " LEFT JOIN " + TABLE_NAME + " AS m2" +
-                " ON m1." + COLUMN_NAME_SEQ + "=IFNULL(m2." + COLUMN_NAME_HIGH + ", m2." + COLUMN_NAME_SEQ + "+1)" +
-                " AND m1." + COLUMN_NAME_TOPIC_ID + "= m2." + COLUMN_NAME_TOPIC_ID +
-                " WHERE m2." + COLUMN_NAME_SEQ + " IS NULL" +
-                " AND m1." + COLUMN_NAME_SEQ + ">1" +
-                " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
-
-        Log.i(TAG, "getNextMissingRange " + sqlHigh);
-        Cursor c = db.rawQuery(sqlHigh, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                high = c.getInt(0);
-            }
-            c.close();
-        }
-
-        if (high <= 0) {
-            // No gap is found.
-            return null;
-        }
-        Log.i(TAG, "getNextMissingRange high=" + high);
-        // Find the first present message with ID less than the 'high'.
-        final String sqlLow = "SELECT MAX(IFNULL(" + COLUMN_NAME_HIGH + "-1," + COLUMN_NAME_SEQ + ")) AS present" +
-                " FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_NAME_SEQ + "<" + high +
-                " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId;
-        int low = 1;
-        c = db.rawQuery(sqlLow, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                low = c.getInt(0) + 1; // Low is inclusive thus +1.
-            }
-            c.close();
-        }
-
-        return new MsgRange(low, high);
     }
 
     /**

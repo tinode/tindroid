@@ -51,7 +51,8 @@ import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
-import org.jetbrains.annotations.NotNull;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -74,8 +75,6 @@ import java.util.concurrent.Executors;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
@@ -1449,14 +1448,15 @@ public class UiUtils {
         return url != null ? Uri.parse(url.toString()) : null;
     }
 
-    static public @Nullable byte[] getByteArray(String name, @NotNull Map<String, Object> data) {
+    static public @Nullable byte[] getByteArray(String name, @NonNull Map<String, Object> data) {
         Object val = data.get(name);
         return val instanceof String ?
                 Base64.decode((String) val, Base64.DEFAULT) :
                 val instanceof byte[] ? (byte[]) val : null;
     }
 
-    static public @NotNull List<String> getRequiredCredMethods(@NotNull Tinode tinode, @NotNull String forAuthLevel) {
+    static public @NonNull List<String> getRequiredCredMethods(@NonNull Tinode tinode,
+                                                               @NonNull String forAuthLevel) {
         // "auth:email,tel;anon:none"
         Object credObj = tinode.getServerParam("reqCred");
         ArrayList<String> methods = new ArrayList<>();
@@ -1514,7 +1514,7 @@ public class UiUtils {
     }
 
     static void clickToBrowseURL(@NonNull View view, @StringRes int url) {
-        clickToBrowseURL(view, view.getResources().getString(R.string.tinode_url));
+        clickToBrowseURL(view, view.getResources().getString(url));
     }
 
     static boolean isAppFirstRun(Context context) {

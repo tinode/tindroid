@@ -63,7 +63,6 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
                         .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                                Log.i(TAG, "Incognito mode: " + isChecked, err);
                                 if (err instanceof NotConnectedException) {
                                     Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                                 }

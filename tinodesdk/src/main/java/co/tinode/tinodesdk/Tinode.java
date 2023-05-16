@@ -765,8 +765,6 @@ public class Tinode {
             Topic topic = getTopic(pkt.data.topic);
             if (topic != null) {
                 topic.routeData(pkt.data);
-            } else {
-                Log.i(TAG, "Topic is null " + pkt.data.topic);
             }
 
             mNotifier.onDataMessage(pkt.data);

@@ -36,8 +36,6 @@ import android.util.TypedValue;
 import android.view.View;
 import android.widget.TextView;
 
-import org.jetbrains.annotations.NotNull;
-
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -359,7 +357,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         int scaledWidth;
         int scaledHeight;
 
-        public @NotNull String toString() {
+        public @NonNull String toString() {
             return width + "x" + height + "/" + scaledWidth + "x" + scaledHeight + "@" + scale;
         }
     }

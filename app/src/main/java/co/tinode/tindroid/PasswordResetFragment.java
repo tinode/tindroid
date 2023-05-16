@@ -17,10 +17,9 @@ import android.widget.Toast;
 
 import com.google.android.material.textfield.TextInputLayout;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 
+import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.core.view.MenuProvider;
@@ -138,10 +137,8 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                     willSendEmail.setVisibility(View.VISIBLE);
                     phone.setVisibility(View.GONE);
                     willSendSMS.setVisibility(View.GONE);
-                } else {
-                    // TODO: show generic text prompt for unknown method.
-                    Log.i(TAG, "Show generic validation field for " + method);
                 }
+                // TODO: show generic text prompt for unknown method.
             }
         });
     }
