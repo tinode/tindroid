@@ -30,7 +30,7 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 
 * One-on-one conversations and group chats.
 * Channels with unlimited number of read-only subscribers.
-* Video and audio calling.
+* Video and audio calling one-one-one.
 * Attachments, inline images and videos, voice messages.
 * Unread message counters.
 * Push notifications and in-app presence notifications.

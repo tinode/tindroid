@@ -947,6 +947,7 @@ public class MessageActivity extends AppCompatActivity
             MsgRange[] found = store.msgIsCached(mTopic, pinsArray);
             List<MsgRange> missing = null;
             if (found == null || found.length <= pinned.length) {
+                // Array to list.
                 missing = Arrays.stream(pinsArray).collect(Collectors.toList());
                 if (found != null) {
                     for (MsgRange f : found) {
