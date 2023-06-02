@@ -796,7 +796,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
-                    input.append(mMessageToSend);
+                    if (input.getText().length() == 0) {
+                        input.append(mMessageToSend);
+                    }
 
                     mMessageToSend = null;
                 }
