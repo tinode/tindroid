@@ -2056,7 +2056,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         setSeq(data.seq);
         setTouched(data.ts);
 
-        // Use message received form other person to mark his messages as received.
+        // Use data message from another person to mark messages as read by him.
         if (data.from != null && !mTinode.isMe(data.from) && !isChannel(getName())) {
             MsgServerInfo info = new MsgServerInfo();
             info.what = Tinode.NOTE_READ;
