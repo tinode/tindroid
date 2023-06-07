@@ -500,21 +500,32 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @Override
     protected void routeInfo(MsgServerInfo info) {
-        if (Tinode.NOTE_KP.equals(info.what)) {
-            return;
-        }
         if (info.src == null) {
             return;
         }
 
-        Topic topic = mTinode.getTopic(info.src);
-        if (topic != null) {
-            topic.setReadRecvByRemote(info.from, info.what, info.seq);
-        }
+        switch (info.what) {
+            case Tinode.NOTE_KP:
+            case Tinode.NOTE_REC_AUDIO:
+            case Tinode.NOTE_REC_VIDEO:
+            case Tinode.NOTE_CALL:
+                break;
 
-        // If this is an update from the current user, update the contact with the new count too.
-        if (mTinode.isMe(info.from)) {
-            setMsgReadRecv(info.src, info.what, info.seq);
+            case Tinode.NOTE_RECV:
+            case Tinode.NOTE_READ:
+                Topic topic = mTinode.getTopic(info.src);
+                if (topic != null) {
+                    topic.setReadRecvByRemote(info.from, info.what, info.seq);
+                }
+
+                // If this is an update from the current user, update the contact with the new count too.
+                if (mTinode.isMe(info.from)) {
+                    setMsgReadRecv(info.src, info.what, info.seq);
+                }
+                break;
+
+            default:
+                // Unknown notification ignored.
         }
 
         if (mListener != null) {
