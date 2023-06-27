@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class MsgServerInfo implements Serializable {
     public enum What {CALA, CALL, KP, KPA, KPV, RECV, READ, UNKNOWN}
-    public enum Event {ACCEPT, ANSWER, HANG_UP, ICE_CANDIDATE, OFFER, RINGING, UNKNOWN}
+    public enum Event {ACCEPT, ANSWER, HANG_UP, ICE_CANDIDATE, OFFER, RINGING, VC_TOKEN, UNKNOWN}
 
     public String topic;
     public String src;
@@ -58,6 +58,8 @@ public class MsgServerInfo implements Serializable {
             return Event.OFFER;
         } else if (event.equals("ringing")) {
             return Event.RINGING;
+        } else if (event.equals("vc-token")) {
+            return Event.VC_TOKEN;
         }
         return Event.UNKNOWN;
     }

@@ -548,7 +548,11 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
                 return true;
             } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
-                CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+                if (mTopic.isP2PType()) {
+                    CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+                } else {
+                    CallManager.startVC(this, mTopicName);
+                }
                 return true;
             }
         } else {

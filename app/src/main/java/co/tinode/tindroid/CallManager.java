@@ -105,6 +105,16 @@ public class CallManager {
         telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
     }
 
+    public static void startVC(Activity activity, String topicName) {
+        //Cache.prepareNewCall(topicName, 0, conn);
+
+        Intent intent = new Intent((Context)activity, VCActivity.class);
+        intent.setAction(VCActivity.INTENT_ACTION_VC_START);
+        intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        ((Context)activity).startActivity(intent);
+    }
+
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
         TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
         if (shouldBypassTelecom(activity, telecomManager, true)) {
