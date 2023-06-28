@@ -44,7 +44,6 @@ public class VCFragment extends Fragment {
     private String mVCEndpoint;
     private VCFragment.InfoListener mTinodeListener;
     private boolean mCallStarted = false;
-    private boolean mIsInitiatingCall = true;
 
     private VCRoomHandler mRoomHandler;
 
@@ -122,23 +121,8 @@ public class VCFragment extends Fragment {
         String name = args.getString(Const.INTENT_EXTRA_TOPIC);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) tinode.getTopic(name);
-
-        //String callStateStr = args.getString(Const.INTENT_EXTRA_CALL_DIRECTION);
         mVCEndpoint = (String)tinode.getServerParam("vcEndpoint");
-
-        //mCallDirection = "incoming".equals(callStateStr) ? CallFragment.CallDirection.INCOMING : CallFragment.CallDirection.OUTGOING;
-        /*
-        if (mCallDirection == CallFragment.CallDirection.INCOMING) {
-            mCallSeqID = args.getInt(Const.INTENT_EXTRA_SEQ);
-        }
-        */
-        /*
-        mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-        AudioManager audioManager = (AudioManager) requireContext().getSystemService(Context.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-        audioManager.setSpeakerphoneOn(!mAudioOnly);
-        mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
-*/
+        mCallSeqID = args.getInt(Const.INTENT_EXTRA_SEQ);
         if (!mTopic.isAttached()) {
             mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
                 @Override
@@ -204,8 +188,8 @@ public class VCFragment extends Fragment {
         }
         Activity activity = requireActivity();
         mCallStarted = true;
-        if (mIsInitiatingCall) {
-            // Outgoing call.
+        if (mCallSeqID <= 0) {
+            // Starting a new VC cal.
             // Send out a call invitation to the peer.
             Map<String, Object> head = new HashMap<>();
             head.put("webrtc", "started");
@@ -221,7 +205,6 @@ public class VCFragment extends Fragment {
                                 if (seq > 0 & !token.isEmpty()) {
                                     // All good.
                                     mCallSeqID = seq;
-                                    //Cache.setCallActive(mTopic.getName(), seq);
                                     joinRoom(token);
                                     return null;
                                 }
@@ -232,7 +215,7 @@ public class VCFragment extends Fragment {
                     }, new VCFragment.FailureHandler(getActivity()));
         } else {
             // Joining an existing call.
-            // TODO
+            mTopic.videoCallJoinVC(mCallSeqID);
         }
     }
 
@@ -242,7 +225,9 @@ public class VCFragment extends Fragment {
         if (mCallSeqID > 0) {
             mTopic.videoCallHangUp(mCallSeqID);
         }
-        mRoomHandler.close();
+        if (mRoomHandler != null) {
+            mRoomHandler.close();
+        }
 
         mCallSeqID = -1;
         final VCActivity activity = (VCActivity) getActivity();

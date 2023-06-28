@@ -197,7 +197,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return sb.append(sec);
     }
 
-    protected static int callStatus(boolean incoming, String event) {
+    protected static int callStatus(boolean incoming, String event, boolean isConferenceCall) {
         int comment;
         switch (event) {
             case "busy":
@@ -210,7 +210,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 comment = incoming ? R.string.missed_call : R.string.cancelled_call;
                 break;
             case "started":
-                comment = R.string.connecting_call;
+                comment = isConferenceCall ? R.string.in_progress_call : R.string.connecting_call;
                 break;
             case "accepted":
                 comment = R.string.in_progress_call;

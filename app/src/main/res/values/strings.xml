@@ -228,6 +228,7 @@
     <string name="full_name_required">Full name required</string>
     <string name="outgoing_call">Outgoing call</string>
     <string name="incoming_call">Incoming call</string>
+    <string name="vc_join">Join</string>
 
     <string name="default_contact_name">Tinode User %1$s</string>
     <string name="permission_missing">Required permission is missing</string>

@@ -1778,6 +1778,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         videoCall("ringing", seq, null);
     }
 
+    /**
+     * Send a video conference call join request.
+     * @param seq VC call message ID.
+     */
+    public void videoCallJoinVC(int seq) { videoCall("vc-join", seq, null); }
+
     public String getName() {
         return mName;
     }

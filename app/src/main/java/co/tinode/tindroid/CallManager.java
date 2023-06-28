@@ -105,12 +105,13 @@ public class CallManager {
         telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
     }
 
-    public static void startVC(Activity activity, String topicName) {
-        //Cache.prepareNewCall(topicName, 0, conn);
-
+    public static void startVC(Activity activity, String topicName, int seq) {
         Intent intent = new Intent((Context)activity, VCActivity.class);
-        intent.setAction(VCActivity.INTENT_ACTION_VC_START);
+        intent.setAction(seq > 0 ? VCActivity.INTENT_ACTION_VC_JOIN : VCActivity.INTENT_ACTION_VC_START);
         intent.putExtra(Const.INTENT_EXTRA_TOPIC, topicName);
+        if (seq > 0) {
+            intent.putExtra(Const.INTENT_EXTRA_SEQ, seq);
+        }
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         ((Context)activity).startActivity(intent);
     }

@@ -792,6 +792,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         int duration = getIntVal("duration", data);
         String state = getStringVal("state", data, "");
+        boolean isConferenceCall = getBooleanVal("vc", data);
 
         result.append("\n");
 
@@ -810,11 +811,33 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (duration > 0) {
             second.append(millisToTime(duration, false));
         } else {
-            second.append(ctx.getString(callStatus(incoming, state)));
+            second.append(ctx.getString(callStatus(incoming, state, isConferenceCall)));
         }
         // Shift second line to the right.
         result.append(second, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
+        if (isConferenceCall && "started".equals(state)) {
+            // Join link.
+            result.append("\n");
+
+            SpannableStringBuilder saveLink = new SpannableStringBuilder();
+
+            // Clickable "Join".
+            saveLink.append(ctx.getString(R.string.vc_join),
+                    new ClickableSpan() {
+                        @Override
+                        public void onClick(@NonNull View widget) {
+                            mClicker.onClick("VC", data, null);
+                        }
+                    }, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+
+            // Add space on the left to make the link appear under the file name.
+            result.append(saveLink, new LeadingMarginSpan.Standard(bounds.width()), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+            // Append thin space after the link, otherwise the whole line to the right is clickable.
+            result.append('\u2009');
+        }
         return result;
     }
 

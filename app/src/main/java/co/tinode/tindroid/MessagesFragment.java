@@ -956,11 +956,12 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 menu.findItem(R.id.action_archive).setVisible(!mTopic.isArchived());
                 menu.findItem(R.id.action_unarchive).setVisible(mTopic.isArchived());
 
-                boolean callsEnabled = (mTopic.isP2PType() &&
-                        Cache.getTinode().getServerParam("iceServers") != null) ||
-                        (mTopic.isGrpType());
-                menu.findItem(R.id.action_video_call).setVisible(callsEnabled);
-                menu.findItem(R.id.action_audio_call).setVisible(callsEnabled);
+                boolean audioCallsEnabled = mTopic.isP2PType() &&
+                        Cache.getTinode().getServerParam("iceServers") != null;
+                boolean videoCallsEnabled = audioCallsEnabled ||
+                        (mTopic.isGrpType() && Cache.getTinode().getServerParam("vcEndpoint") != null);
+                menu.findItem(R.id.action_video_call).setVisible(videoCallsEnabled);
+                menu.findItem(R.id.action_audio_call).setVisible(audioCallsEnabled);
             }
         }
     }

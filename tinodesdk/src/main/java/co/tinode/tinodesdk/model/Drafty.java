@@ -85,7 +85,7 @@ public class Drafty implements Serializable {
 
     private static final String[] DATA_FIELDS =
             new String[]{"act", "duration", "height", "incoming", "mime", "name", "premime", "preref", "preview", "ref",
-                    "size", "state", "title", "url", "val", "width"};
+                    "size", "state", "title", "url", "val", "vc", "width"};
 
     private static final Map<Class<?>, Class<?>> WRAPPER_TYPE_MAP;
     static {
@@ -914,7 +914,9 @@ public class Drafty implements Serializable {
         src.ent[0].putData("state", params.get("webrtc"));
         src.ent[0].putData("duration", params.get("webrtc-duration"));
         src.ent[0].putData("incoming", incoming);
-
+        if ((boolean) params.getOrDefault("vc", false)) {
+            src.ent[0].putData("vc", true);
+        }
         return src;
     }
 

@@ -551,7 +551,7 @@ public class MessageActivity extends AppCompatActivity
                 if (mTopic.isP2PType()) {
                     CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
                 } else {
-                    CallManager.startVC(this, mTopicName);
+                    CallManager.startVC(this, mTopicName, -1);  // -1 - outgoing call.
                 }
                 return true;
             }

@@ -192,12 +192,13 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         boolean incoming = getBooleanVal("incoming", data);
         int duration = getIntVal("duration", data);
         String state = getStringVal("state", data, "");
+        boolean isConferenceCall = getBooleanVal("vc", data);
 
         boolean success = !Arrays.asList("busy", "declined", "disconnected", "missed")
                 .contains(state);
         String status = " " + (duration > 0 ?
                 millisToTime(duration, false).toString() :
-                ctx.getString(callStatus(incoming, state)));
+                ctx.getString(callStatus(incoming, state, isConferenceCall)));
         return annotatedIcon(ctx, incoming ?
                 (success ? R.drawable.ic_call_received : R.drawable.ic_call_missed) :
                 (success ? R.drawable.ic_call_made : R.drawable.ic_call_cancelled),

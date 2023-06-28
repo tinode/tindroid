@@ -632,7 +632,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (m.content != null && m.content.hasEntities(
-                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "VD"))) {
+                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "VC", "VD"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -1225,8 +1225,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     return clickButton(data);
 
                 case "VD":
-                    // Pay video.
+                    // Play video.
                     return clickVideo(data);
+
+                case "VC":
+                    // Join video conference call.
+                    return clickVideoConference(data);
             }
             return false;
         }
@@ -1428,6 +1432,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_VIDEO, args, true);
 
+            return true;
+        }
+
+        private boolean clickVideoConference(Map<String, Object> data) {
+            CallManager.startVC(mActivity, mTopicName, mSeqId);
             return true;
         }
     }

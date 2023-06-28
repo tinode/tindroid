@@ -29,7 +29,7 @@ public class VCActivity extends AppCompatActivity  {
 
     static final String FRAGMENT_VC = "active_vc";
 
-    public static final String INTENT_ACTION_VC_INCOMING = "tindroidx.intent.action.vc.INCOMING";
+    public static final String INTENT_ACTION_VC_JOIN = "tindroidx.intent.action.vc.JOIN";
     public static final String INTENT_ACTION_VC_START = "tindroidx.intent.action.vc.START";
 
     private boolean mTurnScreenOffWhenDone;
@@ -88,19 +88,15 @@ public class VCActivity extends AppCompatActivity  {
         Bundle args = new Bundle();
         args.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY,
                 intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, false));
-        //String fragmentToShow;
         switch (action) {
-            case INTENT_ACTION_VC_INCOMING:
-                // Incoming call started by the ser
-                boolean accepted = intent.getBooleanExtra(Const.INTENT_EXTRA_CALL_ACCEPTED, false);
-                //fragmentToShow = accepted ? FRAGMENT_ACTIVE : FRAGMENT_INCOMING;
-                args.putString(Const.INTENT_EXTRA_CALL_DIRECTION, "incoming");
+            case INTENT_ACTION_VC_JOIN:
+                // User joining a VC call in progress.
+                int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
+                args.putInt(Const.INTENT_EXTRA_SEQ, seq);
                 break;
 
             case INTENT_ACTION_VC_START:
-                // Call started by the current user.
-                args.putString(Const.INTENT_EXTRA_CALL_DIRECTION, "outgoing");
-                //fragmentToShow = FRAGMENT_ACTIVE;
+                // VC call started by the current user.
                 break;
 
             default:
