@@ -67,7 +67,7 @@ public class Cache {
                     MsgServerData.WebRTC callState = MsgServerData.parseWebRTC(webrtc);
 
                     ComTopic topic = (ComTopic) Cache.getTinode().getTopic(data.topic);
-                    if (topic == null) {
+                    if (topic == null || !topic.isP2PType()) {
                         return;
                     }
 

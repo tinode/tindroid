@@ -15,7 +15,9 @@ class VCParticipantItem(
         private val room: Room,
         private val participant: Participant,
 ) {
-    val TAG = "VCParticipantItem"
+    companion object {
+        private val TAG: String? = VCParticipantItem::class.simpleName
+    }
     private var boundVideoTrack: VideoTrack? = null
     private var coroutineScope: CoroutineScope? = null
 

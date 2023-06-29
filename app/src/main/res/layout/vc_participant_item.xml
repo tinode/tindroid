@@ -6,8 +6,8 @@
     android:background="@color/colorGray">
 
     <FrameLayout
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:background="@color/colorGray"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,6 +22,7 @@
 
         <io.livekit.android.renderer.TextureViewRenderer
             android:id="@+id/renderer"
+            android:gravity="center"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

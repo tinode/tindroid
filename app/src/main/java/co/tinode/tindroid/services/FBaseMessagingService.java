@@ -134,7 +134,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             tinode.oobNotification(data, token, "started".equals(webrtc) ||
                     topicName.equals(selectedTopic));
 
-            if (webrtc != null) {
+            Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
+            if (webrtc != null && tp == Topic.TopicType.P2P) {
                 // It's a video call.
                 handleCallNotification(webrtc, tinode.isMe(senderId), data);
                 return;
@@ -152,7 +153,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                 return;
             }
 
-            Topic.TopicType tp = Topic.getTopicTypeByName(topicName);
+
             if (tp != Topic.TopicType.P2P && tp != Topic.TopicType.GRP) {
                 Log.w(TAG, "Unexpected topic type=" + tp);
                 return;

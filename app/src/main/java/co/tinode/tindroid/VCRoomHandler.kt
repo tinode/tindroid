@@ -30,8 +30,9 @@ class VCRoomHandler(
         fun beforeConnect(room: Room)
         fun onParticipants(participants: List<@JvmSuppressWildcards Participant>)
     }
-
-    val TAG = "VCRoomHandler"
+    companion object {
+        private val TAG: String? = VCRoomHandler::class.simpleName
+    }
 
     val audioHandler = AudioSwitchHandler(application)
     val room = LiveKit.create(
@@ -194,7 +195,6 @@ class VCRoomHandler(
         room.disconnect()
         room.release()
         coroutineScope.cancel()
-        Log.i(TAG, "*** cleared ***")
     }
 
     fun setMicEnabled(enabled: Boolean) {

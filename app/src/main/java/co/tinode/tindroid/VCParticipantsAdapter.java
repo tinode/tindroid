@@ -1,6 +1,8 @@
 package co.tinode.tindroid;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +20,7 @@ import io.livekit.android.room.Room;
 import io.livekit.android.room.participant.Participant;
 
 public class VCParticipantsAdapter extends RecyclerView.Adapter<VCParticipantsAdapter.RecyclerViewHolder> {
+    private static final String TAG = "VCParticipantsAdapter";
     private Context mContext;
 
     private Room mRoom;
@@ -37,12 +40,18 @@ public class VCParticipantsAdapter extends RecyclerView.Adapter<VCParticipantsAd
     public RecyclerViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         // Inflate Layout
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.vc_participant_item, parent, false);
-        return new RecyclerViewHolder(view);
+
+        DisplayMetrics displaymetrics = new DisplayMetrics();
+        ((Activity)mContext).getWindowManager().getDefaultDisplay().getMetrics(displaymetrics);
+
+        RecyclerViewHolder holder = new RecyclerViewHolder(view);
+        holder.mRenderer.getLayoutParams().height = displaymetrics.heightPixels / 2;
+        return holder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerViewHolder holder, int position) {
-        Log.i("adapter", "attaching pos " + position);
+        Log.v(TAG, "Attaching VC participant at position " + position);
         Participant p = mParticipants.get(position);
         VCParticipantItem item = new VCParticipantItem(mRoom, p);
         item.initialize(holder);
@@ -51,7 +60,7 @@ public class VCParticipantsAdapter extends RecyclerView.Adapter<VCParticipantsAd
 
     @Override
     public void onViewRecycled(@NonNull RecyclerViewHolder holder) {
-        Log.i("adapter", "detaching " + holder.toString());
+        Log.v(TAG, "Detaching " + holder.toString());
         if (holder.mParticipant != null) {
             holder.mParticipant.unbind(holder);
         }
