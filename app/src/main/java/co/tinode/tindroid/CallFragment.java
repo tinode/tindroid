@@ -160,7 +160,7 @@ public class CallFragment extends Fragment {
         mLocalVideoView = v.findViewById(R.id.localView);
         mRemoteVideoView = v.findViewById(R.id.remoteView);
 
-        mToggleSpeakerphoneBtn = v.findViewById(R.id.toggleSpeakerphoneBtn);
+        mToggleSpeakerphoneBtn = v.findViewById(R.id.flipCameraBtn);
         mToggleCameraBtn = v.findViewById(R.id.toggleCameraBtn);
         mToggleMicBtn = v.findViewById(R.id.toggleMicBtn);
 

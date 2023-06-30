@@ -135,17 +135,8 @@ class VCParticipantItem(
     fun unbind(holder: VCParticipantsAdapter.RecyclerViewHolder) {
         coroutineScope?.cancel()
         coroutineScope = null
-        //super.unbind(viewHolder)
         boundVideoTrack?.removeRenderer(holder.mRenderer)
         boundVideoTrack = null
-    }
-}
-
-private fun View.visibleOrGone(visible: Boolean) {
-    visibility = if (visible) {
-        View.VISIBLE
-    } else {
-        View.GONE
     }
 }
 

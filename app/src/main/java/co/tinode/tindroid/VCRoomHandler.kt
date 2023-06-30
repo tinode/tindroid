@@ -72,6 +72,9 @@ class VCRoomHandler(
     private val mutablePermissionAllowed = MutableStateFlow(true)
     val permissionAllowed = mutablePermissionAllowed.hide()
 
+    val isCameraEnabled get() = room.localParticipant.isCameraEnabled()
+    val isMicEnabled get() = room.localParticipant.isMicrophoneEnabled()
+
     init {
         coroutineScope.launch {
             // Collect any errors.

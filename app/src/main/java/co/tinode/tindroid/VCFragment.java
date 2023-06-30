@@ -11,10 +11,13 @@ import android.view.ViewGroup;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -44,6 +47,10 @@ public class VCFragment extends Fragment {
     private String mVCEndpoint;
     private VCFragment.InfoListener mTinodeListener;
     private boolean mCallStarted = false;
+    // Control buttons: speakerphone, mic, camera.
+    private FloatingActionButton mFlipCameraBtn;
+    private FloatingActionButton mToggleCameraBtn;
+    private FloatingActionButton mToggleMicBtn;
 
     private VCRoomHandler mRoomHandler;
 
@@ -101,6 +108,20 @@ public class VCFragment extends Fragment {
         GridLayoutManager layoutManager = new GridLayoutManager(ctx,2);
         mParticipantsView.setLayoutManager(layoutManager);
         mParticipantsView.setAdapter(mAdapter);
+
+        mFlipCameraBtn = v.findViewById(R.id.flipCameraBtn);
+        mToggleCameraBtn = v.findViewById(R.id.toggleCameraBtn);
+        mToggleMicBtn = v.findViewById(R.id.toggleMicBtn);
+
+        // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
+        mFlipCameraBtn.setOnClickListener(v0 ->
+                flipCamera((FloatingActionButton) v0));
+        mToggleCameraBtn.setOnClickListener(v2 ->
+                toggleMedia((FloatingActionButton) v2, true,
+                        R.drawable.ic_videocam, R.drawable.ic_videocam_off));
+        mToggleMicBtn.setOnClickListener(v3 ->
+                toggleMedia((FloatingActionButton) v3, false,
+                        R.drawable.ic_mic, R.drawable.ic_mic_off));
 
         v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
         return v;
@@ -167,6 +188,28 @@ public class VCFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
+    }
+
+    private void enableControls() {
+        requireActivity().runOnUiThread(() -> {
+            mFlipCameraBtn.setEnabled(true);
+            mToggleCameraBtn.setEnabled(true);
+            mToggleMicBtn.setEnabled(true);
+        });
+    }
+
+    private void toggleMedia(FloatingActionButton b, boolean video, @DrawableRes int enabledIcon, int disabledIcon) {
+        boolean enabled = video ? mRoomHandler.isCameraEnabled() : mRoomHandler.isMicEnabled();
+        if (!video) {
+            mRoomHandler.setMicEnabled(!enabled);
+        } else {
+            mRoomHandler.setCameraEnabled(!enabled);
+        }
+        b.setImageResource(enabled ? disabledIcon : enabledIcon);
+    }
+
+    private void flipCamera(FloatingActionButton b) {
+        mRoomHandler.flipCamera();
     }
 
     private void startMediaAndSignal() {
@@ -251,7 +294,6 @@ public class VCFragment extends Fragment {
                     @Override
                     public void onParticipants(@NonNull List<Participant> participants) {
                         Log.i(TAG, "participants -> " + participants.toString());
-                        //participants.
 
                         Context ctx = getContext();
                         switch (participants.size()) {
@@ -284,6 +326,7 @@ public class VCFragment extends Fragment {
 
                     }
                 });
+        enableControls();
     }
 
     private void handleVCToken(Object payload) {
