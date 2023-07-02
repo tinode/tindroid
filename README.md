@@ -106,6 +106,7 @@ The app is currently available in the following languages:
 * Hindi
 * Korean
 * Portuguese
+* Romanian
 * Russian
 * Spanish
 
