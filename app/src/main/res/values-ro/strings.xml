@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="asset_statements" translatable="false">[{ \"include\": \"https://web.tinode.co/.well-known/assetlinks.json\" }]</string>
-    <string name="tinode_url" translatable="false">https://tinode.co</string>
-    <string name="emulator_host_name" translatable="false">10.0.2.2:6060</string>
-    <string name="contact_us_uri" translatable="false">mailto:support@tinode.co</string>
-    <string name="terms_of_use_uri" translatable="false">https://tinode.co/terms.html</string>
-    <string name="privacy_policy_uri" translatable="false">https://tinode.co/privacy.html</string>
-    <string name="app_name" translatable="false">Tinode</string>
-    <string name="app_name_full" translatable="false">Tinode Chat</string>
-    <string name="copyright" translatable="false">© 2014 – 2023 Tinode</string>
-    <string name="tinode" translatable="false">Tinode</string>
-
     <string name="app_version">Versiune</string>
 
     <string name="login_hint">Conectare</string>
@@ -21,13 +10,11 @@
     <string name="send_file_button_hint">Trimite fişier</string>
 
     <string name="sign_in">Conectează-te</string>
-    <string name="app_description" translatable="false">Tinode Chat</string>
     <string name="action_signup">Înscrie-te</string>
     <string name="sign_up">Înscrie-te</string>
     <string name="login_new">Utilizator</string>
     <string name="password_new">Parolă</string>
     <string name="full_name">Nume complet ex. Popescu Ion</string>
-    <string name="tinode_logo" translatable="false">Tinode Logo</string>
     <string name="action_cancel">Anulează</string>
     <string name="settings_host_name">Adresă server</string>
     <string name="settings_use_tls">Utilizează conexiune securizată</string>
@@ -145,7 +132,6 @@
     <string name="edit_account">Schimbă numele contului</string>
     <string name="invalid_login">Conexiunea este invalidă</string>
 
-    <string name="default_attachment_name" translatable="false">file_attachment</string>
     <string name="download_attachment">salvează</string>
     <string name="broken_image">Formatul imaginii este necunoscut sau invalid</string>
     <string name="file_manager_not_found">Gestionarul de fişiere nu a fost găsit</string>
@@ -185,7 +171,7 @@
 	<string name="request">Cere</string>
     <string name="forgot_password">Parolă uitată</string>
     <string name="invalid_or_unknown_credential">Date necunoscute sau invalide</string>
-    <string name="password_reset_message_sent">Mesajul cu instrucţiuni a fost trimis/string>
+    <string name="password_reset_message_sent">Mesajul cu instrucţiuni a fost trimis</string>
     <string name="user_not_found">Utilizator negăsit</string>
     <string name="topic_tags">Taguri, listă separată cu virgulă</string>
     <string name="sender_unknown">Necunoscut</string>
@@ -248,8 +234,6 @@
     <string name="enter_search_query">Introduceți interogarea de căutare</string>
     <string name="image_caption_hint">Legendă imagine</string>
     <string name="action_download">Descarcă</string>
-    <string name="tinode_image" translatable="false">tinode_image</string>
-    <string name="tinode_video" translatable="false">tinode_video</string>
     <string name="invalid_content">conţinut invalid</string>
     <string name="failed">eşec</string>
     <string name="processing">procesare …</string>
@@ -271,7 +255,6 @@
     <string name="confirm_delmsg_for_all">Eşti sigur că vrei să ştergi toate mesajele pentru toţi participanţii?</string>
     <string name="confirm_delmsg_for_self">Eşti sigur că vrei să ştergi toate mesajele? Le ştergi numai pentru tine.</string>
     <string name="licenses">Licenţe</string>
-    <string name="invalid_file" translatable="false">invalid</string>
     <string name="blocked_contacts">Contacte blocate</string>
     <string name="action_restore">Deblochează</string>
     <string name="send_to">trimite către…</string>
