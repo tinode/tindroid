@@ -24,18 +24,18 @@ class VCRoomHandler(
         val url: String,
         val token: String,
         application: Application,
+        adapter: VCParticipantsAdapter,
         listener: VCListener
 ) {
     interface VCListener {
-        fun beforeConnect(room: Room)
         fun onParticipants(participants: List<@JvmSuppressWildcards Participant>)
     }
     companion object {
         private val TAG: String? = VCRoomHandler::class.simpleName
     }
 
-    val audioHandler = AudioSwitchHandler(application)
-    val room = LiveKit.create(
+    private val audioHandler = AudioSwitchHandler(application)
+    private val room = LiveKit.create(
             appContext = application,
             options = RoomOptions(adaptiveStream = true, dynacast = true),
             overrides = LiveKitOverrides(
@@ -43,7 +43,7 @@ class VCRoomHandler(
             )
     )
 
-    val participants = room::remoteParticipants.flow
+    private val participants = room::remoteParticipants.flow
             .map { remoteParticipants ->
                 listOf<Participant>(room.localParticipant) +
                         remoteParticipants
@@ -76,6 +76,7 @@ class VCRoomHandler(
     val isMicEnabled get() = room.localParticipant.isMicrophoneEnabled()
 
     init {
+        adapter.setRoom(room)
         coroutineScope.launch {
             // Collect any errors.
             launch {
@@ -122,7 +123,6 @@ class VCRoomHandler(
                 }
             }
 
-            listener.beforeConnect(room)
             connectToRoom()
         }
     }
@@ -195,9 +195,14 @@ class VCRoomHandler(
     }
 
     fun close() {
-        room.disconnect()
-        room.release()
-        coroutineScope.cancel()
+        try {
+            room.disconnect()
+        } catch (e: Exception) {
+            Log.e(TAG, "Room.disconnect error: $e")
+        } finally {
+            room.release()
+            coroutineScope.cancel()
+        }
     }
 
     fun setMicEnabled(enabled: Boolean) {
@@ -225,30 +230,6 @@ class VCRoomHandler(
 
         videoTrack.switchCamera(position = newPosition)
     }
-
-    fun toggleSubscriptionPermissions() {
-        mutablePermissionAllowed.value = !mutablePermissionAllowed.value
-        room.localParticipant.setTrackSubscriptionPermissions(mutablePermissionAllowed.value)
-    }
-
-    // Debug functions
-    fun simulateMigration() {
-        room.sendSimulateScenario(Room.SimulateScenario.MIGRATION)
-    }
-
-    fun simulateNodeFailure() {
-        room.sendSimulateScenario(Room.SimulateScenario.NODE_FAILURE)
-    }
-
-    fun reconnect() {
-        Log.i(TAG, "Reconnecting.")
-        mutablePrimarySpeaker.value = null
-        room.disconnect()
-        coroutineScope.launch {
-            connectToRoom()
-        }
-    }
 }
 
 private fun <T> MutableStateFlow<T>.hide(): StateFlow<T> = this
-private fun <T> Flow<T>.hide(): Flow<T> = this

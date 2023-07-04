@@ -173,7 +173,6 @@ public class VCFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
         mTopic.setListener(null);
 
@@ -187,6 +186,7 @@ public class VCFragment extends Fragment {
 
     @Override
     public void onPause() {
+        stopMediaAndSignal();
         super.onPause();
     }
 
@@ -284,46 +284,44 @@ public class VCFragment extends Fragment {
         // TODO: remove.
         String url = mVCEndpoint.replace("localhost", "10.0.2.2");
 
-        mRoomHandler = new VCRoomHandler(url, token, getActivity().getApplication(),
+        mRoomHandler = new VCRoomHandler(url, token, getActivity().getApplication(), mAdapter,
                 new VCRoomHandler.VCListener() {
-                    @Override
-                    public void beforeConnect(@NonNull Room room) {
-                        mAdapter.setRoom(room);
-                    }
-
                     @Override
                     public void onParticipants(@NonNull List<Participant> participants) {
                         Log.i(TAG, "participants -> " + participants.toString());
 
+                        Activity activity = getActivity();
+                        if (activity == null) {
+                            return;
+                        }
                         Context ctx = getContext();
                         switch (participants.size()) {
                             case 1: {
                                 GridLayoutManager layoutManager = new GridLayoutManager(ctx, 1, GridLayoutManager.HORIZONTAL, false);//GridLayoutManager(ctx,2, );
-                                getActivity().runOnUiThread(() -> {
+                                activity.runOnUiThread(() -> {
                                     mParticipantsView.setLayoutManager(layoutManager);
                                 });
                                 break;
                             }
                             case 2: {
                                 GridLayoutManager layoutManager = new GridLayoutManager(ctx, 2, GridLayoutManager.HORIZONTAL, false);//GridLayoutManager(ctx,2, );
-                                getActivity().runOnUiThread(() -> {
+                                activity.runOnUiThread(() -> {
                                     mParticipantsView.setLayoutManager(layoutManager);
                                 });
                                 break;
                             }
                             default: {
                                 GridLayoutManager layoutManager = new GridLayoutManager(ctx, 2, GridLayoutManager.VERTICAL, false);//GridLayoutManager(ctx,2, );
-                                getActivity().runOnUiThread(() -> {
+                                activity.runOnUiThread(() -> {
                                     mParticipantsView.setLayoutManager(layoutManager);
                                 });
                                 break;
                             }
                         }
                         mAdapter.update(participants);
-                        getActivity().runOnUiThread(() -> {
+                        activity.runOnUiThread(() -> {
                             mAdapter.notifyDataSetChanged();
                         });
-
                     }
                 });
         enableControls();
