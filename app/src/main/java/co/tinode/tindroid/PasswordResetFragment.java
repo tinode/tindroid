@@ -185,9 +185,6 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                         new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                                if (parent.isFinishing() || parent.isDestroyed()) {
-                                    return null;
-                                }
                                 parent.runOnUiThread(() -> {
                                     readyToEnterCode();
                                     Toast.makeText(parent, R.string.confirmation_code_sent, Toast.LENGTH_SHORT).show();
@@ -255,6 +252,10 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
 
     private void readyToEnterCode() {
         final LoginActivity parent = (LoginActivity) requireActivity();
+
+        if (parent.isFinishing() || parent.isDestroyed()) {
+            return;
+        }
 
         parent.findViewById(R.id.requestCode).setVisibility(View.GONE);
         parent.findViewById(R.id.editPasswordWrapper).setVisibility(View.VISIBLE);
