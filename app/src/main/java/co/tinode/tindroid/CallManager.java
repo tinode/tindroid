@@ -103,7 +103,10 @@ public class CallManager {
     public static void unregisterCallingAccount() {
         CallManager shared = CallManager.getShared();
         TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
-        telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
+        try {
+            telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
+        } catch (UnsupportedOperationException ignored) {
+        }
     }
 
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
