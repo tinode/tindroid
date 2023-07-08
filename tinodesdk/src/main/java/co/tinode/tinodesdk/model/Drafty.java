@@ -419,6 +419,12 @@ public class Drafty implements Serializable {
 
             for (int i = 1; i<blks.size(); i++) {
                 int offset = text.codePointCount(0, text.length()) + 1;
+                for (int j = 0; j < text.length(); j++) {
+                    if (Character.isHighSurrogate(text.charAt(j)) && j + 1 < text.length() &&
+                        Character.isLowSurrogate(text.charAt(j + 1))){
+                            offset++;
+                    }
+                }
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
