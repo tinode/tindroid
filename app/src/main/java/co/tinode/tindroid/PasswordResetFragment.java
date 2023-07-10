@@ -122,7 +122,6 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
 
         activity.runOnUiThread(() -> {
             String method = mCredMethods[0];
-
             if (method.equals("tel")) {
                 activity.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
                 activity.findViewById(R.id.will_send_email).setVisibility(View.GONE);
