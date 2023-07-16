@@ -72,8 +72,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     // Max size of the video and poster bitmap to be sent as byte array.
     // Otherwise write to temp file.
-    private static final int MAX_POSTER_BYTES = 4096; // 4K.
-    private static final int MAX_VIDEO_BYTES = 6144;
+    private static final int MAX_POSTER_BYTES = 1024*3; // 3K.
+    private static final int MAX_VIDEO_BYTES = 1024*4; // 4K.
 
     private ExoPlayer mExoPlayer;
     // Media source factory for remote videos from Tinode server.
