@@ -549,7 +549,7 @@ public class SqlStore implements Storage {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
-            if (c != null) {
+            if (c != null && c.moveToFirst()) {
                 list = new MessageList(c, -1);
             }
         }
@@ -561,7 +561,7 @@ public class SqlStore implements Storage {
     public <R extends Iterator<Message> & Closeable> R getLatestMessagePreviews() {
         MessageList list = null;
         Cursor c = MessageDb.getLatestMessages(mDbh.getReadableDatabase());
-        if (c != null) {
+        if (c != null && c.moveToFirst()) {
             list = new MessageList(c, MessageDb.MESSAGE_PREVIEW_LENGTH);
         }
         return (R) list;
@@ -593,7 +593,6 @@ public class SqlStore implements Storage {
 
         MessageList(Cursor cursor, int previewLength) {
             mCursor = cursor;
-            mCursor.moveToFirst();
             mPreviewLength = previewLength;
         }
 
