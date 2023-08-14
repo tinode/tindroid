@@ -109,6 +109,7 @@ The app is currently available in the following languages:
 * Romanian
 * Russian
 * Spanish
+* Ukrainian
 
 More translations are welcome. See [instructions](https://github.com/tinode/chat/blob/devel/docs/translations.md#android).
 
