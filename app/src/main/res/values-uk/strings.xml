@@ -12,11 +12,11 @@
     <string name="sign_up">Зареєструватися</string>
     <string name="login_new">Логін</string>
     <string name="password_new">Пароль</string>
-    <string name="full_name">Повне ім'я, напр. Дмитро Соколов</string>
+    <string name="full_name">Повне ім\'я, напр. Дмитро Бойко</string>
     <string name="action_cancel">Скасувати</string>
     <string name="settings_host_name">Адреса серверу</string>
     <string name="settings_use_tls">Захищене підключення</string>
-    <string name="settings_tls_explained">Використовувати захищене (https) з'єднання</string>
+    <string name="settings_tls_explained">Використовувати захищене (https) з\'єднання</string>
     <string name="settings_host_name_explained">Підключення до серверу \'%1$s\'</string>
 
     <string name="action_clear_messages">Очистити історію повідомлень</string>
@@ -40,7 +40,7 @@
     <string name="error_new_account_failed">Помилка реєстрації:</string>
     <string name="password_required">Введіть пароль</string>
     <string name="login_required">Введіть логін</string>
-    <string name="error_connection_failed">Немає зв'язку:</string>
+    <string name="error_connection_failed">Немає зв\'язку:</string>
     <string name="invalid_confirmation_code">Код невірний</string>
     <string name="email_rejected">Емейл помилковий</string>
     <string name="login_rejected">Логин невірний</string>
@@ -96,7 +96,7 @@
     <string name="owner_cannot_unsubscribe">Власник не може покинути групу</string>
     <string name="options_menu">Налаштування</string>
     <string name="no_members">Учасників немає</string>
-    <string name="no_connection">Немає зв'язку з інтернетом</string>
+    <string name="no_connection">Немає зв\'язку з інтернетом</string>
     <string name="name_required">Введіть назву групи</string>
     <string name="modeWriteOnly">тільки запис</string>
     <string name="modeUndefined">не визначено</string>
@@ -138,7 +138,7 @@
     <string name="edit_topic">Редагувати чат</string>
     <string name="email">Емейл</string>
     <string name="email_required">Потрібен емейл</string>
-    <string name="full_name_required">Повне ім'я обов'язкове</string>
+    <string name="full_name_required">Повне ім\'я обов\'язкове</string>
     <string name="enter_confirmation_code">Введіть код підтвердження</string>
     <string name="enter_new_password">Введіть пароль</string>
     <string name="failed_credential_confirmation">Невірний код підтвердження</string>
@@ -165,13 +165,13 @@
     <string name="find">Знайти</string>
     <string name="by_id">По ID</string>
     <string name="group">Група</string>
-    <string name="id_required">адреса обов'язкова</string>
+    <string name="id_required">адреса обов\'язкова</string>
     <string name="settings">Налаштування</string>
     <string name="hint_search_tags">Пошук по тегам</string>
     <string name="contacts_section_contacts">Адресна книга</string>
     <string name="contacts_section_directory">Глобальна Директорія</string>
     <string name="no_results">Нічого не знайдено</string>
-    <string name="file_name_label">Ім'я файлу:</string>
+    <string name="file_name_label">Ім\'я файлу:</string>
     <string name="content_type_label">Тип:</string>
     <string name="image_size_label">Розмір:</string>
     <string name="must_subscribe_first">Спочатку потрібно підписатися</string>
@@ -196,7 +196,7 @@
     <string name="confirm_contact_ban">Заблокувати %1$s?</string>
     <string name="confirm_report">Заблокувати та сповістити про порушення %1$s?</string>
     <string name="terms_of_use">Угода користувача</string>
-    <string name="contact_us">Зворотній зв'язок</string>
+    <string name="contact_us">Зворотній зв\'язок</string>
     <string name="privacy_policy">Політика конфіденційності</string>
     <string name="incognito_mode_enabled">Режим інкогніто</string>
     <string name="about_the_app">Про додаток</string>
@@ -246,8 +246,8 @@
     <string name="form">Форма</string>
     <string name="accept_avatar_button_hint">Прийняти аватарку</string>
     <string name="next_button_hint">Далі</string>
-    <string name="your_name">Ваше ім'я</string>
-    <string name="description_optional">Опис (не обов'язково)</string>
+    <string name="your_name">Ваше ім\'я</string>
+    <string name="description_optional">Опис (не обов\'язково)</string>
     <string name="change_avatar">Змінити аватарку</string>
     <string name="action_edit">Редагувати</string>
     <string name="action_save">Зберегти</string>
@@ -257,7 +257,7 @@
     <string name="action_forward">Переслати</string>
     <string name="hint_search_contacts">Пошук контактів</string>
     <string name="report_channel">Поскаржитись на канал</string>
-    <string name="hint_contact_name">Ім'я контакту</string>
+    <string name="hint_contact_name">Ім\'я контакту</string>
     <string name="forward_to">Переслати …</string>
     <string name="description">Опис</string>
     <string name="group_security_explained">Налаштування безпеки, вийти з чату або поскаржитися</string>
@@ -289,10 +289,10 @@
     <string name="incoming_call">Вхідний дзвінок</string>
     <string name="voice_calls_limited">Ви не зможете приймати деякі вхідні дзвінки.</string>
     <string name="copied_to_clipboard">Скопійовано в буфер обміну</string>
-    <string name="image_preview">Прев'ю картинки</string>
+    <string name="image_preview">Прев\'ю картинки</string>
     <string name="image_download_success">Зображення збережено у галереї</string>
     <string name="in_progress_call">в процесі</string>
-    <string name="connecting_call">з'єднуємося</string>
+    <string name="connecting_call">з\'єднуємося</string>
     <string name="tags_not_found">Теґів немає. Додайте.</string>
 
     <string name="edited">змінено</string>
@@ -338,5 +338,5 @@
     <string name="scan_code">Сканувати код</string>
     <string name="hint_enter_code">Код конфігурації</string>
     <string name="code_required">Потрібен код</string>
-    <string name="configure_connection">Налаштувати з'єднання</string>
+    <string name="configure_connection">Налаштувати з\'єднання</string>
 </resources>
