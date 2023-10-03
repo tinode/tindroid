@@ -359,4 +359,5 @@
     <string name="hint_enter_code">Code de configuration</string>
     <string name="code_required">Code requis</string>
     <string name="configure_connection">Configurer la connexion</string>
+    <string name="calling_not_supported">Appel non pris en charge</string>
 </resources>

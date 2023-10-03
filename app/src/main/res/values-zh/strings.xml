@@ -360,4 +360,5 @@
     <string name="hint_enter_code">配置代码</string>
     <string name="code_required">需要代码</string>
     <string name="configure_connection">配置连接</string>
+    <string name="calling_not_supported">不支持通话</string>
 </resources>

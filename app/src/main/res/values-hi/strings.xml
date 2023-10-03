@@ -331,4 +331,5 @@
     <string name="hint_enter_code">कॉन्फ़िगरेशन कोड</string>
     <string name="code_required">कोड आवश्यक है</string>
     <string name="configure_connection">कनेक्शन कॉन्फ़िगर करें</string>
+    <string name="calling_not_supported">कॉलिंग समर्थित नहीं है</string>
 </resources>

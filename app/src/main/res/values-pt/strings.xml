@@ -360,4 +360,5 @@
     <string name="hint_enter_code">Código de configuração</string>
     <string name="code_required">Código necessário</string>
     <string name="configure_connection">Configurar conexão</string>
+    <string name="calling_not_supported">Chamada não suportada</string>
 </resources>

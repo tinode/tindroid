@@ -359,4 +359,5 @@
     <string name="hint_enter_code">配置代碼</string>
     <string name="code_required">需要代碼</string>
     <string name="configure_connection">配置連接</string>
+    <string name="calling_not_supported">不支援通話</string>
 </resources>

@@ -361,4 +361,5 @@
     <string name="hint_enter_code">Konfigurationscode</string>
     <string name="code_required">Code erforderlich</string>
     <string name="configure_connection">Verbindung konfigurieren</string>
+    <string name="calling_not_supported">Anruf wird nicht unterstützt</string>
 </resources>

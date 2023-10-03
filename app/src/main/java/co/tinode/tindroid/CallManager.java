@@ -101,9 +101,9 @@ public class CallManager {
 
     // FIXME: this has to be called on logout.
     public static void unregisterCallingAccount() {
-        CallManager shared = CallManager.getShared();
-        TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
         try {
+            CallManager shared = CallManager.getShared();
+            TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
             telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
         } catch (UnsupportedOperationException ignored) {
         }
@@ -117,7 +117,15 @@ public class CallManager {
             return;
         }
 
-        CallManager shared = CallManager.getShared();
+        CallManager shared;
+        try {
+            shared = CallManager.getShared();
+        } catch (UnsupportedOperationException ex) {
+            Toast.makeText(TindroidApp.getAppContext(), R.string.calling_not_supported, Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Unable to place call", ex);
+            return;
+        }
+
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
         if (!audioOnly) {

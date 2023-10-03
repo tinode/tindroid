@@ -339,4 +339,5 @@
     <string name="hint_enter_code">Код конфігурації</string>
     <string name="code_required">Потрібен код</string>
     <string name="configure_connection">Налаштувати з\'єднання</string>
+    <string name="calling_not_supported">Дзвінки не підтримуються</string>
 </resources>
