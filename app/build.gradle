@@ -133,7 +133,7 @@ configurations {
     configureEach {
         exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
         resolutionStrategy {
-            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10'
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
         }
     }
 }
