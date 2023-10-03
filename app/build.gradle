@@ -87,7 +87,8 @@ dependencies {
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.2.0'
-    implementation 'androidx.emoji2:emoji2:1.4.0'
+    // noinspection GradleDependency: 1.4 requires API 34
+    implementation 'androidx.emoji2:emoji2:1.3.0'
     implementation 'androidx.exifinterface:exifinterface:1.3.6'
     implementation 'androidx.fragment:fragment:1.6.1'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
@@ -131,5 +132,8 @@ dependencies {
 configurations {
     configureEach {
         exclude group: 'androidx.lifecycle', module: 'lifecycle-viewmodel-ktx'
+        resolutionStrategy {
+            force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.10'
+        }
     }
 }
