@@ -10,10 +10,10 @@ buildscript {
         classpath 'com.android.tools.build:gradle:7.4.2'
 
         // For FCM push notifications
-        classpath 'com.google.gms:google-services:4.3.15'
+        classpath 'com.google.gms:google-services:4.4.0'
 
         // Crashlytics
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.4'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.9.9'
 
         // Legal compliance: plugin to collect and display OSS licenses.
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.6'
@@ -36,13 +36,10 @@ allprojects {
         mavenCentral()
         maven { url 'https://jitpack.io' }
         maven { url 'https://maven.google.com/' }
-        flatDir {
-            dirs 'src/main/libs'
-        }
     }
 }
 
-task clean(type: Delete) {
+tasks.register('clean', Delete) {
     delete rootProject.buildDir
 }
 
