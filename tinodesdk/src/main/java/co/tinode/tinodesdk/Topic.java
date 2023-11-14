@@ -1834,7 +1834,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             Collection<Subscription<SP, SR>> subs = getSubscriptions();
             if (subs != null) {
                 for (Subscription sub : subs) {
-                    if (!sub.user.equals(me) && sub.read >= seq) {
+                    if ((sub.user == null || !sub.user.equals(me)) && sub.read >= seq) {
                         count++;
                     }
                 }
