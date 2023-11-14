@@ -1829,12 +1829,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public int msgReadCount(int seq) {
         int count = 0;
-        if (seq > 0) {
-            String me = mTinode.getMyId();
+        String me = mTinode.getMyId();
+        if (seq > 0 && me != null) {
             Collection<Subscription<SP, SR>> subs = getSubscriptions();
             if (subs != null) {
                 for (Subscription sub : subs) {
-                    if ((sub.user == null || !sub.user.equals(me)) && sub.read >= seq) {
+                    if (!me.equals(sub.user) && sub.read >= seq) {
                         count++;
                     }
                 }
