@@ -959,6 +959,9 @@ public class CallFragment extends Fragment {
 
     private void rearrangePeerViews(final Activity activity, boolean remoteVideoLive) {
         activity.runOnUiThread(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
             if (remoteVideoLive) {
                 ConstraintSet cs = new ConstraintSet();
                 cs.clone(mLayout);
@@ -979,7 +982,9 @@ public class CallFragment extends Fragment {
                 cs.setHorizontalBias(R.id.peerName, 0.5f);
                 cs.applyTo(mLayout);
                 mPeerAvatar.setVisibility(View.VISIBLE);
-                mRemoteVideoView.setVisibility(View.INVISIBLE);
+                if (mRemoteVideoView != null) {
+                    mRemoteVideoView.setVisibility(View.INVISIBLE);
+                }
             }
         });
     }

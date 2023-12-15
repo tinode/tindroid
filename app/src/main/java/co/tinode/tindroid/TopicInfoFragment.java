@@ -109,30 +109,38 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         // Set up listeners
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
-        muted.setOnCheckedChangeListener((buttonView, isChecked) ->
-                mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(() -> muted.setChecked(!isChecked));
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
+        muted.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (mTopic == null) {
+                return;
+            }
+            mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                    activity.runOnUiThread(() -> muted.setChecked(!isChecked));
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     }
-                }));
+                    return null;
+                }
+            });
+        });
 
         final SwitchCompat archived = view.findViewById(R.id.switchArchived);
-        archived.setOnCheckedChangeListener((buttonView, isChecked) ->
-                mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(() -> archived.setChecked(!isChecked));
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
+        archived.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (mTopic == null) {
+                return;
+            }
+            mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                    activity.runOnUiThread(() -> archived.setChecked(!isChecked));
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     }
-                }));
+                    return null;
+                }
+            });
+        });
 
         view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
