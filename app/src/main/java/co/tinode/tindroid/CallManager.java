@@ -62,18 +62,17 @@ public class CallManager {
             throw new IllegalStateException("Tinode ID is not set");
         }
 
-        MeTopic<VxCard> me = tinode.getMeTopic();
-        VxCard card = null;
-        if (me != null) {
-            card = (VxCard) tinode.getMeTopic().getPub();
-        }
         String accLabel = context.getString(R.string.current_user);
         Icon icon = null;
-        if (card != null) {
-            accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
-            Bitmap avatar = card.getBitmap();
-            if (avatar != null) {
-                icon = Icon.createWithBitmap(avatar);
+        MeTopic<VxCard> me = tinode.getMeTopic();
+        if (me != null) {
+            VxCard card = (VxCard) tinode.getMeTopic().getPub();
+            if (card != null) {
+                accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
+                Bitmap avatar = card.getBitmap();
+                if (avatar != null) {
+                    icon = Icon.createWithBitmap(avatar);
+                }
             }
         }
 
