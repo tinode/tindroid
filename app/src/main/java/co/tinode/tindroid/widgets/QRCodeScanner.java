@@ -68,7 +68,7 @@ public class QRCodeScanner {
                         analysisUseCase.setAnalyzer(mQRCodeAnalysisExecutor, this::scanBarcodes);
                         mCameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_BACK_CAMERA,
                                 previewUseCase, analysisUseCase);
-                    } catch (ExecutionException | InterruptedException e) {
+                    } catch (ExecutionException | IllegalArgumentException | InterruptedException e) {
                         Log.e(TAG, "Unable to initialize camera", e);
                     }
                 },

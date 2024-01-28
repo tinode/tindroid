@@ -849,7 +849,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     private void updateSelectionMode() {
         if (mSelectionMode != null) {
-            int selected = mSelectedItems.size();
+            int selected = mSelectedItems != null ? mSelectedItems.size() : 0;
             if (selected == 0) {
                 mSelectionMode.finish();
                 mSelectionMode = null;

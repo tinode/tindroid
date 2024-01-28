@@ -268,7 +268,9 @@ public class MessageActivity extends AppCompatActivity
         mSendReadReceipts = pref.getBoolean(Const.PREF_READ_RCPT, true);
         mSendTypingNotifications = pref.getBoolean(Const.PREF_TYPING_NOTIF, true);
 
-        BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+        if (mTopic != null) {
+            BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+        }
     }
 
     @Override

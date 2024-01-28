@@ -11,6 +11,7 @@ import android.util.SparseArray;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import androidx.annotation.NonNull;
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Acs;
@@ -49,6 +50,7 @@ public class BaseDb extends SQLiteOpenHelper {
      *
      * @return BaseDb instance
      */
+    @NonNull
     public static BaseDb getInstance() {
         if (sInstance == null) {
             sInstance = new BaseDb(TindroidApp.getAppContext());
