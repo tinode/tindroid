@@ -58,6 +58,10 @@ public class CallManager {
 
         Tinode tinode = Cache.getTinode();
         String myID = tinode.getMyId();
+        if (TextUtils.isEmpty(myID)) {
+            throw new IllegalStateException("Tinode ID is not set");
+        }
+
         MeTopic<VxCard> me = tinode.getMeTopic();
         VxCard card = null;
         if (me != null) {
@@ -105,7 +109,7 @@ public class CallManager {
             CallManager shared = CallManager.getShared();
             TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
             telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
-        } catch (UnsupportedOperationException ignored) {
+        } catch (IllegalStateException | UnsupportedOperationException ignored) {
         }
     }
 
