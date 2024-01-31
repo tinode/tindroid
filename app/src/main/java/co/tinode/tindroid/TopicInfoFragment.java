@@ -1,7 +1,7 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
-import android.app.Activity;
+import android.annotation.SuppressLint;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -51,7 +51,6 @@ import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -148,6 +147,21 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
+        });
+
+        view.findViewById(R.id.displayQRCode).setOnClickListener(v -> {
+            if (mTopic == null) {
+                return;
+            }
+            final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            @SuppressLint("InflateParams") final View codeView =
+                    LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_qrcode, null);
+            ImageView qrCodeImageView = codeView.findViewById(R.id.qrCodeImageView);
+            UiUtils.generateQRCode(qrCodeImageView, UiUtils.TOPIC_URI_PREFIX + mTopic.getName());
+            builder.setView(codeView).setTitle(R.string.scan_code);
+            builder
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         });
 
         view.findViewById(R.id.permissions).setOnClickListener(v ->

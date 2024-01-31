@@ -3,8 +3,6 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -24,18 +22,10 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.fragment.app.Fragment;
 
 import co.tinode.tindroid.widgets.QRCodeScanner;
-import io.nayuki.qrcodegen.QrCode;
 
 public class AddByIDFragment extends Fragment {
-    private static final String TOPIC_URI_PREFIX = "tinode:topic/";
     private static final int FRAME_QRCODE = 0;
     private static final int FRAME_CAMERA = 1;
-
-    private static final int QRCODE_SCALE = 10;
-    private static final int QRCODE_BORDER = 1;
-
-    private static final int QRCODE_FG_COLOR = Color.BLACK;
-    private static final int QRCODE_BG_COLOR = Color.WHITE;
 
     private QRCodeScanner mQrScanner = null;
 
@@ -74,7 +64,7 @@ public class AddByIDFragment extends Fragment {
         final String myID = Cache.getTinode().getMyId();
         final ViewFlipper qrFrame = view.findViewById(R.id.qrFrame);
         final ImageView qrCodeImageView = view.findViewById(R.id.qrCodeImageView);
-        generateQRCode(qrCodeImageView, TOPIC_URI_PREFIX + myID);
+        UiUtils.generateQRCode(qrCodeImageView, UiUtils.TOPIC_URI_PREFIX + myID);
 
         ColorStateList buttonColor = new ColorStateList(
                 new int[][]{
@@ -119,7 +109,7 @@ public class AddByIDFragment extends Fragment {
             qrFrame.setDisplayedChild(FRAME_CAMERA);
 
             if (mQrScanner == null) {
-                mQrScanner = new QRCodeScanner(activity, TOPIC_URI_PREFIX, this::goToTopic);
+                mQrScanner = new QRCodeScanner(activity, UiUtils.TOPIC_URI_PREFIX, this::goToTopic);
             }
 
             if (!UiUtils.isPermissionGranted(activity, Manifest.permission.CAMERA)) {
@@ -136,22 +126,5 @@ public class AddByIDFragment extends Fragment {
         it.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         it.putExtra(Const.INTENT_EXTRA_TOPIC, id);
         startActivity(it);
-    }
-
-    private void generateQRCode(ImageView view, String uri) {
-        QrCode qr = QrCode.encodeText(uri, QrCode.Ecc.LOW);
-        view.setImageBitmap(toImage(qr));
-    }
-
-    private static Bitmap toImage(QrCode qr) {
-        Bitmap result = Bitmap.createBitmap((qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE,
-            (qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE, Bitmap.Config.ARGB_8888);
-        for (int y = 0; y < result.getHeight(); y++) {
-            for (int x = 0; x < result.getWidth(); x++) {
-                boolean color = qr.getModule(x / QRCODE_SCALE - QRCODE_BORDER, y / QRCODE_SCALE - QRCODE_BORDER);
-                result.setPixel(x, y, color ? QRCODE_FG_COLOR : QRCODE_BG_COLOR);
-            }
-        }
-        return result;
     }
 }

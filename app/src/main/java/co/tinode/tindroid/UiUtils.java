@@ -17,6 +17,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
@@ -82,7 +83,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
-import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
@@ -107,6 +107,7 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+import io.nayuki.qrcodegen.QrCode;
 
 /**
  * Static utilities for UI support.
@@ -132,6 +133,12 @@ public class UiUtils {
     private static String sVisibleTopic = null;
 
     private static final String PREF_FIRST_RUN = "firstRun";
+
+    static final String TOPIC_URI_PREFIX = "tinode:topic/";
+    private static final int QRCODE_BORDER = 1;
+    private static final int QRCODE_SCALE = 10;
+    private static final int QRCODE_FG_COLOR = Color.BLACK;
+    private static final int QRCODE_BG_COLOR = Color.WHITE;
 
     public enum MsgAction {
         NONE, REPLY, FORWARD, EDIT
@@ -1526,6 +1533,21 @@ public class UiUtils {
     static void doneAppFirstRun(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         prefs.edit().putBoolean(PREF_FIRST_RUN, false).apply();
+    }
+
+    static void generateQRCode(ImageView view, String uri) {
+        QrCode qr = QrCode.encodeText(uri, QrCode.Ecc.LOW);
+
+        Bitmap result = Bitmap.createBitmap((qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE,
+                (qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE, Bitmap.Config.ARGB_8888);
+        for (int y = 0; y < result.getHeight(); y++) {
+            for (int x = 0; x < result.getWidth(); x++) {
+                boolean color = qr.getModule(x / QRCODE_SCALE - QRCODE_BORDER, y / QRCODE_SCALE - QRCODE_BORDER);
+                result.setPixel(x, y, color ? QRCODE_FG_COLOR : QRCODE_BG_COLOR);
+            }
+        }
+
+        view.setImageBitmap(result);
     }
 
     interface ProgressIndicator {

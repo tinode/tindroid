@@ -89,14 +89,24 @@
                 android:layout_weight="1"
                 tools:text="grpAbCd345627" />
 
-            <androidx.appcompat.widget.AppCompatButton
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/displayQRCode"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/display_code"
+                android:drawablePadding="4dp"
+                app:srcCompat="@drawable/ic_qr_code"
+                app:drawableTint="?android:textColorPrimary" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/buttonCopyID"
                 style="?attr/buttonBarButtonStyle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/action_copy"
-                android:drawablePadding="4sp"
-                app:drawableStartCompat="@drawable/ic_copy"
+                android:drawablePadding="4dp"
+                app:srcCompat="@drawable/ic_copy"
                 app:drawableTint="?android:textColorPrimary" />
         </LinearLayout>
 
