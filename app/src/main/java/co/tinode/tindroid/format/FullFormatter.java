@@ -33,7 +33,6 @@ import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
-import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 
@@ -230,7 +229,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Object val = data.get("preview");
         byte[] preview = null;
         if (val instanceof String) {
-            preview = Base64.decode((String) val, Base64.DEFAULT);
+            try {
+                preview = Base64.decode((String) val, Base64.DEFAULT);
+            } catch (IllegalArgumentException ignored) {}
         }
 
         if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
@@ -390,9 +391,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 boolean usePreviewAsMainImage = false;
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                bmpPreview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                byte[] bits = UiUtils.decodeByteArray(val);
+                if (bits != null) {
+                    bmpPreview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                }
                 if (bmpPreview != null) {
                     // Check if the inline bitmap is big enough to be used as primary image.
                     int previewWidth = bmpPreview.getWidth();
@@ -658,9 +660,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         int byteCount = getIntVal("size", data);
         if (byteCount <= 0) {
-            Object val = data.get("val");
-            byte[] bits = (val instanceof String) ?
-                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+            byte[] bits = UiUtils.decodeByteArray(data.get("val"));
             if (bits != null) {
                 byteCount = bits.length;
             }

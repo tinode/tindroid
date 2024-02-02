@@ -1457,11 +1457,20 @@ public class UiUtils {
         return url != null ? Uri.parse(url.toString()) : null;
     }
 
+    static public @Nullable byte[] decodeByteArray(Object val) {
+        byte[] bits = null;
+        if (val instanceof String) {
+            try {
+                bits = Base64.decode((String) val, Base64.DEFAULT);
+            } catch (IllegalArgumentException ignored) {}
+        } else {
+            bits = val instanceof byte[] ? (byte[]) val : null;
+        }
+        return bits;
+    }
+
     static public @Nullable byte[] getByteArray(String name, @NotNull Map<String, Object> data) {
-        Object val = data.get(name);
-        return val instanceof String ?
-                Base64.decode((String) val, Base64.DEFAULT) :
-                val instanceof byte[] ? (byte[]) val : null;
+        return decodeByteArray(data.get(name));
     }
 
     static public @NotNull List<String> getRequiredCredMethods(@NotNull Tinode tinode, @NotNull String forAuthLevel) {

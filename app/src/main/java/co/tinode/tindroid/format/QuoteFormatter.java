@@ -92,9 +92,11 @@ public class QuoteFormatter extends PreviewFormatter {
             try {
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                byte[] bits = UiUtils.decodeByteArray(val);
+                Bitmap bmp = null;
+                if (bits != null) {
+                    bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                }
                 if (bmp != null) {
                     if (dim.square) {
                         thumbnail = new BitmapDrawable(res,

@@ -143,8 +143,13 @@ public class MediaControl {
                 return false;
             }
         } else if ((val = data.get("val")) instanceof String) {
-            byte[] source = Base64.decode((String) val, Base64.DEFAULT);
-            mAudioPlayer.setDataSource(new MemoryAudioSource(source));
+            try {
+                byte[] source = Base64.decode((String) val, Base64.DEFAULT);
+                mAudioPlayer.setDataSource(new MemoryAudioSource(source));
+            } catch (IllegalArgumentException ex) {
+                Log.w(TAG, "Unable to play audio: invalid data");
+                Toast.makeText(mContext, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
+            }
         } else {
             mAudioControlCallback.reset();
             Log.w(TAG, "Unable to play audio: missing data");
