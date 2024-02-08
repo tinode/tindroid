@@ -45,3 +45,7 @@
 
 # Apparently mangling breaks references to material resources.
 -keep class com.google.android.material.R$drawable { *; }
+
+##---------------Begin: proguard configuration for Pusher Java Client  ----------
+-dontwarn org.slf4j.impl.StaticLoggerBinder
+##---------------End: proguard configuration for Pusher Java Client  ----------
