@@ -103,4 +103,17 @@
         <item name="cornerSizeBottomRight">0dp</item>
         <item name="cornerSizeBottomLeft">0dp</item>
     </style>
+
+    <style name="Theme.App.Starting" parent="Theme.SplashScreen">
+        <!-- Splash screen background. -->
+        <item name="windowSplashScreenBackground">@color/colorSplashScreenBackground</item>
+
+        <!-- Drawable or an animated drawable. Required. -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/logo_splash</item>
+        <!-- Required for animated icons. -->
+        <item name="windowSplashScreenAnimationDuration">200</item>
+
+        <!-- The theme of the Activity that directly follows the splash screen. Required. -->
+        <item name="postSplashScreenTheme">@style/AppTheme</item>
+    </style>
 </resources>

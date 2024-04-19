@@ -238,6 +238,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return def;
     }
 
+    /** @noinspection SameParameterValue*/
     protected static boolean getBooleanVal(String name, Map<String, Object> data) {
         Object tmp;
         if ((tmp = data.get(name)) instanceof Boolean) {

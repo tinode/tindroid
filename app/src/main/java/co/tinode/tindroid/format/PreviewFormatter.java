@@ -73,7 +73,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
 
     @Override
     protected SpannableStringBuilder handleLink(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
-        return assignStyle(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent)), content);
+        return assignStyle(new ForegroundColorSpan(ctx.getResources().getColor(R.color.colorAccent, null)), content);
     }
 
     @Override
@@ -91,7 +91,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
         if (icon != null) {
             Resources res = ctx.getResources();
-            icon.setTint(res.getColor(R.color.colorDarkGray));
+            icon.setTint(res.getColor(R.color.colorDarkGray, null));
             icon.setBounds(0, 0, (int) (mFontSize * DEFAULT_ICON_SCALE), (int) (mFontSize * DEFAULT_ICON_SCALE));
             node = new SpannableStringBuilder(" ");
             node.setSpan(new ImageSpan(icon, ImageSpan.ALIGN_BOTTOM), 0, node.length(),

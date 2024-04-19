@@ -263,19 +263,19 @@ public class MediaControl {
         }
 
         @Override
-        public int readAt(long position, byte[] destination, int offset, int size) throws IOException {
+        public int readAt(long position, byte[] destination, int offset, int size) {
             size = Math.min(mData.length - (int) position, size);
             System.arraycopy(mData, (int) position, destination, offset, size);
             return size;
         }
 
         @Override
-        public long getSize() throws IOException {
+        public long getSize() {
             return mData.length;
         }
 
         @Override
-        public void close() throws IOException {
+        public void close() {
             // Do nothing.
         }
     }

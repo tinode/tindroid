@@ -240,7 +240,7 @@ public class BaseDb extends SQLiteOpenHelper {
 
     static String[] deserializeStringArray(String str) {
         String[] result = null;
-        if (str != null && str.length() > 0) {
+        if (str != null && !str.isEmpty()) {
             result = str.split(",");
         }
         return result;
@@ -363,7 +363,7 @@ public class BaseDb extends SQLiteOpenHelper {
             }
         }
 
-        public int value;
+        public final int value;
 
         Status(int v) {
             value = v;

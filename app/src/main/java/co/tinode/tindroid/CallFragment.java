@@ -202,7 +202,7 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-        AudioManager audioManager = (AudioManager) getContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(!mAudioOnly);
         mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);

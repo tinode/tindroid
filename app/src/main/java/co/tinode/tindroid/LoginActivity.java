@@ -123,7 +123,7 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
             }
         }
         final String finalMessage = message +
-                (!TextUtils.isEmpty(errMessage) ? (": " + errMessage + "") : "");
+                (!TextUtils.isEmpty(errMessage) ? (": " + errMessage) : "");
         Log.i(TAG, finalMessage, err);
 
         runOnUiThread(() -> {

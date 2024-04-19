@@ -50,13 +50,11 @@ public class Utils {
         // Let's find out if we already have a suitable account. If one is not found, go to full login. It will create
         // an account with suitable name.
         final Account[] availableAccounts = accountManager.getAccountsByType(ACCOUNT_TYPE);
-        if (availableAccounts.length > 0) {
-            // Found some accounts, let's find the one with the right name
-            for (Account acc : availableAccounts) {
-                if (uid.equals(acc.name)) {
-                    account = acc;
-                    break;
-                }
+        // Found some accounts, let's find the one with the right name
+        for (Account acc : availableAccounts) {
+            if (uid.equals(acc.name)) {
+                account = acc;
+                break;
             }
         }
 

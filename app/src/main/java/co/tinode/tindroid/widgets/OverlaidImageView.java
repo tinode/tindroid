@@ -23,7 +23,7 @@ public class OverlaidImageView extends AppCompatImageView {
 
         mBackgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         mBackgroundPaint.setStyle(Paint.Style.FILL);
-        mBackgroundPaint.setColor(getResources().getColor(R.color.colorImagePreviewBg));
+        mBackgroundPaint.setColor(getResources().getColor(R.color.colorImagePreviewBg, null));
         mBackgroundPaint.setAlpha(0xCC);
 
         mClipPath = new Path();

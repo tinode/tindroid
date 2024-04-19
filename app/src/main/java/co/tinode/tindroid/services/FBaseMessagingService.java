@@ -114,7 +114,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         NotificationCompat.Builder builder;
 
         // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0) {
+        if (!remoteMessage.getData().isEmpty()) {
             Map<String, String> data = remoteMessage.getData();
 
             // Check notification type: message, subscription.
@@ -320,7 +320,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private void handleCallNotification(@NonNull String webrtc, boolean isMe, @NonNull Map<String, String> data) {
         String seqStr = data.get("seq");
         String topicName = data.get("topic");
-        boolean audioOnly = Boolean.parseBoolean(data.get("aonly"));
         try {
             int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
             if (seq <= 0) {

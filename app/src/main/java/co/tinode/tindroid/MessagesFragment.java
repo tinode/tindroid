@@ -1236,7 +1236,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
 
         String message = inputField.getText().toString().trim();
-        if (!message.equals("")) {
+        if (!message.isEmpty()) {
             Drafty msg = Drafty.parse(message);
             boolean isReplacement = false;
             if (mTextAction == UiUtils.MsgAction.EDIT) {

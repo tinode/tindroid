@@ -29,7 +29,6 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
@@ -158,7 +157,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         mPosterView = view.findViewById(R.id.poster);
         mProgressView = view.findViewById(R.id.loading);
 
-        mVideoView = (StyledPlayerView) view.findViewById(R.id.video);
+        mVideoView = view.findViewById(R.id.video);
         mVideoView.setPlayer(mExoPlayer);
 
         // Send message on button click.
@@ -176,8 +175,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((MenuHost) requireActivity()).addMenuProvider(this,
-                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        ((MenuHost) requireActivity()).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -300,7 +298,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_video);
-                filename += "" + (System.currentTimeMillis() % 10000);
+                filename += Long.toString(System.currentTimeMillis() % 10000);
             }
 
             Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);

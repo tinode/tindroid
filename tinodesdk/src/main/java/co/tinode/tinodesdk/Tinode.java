@@ -372,7 +372,7 @@ public class Tinode {
      */
     public static Map<String, Object> headersForReply(final int seq) {
         Map<String, Object> head = new HashMap<>();
-        head.put("reply", "" + seq);
+        head.put("reply", Integer.toString(seq));
         return head;
     }
 
@@ -684,7 +684,7 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked")
     private void dispatchPacket(String message) throws Exception {
-        if (message == null || message.equals(""))
+        if (message == null || message.isEmpty())
             return;
 
         Log.d(TAG, "in: " + message);

@@ -19,10 +19,10 @@ public class MsgClientSetSerializer extends StdSerializer<MsgClientSet<?,?>> {
     @Override
     public void serialize(MsgClientSet<?,?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
-        if (value.id != null && value.id.length() > 0) {
+        if (value.id != null && !value.id.isEmpty()) {
             gen.writeStringField("id", value.id);
         }
-        if (value.topic != null && value.topic.length() > 0) {
+        if (value.topic != null && !value.topic.isEmpty()) {
             gen.writeStringField("topic", value.topic);
         }
 

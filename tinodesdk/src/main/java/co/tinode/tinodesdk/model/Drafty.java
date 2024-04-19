@@ -210,7 +210,7 @@ public class Drafty implements Serializable {
     // ranges from markup-ed offsets to plain text offsets.
     private static List<Span> chunkify(String line, int start, int end, List<Span> spans) {
 
-        if (spans == null || spans.size() == 0) {
+        if (spans == null || spans.isEmpty()) {
             return null;
         }
 
@@ -310,7 +310,7 @@ public class Drafty implements Serializable {
             }
         }
 
-        if (ranges.size() > 0) {
+        if (!ranges.isEmpty()) {
             block.fmt = ranges;
         }
 
@@ -406,7 +406,7 @@ public class Drafty implements Serializable {
         StringBuilder text = new StringBuilder();
         List<Style> fmt = new ArrayList<>();
         // Merge lines and save line breaks as BR inline formatting.
-        if (blks.size() > 0) {
+        if (!blks.isEmpty()) {
             Block b = blks.get(0);
             if (b.txt != null) {
                 text.append(b.txt);
@@ -436,8 +436,8 @@ public class Drafty implements Serializable {
         }
 
         return new Drafty(text.toString(),
-                fmt.size() > 0 ? fmt.toArray(new Style[0]) : null,
-                refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
+                !fmt.isEmpty() ? fmt.toArray(new Style[0]) : null,
+                !refs.isEmpty() ? refs.toArray(new Entity[0]) : null);
     }
 
     // Check if Drafty has at least one entity of the given type.
@@ -492,7 +492,7 @@ public class Drafty implements Serializable {
                 }
             }
         }
-        return result.size() > 0 ? result.toArray(new String[]{}) : null;
+        return !result.isEmpty() ? result.toArray(new String[]{}) : null;
     }
 
     // Ensure Drafty has enough space to add 'count' formatting styles.
@@ -828,7 +828,7 @@ public class Drafty implements Serializable {
                 int at = thatst.at >= 0 ? thatst.at + len : -1;
                 Style style = new Style(null, at, thatst.len);
                 int key = thatst.key != null ? thatst.key : 0;
-                if (thatst.tp != null && !thatst.tp.equals("")) {
+                if (thatst.tp != null && !thatst.tp.isEmpty()) {
                     style.tp = thatst.tp;
                 } else if (that.ent != null && that.ent.length > key) {
                     style.key = ent_idx;
@@ -1110,7 +1110,7 @@ public class Drafty implements Serializable {
                 // else: overlapping subspan, ignore it.
             }
 
-            if (subspans.size() == 0) {
+            if (subspans.isEmpty()) {
                 subspans = null;
             }
 
@@ -1237,7 +1237,7 @@ public class Drafty implements Serializable {
         }
 
         // Sort spans first by start index (asc) then by length (desc).
-        Collections.sort(spans, (a, b) -> {
+        spans.sort((a, b) -> {
             int diff = a.start - b.start;
             if (diff != 0) {
                 return diff;
@@ -1250,7 +1250,7 @@ public class Drafty implements Serializable {
         });
 
         // Move attachments to the end of the list.
-        if (attachments.size() > 0) {
+        if (!attachments.isEmpty()) {
             spans.addAll(attachments);
         }
 
@@ -1595,7 +1595,7 @@ public class Drafty implements Serializable {
         }
 
         boolean isUnstyled() {
-            return tp == null || "".equals(tp);
+            return tp == null || tp.isEmpty();
         }
         @NotNull
         @Override
@@ -1684,7 +1684,7 @@ public class Drafty implements Serializable {
 
     // Optionally insert nullable value into entity data: null values or empty strings are not inserted.
     private static void addOrSkip(@NotNull Map<String,Object> data, @NotNull String key, @Nullable String value) {
-        if (value != null && value.length() > 0) {
+        if (value != null && !value.isEmpty()) {
             data.put(key, value);
         }
     }
@@ -1859,7 +1859,7 @@ public class Drafty implements Serializable {
         }
 
         public boolean isUnstyled() {
-            return tp == null || "".equals(tp);
+            return tp == null || tp.isEmpty();
         }
 
         public CharSequence getText() {
@@ -1916,7 +1916,7 @@ public class Drafty implements Serializable {
             } else if (isUnstyled()) {
                 if (text != null) {
                     text = ltrim(text);
-                } else if (children != null && children.size() > 0) {
+                } else if (children != null && !children.isEmpty()) {
                     children.get(0).lTrim();
                 }
             }
@@ -2044,7 +2044,7 @@ public class Drafty implements Serializable {
         }
 
         boolean isUnstyled() {
-            return type == null || "".equals(type);
+            return type == null || type.isEmpty();
         }
         static boolean isVoid(final String tp) {
             return Arrays.binarySearch(VOID_STYLES, tp) >= 0;
@@ -2115,9 +2115,9 @@ public class Drafty implements Serializable {
             Drafty doc = txt != null ?
                     Drafty.fromPlainText(txt.toString()) : new Drafty();
 
-            if (fmt != null && fmt.size() > 0) {
+            if (fmt != null && !fmt.isEmpty()) {
                 doc.fmt = fmt.toArray(new Style[]{});
-                if (ent != null && ent.size() > 0) {
+                if (ent != null && !ent.isEmpty()) {
                     doc.ent = ent.toArray(new Entity[]{});
                 }
             }

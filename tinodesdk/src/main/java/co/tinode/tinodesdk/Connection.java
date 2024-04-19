@@ -77,7 +77,7 @@ public class Connection extends WebSocketClient {
 
     private static URI normalizeEndpoint(URI endpoint) {
         String path = endpoint.getPath();
-        if (path.equals("")) {
+        if (path.isEmpty()) {
             path = "/";
         } else if (path.lastIndexOf("/") != path.length() - 1) {
             path += "/";

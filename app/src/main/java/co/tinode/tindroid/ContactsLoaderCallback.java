@@ -15,8 +15,6 @@ import co.tinode.tindroid.account.Utils;
 class ContactsLoaderCallback implements LoaderManager.LoaderCallbacks<Cursor> {
     static final String ARG_SEARCH_TERM = "searchTerm";
 
-    // private static final String TAG = "ContactsLoaderCallback";
-
     private final int mID;
     private final Context mContext;
     private final CursorSwapper mAdapter;

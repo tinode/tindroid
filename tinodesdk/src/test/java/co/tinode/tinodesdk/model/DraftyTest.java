@@ -78,8 +78,8 @@ public class DraftyTest {
         };
         assertEquals("Parse 6 has failed", expected, actual);
 
-        // String 7: Unicode emoji UTF32. 👩🏽‍✈ is a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
-        // 👩🏽‍✈ is composed as 👩 female 🏽 fitzpatrick skin tone ‍ ZWJ ✈ airplane.
+        // String 7: Unicode emoji UTF32. 👩🏽‍✈ is a medium-dark-skinned female pilot, 4 code points:
+        // 👩🏽‍✈ == 👩 female + 🏽 fitzpatrick skin tone + ‍ ZWJ + ✈ airplane.
         // This test is expected to fail until compound emoji is supported.
         actual = Drafty.parse("😀 *b1👩🏽‍✈️b2* smile");
         expected = new Drafty("😀 b1👩🏽‍✈️b2 smile");
@@ -304,8 +304,8 @@ public class DraftyTest {
         expected = Drafty.fromPlainText("a😀c😀…");
         assertEquals("Shorten Emoji 1 has failed", expected, actual);
 
-        // Emoji 2. 👩🏽‍✈️ is a medium-dark-skinned female pilot, 4 code points: 👩🏽‍✈
-        // 👩 female 🏽 fitzpatrick skin tone ‍ ZWJ ✈ airplane.
+        // Emoji 2. 👩🏽‍✈️ is a medium-dark-skinned female pilot, 4 code points:
+        // 👩🏽‍✈ == 👩 female + 🏽 fitzpatrick skin tone + ‍ ZWJ + ✈ airplane.
         // This test is expected to fail until composed emoji is supported.
         src = Drafty.fromPlainText("😀 b1👩🏽‍✈️b2 smile");
         actual = src.shorten(6, false);

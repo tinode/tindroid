@@ -100,12 +100,11 @@ public class TheCard implements Serializable, Mergeable {
     }
 
     private static boolean merge(@NotNull Field[] fields, @NotNull Mergeable dst, Mergeable src) {
-        boolean updated = false;
-
         if (src == null) {
-            return updated;
+            return false;
         }
 
+        boolean updated = false;
         try {
             for (Field f : fields) {
                 Object sf = f.get(src);

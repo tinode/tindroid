@@ -29,8 +29,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.AppCompatImageView;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -41,7 +43,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * Topic general info fragment: p2p or a group topic.
  */
-public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPreviewer,
+public class TopicGeneralFragment extends Fragment implements MenuProvider, UiUtils.AvatarPreviewer,
         MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicGeneralFragment";
@@ -76,22 +78,15 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final FragmentActivity activity = requireActivity();
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
         toolbar.setSubtitle(null);
         toolbar.setLogo(null);
+
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         view.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
             if (activity.isFinishing() || activity.isDestroyed()) {
@@ -247,15 +242,14 @@ public class TopicGeneralFragment extends Fragment implements UiUtils.AvatarPrev
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         inflater.inflate(R.menu.menu_save, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        if (id == R.id.action_save) {
+        if (id == R.id.action_save && mTopic != null) {
             final FragmentActivity activity = getActivity();
             if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                 return false;

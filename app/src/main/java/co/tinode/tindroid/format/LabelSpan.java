@@ -40,12 +40,12 @@ public class LabelSpan extends ReplacementSpan {
         mPaintFrame = new Paint();
         mPaintFrame.setStyle(Paint.Style.STROKE);
         mPaintFrame.setAntiAlias(true);
-        mPaintFrame.setColor(ctx.getResources().getColor(R.color.colorChipBorder));
+        mPaintFrame.setColor(ctx.getResources().getColor(R.color.colorChipBorder, null));
 
         mPaintBackground = new Paint();
         mPaintBackground.setStyle(Paint.Style.FILL);
         mPaintBackground.setAntiAlias(true);
-        mPaintBackground.setColor(ctx.getResources().getColor(R.color.colorChipBackground));
+        mPaintBackground.setColor(ctx.getResources().getColor(R.color.colorChipBackground, null));
     }
 
     @Override

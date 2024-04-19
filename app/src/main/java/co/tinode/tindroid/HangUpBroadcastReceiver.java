@@ -4,7 +4,6 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.util.Log;
 
 import co.tinode.tinodesdk.Topic;
 
@@ -12,8 +11,6 @@ import co.tinode.tinodesdk.Topic;
  * Receives broadcasts to hang up or decline video/audio call.
  */
 public class HangUpBroadcastReceiver extends BroadcastReceiver {
-    private static final String TAG = "HangUpBroadcastReceiver";
-
     @Override
     public void onReceive(Context context, Intent intent) {
         // Clear incoming call notification.

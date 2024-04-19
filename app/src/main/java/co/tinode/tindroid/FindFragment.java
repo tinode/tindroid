@@ -27,9 +27,12 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ShareActionProvider;
+import androidx.core.view.MenuHost;
 import androidx.core.view.MenuItemCompat;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import androidx.loader.app.LoaderManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,7 +51,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * FindFragment contains a RecyclerView with results from searching local Contacts and remote 'fnd' topic.
  */
-public class FindFragment extends Fragment implements UiUtils.ProgressIndicator {
+public class FindFragment extends Fragment implements UiUtils.ProgressIndicator, MenuProvider {
 
     private static final String TAG = "FindFragment";
 
@@ -103,17 +106,17 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
-
         return inflater.inflate(R.layout.fragment_contacts, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View fragment, Bundle savedInstanceState) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final FragmentActivity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
+
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         RecyclerView rv = fragment.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
@@ -205,7 +208,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         menu.clear();
         inflater.inflate(R.menu.menu_contacts, menu);
 
@@ -228,6 +231,9 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
         // Retrieves the SearchView from the search menu item
         final SearchView searchView = (SearchView) searchItem.getActionView();
+        if (searchView == null) {
+            return;
+        }
         searchView.setQueryHint(getResources().getString(R.string.hint_search_tags));
         // Assign searchable info to SearchView
         searchView.setSearchableInfo(searchManager.getSearchableInfo(activity.getComponentName()));
@@ -266,7 +272,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
 
         searchItem.setOnActionExpandListener(new MenuItem.OnActionExpandListener() {
             @Override
-            public boolean onMenuItemActionExpand(MenuItem menuItem) {
+            public boolean onMenuItemActionExpand(@NonNull MenuItem menuItem) {
                 searchView.setIconified(false);
                 searchView.requestFocus();
                 searchView.requestFocusFromTouch();
@@ -274,7 +280,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
             }
 
             @Override
-            public boolean onMenuItemActionCollapse(MenuItem menuItem) {
+            public boolean onMenuItemActionCollapse(@NonNull MenuItem menuItem) {
                 searchView.clearFocus();
                 mSearchTerm = null;
                 return true;
@@ -300,7 +306,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator 
     }
 
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return true;

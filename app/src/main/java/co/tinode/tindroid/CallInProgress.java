@@ -21,7 +21,7 @@ public class CallInProgress {
     // True if this call is established and connected between this client and the peer.
     private boolean mConnected = false;
     // True if the call is outgoing.
-    private boolean mIsOutgoing = false;
+    private final boolean mIsOutgoing;
 
     public CallInProgress(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         mTopic = topic;

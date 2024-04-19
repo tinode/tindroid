@@ -75,9 +75,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     private static final int MIN_AUDIO_PREVIEW_LENGTH = 16;
 
-    // Size of the [PLAY] control in video in dip.
-    private static final int PLAY_CONTROL_SIZE = 42;
-
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
 
@@ -610,7 +607,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     @Override
     protected SpannableStringBuilder handleForm(Context ctx, List<SpannableStringBuilder> content,
                                                 Map<String, Object> data) {
-        if (content == null || content.size() == 0) {
+        if (content == null || content.isEmpty()) {
             return null;
         }
 

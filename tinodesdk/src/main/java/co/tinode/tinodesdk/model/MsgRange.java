@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
@@ -94,7 +93,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
      * Convert List of IDs to multiple ranges.
      */
     public static MsgRange[] listToRanges(final List<Integer> list) {
-        if (list == null || list.size() == 0) {
+        if (list == null || list.isEmpty()) {
             return null;
         }
 

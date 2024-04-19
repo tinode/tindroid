@@ -282,7 +282,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
     }
 
-    static abstract class ViewHolder extends RecyclerView.ViewHolder {
+    public static abstract class ViewHolder extends RecyclerView.ViewHolder {
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -291,7 +291,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         abstract void bind(int position, Object data);
     }
 
-    class ViewHolderItem extends ViewHolder {
+    public class ViewHolderItem extends ViewHolder {
         final TextView name;
         final TextView contactPriv;
         final ImageView avatar;

@@ -66,7 +66,7 @@ public class WaveDrawable extends Drawable implements Runnable {
 
     private Rect mSize = new Rect();
     // Padding on the left.
-    private int mLeftPadding = 0;
+    private final int mLeftPadding;
 
     private CompletionListener mCompletionListener = null;
 

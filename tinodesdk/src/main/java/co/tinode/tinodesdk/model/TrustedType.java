@@ -34,9 +34,7 @@ public class TrustedType extends HashMap<String,Object> implements Mergeable, Se
             return false;
         }
         TrustedType apt = (TrustedType) another;
-        for (Entry<String, Object> e : apt.entrySet()) {
-            put(e.getKey(), e.getValue());
-        }
+        this.putAll(apt);
         return apt.size() > 0;
     }
 }

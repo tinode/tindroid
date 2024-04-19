@@ -56,10 +56,10 @@ public class LetterTileDrawable extends Drawable {
         if (sColorsLight == null) {
             sColorsLight = res.obtainTypedArray(R.array.letter_tile_colors_light);
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sDefaultColorLight = res.getColor(R.color.letter_tile_bg_color_light);
-            sDefaultColorDark = res.getColor(R.color.letter_tile_bg_color_dark);
-            sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light);
-            sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark);
+            sDefaultColorLight = res.getColor(R.color.letter_tile_bg_color_light, null);
+            sDefaultColorDark = res.getColor(R.color.letter_tile_bg_color_dark, null);
+            sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light, null);
+            sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark, null);
             sLetterToTileRatio = 0.75f;
             DEFAULT_PERSON_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_person_white);
             DEFAULT_GROUP_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_group_white);
@@ -69,7 +69,7 @@ public class LetterTileDrawable extends Drawable {
         mPaint = new Paint();
         mPaint.setFilterBitmap(true);
         mPaint.setDither(true);
-        mColor = res.getColor(R.color.grey);
+        mColor = res.getColor(R.color.grey, null);
     }
 
     /**
@@ -193,7 +193,7 @@ public class LetterTileDrawable extends Drawable {
 
     public LetterTileDrawable setLetterAndColor(final String displayName, final String identifier,
                                                 final boolean disabled) {
-        if (displayName != null && displayName.length() > 0) {
+        if (displayName != null && !displayName.isEmpty()) {
             mLetter = Character.toUpperCase(displayName.charAt(0));
         } else {
             mLetter = null;

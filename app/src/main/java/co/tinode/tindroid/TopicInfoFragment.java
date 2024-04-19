@@ -39,8 +39,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -58,7 +60,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Topic Info fragment: p2p or a group topic.
  */
-public class TopicInfoFragment extends Fragment implements MessageActivity.DataSetChangeListener {
+public class TopicInfoFragment extends Fragment implements MenuProvider, MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicInfoFragment";
 
@@ -80,21 +82,15 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final FragmentActivity activity = requireActivity();
+
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
         toolbar.setSubtitle(null);
         toolbar.setLogo(null);
+
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         mMembersAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
@@ -438,18 +434,17 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_edit, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_edit) {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            FragmentActivity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
                 return false;
             }
 

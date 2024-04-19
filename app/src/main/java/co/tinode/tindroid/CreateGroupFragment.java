@@ -90,16 +90,13 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        setHasOptionsMenu(true);
-
         return inflater.inflate(R.layout.fragment_add_group, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull final View view, Bundle savedInstance) {
-
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
+        final FragmentActivity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 

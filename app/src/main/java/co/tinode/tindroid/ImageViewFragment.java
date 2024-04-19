@@ -107,7 +107,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
 
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
+            public boolean onScroll(MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -304,7 +304,6 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                     @Override
                     public void onSuccess() {
                         mRemoteState = RemoteState.SUCCESS;
-                        Log.i(TAG, "Remote load: success" + ref);
                         Activity activity = getActivity();
                         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
                             return;
@@ -421,7 +420,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         }
 
         // The received image is viewed.
-        String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
+        String size = ((int) mInitialRect.width()) + " × " + ((int) mInitialRect.height()) + "; ";
         activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
         ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
@@ -451,7 +450,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
             }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
-                filename += "" + (System.currentTimeMillis() % 10000);
+                filename += Long.toString(System.currentTimeMillis() % 10000);
             }
             Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
             String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,

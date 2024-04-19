@@ -11,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -40,13 +39,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -126,13 +122,13 @@ public class MessageActivity extends AppCompatActivity
                     idx = c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE);
                     String mimeType = idx >= 0 ? c.getString(idx) : null;
                     if (fileUri != null) {
-                        intent = new Intent();
-                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                        Intent intent2 = new Intent();
+                        intent2.setAction(android.content.Intent.ACTION_VIEW);
+                        intent2.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
                                 "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         try {
-                            startActivity(intent);
+                            startActivity(intent2);
                         } catch (ActivityNotFoundException ignored) {
                             Log.w(TAG, "No application can view downloaded file");
                             startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));

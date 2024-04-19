@@ -77,7 +77,6 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.StringRes;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -518,9 +517,8 @@ public class UiUtils {
             return false;
         }
 
-        return (one.getDate() == two.getDate()) &&
-                (one.getMonth() == two.getMonth()) &&
-                (one.getYear() == two.getYear());
+        final long oneDay = 24 * 60 * 60 * 1000;
+        return one.getTime() / oneDay == two.getTime() / oneDay;
     }
 
     static Intent avatarSelectorIntent(@NonNull final Activity activity,
@@ -658,8 +656,8 @@ public class UiUtils {
 
         // Scale down.
         if (upscale || factor > 1.0) {
-            height /= factor;
-            width /= factor;
+            height = (int) (height / factor);
+            width = (int) (width / factor);
             return Bitmap.createScaledBitmap(bmp, width, height, true);
         }
         return bmp;
@@ -1120,7 +1118,7 @@ public class UiUtils {
                 if (pub == null) {
                     pub = new VxCard();
                 }
-                pub.note = description.equals("") ? Tinode.NULL_VALUE : description;
+                pub.note = description.isEmpty() ? Tinode.NULL_VALUE : description;
             }
         }
 
@@ -1220,7 +1218,7 @@ public class UiUtils {
             }
         }
 
-        if (tags.size() == 0) {
+        if (tags.isEmpty()) {
             return null;
         }
 
@@ -1512,11 +1510,11 @@ public class UiUtils {
 
             View byTinode = view.findViewById(R.id.byTinode);
             byTinode.setVisibility(View.VISIBLE);
-            UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+            UiUtils.clickToBrowseTinodeURL(byTinode);
         }
     }
     // Click on a view to open the given URL.
-    static void clickToBrowseURL(View view, String url) {
+    static void clickToBrowseTinodeURL(View view, String url) {
         Uri uri =  Uri.parse(url);
         if (uri == null) {
             return;
@@ -1530,8 +1528,8 @@ public class UiUtils {
         });
     }
 
-    static void clickToBrowseURL(@NonNull View view, @StringRes int url) {
-        clickToBrowseURL(view, view.getResources().getString(R.string.tinode_url));
+    static void clickToBrowseTinodeURL(@NonNull View view) {
+        clickToBrowseTinodeURL(view, view.getResources().getString(R.string.tinode_url));
     }
 
     static boolean isAppFirstRun(Context context) {

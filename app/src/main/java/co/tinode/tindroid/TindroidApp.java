@@ -5,7 +5,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -26,7 +25,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -183,7 +181,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             @Override
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
-                if (token != null && !token.equals("")) {
+                if (token != null && !token.isEmpty()) {
                     Cache.getTinode().setDeviceToken(token);
                 }
             }
@@ -284,7 +282,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
         if (!TextUtils.isEmpty(uid)) {
-            new LoginWithSavedAccount().execute(uid);
+            Executors.newSingleThreadExecutor().execute(() -> loginInBackground(uid));
         }
     }
 
@@ -343,106 +341,100 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     }
 
     // Read saved account credentials and try to connect to server using them.
-    // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
-    @SuppressLint("StaticFieldLeak")
-    private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... uidWrapper) {
-            final AccountManager accountManager = AccountManager.get(TindroidApp.this);
-            final Account account = Utils.getSavedAccount(accountManager, uidWrapper[0]);
-            if (account != null) {
-                // Check if sync is enabled.
-                if (ContentResolver.getMasterSyncAutomatically()) {
-                    if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
-                        ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
-                    }
+    private void loginInBackground(String uid) {
+        final AccountManager accountManager = AccountManager.get(TindroidApp.this);
+        final Account account = Utils.getSavedAccount(accountManager, uid);
+        if (account != null) {
+            // Check if sync is enabled.
+            if (ContentResolver.getMasterSyncAutomatically()) {
+                if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
+                    ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
                 }
+            }
 
-                // Account found, establish connection to the server and use save account credentials for login.
-                String token = null;
-                Date expires = null;
+            // Account found, establish connection to the server and use save account credentials for login.
+            String token = null;
+            Date expires = null;
+            try {
+                token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+                String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
+                // FIXME: remove this check when all clients are updated; Apr 8, 2020.
+                if (!TextUtils.isEmpty(strExp)) {
+                    expires = new Date(Long.parseLong(strExp));
+                }
+            } catch (OperationCanceledException e) {
+                Log.i(TAG, "Request to get an existing account was canceled.", e);
+            } catch (AuthenticatorException e) {
+                Log.e(TAG, "No access to saved account", e);
+            } catch (Exception e) {
+                Log.e(TAG, "Failure to login with saved account", e);
+            }
+
+            // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
+            final Tinode tinode = Cache.getTinode();
+            if (!TextUtils.isEmpty(token) && expires != null && expires.after(new Date())) {
+                // Connecting with synchronous calls because this is not the UI thread.
+                tinode.setAutoLoginToken(token);
+                // Connect and login.
                 try {
-                    token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-                    String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
-                    // FIXME: remove this check when all clients are updated; Apr 8, 2020.
-                    if (!TextUtils.isEmpty(strExp)) {
-                        expires = new Date(Long.parseLong(strExp));
+                    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
+                    // Sync call throws on error.
+                    tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
+                            pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
+                            false).getResult();
+                    if (!tinode.isAuthenticated()) {
+                        // The connection may already exist but not yet authenticated.
+                        tinode.loginToken(token).getResult();
                     }
-                } catch (OperationCanceledException e) {
-                    Log.i(TAG, "Request to get an existing account was canceled.", e);
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "No access to saved account", e);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failure to login with saved account", e);
-                }
-
-                // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
-                final Tinode tinode = Cache.getTinode();
-                if (!TextUtils.isEmpty(token) && expires != null && expires.after(new Date())) {
-                    // Connecting with synchronous calls because this is not the UI thread.
-                    tinode.setAutoLoginToken(token);
-                    // Connect and login.
-                    try {
-                        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
-                        // Sync call throws on error.
-                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
-                                pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
-                                false).getResult();
-                        if (!tinode.isAuthenticated()) {
-                            // The connection may already exist but not yet authenticated.
-                            tinode.loginToken(token).getResult();
-                        }
-                        Cache.attachMeTopic(null);
-                        // Logged in successfully. Save refreshed token for future use.
-                        accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
-                                String.valueOf(tinode.getAuthTokenExpiration().getTime()));
-                        startWatchingContacts(TindroidApp.this, account);
-                        // Trigger sync to be sure contacts are up to date.
-                        UiUtils.requestImmediateContactsSync(account);
-                    } catch (IOException ex) {
-                        Log.d(TAG, "Network failure during login", ex);
-                        // Do not invalidate token on network failure.
-                    } catch (ServerResponseException ex) {
-                        Log.w(TAG, "Server rejected login sequence", ex);
-                        int code = ex.getCode();
-                        // 401: Token expired or invalid login.
-                        // 404: 'me' topic is not found (user deleted, but token is still valid).
-                        if (code == 401 || code == 404) {
-                            // Another try-catch because some users revoke needed permission after granting it.
-                            try {
-                                // Login failed due to invalid (expired) token or missing/disabled account.
-                                accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
-                                accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
-                            } catch (SecurityException ex2) {
-                                Log.e(TAG, "Unable to access android account", ex2);
-                            }
-                            // Force new login.
-                            UiUtils.doLogout(TindroidApp.this);
-                        }
-                        // 409 Already authenticated should not be possible here.
-                    } catch (Exception ex) {
-                        Log.e(TAG, "Other failure during login", ex);
-                    }
-                } else {
-                    Log.i(TAG, "No token or expired token. Forcing re-login");
-                    try {
-                        if (!TextUtils.isEmpty(token)) {
+                    Cache.attachMeTopic(null);
+                    // Logged in successfully. Save refreshed token for future use.
+                    accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
+                            String.valueOf(tinode.getAuthTokenExpiration().getTime()));
+                    startWatchingContacts(TindroidApp.this, account);
+                    // Trigger sync to be sure contacts are up to date.
+                    UiUtils.requestImmediateContactsSync(account);
+                } catch (IOException ex) {
+                    Log.d(TAG, "Network failure during login", ex);
+                    // Do not invalidate token on network failure.
+                } catch (ServerResponseException ex) {
+                    Log.w(TAG, "Server rejected login sequence", ex);
+                    int code = ex.getCode();
+                    // 401: Token expired or invalid login.
+                    // 404: 'me' topic is not found (user deleted, but token is still valid).
+                    if (code == 401 || code == 404) {
+                        // Another try-catch because some users revoke needed permission after granting it.
+                        try {
+                            // Login failed due to invalid (expired) token or missing/disabled account.
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                            accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                        } catch (SecurityException ex2) {
+                            Log.e(TAG, "Unable to access android account", ex2);
                         }
-                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
-                    } catch (SecurityException ex) {
-                        Log.e(TAG, "Unable to access android account", ex);
+                        // Force new login.
+                        UiUtils.doLogout(TindroidApp.this);
                     }
-                    // Force new login.
-                    UiUtils.doLogout(TindroidApp.this);
+                    // 409 Already authenticated should not be possible here.
+                } catch (Exception ex) {
+                    Log.e(TAG, "Other failure during login", ex);
                 }
             } else {
-                Log.i(TAG, "Account not found or no permission to access accounts");
-                // Force new login in case account existed before but was deleted.
+                Log.i(TAG, "No token or expired token. Forcing re-login");
+                try {
+                    if (!TextUtils.isEmpty(token)) {
+                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                    }
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                } catch (SecurityException ex) {
+                    Log.e(TAG, "Unable to access android account", ex);
+                }
+                // Force new login.
                 UiUtils.doLogout(TindroidApp.this);
             }
-            return null;
+        } else {
+            Log.i(TAG, "Account not found or no permission to access accounts");
+            // Force new login in case account existed before but was deleted.
+            UiUtils.doLogout(TindroidApp.this);
         }
     }
 }

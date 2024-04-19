@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -36,7 +35,7 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
 
     @JsonIgnore
     public void setComment(String comment) {
-        put("comment", comment != null && comment.length() > 0 ? comment : Tinode.NULL_VALUE);
+        put("comment", comment != null && !comment.isEmpty() ? comment : Tinode.NULL_VALUE);
     }
 
     public Boolean isArchived() {
@@ -57,9 +56,7 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
             return false;
         }
         PrivateType apt = (PrivateType) another;
-        for (Map.Entry<String, Object> e : apt.entrySet()) {
-            put(e.getKey(), e.getValue());
-        }
+        this.putAll((PrivateType) another);
         return apt.size() > 0;
     }
 }

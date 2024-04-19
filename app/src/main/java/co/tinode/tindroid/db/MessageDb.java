@@ -414,7 +414,7 @@ public class MessageDb implements BaseColumns {
     }
     /**
      * Get a list of the latest message for every topic, sent or received.
-     * See explanation here: https://stackoverflow.com/a/2111420
+     * See explanation here: <a href="https://stackoverflow.com/a/2111420">...</a>
      */
     static Cursor getLatestMessages(SQLiteDatabase db) {
         final String sql = "SELECT m1.*, t." + TopicDb.COLUMN_NAME_TOPIC + " AS topic" +

@@ -22,7 +22,6 @@ import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.text.method.LinkMovementMethod;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
 import android.text.style.StyleSpan;
@@ -57,7 +56,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
-import androidx.appcompat.widget.AppCompatImageView;
 import androidx.core.app.ActivityCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
@@ -1020,11 +1018,11 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mMediaControl.releasePlayer(0);
     }
 
-    static class ViewHolder extends RecyclerView.ViewHolder {
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         final int mViewType;
         final ImageView mAvatar;
         final View mMessageBubble;
-        final AppCompatImageView mDeliveredIcon;
+        final ImageView mDeliveredIcon;
         final TextView mDateDivider;
         final TextView mText;
         final TextView mEdited;
@@ -1248,7 +1246,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         json.put("resp", resp);
                     }
 
-                    json.put("seq", "" + mSeqId);
+                    json.put("seq", Integer.toString(mSeqId));
                     newMsg.attachJSON(json);
                     mActivity.sendMessage(newMsg, -1, false);
 
@@ -1265,7 +1263,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                                     TextUtils.isEmpty(actionValue) ? "1" : actionValue);
                         }
                         builder = builder
-                                .appendQueryParameter("seq", "" + mSeqId)
+                                .appendQueryParameter("seq", Integer.toString(mSeqId))
                                 .appendQueryParameter("uid", Cache.getTinode().getMyId());
                         Intent viewIntent = new Intent(Intent.ACTION_VIEW, builder.build());
                         try {

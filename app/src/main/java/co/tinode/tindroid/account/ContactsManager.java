@@ -457,7 +457,7 @@ public class ContactsManager {
                 continue;
             }
             String value = parts[1].trim();
-            if (value.length() == 0) {
+            if (value.isEmpty()) {
                 continue;
             }
 
@@ -529,13 +529,10 @@ public class ContactsManager {
         static final int COLUMN_DATA1 = 3;
         static final int COLUMN_DATA2 = 4;
         static final int COLUMN_DATA3 = 5;
-        // static final int COLUMN_DATA15 = 6;
-        // static final int COLUMN_SYNC1 = 7;
         static final Uri CONTENT_URI = Data.CONTENT_URI;
         static final int COLUMN_PHONE_NUMBER = COLUMN_DATA1;
         static final int COLUMN_PHONE_TYPE = COLUMN_DATA2;
         static final int COLUMN_EMAIL_ADDRESS = COLUMN_DATA1;
-        // static final int COLUMN_EMAIL_TYPE = COLUMN_DATA2;
         static final int COLUMN_FULL_NAME = COLUMN_DATA1;
         static final int COLUMN_GIVEN_NAME = COLUMN_DATA2;
         static final int COLUMN_FAMILY_NAME = COLUMN_DATA3;

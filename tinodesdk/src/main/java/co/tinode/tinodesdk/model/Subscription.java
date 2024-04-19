@@ -61,7 +61,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public boolean merge(Subscription<SP,SR> sub) {
         boolean changed = false;
 
-        if (user == null && sub.user != null && !sub.user.equals("")) {
+        if (user == null && sub.user != null && !sub.user.isEmpty()) {
             user = sub.user;
             changed = true;
         }
@@ -128,7 +128,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
             online = sub.online;
         }
 
-        if ((topic == null || topic.equals("")) && sub.topic != null && !sub.topic.equals("")) {
+        if ((topic == null || topic.isEmpty()) && sub.topic != null && !sub.topic.isEmpty()) {
             topic = sub.topic;
             changed = true;
         }
@@ -159,7 +159,7 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
             acs = new Acs();
         }
 
-        if (sub.user != null && !sub.user.equals("")) {
+        if (sub.user != null && !sub.user.isEmpty()) {
             if (user == null) {
                 user = sub.user;
                 changed = true;

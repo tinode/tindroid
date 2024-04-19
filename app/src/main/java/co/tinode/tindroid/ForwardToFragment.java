@@ -128,8 +128,6 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
             return;
         }
 
-        setHasOptionsMenu(true);
-
         Bundle args = getArguments();
         if (args != null) {
             mContent = (Drafty) args.getSerializable(CONTENT_TO_FORWARD);

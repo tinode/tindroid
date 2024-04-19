@@ -12,7 +12,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
-import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -47,7 +46,7 @@ public class QuoteFormatter extends PreviewFormatter {
         Resources res = parent.getResources();
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sTextColor = res.getColor(R.color.colorReplyText);
+            sTextColor = res.getColor(R.color.colorReplyText, null);
         }
     }
 

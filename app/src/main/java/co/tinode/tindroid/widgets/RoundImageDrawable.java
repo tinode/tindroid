@@ -9,7 +9,6 @@ import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 
@@ -35,14 +34,6 @@ public class RoundImageDrawable extends BitmapDrawable {
 
         mBitmap = bmp;
         mBitmapRect = new Rect(0, 0, bmp.getWidth(), bmp.getHeight());
-    }
-
-    public Bitmap getRoundedBitmap() {
-        Bitmap bmp = Bitmap.createBitmap(mBitmapRect.width(), mBitmapRect.height(),
-                Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bmp);
-        draw(canvas);
-        return bmp;
     }
 
     @Override

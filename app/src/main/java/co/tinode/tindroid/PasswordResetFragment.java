@@ -110,10 +110,6 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
 
     // Configure email or phone field.
     private void setupCredentials(Activity activity, String[] methods) {
-        if (activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
         if (methods == null || methods.length == 0) {
             mCredMethods = new String[]{"email"};
         } else {

@@ -201,7 +201,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         }
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         final int viewType;
         ImageView avatar;
         TextView displayName;

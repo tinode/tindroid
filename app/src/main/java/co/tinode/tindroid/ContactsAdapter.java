@@ -252,7 +252,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                     // something other than the display name
                     text2.setVisibility(View.VISIBLE);
                 }
-            } else if (mSearchTerm.length() > 0) {
+            } else if (!mSearchTerm.isEmpty()) {
                 // If the search string matched the display name, applies a SpannableString to
                 // highlight the search string with the displayed display name
 

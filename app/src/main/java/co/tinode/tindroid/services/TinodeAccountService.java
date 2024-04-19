@@ -29,10 +29,6 @@ public class TinodeAccountService extends Service {
     }
 
     @Override
-    public void onDestroy() {
-    }
-
-    @Override
     public IBinder onBind(Intent intent) {
         return mAuthenticator.getIBinder();
     }

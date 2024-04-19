@@ -123,11 +123,6 @@ public class CallActivity extends AppCompatActivity  {
             setTurnScreenOn(true);
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //KeyguardManager mgr = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            //mgr.requestDismissKeyguard(this, null);
-        }
-
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mTurnScreenOffWhenDone = !pm.isInteractive();
         // Try to reconnect and subscribe.

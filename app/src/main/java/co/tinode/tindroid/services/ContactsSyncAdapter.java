@@ -189,7 +189,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
     // Generate a hash from a string.
     private static String hash(String s) {
-        if (s == null || s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return "";
         }
 
@@ -207,7 +207,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
             return hexString.toString();
 
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+            Log.e(TAG, "MD5 hashing not available, using hashCode", e);
         }
 
         return String.valueOf(s.hashCode());
@@ -223,7 +223,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
      * <p>
      * <p>This is where we actually perform any work required to perform a sync.
      * {@link android.content.AbstractThreadedSyncAdapter} guarantees that this will be called on a non-UI thread,
-     * so it is safe to peform blocking I/O here.
+     * so it is safe to perform blocking I/O here.
      * <p>
      * <p>The syncResult argument allows you to pass information back to the method that triggered
      * the sync.
@@ -358,7 +358,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
     private void setServerQueryHash(Account account, String hash) {
         // The hash could be empty if user has no contacts
-        if (hash != null && !hash.equals("")) {
+        if (hash != null && !hash.isEmpty()) {
             mAccountManager.setUserData(account, ACCKEY_QUERY_HASH, hash);
         }
     }
@@ -373,7 +373,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
         }
 
         private static void Stringify(List<String> vals, StringBuilder str) {
-            if (vals != null && vals.size() > 0) {
+            if (vals != null && !vals.isEmpty()) {
                 if (str.length() > 0) {
                     str.append(",");
                 }

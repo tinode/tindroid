@@ -31,7 +31,7 @@ public class ExpBackoff {
             attempt = MAX_SHIFT;
         }
 
-        long delay = BASE_SLEEP_MS * (1 << attempt) + random.nextInt(BASE_SLEEP_MS * (1 << attempt));
+        long delay = (long) BASE_SLEEP_MS * (1L << attempt) + random.nextInt(BASE_SLEEP_MS * (1 << attempt));
         attempt++;
 
         return delay;

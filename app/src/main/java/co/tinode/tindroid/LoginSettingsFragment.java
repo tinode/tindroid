@@ -1,15 +1,21 @@
 package co.tinode.tindroid;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.preference.ListPreference;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
+import androidx.lifecycle.Lifecycle;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
@@ -19,15 +25,13 @@ import co.tinode.tindroid.account.Utils;
  * A placeholder fragment containing a simple view.
  */
 public class LoginSettingsFragment extends PreferenceFragmentCompat
-        implements SharedPreferences.OnSharedPreferenceChangeListener {
+        implements MenuProvider, SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String TAG = "LoginSettingsFragment";
 
     @Override
     public void onCreatePreferences(Bundle bundle, String rootKey) {
         AppCompatActivity activity = (AppCompatActivity) requireActivity();
-
-        setHasOptionsMenu(false);
 
         ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
@@ -41,6 +45,12 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(activity);
         onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_HOST_NAME);
         onSharedPreferenceChanged(sharedPreferences, Utils.PREFS_USE_TLS);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -89,5 +99,15 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
                 Log.i(TAG, "Unknown preference '" + key + "'");
                 // do nothing.
         }
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menu.clear();
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        return false;
     }
 }

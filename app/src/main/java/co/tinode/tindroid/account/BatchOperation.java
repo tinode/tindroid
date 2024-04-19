@@ -38,16 +38,14 @@ final public class BatchOperation {
     @SuppressWarnings("UnusedReturnValue")
     List<Uri> execute() {
         List<Uri> resultUris = new ArrayList<>();
-        if (mOperations.size() == 0) {
+        if (mOperations.isEmpty()) {
             return resultUris;
         }
         // Apply the mOperations to the content provider
         try {
             ContentProviderResult[] results = mResolver.applyBatch(ContactsContract.AUTHORITY, mOperations);
-            if (results.length > 0) {
-                for (ContentProviderResult result : results) {
-                    resultUris.add(result.uri);
-                }
+            for (ContentProviderResult result : results) {
+                resultUris.add(result.uri);
             }
         } catch (final OperationApplicationException | RemoteException e) {
             Log.e(TAG, "storing contact data failed", e);
