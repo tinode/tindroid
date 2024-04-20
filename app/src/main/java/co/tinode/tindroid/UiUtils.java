@@ -50,7 +50,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
+import coil.Coil;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -731,10 +731,10 @@ public class UiUtils {
             ref = pub.getPhotoRef();
         }
 
-        Drawable local = avatarDrawable(avatarView.getContext(), avatar, fullName, address, disabled);
+        final Context context = avatarView.getContext();
+        Drawable local = avatarDrawable(context, avatar, fullName, address, disabled);
         if (ref != null) {
-            Picasso
-                    .get()
+            Coil.imageLoader(context)
                     .load(ref)
                     .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
                     .placeholder(local)
