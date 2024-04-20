@@ -157,7 +157,9 @@ public class IncomingCallFragment extends Fragment
 
     @Override
     public void onDestroy() {
-        mTimer.cancel();
+        if (mTimer != null) {
+            mTimer.cancel();
+        }
         Cache.getTinode().removeListener(mListener);
         super.onDestroy();
     }
