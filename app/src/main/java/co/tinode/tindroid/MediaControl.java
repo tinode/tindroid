@@ -121,17 +121,8 @@ public class MediaControl {
             URL url = tinode.toAbsoluteURL((String) val);
             if (url != null) {
                 try {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        mAudioPlayer.setDataSource(mContext, Uri.parse(url.toString()),
-                                tinode.getRequestHeaders(), null);
-                    } else {
-                        Uri uri = Uri.parse(url.toString()).buildUpon()
-                                .appendQueryParameter("apikey", tinode.getApiKey())
-                                .appendQueryParameter("auth", "token")
-                                .appendQueryParameter("secret", tinode.getAuthToken())
-                                .build();
-                        mAudioPlayer.setDataSource(mContext, uri);
-                    }
+                    mAudioPlayer.setDataSource(mContext, Uri.parse(url.toString()),
+                            tinode.getRequestHeaders(), null);
                 } catch (SecurityException | IOException ex) {
                     Log.w(TAG, "Failed to add URI data source ", ex);
                     Toast.makeText(mContext, R.string.unable_to_play_audio, Toast.LENGTH_SHORT).show();
@@ -218,11 +209,7 @@ public class MediaControl {
 
     void seekTo(int pos) {
         if (mAudioPlayer != null && mPlayingAudioSeq > 0) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                mAudioPlayer.seekTo(pos, MediaPlayer.SEEK_CLOSEST);
-            } else {
-                mAudioPlayer.seekTo(pos);
-            }
+            mAudioPlayer.seekTo(pos, MediaPlayer.SEEK_CLOSEST);
         }
     }
 

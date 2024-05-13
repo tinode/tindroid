@@ -34,9 +34,7 @@ public class CallConnectionService extends ConnectionService {
             Bundle extras = request.getExtras();
             audioOnly = extras.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
-        }
+        conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE |
                 Connection.CAPABILITY_CAN_SEND_RESPONSE_VIA_CONNECTION);
         conn.setAudioModeIsVoip(true);
@@ -76,9 +74,7 @@ public class CallConnectionService extends ConnectionService {
         int seq = extras.getInt(Const.INTENT_EXTRA_SEQ);
         conn.setExtras(extras);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
-        }
+        conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
 
         Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, conn);
 

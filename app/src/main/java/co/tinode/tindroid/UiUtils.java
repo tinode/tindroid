@@ -50,8 +50,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import coil.Coil;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayInputStream;
@@ -84,8 +82,8 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-
 import androidx.preference.PreferenceManager;
+
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -93,7 +91,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
-
 import co.tinode.tindroid.widgets.UrlLayerDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
@@ -106,6 +103,11 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+
+import coil.Coil;
+import coil.ImageLoaders;
+import coil.request.ImageRequest;
+
 import io.nayuki.qrcodegen.QrCode;
 
 /**
@@ -194,7 +196,6 @@ public class UiUtils {
             return;
         }
 
-        Resources res = activity.getResources();
         ArrayList<Drawable> drawables = new ArrayList<>();
         AnimationDrawable typing = null;
         Bitmap bmp = null;
@@ -213,10 +214,13 @@ public class UiUtils {
             drawables.add(new ColorDrawable(0x00000000));
         }
 
+        Resources res = activity.getResources();
+
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
-            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res, R.drawable.typing_indicator, null);
+            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res,
+                    R.drawable.typing_indicator, null);
             if (typing != null) {
                 typing.setOneShot(false);
                 typing.setVisible(false, true);
@@ -225,7 +229,7 @@ public class UiUtils {
             }
         }
 
-        UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
+        UrlLayerDrawable layers = new UrlLayerDrawable(activity, drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
 
         if (ref != null) {
@@ -735,11 +739,13 @@ public class UiUtils {
         Drawable local = avatarDrawable(context, avatar, fullName, address, disabled);
         if (ref != null) {
             Coil.imageLoader(context)
-                    .load(ref)
-                    .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
-                    .placeholder(local)
-                    .error(R.drawable.ic_broken_image_round)
-                    .into(avatarView);
+                    .enqueue(new ImageRequest.Builder(context)
+                            .data(ref)
+                            .size(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
+                            .placeholder(local)
+                            .error(R.drawable.ic_broken_image_round)
+                            .target(avatarView)
+                            .build());
         } else {
             avatarView.setImageDrawable(local);
         }
@@ -831,13 +837,12 @@ public class UiUtils {
             fullName = pub.fn;
             String ref = pub.getPhotoRef();
             if (ref != null) {
-                try {
-                    bitmap = Picasso.get()
-                            .load(ref)
-                            .resize(size, size).get();
-                } catch (IOException ex) {
-                    Log.w(TAG, "Failed to load avatar", ex);
-                }
+                ImageRequest req = new ImageRequest.Builder(context)
+                        .data(ref)
+                        .size(size, size)
+                        .build();
+                Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(context), req).getDrawable();
+                bitmap = bitmapFromDrawable(drw);
             } else {
                 bitmap = pub.getBitmap();
             }

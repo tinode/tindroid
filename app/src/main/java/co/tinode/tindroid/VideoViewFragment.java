@@ -39,7 +39,6 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 
 import com.google.android.exoplayer2.video.VideoSize;
-import com.squareup.picasso.Picasso;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -58,6 +57,9 @@ import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tinodesdk.Tinode;
+
+import coil.Coil;
+import coil.request.ImageRequest;
 
 /**
  * Fragment for viewing a video: before being attached or received.
@@ -331,10 +333,12 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // Poster is included as a reference.
         final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
         if (ref != null) {
-            Picasso.get().load(ref)
-                    .placeholder(placeholder)
-                    .error(placeholder)
-                    .into(mPosterView);
+            Coil.imageLoader(activity).enqueue(
+                    new ImageRequest.Builder(activity)
+                        .data(ref)
+                        .placeholder(placeholder)
+                        .error(placeholder)
+                        .target(mPosterView).build());
             return;
         }
 
@@ -348,12 +352,6 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         super.onPause();
         mExoPlayer.stop();
         mExoPlayer.release();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Picasso.get().cancelRequest(mPosterView);
     }
 
     private Uri writeToTempFile(Context ctx, byte[] bits, String prefix, String suffix) {

@@ -14,16 +14,19 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.model.Subscription;
+
+import coil.Coil;
+import coil.request.ImageRequest;
+import coil.size.Scale;
 
 /**
  * FindAdapter merges results from searching local Contacts with remote 'fnd' topic.
@@ -364,13 +367,16 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                 contactPriv.setVisibility(View.GONE);
             }
 
+            Context context = itemView.getContext();
             if (photoUri != null) {
-                Picasso.get()
-                        .load(photoUri)
-                        .placeholder(R.drawable.disk)
-                        .error(R.drawable.ic_broken_image_round)
-                        .fit()
-                        .into(avatar);
+                Coil.imageLoader(context).enqueue(
+                        new ImageRequest.Builder(context)
+                            .data(photoUri)
+                            .placeholder(R.drawable.disk)
+                            .error(R.drawable.ic_broken_image_round)
+                            .target(avatar)
+                            .scale(Scale.FIT)
+                            .build());
             } else {
                 avatar.setImageDrawable(
                         UiUtils.avatarDrawable(itemView.getContext(), null, displayName, unique, false));

@@ -369,10 +369,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param avatar sender's avatar.
      */
     private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
-        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
-                        new NotificationCompat.Builder(this);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID);
 
         return notificationBuilder
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -388,10 +386,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     }
 
     private NotificationCompat.Builder composeNotification(@NonNull RemoteMessage.Notification remote) {
-        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
-                        new NotificationCompat.Builder(this);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID);
 
         final Resources res = getResources();
         final String packageName = getPackageName();

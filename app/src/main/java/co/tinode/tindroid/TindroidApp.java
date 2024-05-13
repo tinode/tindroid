@@ -38,11 +38,15 @@ import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvicto
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
@@ -58,6 +62,15 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
+import coil.Coil;
+import coil.ComponentRegistry;
+import coil.ImageLoader;
+import coil.intercept.Interceptor;
+import coil.key.Keyer;
+import coil.request.ImageRequest;
+import coil.request.ImageResult;
+import coil.util.DebugLogger;
+import kotlin.coroutines.Continuation;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -68,7 +81,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static final String TAG = "TindroidApp";
 
     // 256 MB.
-    private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
+    private static final int COIL_CACHE_SIZE = 1024 * 1024 * 256;
     private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
     private static TindroidApp sContext;
@@ -205,38 +218,59 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         // Clear completed/failed upload tasks.
         WorkManager.getInstance(this).pruneWork();
 
-        // Setting up Picasso with auth headers.
+        // Setting up Coil with auth headers.
         OkHttpClient client = new OkHttpClient.Builder()
-                .cache(new okhttp3.Cache(createDefaultCacheDir(this), PICASSO_CACHE_SIZE))
+                .cache(new okhttp3.Cache(createDefaultCacheDir(this), COIL_CACHE_SIZE))
                 .addInterceptor(chain -> {
+                    // Add authentication headers to requests.
                     Tinode tinode = Cache.getTinode();
-                    Request picassoReq = chain.request();
+                    Request request = chain.request();
                     Map<String, String> headers;
-                    if (tinode.isTrustedURL(picassoReq.url().url())) {
+                    if (tinode.isTrustedURL(request.url().url())) {
                         headers = tinode.getRequestHeaders();
-                        Request.Builder builder = picassoReq.newBuilder();
+                        Request.Builder rb = request.newBuilder();
                         for (Map.Entry<String, String> el : headers.entrySet()) {
-                            builder = builder.addHeader(el.getKey(), el.getValue());
+                            rb = rb.addHeader(el.getKey(), el.getValue());
                         }
-                        return chain.proceed(builder.build());
+                        return chain.proceed(rb.build());
                     } else {
-                        return chain.proceed(picassoReq);
+                        return chain.proceed(request);
                     }
                 })
                 .build();
-        Picasso.setSingletonInstance(new Picasso.Builder(this)
-                .requestTransformer(request -> {
-                    // Rewrite relative URIs to absolute.
-                    if (request.uri != null && Tinode.isUrlRelative(request.uri.toString())) {
-                        URL url = Cache.getTinode().toAbsoluteURL(request.uri.toString());
-                        if (url != null) {
-                            return request.buildUpon().setUri(Uri.parse(url.toString())).build();
-                        }
+        ComponentRegistry.Builder crb = new ComponentRegistry().newBuilder();
+        crb.add((Keyer<Uri>) (uri, options) -> {
+            // For caching purposes, remove transient query parameters from Uri
+            // such as X-Amz-Signature or X-Goog-Date.
+            // Credential is removed because X-Amz-Credentialalice contains current date.
+            String[] tempKeys = {"credential", "date", "signature"};
+            Set<String> query = uri.getQueryParameterNames();
+            query.removeIf(key -> Arrays.stream(tempKeys).anyMatch(key.toLowerCase()::contains));
+            uri.buildUpon().clearQuery().query(query.toString());
+            return uri.toString();
+        }, Uri.class);
+        crb.add(new Interceptor() {
+            @Nullable
+            @Override
+            public Object intercept(@NonNull Chain chain, @NonNull Continuation<? super ImageResult> continuation) {
+                // Rewrite relative URIs to absolute.
+                ImageRequest request = chain.getRequest();
+                String data = request.getData().toString();
+                if (Tinode.isUrlRelative(data)) {
+                    URL url = Cache.getTinode().toAbsoluteURL(data);
+                    if (url != null) {
+                        return chain.proceed(request.newBuilder().data(url.toString()).build(), continuation);
                     }
-                    return request;
-                })
-                .downloader(new OkHttp3Downloader(client))
-                .build());
+                }
+                return chain.proceed(request, continuation);
+            }
+        });
+        ImageLoader loader = new ImageLoader.Builder(this)
+                .okHttpClient(client)
+                .components(crb.build())
+                .logger(new DebugLogger(Log.VERBOSE))
+                .build();
+        Coil.setImageLoader(loader);
 
         // Listen to connectivity changes.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -293,33 +327,31 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     }
 
     private void createNotificationChannels() {
-        // Create the NotificationChannel on API 26+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
-                    getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
-            newMessage.setDescription(getString(R.string.new_message_channel_description));
-            newMessage.enableLights(true);
-            newMessage.setLightColor(Color.WHITE);
+        // Create the NotificationChannel.
+        NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
+                getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
+        newMessage.setDescription(getString(R.string.new_message_channel_description));
+        newMessage.enableLights(true);
+        newMessage.setLightColor(Color.WHITE);
 
-            NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
-                    getString(R.string.video_call_channel_name),
-                    NotificationManager.IMPORTANCE_HIGH);
-            videoCall.setDescription(getString(R.string.video_call_channel_description));
-            videoCall.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                            new AudioAttributes.Builder()
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                                    .build());
-            videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
-            videoCall.enableVibration(true);
-            videoCall.enableLights(true);
-            videoCall.setLightColor(Color.RED);
+        NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
+                getString(R.string.video_call_channel_name),
+                NotificationManager.IMPORTANCE_HIGH);
+        videoCall.setDescription(getString(R.string.video_call_channel_description));
+        videoCall.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                        new AudioAttributes.Builder()
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                .build());
+        videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
+        videoCall.enableVibration(true);
+        videoCall.enableLights(true);
+        videoCall.setLightColor(Color.RED);
 
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null) {
-                nm.createNotificationChannel(newMessage);
-                nm.createNotificationChannel(videoCall);
-            }
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) {
+            nm.createNotificationChannel(newMessage);
+            nm.createNotificationChannel(videoCall);
         }
     }
 

@@ -3,6 +3,7 @@ package co.tinode.tindroid.account;
 import android.content.ContentProviderOperation;
 import android.content.ContentValues;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Email;
@@ -13,16 +14,16 @@ import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.Data;
 import android.provider.ContactsContract.RawContacts;
 import android.text.TextUtils;
-import android.util.Log;
-
-import com.squareup.picasso.Picasso;
-
-import java.io.IOException;
 
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.Tinode;
+
+import coil.Coil;
+import coil.ImageLoaders;
+import coil.request.ImageRequest;
+import coil.size.Scale;
 
 /**
  * Helper class for storing data in the platform content providers.
@@ -222,14 +223,13 @@ class ContactOperations {
     ContactOperations addAvatar(byte[] avatar, final Tinode tinode, final String ref, final String mimeType) {
         mValues.clear();
         if (ref != null) {
-            try {
-                avatar = UiUtils.bitmapToBytes(Picasso.get()
-                        .load(ref)
-                        .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE).centerCrop()
-                        .get(), mimeType);
-            } catch (IOException ex) {
-                Log.w(TAG, "Failed to download avatar", ex);
-            }
+            ImageRequest req = new ImageRequest.Builder(mContext)
+                    .data(ref)
+                    .size(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
+                    .scale(Scale.FILL)
+                    .build();
+            Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(mContext), req).getDrawable();
+            avatar = UiUtils.bitmapToBytes(UiUtils.bitmapFromDrawable(drw), mimeType);
         }
 
         if (avatar != null) {
