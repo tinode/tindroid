@@ -362,4 +362,5 @@
     <string name="code_required">Code erforderlich</string>
     <string name="configure_connection">Verbindung konfigurieren</string>
     <string name="calling_not_supported">Anruf wird nicht unterstützt</string>
+    <string name="display_code">QR-Code anzeigen</string>
 </resources>

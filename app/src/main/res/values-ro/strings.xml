@@ -361,4 +361,5 @@
     <string name="code_required">Cod obligatoriu</string>
     <string name="configure_connection">Configurare conexiune</string>
     <string name="calling_not_supported">Apelarea nu este acceptată</string>
+    <string name="display_code">Afișați codul QR</string>
 </resources>

@@ -340,4 +340,5 @@
     <string name="code_required">Требуется код</string>
     <string name="configure_connection">Настроить подключение</string>
     <string name="calling_not_supported">Звонки не поддерживаются</string>
+    <string name="display_code">Показать QR-код</string>
 </resources>

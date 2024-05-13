@@ -147,8 +147,8 @@
     <string name="request_pass_reset_title">नया संदेश मिला</string>
     <string name="request">अनुरोध</string>
     <string name="forgot_password">पासवर्ड भूल गए</string>
-    <string name="invalid_or_unknown_credential">मान्य %1$s दर्ज करें</string>
-    <string name="password_reset_message_sent">अमान्य या अज्ञात पता</string>
+    <string name="invalid_or_unknown_credential">अमान्य या अज्ञात पता</string>
+    <string name="password_reset_message_sent">निर्देशों के साथ संदेश भेजा गया</string>
     <string name="user_not_found">नहीं मिला</string>
     <string name="topic_tags">टैग, अल्पविराम से अलग की गई सूची</string>
     <string name="sender_unknown">अज्ञात</string>
@@ -332,4 +332,5 @@
     <string name="code_required">कोड आवश्यक है</string>
     <string name="configure_connection">कनेक्शन कॉन्फ़िगर करें</string>
     <string name="calling_not_supported">कॉलिंग समर्थित नहीं है</string>
+    <string name="display_code">QR कोड दिखाएँ</string>
 </resources>

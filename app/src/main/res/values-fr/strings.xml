@@ -360,4 +360,5 @@
     <string name="code_required">Code requis</string>
     <string name="configure_connection">Configurer la connexion</string>
     <string name="calling_not_supported">Appel non pris en charge</string>
+    <string name="display_code">Afficher le code QR</string>
 </resources>

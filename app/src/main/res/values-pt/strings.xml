@@ -361,4 +361,5 @@
     <string name="code_required">Código necessário</string>
     <string name="configure_connection">Configurar conexão</string>
     <string name="calling_not_supported">Chamada não suportada</string>
+    <string name="display_code">Mostrar código QR</string>
 </resources>

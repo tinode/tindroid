@@ -51,7 +51,7 @@ public class OverlaidImageView extends AppCompatImageView {
 
             mClipPath.reset();
             mClipPath.addCircle(width * 0.5f, height * 0.5f, minDimension * 0.5f, Path.Direction.CW);
-            canvas.clipPath(mClipPath, Region.Op.DIFFERENCE);
+            canvas.clipPath(mClipPath);
             canvas.drawPaint(mBackgroundPaint);
         }
     }

@@ -10,7 +10,6 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.RingtoneManager;
-import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -193,7 +192,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         if (draftyBody != null) {
                             @SuppressLint("ResourceType") @StyleableRes int[] attrs = {android.R.attr.textSize};
                             float fontSize = 14f;
-                            TypedArray ta = obtainStyledAttributes(R.style.TextAppearance_Compat_Notification, attrs);
+                            TypedArray ta = obtainStyledAttributes(androidx.core.R.style.TextAppearance_Compat_Notification, attrs);
                             fontSize = ta.getDimension(0, fontSize);
                             ta.recycle();
                             body = draftyBody.shorten(MAX_MESSAGE_LENGTH, true)
