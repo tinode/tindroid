@@ -880,8 +880,8 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     public static class AudioClickAction {
         public enum Action {PLAY, PAUSE, SEEK}
 
-        public Float seekTo;
-        public Action action;
+        public final Float seekTo;
+        public final Action action;
 
         public AudioControlCallback control;
 

@@ -45,7 +45,6 @@ import androidx.lifecycle.Lifecycle;
 
 import co.tinode.tindroid.widgets.OverlaidImageView;
 
-import coil.Coil;
 import coil.request.ImageRequest;
 import coil.target.Target;
 

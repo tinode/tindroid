@@ -15,11 +15,11 @@ import co.tinode.tindroid.R;
 
 /**
  * Fixes two bugs in LinkMovementMethod:
- *
+ * <p>
  * Highlights clicked URLSpans only.
  * LinkMovementMethod tries to highlight any ClickableSpan resulting in
  * clickable images jumping left.
- *
+ * <p>
  * Correctly identifies URL bounds.
  * LinkMovementMethod registers a click made outside of the URL's bounds
  * if there is no more text in that direction.

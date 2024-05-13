@@ -1002,10 +1002,10 @@ public class CallFragment extends Fragment {
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
     static class IceCandidateAux implements Serializable {
-        public String type;
-        public int sdpMLineIndex;
-        public String sdpMid;
-        public String candidate;
+        public final String type;
+        public final int sdpMLineIndex;
+        public final String sdpMid;
+        public final String candidate;
 
         IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) {
             this.type = type;

@@ -162,10 +162,10 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
     static class Member {
         // Member position within the parent contacts adapter.
-        int position;
+        final int position;
         final String unique;
         final String displayName;
-        Bitmap avatarBitmap;
+        final Bitmap avatarBitmap;
         final Uri avatarUri;
         final Boolean removable;
 

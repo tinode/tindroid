@@ -64,7 +64,7 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
     }
 
     @Override
-    public void onSuccess(Drawable drawable) {
+    public void onSuccess(@NonNull Drawable drawable) {
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = drawable;
