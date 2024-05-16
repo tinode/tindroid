@@ -2157,4 +2157,19 @@ public class Drafty implements Serializable {
             return key;
         }
     }
+
+    /**
+     * Methods related to grapheme clusters.
+     */
+    public static final Pattern graphemePattern = Pattern.compile("\\X");
+    private final Matcher graphemeMatcher = graphemePattern.matcher("");
+
+    private int countGraphemeClusters(String text) {
+        graphemeMatcher.reset(text).region(0, text.length());
+        int count = 0;
+        while (graphemeMatcher.find()) {
+            ++count;
+        }
+        return count;
+    }
 }
