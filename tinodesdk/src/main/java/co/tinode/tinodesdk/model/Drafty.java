@@ -417,12 +417,13 @@ public class Drafty implements Serializable {
             }
             if (b.fmt != null) {
                 for (Style s : b.fmt) {
-                    fmt.add(s.convertToGraphemeCounts(text));
+                    fmt.add(s.toGraphemeCounts(text));
                 }
             }
 
+            Matcher gm = GRAPHEME_PATTERN.matcher("");
             for (int i = 1; i<blks.size(); i++) {
-                int offset = text.codePointCount(0, text.length()) + 1;
+                int offset = graphemeCount(gm, text) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -943,6 +944,7 @@ public class Drafty implements Serializable {
      *
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("unused")
     protected Drafty insertButton(int at, @Nullable String title, @Nullable String id,
                                   @NotNull String actionType,
                                   @Nullable String actionValue,
@@ -1299,6 +1301,7 @@ public class Drafty implements Serializable {
 
     // Clip tree to the provided limit.
     // If the tree is shortened, prepend tail.
+    @SuppressWarnings("SameParameterValue")
     protected static Node shortenTree(Node tree, int length, String tail) {
         if (tail != null) {
             length -= tail.length();
@@ -1307,6 +1310,7 @@ public class Drafty implements Serializable {
         return treeTopDown(tree, new Transformer() {
             private int limit;
 
+            @SuppressWarnings("unused")
             Transformer init(int limit) {
                 this.limit = limit;
                 return this;
@@ -1327,9 +1331,10 @@ public class Drafty implements Serializable {
                     node.text = tail != null ? new StringBuilder(tail) : null;
                     limit = -1;
                 } else if (node.text != null) {
-                    int len = node.text.codePointCount(0, node.text.length());
+                    Matcher gm = GRAPHEME_PATTERN.matcher("");
+                    int len = graphemeCount(gm, node.text);
                     if (len > limit) {
-                        int clipAt = node.text.offsetByCodePoints(0, limit);
+                        int clipAt = offsetByGraphemes(gm, node.text, limit);
                         node.text.setLength(clipAt);
                         if (tail != null) {
                             node.text.append(tail);
@@ -1394,6 +1399,11 @@ public class Drafty implements Serializable {
         });
     }
 
+    /**
+     * Convert Drafty to plain text.
+     * @return plain text representation of the Drafty document.
+     */
+    @SuppressWarnings("unused")
     public String toPlainText() {
         return "{txt: '" + txt + "'," +
                 "fmt: " + Arrays.toString(fmt) + "," +
@@ -1579,6 +1589,7 @@ public class Drafty implements Serializable {
         public String tp;
         public Integer key;
 
+        @SuppressWarnings("unused")
         public Style() {}
 
         // Basic inline formatting
@@ -1627,11 +1638,10 @@ public class Drafty implements Serializable {
         }
 
         // Convert 'at' and 'len' values from char indexes to grapheme .
-        Style convertToGraphemeCounts(StringBuilder text) {
+        Style toGraphemeCounts(StringBuilder text) {
             Matcher matcher = GRAPHEME_PATTERN.matcher("");
-            String str = text.toString();
-            len = countGraphemes(matcher, str, at, at + len);
-            at = countGraphemes(matcher, str, 0, at);
+            len = countGraphemes(matcher, text, at, at + len);
+            at = countGraphemes(matcher, text, 0, at);
             return this;
         }
     }
@@ -1640,8 +1650,10 @@ public class Drafty implements Serializable {
         public String tp;
         public Map<String,Object> data;
 
+        @SuppressWarnings("unused")
         public Entity() {}
 
+        @SuppressWarnings("unused")
         public Entity(String tp, Map<String,Object> data) {
             this.tp = tp;
             this.data = data;
@@ -1734,6 +1746,7 @@ public class Drafty implements Serializable {
         return null;
     }
     // Create a copy of entity data with (light=false) or without (light=true) the large payload.
+    @SuppressWarnings("SameParameterValue")
     private static Map<String,Object> copyEntData(Map<String,Object> data, int maxLength) {
         return copyEntData(data, maxLength, null);
     }
@@ -1804,6 +1817,7 @@ public class Drafty implements Serializable {
             this(tp, data, key, false);
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull String tp, @Nullable Map<String,Object> data,
              @NotNull CharSequence content, int key) {
             parent = null;
@@ -1815,6 +1829,7 @@ public class Drafty implements Serializable {
             attachment = false;
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull String tp, @Nullable Map<String,Object> data, @NotNull Node node, int key) {
             parent = null;
             this.tp = tp;
@@ -1825,6 +1840,7 @@ public class Drafty implements Serializable {
             add(node);
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull Node node) {
             parent = node.parent;
             tp = node.tp;
@@ -1898,18 +1914,22 @@ public class Drafty implements Serializable {
             data.remove(key);
         }
 
-        public int length() {
+        protected int length(Matcher m) {
             if (text != null) {
-                return text.codePointCount(0, text.length());
+                return graphemeCount(m, text);
             }
             if (children == null) {
                 return 0;
             }
             int len = 0;
             for (Node c : children) {
-                len += c.length();
+                len += c.length(m);
             }
             return len;
+        }
+
+        public int length() {
+            return length(GRAPHEME_PATTERN.matcher(""));
         }
 
         // Remove spaces and breaks on the left.
@@ -1921,7 +1941,7 @@ public class Drafty implements Serializable {
                 data = null;
             } else if (isUnstyled()) {
                 if (text != null) {
-                    text = ltrim(text);
+                    text = ltrim(GRAPHEME_PATTERN.matcher(""), text);
                 } else if (children != null && !children.isEmpty()) {
                     children.get(0).lTrim();
                 }
@@ -1930,23 +1950,23 @@ public class Drafty implements Serializable {
 
         public Drafty toDrafty() {
             MutableDrafty doc = new MutableDrafty();
-            appendToDrafty(doc);
+            appendToDrafty(GRAPHEME_PATTERN.matcher(""), doc);
             return doc.toDrafty();
         }
 
-        private void appendToDrafty(@NotNull MutableDrafty doc) {
-            int start = doc.length();
+        private void appendToDrafty(Matcher gm, @NotNull MutableDrafty doc) {
+            int start = doc.length(gm);
 
             if (text != null) {
                 doc.append(text);
             } else if (children != null) {
                 for (Node c : children) {
-                    c.appendToDrafty(doc);
+                    c.appendToDrafty(gm, doc);
                 }
             }
 
             if (tp != null) {
-                int len = doc.length() - start;
+                int len = doc.length(gm) - start;
                 if (data != null && !data.isEmpty()) {
                     int newKey = doc.append(new Entity(tp, data), key);
                     if (attachment) {
@@ -1962,8 +1982,8 @@ public class Drafty implements Serializable {
         }
 
         @NotNull
-        private static StringBuilder ltrim(@NotNull StringBuilder str) {
-            int len = str.codePointCount(0, str.length());
+        private static StringBuilder ltrim(Matcher gm, @NotNull StringBuilder str) {
+            int len = graphemeCount(gm, str);
             if (len == 0) {
                 return str;
             }
@@ -2131,8 +2151,8 @@ public class Drafty implements Serializable {
             return doc;
         }
 
-        int length() {
-            return txt != null ? txt.codePointCount(0, txt.length()) : 0;
+        int length(Matcher m) {
+            return txt != null ? graphemeCount(m, txt) : 0;
         }
 
         void append(CharSequence text) {
@@ -2168,38 +2188,27 @@ public class Drafty implements Serializable {
      * Methods related to grapheme clusters.
      */
 
-    // Calculate lengths of grapheme clusters comprising the string.
-    private static int[] graphemeSizes(String str) {
-        final Matcher graphemeMatcher = GRAPHEME_PATTERN.matcher(str);
-        int[] sizes = new int[str.length()];
-        int i = 0;
-        while (graphemeMatcher.find()) {
-            sizes[i++] = graphemeMatcher.end() - graphemeMatcher.start();
-        }
-        return sizes;
+    private static int graphemeCount(Matcher matcher, StringBuilder str) {
+        // return str.codePointCount(0, str.length());
+        return countGraphemes(matcher, str, 0, str.length());
     }
 
-    // Slice string by grapheme cluster counts instead of character positions.
-    // The sizes array can be sliced with Arrays.copyOfRange(sizes, start, end);
-    private static String graphemeSlice(String str, int[] sizes, int start, int end) {
-        // Convert grapheme offsets to string offsets.
-        int s = 0;
-        for (int i = 0; i < start; i++) {
-            s += sizes[i];
+    private static int offsetByGraphemes(Matcher matcher, StringBuilder str, int graphemeCount) {
+        matcher.reset(str);
+        int count = 0;
+        int offset = 0;
+        while (matcher.find() && count < graphemeCount) {
+            ++ count;
+            offset = matcher.end();
         }
-        int e = s;
-        for (int i = start; i < end; i++) {
-            e += sizes[i];
-        }
-
-        return str.substring(s, e);
+        return offset;
     }
 
     // Count grapheme clusters in the string between start and end.
-    private static int countGraphemes(Matcher graphemeMatcher, String str, int start, int end) {
-        graphemeMatcher.reset(str).region(start, end);
+    private static int countGraphemes(Matcher matcher, StringBuilder str, int start, int end) {
+        matcher.reset(str).region(start, end);
         int count = 0;
-        while (graphemeMatcher.find()) {
+        while (matcher.find()) {
             ++ count;
         }
         return count;

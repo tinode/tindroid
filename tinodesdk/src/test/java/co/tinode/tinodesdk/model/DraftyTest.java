@@ -316,16 +316,12 @@ public class DraftyTest {
         expected = Drafty.fromPlainText("a😀c😀…");
         assertEquals("Shorten Emoji 1 has failed", expected, actual);
 
-        // Emoji 2. 👩🏽‍✈️ is a medium-dark-skinned female pilot, 4 code points:
-        // 👩🏽‍✈ == 👩 female + 🏽 fitzpatrick skin tone + ‍ ZWJ + ✈ airplane.
-        // This test is expected to fail until composed emoji is supported.
+        // Emoji 2. 👩🏽‍✈ is a medium-dark-skinned female pilot, 4 code points:
+        // '👩🏽‍✈' == 👩 female + 🏽 fitzpatrick skin tone + ‍ ZWJ + ✈ airplane.
+        // AndroidStudio shows '👩🏽‍✈️' instead of '👩🏽‍✈' below. Ignore it.
         src = Drafty.fromPlainText("😀 b1👩🏽‍✈️b2 smile");
         actual = src.shorten(6, false);
         expected = Drafty.fromPlainText("😀 b1👩🏽‍✈️…");
-        expected.fmt = new Drafty.Style[]{
-                new Drafty.Style("ST", 2, 5),
-                new Drafty.Style("EM", 0, 6)
-        };
         assertEquals("Shorten Emoji 2 has failed", expected, actual);
     }
 
