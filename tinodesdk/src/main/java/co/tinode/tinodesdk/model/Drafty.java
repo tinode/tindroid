@@ -113,6 +113,8 @@ public class Drafty implements Serializable {
     // Relative weights of formatting spans. Greater index in array means greater weight.
     private static final List<String> FMT_WEIGHTS = Collections.singletonList("QQ");
 
+    public static final Pattern GRAPHEME_PATTERN = Pattern.compile("\\X");
+
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
             new EntityProc("LN",
@@ -150,6 +152,9 @@ public class Drafty implements Serializable {
     public Style[] fmt;
     public Entity[] ent;
 
+    @JsonIgnore
+    private transient int[] sizes;
+
     public Drafty() {
         txt = null;
         fmt = null;
@@ -162,6 +167,7 @@ public class Drafty implements Serializable {
         this.txt = that.txt;
         this.fmt = that.fmt;
         this.ent = that.ent;
+        this.sizes = that.sizes;
     }
 
     /**
@@ -360,8 +366,6 @@ public class Drafty implements Serializable {
         Map<String, Integer> entityMap = new HashMap<>();
         List<ExtractedEnt> entities;
         for (String line : lines) {
-            // The 'may be null' warning is a false positive: toTree() and chunkify() may return null only
-            // if spans is empty or null. But they are not called if it's empty or null.
             spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {
@@ -413,7 +417,7 @@ public class Drafty implements Serializable {
             }
             if (b.fmt != null) {
                 for (Style s : b.fmt) {
-                    fmt.add(s.convertToCodePoints(text));
+                    fmt.add(s.convertToGraphemeCounts(text));
                 }
             }
 
@@ -1622,10 +1626,12 @@ public class Drafty implements Serializable {
             return false;
         }
 
-        // Convert 'at' and 'len' values from char indexes to codepoints.
-        Style convertToCodePoints(StringBuilder text) {
-            len = text.codePointCount(at, at + len);
-            at = text.codePointCount(0, at);
+        // Convert 'at' and 'len' values from char indexes to grapheme .
+        Style convertToGraphemeCounts(StringBuilder text) {
+            Matcher matcher = GRAPHEME_PATTERN.matcher("");
+            String str = text.toString();
+            len = countGraphemes(matcher, str, at, at + len);
+            at = countGraphemes(matcher, str, 0, at);
             return this;
         }
     }
@@ -2161,14 +2167,40 @@ public class Drafty implements Serializable {
     /**
      * Methods related to grapheme clusters.
      */
-    public static final Pattern graphemePattern = Pattern.compile("\\X");
-    private final Matcher graphemeMatcher = graphemePattern.matcher("");
 
-    private int countGraphemeClusters(String text) {
-        graphemeMatcher.reset(text).region(0, text.length());
+    // Calculate lengths of grapheme clusters comprising the string.
+    private static int[] graphemeSizes(String str) {
+        final Matcher graphemeMatcher = GRAPHEME_PATTERN.matcher(str);
+        int[] sizes = new int[str.length()];
+        int i = 0;
+        while (graphemeMatcher.find()) {
+            sizes[i++] = graphemeMatcher.end() - graphemeMatcher.start();
+        }
+        return sizes;
+    }
+
+    // Slice string by grapheme cluster counts instead of character positions.
+    // The sizes array can be sliced with Arrays.copyOfRange(sizes, start, end);
+    private static String graphemeSlice(String str, int[] sizes, int start, int end) {
+        // Convert grapheme offsets to string offsets.
+        int s = 0;
+        for (int i = 0; i < start; i++) {
+            s += sizes[i];
+        }
+        int e = s;
+        for (int i = start; i < end; i++) {
+            e += sizes[i];
+        }
+
+        return str.substring(s, e);
+    }
+
+    // Count grapheme clusters in the string between start and end.
+    private static int countGraphemes(Matcher graphemeMatcher, String str, int start, int end) {
+        graphemeMatcher.reset(str).region(start, end);
         int count = 0;
         while (graphemeMatcher.find()) {
-            ++count;
+            ++ count;
         }
         return count;
     }

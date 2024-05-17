@@ -96,6 +96,18 @@ public class DraftyTest {
                 new Drafty.Style("ST", 20, 4),
         };
         assertEquals("Parse 8 - Two lines with emoji failed", expected, actual);
+
+        // String 9: markup after emoji.
+        actual = Drafty.parse("🕯️ *bold* https://google.com");
+        expected = new Drafty("🕯️ bold https://google.com");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style("ST", 2, 4),
+                new Drafty.Style(7, 18, 0),
+        };
+        expected.ent = new Drafty.Entity[]{
+                new Drafty.Entity("LN").putData("url", "https://google.com"),
+        };
+        assertEquals("Parse 9 - Markup after emoji failed", expected, actual);
     }
 
     @Test
