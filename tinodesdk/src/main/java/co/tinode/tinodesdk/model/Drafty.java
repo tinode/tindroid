@@ -113,7 +113,7 @@ public class Drafty implements Serializable {
     // Relative weights of formatting spans. Greater index in array means greater weight.
     private static final List<String> FMT_WEIGHTS = Collections.singletonList("QQ");
 
-    public static final Pattern GRAPHEME_PATTERN = Pattern.compile("\\X");
+    private static final Pattern GRAPHEME_PATTERN = Pattern.compile("\\X");
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {

@@ -14,16 +14,21 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.icu.lang.UCharacter;
+import android.icu.lang.UProperty;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
+import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.util.SparseBooleanArray;
@@ -57,6 +62,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.app.ActivityCompat;
+import androidx.emoji2.text.EmojiCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -119,6 +125,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
+
+    private static final float[] EMOJI_SCALING = new float[]{1.26f, 1.55f, 1.93f, 2.40f, 3.00f};
 
     private final MessageActivity mActivity;
     private final ActionMode.Callback mSelectionModeCallback;
@@ -600,6 +608,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else {
                     text = serviceContentSpanned(mActivity, R.drawable.ic_warning_gray, R.string.invalid_content);
                 }
+            } else if (m.content.isPlain()) {
+                // Check if text contains 1-5 emojis and nothing but emojis.
+                int count = countEmoji(text, EMOJI_SCALING.length + 1);
+                if (count > 0 && count <= EMOJI_SCALING.length) {
+                    CharacterStyle style = new RelativeSizeSpan(EMOJI_SCALING[EMOJI_SCALING.length - count]);
+                    text = new SpannableStringBuilder(text);
+                    ((SpannableStringBuilder) text).setSpan(style, 0, text.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                }
             }
             holder.mText.setText(text);
         }
@@ -771,6 +787,67 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             }
         });
+    }
+
+    // If string contains emoji only, count the number of emojis up to 5.
+    private static int countEmoji(CharSequence text, int maxCount) {
+        Log.i(TAG, "Processing text: " + text);
+
+        if (TextUtils.isEmpty(text)) {
+            return 0;
+        }
+
+        int count = 0;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
+            EmojiCompat instance = EmojiCompat.get();
+            int loadedState = instance.getLoadState();
+            if (loadedState != EmojiCompat.LOAD_STATE_SUCCEEDED) {
+                Log.e(TAG, "EmojiCompat not ready: " + loadedState);
+                return -1;
+            }
+
+            for (int offset = 0; offset < text.length() && count < maxCount; count++) {
+                // If the character at offset i is an emoji returns the end index of emoji, -1 otherwise;
+                offset = instance.getEmojiEnd(text, offset);
+                if (offset < 0) {
+                    return -1;
+                }
+            }
+            return count;
+        }
+
+        // The following code does the same as above but requires API 28.
+        // It's less prone to errors. EmojiCompat.init sometimes fails.
+        for (int i = 0; i < text.length(); ) {
+            int cp = Character.codePointAt(text, i);
+            int len = Character.charCount(cp);
+            i += len;
+            if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI_MODIFIER)) {
+                // Do nothing (do not count modifiers).
+                // Checking for them first because UProperty.EMOJI is true for them as well.
+                continue;
+            } else if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI) && (len > 1 || cp > 0x238C)) {
+                count++;
+            } else if (cp == 0x200D) {
+                // ZERO WIDTH JOINER: it's not a stand alone codepoint and the next code point should not
+                // be counted, thus count --.
+                if (count > 0 ) {
+                    count--;
+                } else {
+                    return -1;
+                }
+            } else if (UCharacter.hasBinaryProperty(cp, UProperty.VARIATION_SELECTOR)) {
+                // Do nothing (do not count variation selectors).
+                continue;
+            } else {
+                return -1;
+            }
+
+            if (count >= maxCount) {
+                break;
+            }
+        }
+        return count;
     }
 
     @Override
