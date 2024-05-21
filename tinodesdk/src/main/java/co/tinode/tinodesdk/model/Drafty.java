@@ -222,8 +222,8 @@ public class Drafty implements Serializable {
 
         List<Span> chunks = new ArrayList<>();
         for (Span span : spans) {
-
             // Grab the initial unstyled chunk.
+
             if (span.start > start) {
                 chunks.add(new Span(line.substring(start, span.start)));
             }
@@ -423,7 +423,7 @@ public class Drafty implements Serializable {
 
             Matcher gm = GRAPHEME_PATTERN.matcher("");
             for (int i = 1; i<blks.size(); i++) {
-                int offset = graphemeCount(gm, text) + 1;
+                int offset = gcLength(gm, text) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -803,7 +803,7 @@ public class Drafty implements Serializable {
             return this;
         }
 
-        int len = txt != null ? txt.length() : 0;
+        int len = txt != null ? gcLength(GRAPHEME_PATTERN.matcher(""), txt) : 0;
         if (that.txt != null) {
             if (txt != null) {
                 txt += that.txt;
@@ -859,7 +859,8 @@ public class Drafty implements Serializable {
         }
 
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style("BR", txt.length(), 1);
+        fmt[fmt.length - 1] = new Style("BR",
+                gcLength(GRAPHEME_PATTERN.matcher(""), txt), 1);
 
         txt += " ";
 
@@ -868,14 +869,14 @@ public class Drafty implements Serializable {
 
     /**
      * Create a Drafty document consisting of a single mention.
-     * @param name is location where the button is inserted.
+     * @param name human-readable name of the mentioned user.
      * @param uid is the user ID to be mentioned.
      * @return new Drafty object.
      */
     public static Drafty mention(@NotNull String name, @NotNull String uid) {
         Drafty d = Drafty.fromPlainText(name);
         d.fmt = new Style[]{
-             new Style(0, name.length(), 0)
+             new Style(0, gcLength(GRAPHEME_PATTERN.matcher(""), name), 0)
         };
         d.ent = new Entity[]{
                 new Entity("MN").putData("val", uid)
@@ -930,9 +931,11 @@ public class Drafty implements Serializable {
      */
     public Drafty wrapInto(@NotNull String style) {
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style(style, 0, txt.length());
+        fmt[fmt.length - 1] = new Style(style, 0,
+                gcLength(GRAPHEME_PATTERN.matcher(""), txt));
         return this;
     }
+
     /**
      * Insert button into Drafty document.
      * @param at is the location where the button is inserted.
@@ -1071,13 +1074,21 @@ public class Drafty implements Serializable {
 
     // Returns a tree of nodes.
     @NotNull
-    private static Node spansToTree(@NotNull Node parent,
+    private static Node spansToTree(int[] sizes, @NotNull Node parent,
                                     @NotNull CharSequence text,
                                     int start, int end,
                                     @Nullable List<Span> spans) {
+        if (start >= sizes.length) {
+            return parent;
+        }
+        if (end > sizes.length) {
+            end = sizes.length;
+        }
+
+        // Process unstyled range.
         if (spans == null) {
             if (start < end) {
-                parent.add(new Node(text.subSequence(start, end)));
+                parent.add(new Node(gcSubSequence(sizes, text, start, end)));
             }
             return parent;
         }
@@ -1094,7 +1105,7 @@ public class Drafty implements Serializable {
 
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
-                parent.add(new Node(text.subSequence(start, span.start)));
+                parent.add(new Node(gcSubSequence(sizes, text, start, span.start)));
                 start = span.start;
             }
 
@@ -1120,14 +1131,15 @@ public class Drafty implements Serializable {
                 subspans = null;
             }
 
-            parent.add(spansToTree(new Node(span.type, span.data, span.key), text, start, span.end, subspans));
+            parent.add(spansToTree(sizes, new Node(span.type, span.data, span.key),
+                    text, start, span.end, subspans));
 
             start = span.end;
         }
 
         // Add the last unformatted range.
         if (start < end) {
-            parent.add(new Node(text.subSequence(start, end)));
+            parent.add(new Node(gcSubSequence(sizes, text, start, end)));
         }
 
         return parent;
@@ -1193,8 +1205,9 @@ public class Drafty implements Serializable {
     // Convert Drafty document to a tree of formatted nodes.
     protected Node toTree() {
         CharSequence text = txt == null ? "" : txt;
-
         int entCount = ent != null ? ent.length : 0;
+        Matcher gm = GRAPHEME_PATTERN.matcher(text);
+        int[] sizes = gcSizes(gm, text);
 
         // Handle special case when all values in fmt are 0 and fmt therefore was
         // skipped.
@@ -1210,7 +1223,8 @@ public class Drafty implements Serializable {
         // Sanitize spans
         List<Span> spans = new ArrayList<>();
         List<Span> attachments = new ArrayList<>();
-        int maxIndex = text.length();
+        int maxIndex = sizes.length;
+
         for (Style aFmt : fmt) {
             if (aFmt == null || aFmt.len < 0) {
                 // Invalid span.
@@ -1241,7 +1255,6 @@ public class Drafty implements Serializable {
                 spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
             }
         }
-
         // Sort spans first by start index (asc) then by length (desc).
         spans.sort((a, b) -> {
             int diff = a.start - b.start;
@@ -1271,8 +1284,7 @@ public class Drafty implements Serializable {
                 span.type = "HD";
             }
         }
-
-        Node tree = spansToTree(new Node(), text, 0, text.length(), spans);
+        Node tree = spansToTree(sizes, new Node(), text, 0, text.length(), spans);
 
         // Flatten tree nodes, remove styling from buttons, copy button text to 'title' data.
         return treeTopDown(tree, new Transformer() {
@@ -1332,9 +1344,9 @@ public class Drafty implements Serializable {
                     limit = -1;
                 } else if (node.text != null) {
                     Matcher gm = GRAPHEME_PATTERN.matcher("");
-                    int len = graphemeCount(gm, node.text);
+                    int len = gcLength(gm, node.text);
                     if (len > limit) {
-                        int clipAt = offsetByGraphemes(gm, node.text, limit);
+                        int clipAt = gcOffset(gm, node.text, limit);
                         node.text.setLength(clipAt);
                         if (tail != null) {
                             node.text.append(tail);
@@ -1405,9 +1417,26 @@ public class Drafty implements Serializable {
      */
     @SuppressWarnings("unused")
     public String toPlainText() {
-        return "{txt: '" + txt + "'," +
-                "fmt: " + Arrays.toString(fmt) + "," +
-                "ent: " + Arrays.toString(ent) + "}";
+        StringBuilder sb = new StringBuilder("{");
+        if (txt != null) {
+            sb.append("txt: '").append(txt).append("', ");
+        }
+        if (fmt != null && fmt.length > 0) {
+            sb.append("fmt: [");
+            for (Style f : fmt) {
+                sb.append(f).append(", ");
+            }
+            sb.append("], ");
+        }
+        if (ent != null && ent.length > 0) {
+            sb.append("ent: [");
+            for (Entity e : ent) {
+                sb.append(e).append(", ");
+            }
+            sb.append("]");
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     // Convert Drafty to plain text;
@@ -1553,6 +1582,7 @@ public class Drafty implements Serializable {
                 return node;
             }
         });
+
         // Move attachments to the end of the doc.
         attachmentsToEnd(tree, maxAttachments);
         // Shorten the doc.
@@ -1615,7 +1645,16 @@ public class Drafty implements Serializable {
         @NotNull
         @Override
         public String toString() {
-            return "{tp: '" + tp + "', at: " + at + ", len: " + len + ", key: " + key + "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (tp != null) {
+                sb.append("tp: '").append(tp).append("', ");
+            }
+            sb.append("at: ").append(at).append(", len: ").append(len);
+            if (key != null) {
+                sb.append(", key: ").append(key);
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
         @Override
@@ -1640,8 +1679,8 @@ public class Drafty implements Serializable {
         // Convert 'at' and 'len' values from char indexes to grapheme .
         Style toGraphemeCounts(StringBuilder text) {
             Matcher matcher = GRAPHEME_PATTERN.matcher("");
-            len = countGraphemes(matcher, text, at, at + len);
-            at = countGraphemes(matcher, text, 0, at);
+            len = gcCount(matcher, text, at, at + len);
+            at = gcCount(matcher, text, 0, at);
             return this;
         }
     }
@@ -1916,7 +1955,7 @@ public class Drafty implements Serializable {
 
         protected int length(Matcher m) {
             if (text != null) {
-                return graphemeCount(m, text);
+                return gcLength(m, text);
             }
             if (children == null) {
                 return 0;
@@ -1983,7 +2022,7 @@ public class Drafty implements Serializable {
 
         @NotNull
         private static StringBuilder ltrim(Matcher gm, @NotNull StringBuilder str) {
-            int len = graphemeCount(gm, str);
+            int len = gcLength(gm, str);
             if (len == 0) {
                 return str;
             }
@@ -2088,14 +2127,26 @@ public class Drafty implements Serializable {
         @NotNull
         @Override
         public String toString() {
-            return "{" +
-                    "text='" + text + "'," +
-                    "start=" + start + "," +
-                    "end=" + end + "," +
-                    "type=" + type + "," +
-                    "data=" + (data != null ? data.toString() : "null") + "," +
-                    "\n  children=[" + children + "]" +
-                    "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (type != null) {
+                sb.append("type: ").append(type).append(", ");
+            }
+            sb.append("start: ").append(start).append(", end: ").append(end);
+            if (text != null) {
+                sb.append(", text: '").append(text).append("'");
+            }
+            if (data != null) {
+                sb.append(", data: ").append(data);
+            }
+            if (children != null) {
+                sb.append(", children: [\n");
+                for (Span c : children) {
+                    sb.append("\t").append(c).append("\n");
+                }
+                sb.append("\n]");
+            }
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -2152,7 +2203,7 @@ public class Drafty implements Serializable {
         }
 
         int length(Matcher m) {
-            return txt != null ? graphemeCount(m, txt) : 0;
+            return txt != null ? gcLength(m, txt) : 0;
         }
 
         void append(CharSequence text) {
@@ -2188,13 +2239,37 @@ public class Drafty implements Serializable {
      * Methods related to grapheme clusters.
      */
 
-    private static int graphemeCount(Matcher matcher, StringBuilder str) {
-        // return str.codePointCount(0, str.length());
-        return countGraphemes(matcher, str, 0, str.length());
+    // Get array of grapheme cluster sizes in the string.
+    private static int[] gcSizes(Matcher matcher, CharSequence seq) {
+        List<Integer> sizes = new ArrayList<>();
+        matcher.reset(seq);
+        while (matcher.find()) {
+            sizes.add(matcher.end() - matcher.start());
+        }
+
+        return sizes.stream().mapToInt(i -> i).toArray();
     }
 
-    private static int offsetByGraphemes(Matcher matcher, StringBuilder str, int graphemeCount) {
-        matcher.reset(str);
+    // Extract subsequences of grapheme clusters between start and end clusters.
+    private static CharSequence gcSubSequence(int[] sizes, CharSequence seq, int start, int end) {
+        int from = 0;
+        for (int i = 0; i < start; i++) {
+            from += sizes[i];
+        }
+        int to = from;
+        for (int i = start; i < end; i++) {
+            to += sizes[i];
+        }
+        return seq.subSequence(from, to);
+    }
+
+    private static int gcLength(Matcher matcher, CharSequence seq) {
+        // return str.codePointCount(0, str.length());
+        return gcCount(matcher, seq, 0, seq.length());
+    }
+
+    private static int gcOffset(Matcher matcher, CharSequence seq, int graphemeCount) {
+        matcher.reset(seq);
         int count = 0;
         int offset = 0;
         while (matcher.find() && count < graphemeCount) {
@@ -2205,8 +2280,8 @@ public class Drafty implements Serializable {
     }
 
     // Count grapheme clusters in the string between start and end.
-    private static int countGraphemes(Matcher matcher, StringBuilder str, int start, int end) {
-        matcher.reset(str).region(start, end);
+    private static int gcCount(Matcher matcher, CharSequence seq, int start, int end) {
+        matcher.reset(seq).region(start, end);
         int count = 0;
         while (matcher.find()) {
             ++ count;

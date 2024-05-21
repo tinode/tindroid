@@ -791,8 +791,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     // If string contains emoji only, count the number of emojis up to 5.
     private static int countEmoji(CharSequence text, int maxCount) {
-        Log.i(TAG, "Processing text: " + text);
-
         if (TextUtils.isEmpty(text)) {
             return 0;
         }

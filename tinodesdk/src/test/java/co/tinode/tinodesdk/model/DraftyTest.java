@@ -108,6 +108,22 @@ public class DraftyTest {
                 new Drafty.Entity("LN").putData("url", "https://google.com"),
         };
         assertEquals("Parse 9 - Markup after emoji failed", expected, actual);
+
+        // String 10: emoji with line breaks.
+        /*  🔴Hello🔴
+            🟠Hello🟠
+            🟡Hello🟡 */
+        actual = Drafty.parse("\uD83D\uDD34Hello\uD83D\uDD34\n" +
+                "\uD83D\uDFE0Hello\uD83D\uDFE0\n" +
+                "\uD83D\uDFE1Hello\uD83D\uDFE1");
+        expected = new Drafty("\uD83D\uDD34Hello\uD83D\uDD34 " +
+                "\uD83D\uDFE0Hello\uD83D\uDFE0 " +
+                "\uD83D\uDFE1Hello\uD83D\uDFE1");
+        expected.fmt = new Drafty.Style[]{
+                new Drafty.Style("BR", 7, 1),
+                new Drafty.Style("BR", 15, 1),
+        };
+        assertEquals("Parse 10 - Emoji with line breaks failed", expected, actual);
     }
 
     @Test
@@ -323,6 +339,15 @@ public class DraftyTest {
         actual = src.shorten(6, false);
         expected = Drafty.fromPlainText("😀 b1👩🏽‍✈️…");
         assertEquals("Shorten Emoji 2 has failed", expected, actual);
+
+        // String 10: compound emoji.
+        /*  🔴Hello🔴 🟠Hello🟠 */
+        src = Drafty.parse("\uD83D\uDD34Hello\uD83D\uDD34 " +
+                "\uD83D\uDFE0Hello\uD83D\uDFE0");
+        actual = src.shorten(14, false);
+        expected = new Drafty("\uD83D\uDD34Hello\uD83D\uDD34 " +
+                "\uD83D\uDFE0Hell…");
+        assertEquals("Shorten Emoji 3 - Compound emoji has failed", expected, actual);
     }
 
     @Test
