@@ -596,6 +596,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         // Normal message.
         if (m.content != null) {
+            if (m.content.txt.contains("test")) {
+                Log.i(TAG, "Processing " + m.content.toPlainText());
+            }
             // Disable clicker while message is processed.
             FullFormatter formatter = new FullFormatter(holder.mText, uploadingAttachment ? null : new SpanClicker(m.seq));
             formatter.setQuoteFormatter(new QuoteFormatter(holder.mText, holder.mText.getTextSize()));

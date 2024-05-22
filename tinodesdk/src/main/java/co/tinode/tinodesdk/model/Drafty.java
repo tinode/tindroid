@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import com.ibm.icu.text.BreakIterator;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -112,8 +114,6 @@ public class Drafty implements Serializable {
 
     // Relative weights of formatting spans. Greater index in array means greater weight.
     private static final List<String> FMT_WEIGHTS = Collections.singletonList("QQ");
-
-    private static final Pattern GRAPHEME_PATTERN = Pattern.compile("\\X");
 
     private static final String[] ENTITY_NAME = {"LN", "MN", "HT"};
     private static final EntityProc[] ENTITY_PROC = {
@@ -421,9 +421,8 @@ public class Drafty implements Serializable {
                 }
             }
 
-            Matcher gm = GRAPHEME_PATTERN.matcher("");
             for (int i = 1; i<blks.size(); i++) {
-                int offset = gcLength(gm, text) + 1;
+                int offset = gcLength(text) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -803,7 +802,7 @@ public class Drafty implements Serializable {
             return this;
         }
 
-        int len = txt != null ? gcLength(GRAPHEME_PATTERN.matcher(""), txt) : 0;
+        int len = txt != null ? gcLength(txt) : 0;
         if (that.txt != null) {
             if (txt != null) {
                 txt += that.txt;
@@ -859,8 +858,7 @@ public class Drafty implements Serializable {
         }
 
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style("BR",
-                gcLength(GRAPHEME_PATTERN.matcher(""), txt), 1);
+        fmt[fmt.length - 1] = new Style("BR", gcLength(txt), 1);
 
         txt += " ";
 
@@ -876,7 +874,7 @@ public class Drafty implements Serializable {
     public static Drafty mention(@NotNull String name, @NotNull String uid) {
         Drafty d = Drafty.fromPlainText(name);
         d.fmt = new Style[]{
-             new Style(0, gcLength(GRAPHEME_PATTERN.matcher(""), name), 0)
+             new Style(0, gcLength(name), 0)
         };
         d.ent = new Entity[]{
                 new Entity("MN").putData("val", uid)
@@ -931,8 +929,7 @@ public class Drafty implements Serializable {
      */
     public Drafty wrapInto(@NotNull String style) {
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style(style, 0,
-                gcLength(GRAPHEME_PATTERN.matcher(""), txt));
+        fmt[fmt.length - 1] = new Style(style, 0, gcLength(txt));
         return this;
     }
 
@@ -1004,7 +1001,8 @@ public class Drafty implements Serializable {
      * @return a tree of components.
      */
     public <T> T format(@NotNull Formatter<T> formatter) {
-        return treeBottomUp(toTree(), formatter, new Stack<>());
+        Node tree = toTree();
+        return treeBottomUp(tree, formatter, new Stack<>());
     }
 
     /**
@@ -1075,12 +1073,9 @@ public class Drafty implements Serializable {
     // Returns a tree of nodes.
     @NotNull
     private static Node spansToTree(int[] sizes, @NotNull Node parent,
-                                    @NotNull CharSequence text,
+                                    final @NotNull CharSequence text,
                                     int start, int end,
                                     @Nullable List<Span> spans) {
-        if (start >= sizes.length) {
-            return parent;
-        }
         if (end > sizes.length) {
             end = sizes.length;
         }
@@ -1206,8 +1201,7 @@ public class Drafty implements Serializable {
     protected Node toTree() {
         CharSequence text = txt == null ? "" : txt;
         int entCount = ent != null ? ent.length : 0;
-        Matcher gm = GRAPHEME_PATTERN.matcher(text);
-        int[] sizes = gcSizes(gm, text);
+        int[] sizes = gcSizes(text);
 
         // Handle special case when all values in fmt are 0 and fmt therefore was
         // skipped.
@@ -1284,7 +1278,9 @@ public class Drafty implements Serializable {
                 span.type = "HD";
             }
         }
-        Node tree = spansToTree(sizes, new Node(), text, 0, text.length(), spans);
+        Node tree = spansToTree(sizes, new Node(), text, 0, sizes.length, spans);
+
+        System.out.println("toTree '" + toPlainText() +"'; spans =" + spans + "\ntree=" + tree);
 
         // Flatten tree nodes, remove styling from buttons, copy button text to 'title' data.
         return treeTopDown(tree, new Transformer() {
@@ -1343,10 +1339,9 @@ public class Drafty implements Serializable {
                     node.text = tail != null ? new StringBuilder(tail) : null;
                     limit = -1;
                 } else if (node.text != null) {
-                    Matcher gm = GRAPHEME_PATTERN.matcher("");
-                    int len = gcLength(gm, node.text);
+                    int len = gcLength(node.text);
                     if (len > limit) {
-                        int clipAt = gcOffset(gm, node.text, limit);
+                        int clipAt = gcOffset(node.text, limit);
                         node.text.setLength(clipAt);
                         if (tail != null) {
                             node.text.append(tail);
@@ -1555,6 +1550,7 @@ public class Drafty implements Serializable {
     @NotNull
     public Drafty replyContent(int length, int maxAttachments) {
         Node tree = toTree();
+
         // Strip quote blocks, shorten leading mention, convert line breaks to spaces.
         tree = treeTopDown(tree, new Transformer() {
             @Override
@@ -1678,9 +1674,8 @@ public class Drafty implements Serializable {
 
         // Convert 'at' and 'len' values from char indexes to grapheme .
         Style toGraphemeCounts(StringBuilder text) {
-            Matcher matcher = GRAPHEME_PATTERN.matcher("");
-            len = gcCount(matcher, text, at, at + len);
-            at = gcCount(matcher, text, 0, at);
+            len = gcCount(text, at, at + len);
+            at = gcCount(text, 0, at);
             return this;
         }
     }
@@ -1953,22 +1948,18 @@ public class Drafty implements Serializable {
             data.remove(key);
         }
 
-        protected int length(Matcher m) {
+        public int length() {
             if (text != null) {
-                return gcLength(m, text);
+                return gcLength(text);
             }
             if (children == null) {
                 return 0;
             }
             int len = 0;
             for (Node c : children) {
-                len += c.length(m);
+                len += c.length();
             }
             return len;
-        }
-
-        public int length() {
-            return length(GRAPHEME_PATTERN.matcher(""));
         }
 
         // Remove spaces and breaks on the left.
@@ -1980,7 +1971,7 @@ public class Drafty implements Serializable {
                 data = null;
             } else if (isUnstyled()) {
                 if (text != null) {
-                    text = ltrim(GRAPHEME_PATTERN.matcher(""), text);
+                    text = ltrim(text);
                 } else if (children != null && !children.isEmpty()) {
                     children.get(0).lTrim();
                 }
@@ -1989,23 +1980,23 @@ public class Drafty implements Serializable {
 
         public Drafty toDrafty() {
             MutableDrafty doc = new MutableDrafty();
-            appendToDrafty(GRAPHEME_PATTERN.matcher(""), doc);
+            appendToDrafty(doc);
             return doc.toDrafty();
         }
 
-        private void appendToDrafty(Matcher gm, @NotNull MutableDrafty doc) {
-            int start = doc.length(gm);
+        private void appendToDrafty(@NotNull MutableDrafty doc) {
+            int start = doc.length();
 
             if (text != null) {
                 doc.append(text);
             } else if (children != null) {
                 for (Node c : children) {
-                    c.appendToDrafty(gm, doc);
+                    c.appendToDrafty(doc);
                 }
             }
 
             if (tp != null) {
-                int len = doc.length(gm) - start;
+                int len = doc.length() - start;
                 if (data != null && !data.isEmpty()) {
                     int newKey = doc.append(new Entity(tp, data), key);
                     if (attachment) {
@@ -2021,8 +2012,8 @@ public class Drafty implements Serializable {
         }
 
         @NotNull
-        private static StringBuilder ltrim(Matcher gm, @NotNull StringBuilder str) {
-            int len = gcLength(gm, str);
+        private static StringBuilder ltrim(@NotNull StringBuilder str) {
+            int len = gcLength(str);
             if (len == 0) {
                 return str;
             }
@@ -2040,11 +2031,24 @@ public class Drafty implements Serializable {
         @NotNull
         @Override
         public String toString() {
-            return "{'" + tp + "'" +
-                    (data != null  ? ", data: " + data : "") +
-                    (text != null ? "; '" + text + "'" :
-                            (children != null ? ("; " + children) : "; NULL")) +
-                    "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (tp != null) {
+                sb.append("tp: ").append(tp).append("; ");
+            }
+            if (data != null) {
+                sb.append("data: ").append(data).append(" ");
+            }
+            if (text != null) {
+                sb.append("text: '").append(text).append("'");
+            } else if (children != null) {
+                sb.append("[");
+                for (Node c : children) {
+                    sb.append(c).append(",");
+                }
+                sb.append("]");
+            }
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -2202,8 +2206,8 @@ public class Drafty implements Serializable {
             return doc;
         }
 
-        int length(Matcher m) {
-            return txt != null ? gcLength(m, txt) : 0;
+        int length() {
+            return txt != null ? gcLength(txt) : 0;
         }
 
         void append(CharSequence text) {
@@ -2240,13 +2244,14 @@ public class Drafty implements Serializable {
      */
 
     // Get array of grapheme cluster sizes in the string.
-    private static int[] gcSizes(Matcher matcher, CharSequence seq) {
+    private static int[] gcSizes(CharSequence seq) {
         List<Integer> sizes = new ArrayList<>();
-        matcher.reset(seq);
-        while (matcher.find()) {
-            sizes.add(matcher.end() - matcher.start());
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq);
+        int start = bi.first();
+        for (int end = bi.next(); end != BreakIterator.DONE; start = end, end = bi.next()) {
+            sizes.add(end - start);
         }
-
         return sizes.stream().mapToInt(i -> i).toArray();
     }
 
@@ -2263,27 +2268,31 @@ public class Drafty implements Serializable {
         return seq.subSequence(from, to);
     }
 
-    private static int gcLength(Matcher matcher, CharSequence seq) {
+    private static int gcLength(CharSequence seq) {
         // return str.codePointCount(0, str.length());
-        return gcCount(matcher, seq, 0, seq.length());
+        return gcCount(seq, 0, seq.length());
     }
 
-    private static int gcOffset(Matcher matcher, CharSequence seq, int graphemeCount) {
-        matcher.reset(seq);
-        int count = 0;
+    // Convert offset measured in grapheme count to offset in character count.
+    private static int gcOffset(CharSequence seq, int graphemeCount) {
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq);
+        bi.first();
         int offset = 0;
-        while (matcher.find() && count < graphemeCount) {
-            ++ count;
-            offset = matcher.end();
+        for (int end = bi.next(), count = 0;
+             end != BreakIterator.DONE && count < graphemeCount;
+             end = bi.next(), count ++) {
+            offset = end;
         }
         return offset;
     }
 
     // Count grapheme clusters in the string between start and end.
-    private static int gcCount(Matcher matcher, CharSequence seq, int start, int end) {
-        matcher.reset(seq).region(start, end);
+    private static int gcCount(CharSequence seq, int start, int end) {
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq.subSequence(start, end));
         int count = 0;
-        while (matcher.find()) {
+        for (bi.first(); bi.next() != BreakIterator.DONE;){
             ++ count;
         }
         return count;

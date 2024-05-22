@@ -34,15 +34,12 @@ android {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    // Do NOT upgrade jackson to 2.14+. 2.14+ requires API 26+.
-    // noinspection GradleDependency
-    api 'com.fasterxml.jackson.core:jackson-databind:2.13.5'
-    // noinspection GradleDependency
-    api 'com.fasterxml.jackson.core:jackson-core:2.13.5'
-    // noinspection GradleDependency
-    api 'com.fasterxml.jackson.core:jackson-annotations:2.13.5'
-    api 'org.java-websocket:Java-WebSocket:1.5.3'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.17.1'
+    api 'com.fasterxml.jackson.core:jackson-core:2.17.1'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.17.1'
 
-    implementation 'org.jetbrains:annotations:24.0.1'
+    api 'org.java-websocket:Java-WebSocket:1.5.3'
+    implementation 'com.ibm.icu:icu4j:75.1'
+    implementation 'org.jetbrains:annotations:24.1.0'
     testImplementation 'junit:junit:4.13.2'
 }
