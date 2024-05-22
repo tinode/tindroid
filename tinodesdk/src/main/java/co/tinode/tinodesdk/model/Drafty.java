@@ -1280,8 +1280,6 @@ public class Drafty implements Serializable {
         }
         Node tree = spansToTree(sizes, new Node(), text, 0, sizes.length, spans);
 
-        System.out.println("toTree '" + toPlainText() +"'; spans =" + spans + "\ntree=" + tree);
-
         // Flatten tree nodes, remove styling from buttons, copy button text to 'title' data.
         return treeTopDown(tree, new Transformer() {
             @Override
