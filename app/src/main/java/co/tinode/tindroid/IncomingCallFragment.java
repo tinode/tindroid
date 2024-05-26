@@ -204,7 +204,7 @@ public class IncomingCallFragment extends Fragment
                 mCamera.unbindAll();
                 // Bind use cases to front camera.
                 mCamera.bindToLifecycle(this, CameraSelector.DEFAULT_FRONT_CAMERA, preview);
-            } catch (ExecutionException | InterruptedException | IllegalStateException ex) {
+            } catch (ExecutionException | InterruptedException | IllegalStateException | IllegalArgumentException ex) {
                 Log.e(TAG, "Failed to start camera", ex);
             }
         }, ContextCompat.getMainExecutor(activity));
