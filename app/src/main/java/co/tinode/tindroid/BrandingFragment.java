@@ -24,7 +24,6 @@ import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tindroid.widgets.QRCodeScanner;
 
 public class BrandingFragment extends Fragment {
-    private static final String TAG = "BrandingFragment";
     private static final String URI_PREFIX = "tinode:host/";
 
     private QRCodeScanner mQrScanner = null;

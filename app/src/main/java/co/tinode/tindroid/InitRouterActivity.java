@@ -9,7 +9,7 @@ import co.tinode.tindroid.db.BaseDb;
 /**
  * Splash screen on startup
  */
-public class SplashActivity extends AppCompatActivity {
+public class InitRouterActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

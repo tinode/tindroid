@@ -105,7 +105,7 @@ public class CircleProgressView extends AppCompatImageView {
         ShapeDrawable circle = new ShapeDrawable(new OvalShape());
         ViewCompat.setElevation(this, SHADOW_ELEVATION * density);
         circle.getPaint().setColor(bgColor);
-        ViewCompat.setBackground(this, circle);
+        setBackground(circle);
 
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
 

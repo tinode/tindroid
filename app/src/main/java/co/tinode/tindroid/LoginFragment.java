@@ -59,8 +59,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Activity activity = requireActivity();
-        ((MenuHost) activity).addMenuProvider(this,
-                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
         initBranding(activity);
     }
 
@@ -95,7 +94,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
 
                     View byTinode = activity.findViewById(R.id.byTinode);
                     byTinode.setVisibility(View.VISIBLE);
-                    UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+                    UiUtils.clickToBrowseTinodeURL(byTinode);
                 }
             }
         }

@@ -90,7 +90,7 @@ public class PhoneEdit extends FrameLayout {
 
         TypedValue typedValue = new TypedValue();
         Resources.Theme theme = context.getTheme();
-        theme.resolveAttribute(R.attr.colorControlActivated, typedValue, true);
+        theme.resolveAttribute(androidx.appcompat.R.attr.colorControlActivated, typedValue, true);
         @ColorInt int colorControlActivated = typedValue.data;
         @ColorInt int colorControlNormal = ((TextView) findViewById(R.id.phone_number_hint))
                 .getTextColors().getDefaultColor();

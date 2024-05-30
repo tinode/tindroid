@@ -1,20 +1,24 @@
 package co.tinode.tindroid.format;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.util.Base64;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
-
 import java.util.LinkedList;
 import java.util.List;
 
+import androidx.annotation.NonNull;
 import co.tinode.tindroid.Const;
+import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;
+
+import coil.Coil;
+import coil.request.ImageRequest;
+import coil.target.Target;
 
 // Convert images to thumbnails.
 public class ThumbnailTransformer implements Drafty.Transformer {
@@ -62,31 +66,33 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 components = new LinkedList<>();
             }
             components.add(done);
-            Picasso.get().load((String) val).into(new Target() {
-                @Override
-                public void onBitmapLoaded(Bitmap bmp, Picasso.LoadedFrom from) {
-                    bmp = UiUtils.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
-                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
-                    node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
-                    node.putData("size", bits.length);
-                    node.putData("mime", "image/jpeg");
-                    try {
-                        done.resolve(null);
-                    } catch (Exception ignored) {}
-                }
+            Context context = TindroidApp.getAppContext();
+            Coil.imageLoader(context).enqueue(
+                    new ImageRequest.Builder(context)
+                            .data(val)
+                            .target(new Target() {
+                                @Override
+                                public void onSuccess(@NonNull Drawable drawable) {
+                                    Bitmap bmp = UiUtils.bitmapFromDrawable(drawable);
+                                    bmp = UiUtils.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
+                                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                                    node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
+                                    node.putData("size", bits.length);
+                                    node.putData("mime", "image/jpeg");
+                                    try {
+                                        done.resolve(null);
+                                    } catch (Exception ignored) {}
+                                }
 
-                @Override
-                public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-                    node.clearData("size");
-                    node.clearData("mime");
-                    try {
-                        done.resolve(null);
-                    } catch (Exception ignored) {}
-                }
-
-                @Override
-                public void onPrepareLoad(Drawable placeHolderDrawable) { /* do nothing */ }
-            });
+                                @Override
+                                public void onError(Drawable errorDrawable) {
+                                    node.clearData("size");
+                                    node.clearData("mime");
+                                    try {
+                                        done.resolve(null);
+                                    } catch (Exception ignored) {}
+                                }
+                            }).build());
         }
 
         return node;

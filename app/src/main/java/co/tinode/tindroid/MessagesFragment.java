@@ -175,7 +175,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
         // Check if permission is granted.
         if (isGranted) {
-            openFileSelector(requireActivity());
+            openFileSelector(requireActivity(), false);
         }
     });
 
@@ -189,7 +189,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 }
 
                 // Try to open the image selector again.
-                openMediaSelector(requireActivity());
+                openMediaSelector(requireActivity(), false);
             });
 
     private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
@@ -369,10 +369,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         doneEditing.setOnClickListener(v -> sendText(activity));
 
         // Send image button
-        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity));
+        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity, true));
 
         // Send file button
-        view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity));
+        view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity, true));
 
         // Cancel reply preview button.
         view.findViewById(R.id.cancelPreview).setOnClickListener(v -> cancelPreview(activity));
@@ -880,7 +880,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
                     EditText input = activity.findViewById(R.id.editMessage);
-                    input.append(mMessageToSend);
+                    if (input.getText().length() == 0) {
+                        input.append(mMessageToSend);
+                    }
 
                     mMessageToSend = null;
                 }
@@ -1244,15 +1246,17 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
     }
 
-    private void openFileSelector(@NonNull Activity activity) {
+    private void openFileSelector(@NonNull Activity activity, boolean checkPermissions) {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
-                !UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            mFileOpenerRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
-            return;
+        if (checkPermissions) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU &&
+                    !UiUtils.isPermissionGranted(activity, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                mFileOpenerRequestPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE);
+                return;
+            }
         }
 
         try {
@@ -1263,23 +1267,25 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
     }
 
-    private void openMediaSelector(@NonNull final Activity activity) {
+    private void openMediaSelector(@NonNull final Activity activity, boolean checkPermissions) {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        LinkedList<String> permissions = new LinkedList<>();
-        permissions.add(Manifest.permission.CAMERA);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-            permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-        } else {
-            permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
-            permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
-        }
-        LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions.toArray(new String[]{}));
-        if (!missing.isEmpty()) {
-            mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
-            return;
+        if (checkPermissions) {
+            LinkedList<String> permissions = new LinkedList<>();
+            permissions.add(Manifest.permission.CAMERA);
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            } else {
+                permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
+                permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions.toArray(new String[]{}));
+            if (!missing.isEmpty()) {
+                mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
+                return;
+            }
         }
 
         mMediaPickerLauncher.launch(null);
@@ -1314,7 +1320,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
 
         String message = inputField.getText().toString().trim();
-        if (!message.equals("")) {
+        if (!message.isEmpty()) {
             Drafty msg = Drafty.parse(message);
             boolean isReplacement = false;
             if (mTextAction == UiUtils.MsgAction.EDIT) {

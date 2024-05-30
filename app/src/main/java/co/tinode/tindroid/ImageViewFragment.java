@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.RectF;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -28,14 +29,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Callback;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
-
 import java.io.IOException;
 import java.io.InputStream;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.res.ResourcesCompat;
@@ -44,7 +42,11 @@ import androidx.core.view.MenuProvider;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+
 import co.tinode.tindroid.widgets.OverlaidImageView;
+
+import coil.request.ImageRequest;
+import coil.target.Target;
 
 /**
  * Fragment for expanded display of an image: being attached or received.
@@ -107,7 +109,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
 
         GestureDetector.OnGestureListener listener = new GestureDetector.SimpleOnGestureListener() {
             @Override
-            public boolean onScroll(@NonNull MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
+            public boolean onScroll(MotionEvent e1, @NonNull MotionEvent e2, float dX, float dY) {
                 if (mWorkingRect == null || mInitialRect == null) {
                     // The image is not initialized yet.
                     return false;
@@ -290,22 +292,23 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
             if (ref != null) {
                 mRemoteState = RemoteState.LOADING;
                 mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                RequestCreator rc = Picasso.get().load(ref)
+                ImageRequest.Builder rc = new ImageRequest.Builder(activity)
+                        .data(ref)
                         .error(R.drawable.ic_broken_image);
                 if (preview != null) {
-                    rc = rc.placeholder(new BitmapDrawable(getResources(), preview));
+                    rc.placeholder(new BitmapDrawable(getResources(), preview));
                     // No need to show preview separately from Picasso.
                     preview = null;
                 } else {
-                    rc = rc.placeholder(R.drawable.ic_image);
+                    rc.placeholder(R.drawable.ic_image);
                 }
 
-                rc.into(mImageView, new Callback() {
+                rc.target(new Target() {
                     @Override
-                    public void onSuccess() {
+                    public void onSuccess(@NonNull Drawable drawable) {
                         mRemoteState = RemoteState.SUCCESS;
-                        Activity activity = getActivity();
-                        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+                        Activity activity = requireActivity();
+                        if (activity.isFinishing() || activity.isDestroyed()) {
                             return;
                         }
 
@@ -323,9 +326,9 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                     }
 
                     @Override
-                    public void onError(Exception e) {
+                    public void onError(@Nullable Drawable drawable) {
                         mRemoteState = RemoteState.FAILED;
-                        Log.w(TAG, "Failed to fetch image: " + e.getMessage() + " (" + ref + ")");
+                        Log.w(TAG, "Failed to fetch image: " + ref);
                         mImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                         ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
                     }
@@ -392,13 +395,6 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         mImageView.setImageMatrix(mMatrix);
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        Picasso.get().cancelRequest(mImageView);
-    }
-
     // Setup fields for image preview.
     private void setupImagePreview(final Activity activity) {
         if (mAvatarUpload) {
@@ -420,7 +416,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         }
 
         // The received image is viewed.
-        String size = ((int) mInitialRect.width()) + " \u00D7 " + ((int) mInitialRect.height()) + "; ";
+        String size = ((int) mInitialRect.width()) + " × " + ((int) mInitialRect.height()) + "; ";
         activity.findViewById(R.id.sendImagePanel).setVisibility(View.GONE);
         activity.findViewById(R.id.annotation).setVisibility(View.VISIBLE);
         ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
@@ -450,7 +446,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
             }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_image);
-                filename += "" + (System.currentTimeMillis() % 10000);
+                filename += Long.toString(System.currentTimeMillis() % 10000);
             }
             Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
             String savedAt = MediaStore.Images.Media.insertImage(activity.getContentResolver(), bmp,

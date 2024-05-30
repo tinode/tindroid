@@ -128,7 +128,7 @@ public class AcsHelper implements Serializable {
     }
 
     private static int decode(String mode) {
-        if (mode == null || mode.length() == 0) {
+        if (mode == null || mode.isEmpty()) {
             return MODE_INVALID;
         }
 
@@ -208,7 +208,7 @@ public class AcsHelper implements Serializable {
      * @return updated value.
      */
     private static int update(int val, String umode) {
-        if (umode == null || umode.length() == 0) {
+        if (umode == null || umode.isEmpty()) {
             return val;
         }
 

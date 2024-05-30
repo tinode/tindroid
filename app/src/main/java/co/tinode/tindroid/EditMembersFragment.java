@@ -79,8 +79,6 @@ public class EditMembersFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstance) {
-        setHasOptionsMenu(true);
-
         return inflater.inflate(R.layout.fragment_edit_members, container, false);
     }
 

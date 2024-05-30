@@ -5,7 +5,6 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
-import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -26,7 +25,6 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -39,14 +37,16 @@ import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
 import com.google.android.exoplayer2.upstream.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
-import com.squareup.picasso.OkHttp3Downloader;
-import com.squareup.picasso.Picasso;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
@@ -62,6 +62,15 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
+import coil.Coil;
+import coil.ComponentRegistry;
+import coil.ImageLoader;
+import coil.intercept.Interceptor;
+import coil.key.Keyer;
+import coil.request.ImageRequest;
+import coil.request.ImageResult;
+import coil.util.DebugLogger;
+import kotlin.coroutines.Continuation;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -72,7 +81,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     private static final String TAG = "TindroidApp";
 
     // 256 MB.
-    private static final int PICASSO_CACHE_SIZE = 1024 * 1024 * 256;
+    private static final int COIL_CACHE_SIZE = 1024 * 1024 * 256;
     private static final int VIDEO_CACHE_SIZE = 1024 * 1024 * 256;
 
     private static TindroidApp sContext;
@@ -183,7 +192,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             @Override
             public void onReceive(Context context, Intent intent) {
                 String token = intent.getStringExtra("token");
-                if (token != null && !token.equals("")) {
+                if (token != null && !token.isEmpty()) {
                     Cache.getTinode().setDeviceToken(token);
                 }
             }
@@ -209,38 +218,59 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         // Clear completed/failed upload tasks.
         WorkManager.getInstance(this).pruneWork();
 
-        // Setting up Picasso with auth headers.
+        // Setting up Coil with auth headers.
         OkHttpClient client = new OkHttpClient.Builder()
-                .cache(new okhttp3.Cache(createDefaultCacheDir(this), PICASSO_CACHE_SIZE))
+                .cache(new okhttp3.Cache(createDefaultCacheDir(this), COIL_CACHE_SIZE))
                 .addInterceptor(chain -> {
+                    // Add authentication headers to requests.
                     Tinode tinode = Cache.getTinode();
-                    Request picassoReq = chain.request();
+                    Request request = chain.request();
                     Map<String, String> headers;
-                    if (tinode.isTrustedURL(picassoReq.url().url())) {
+                    if (tinode.isTrustedURL(request.url().url())) {
                         headers = tinode.getRequestHeaders();
-                        Request.Builder builder = picassoReq.newBuilder();
+                        Request.Builder rb = request.newBuilder();
                         for (Map.Entry<String, String> el : headers.entrySet()) {
-                            builder = builder.addHeader(el.getKey(), el.getValue());
+                            rb = rb.addHeader(el.getKey(), el.getValue());
                         }
-                        return chain.proceed(builder.build());
+                        return chain.proceed(rb.build());
                     } else {
-                        return chain.proceed(picassoReq);
+                        return chain.proceed(request);
                     }
                 })
                 .build();
-        Picasso.setSingletonInstance(new Picasso.Builder(this)
-                .requestTransformer(request -> {
-                    // Rewrite relative URIs to absolute.
-                    if (request.uri != null && Tinode.isUrlRelative(request.uri.toString())) {
-                        URL url = Cache.getTinode().toAbsoluteURL(request.uri.toString());
-                        if (url != null) {
-                            return request.buildUpon().setUri(Uri.parse(url.toString())).build();
-                        }
+        ComponentRegistry.Builder crb = new ComponentRegistry().newBuilder();
+        crb.add((Keyer<Uri>) (uri, options) -> {
+            // For caching purposes, remove transient query parameters from Uri
+            // such as X-Amz-Signature or X-Goog-Date.
+            // Credential is removed because X-Amz-Credentialalice contains current date.
+            String[] tempKeys = {"credential", "date", "signature"};
+            Set<String> query = uri.getQueryParameterNames();
+            query.removeIf(key -> Arrays.stream(tempKeys).anyMatch(key.toLowerCase()::contains));
+            uri.buildUpon().clearQuery().query(query.toString());
+            return uri.toString();
+        }, Uri.class);
+        crb.add(new Interceptor() {
+            @Nullable
+            @Override
+            public Object intercept(@NonNull Chain chain, @NonNull Continuation<? super ImageResult> continuation) {
+                // Rewrite relative URIs to absolute.
+                ImageRequest request = chain.getRequest();
+                String data = request.getData().toString();
+                if (Tinode.isUrlRelative(data)) {
+                    URL url = Cache.getTinode().toAbsoluteURL(data);
+                    if (url != null) {
+                        return chain.proceed(request.newBuilder().data(url.toString()).build(), continuation);
                     }
-                    return request;
-                })
-                .downloader(new OkHttp3Downloader(client))
-                .build());
+                }
+                return chain.proceed(request, continuation);
+            }
+        });
+        ImageLoader loader = new ImageLoader.Builder(this)
+                .okHttpClient(client)
+                .components(crb.build())
+                .logger(new DebugLogger(Log.VERBOSE))
+                .build();
+        Coil.setImageLoader(loader);
 
         // Listen to connectivity changes.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
@@ -284,7 +314,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
         if (!TextUtils.isEmpty(uid)) {
-            new LoginWithSavedAccount().execute(uid);
+            Executors.newSingleThreadExecutor().execute(() -> loginInBackground(uid));
         }
     }
 
@@ -297,33 +327,31 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     }
 
     private void createNotificationChannels() {
-        // Create the NotificationChannel on API 26+
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
-                    getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
-            newMessage.setDescription(getString(R.string.new_message_channel_description));
-            newMessage.enableLights(true);
-            newMessage.setLightColor(Color.WHITE);
+        // Create the NotificationChannel.
+        NotificationChannel newMessage = new NotificationChannel(Const.NEWMSG_NOTIFICATION_CHAN_ID,
+                getString(R.string.new_message_channel_name), NotificationManager.IMPORTANCE_DEFAULT);
+        newMessage.setDescription(getString(R.string.new_message_channel_description));
+        newMessage.enableLights(true);
+        newMessage.setLightColor(Color.WHITE);
 
-            NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
-                    getString(R.string.video_call_channel_name),
-                    NotificationManager.IMPORTANCE_HIGH);
-            videoCall.setDescription(getString(R.string.video_call_channel_description));
-            videoCall.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
-                            new AudioAttributes.Builder()
-                                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                                    .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
-                                    .build());
-            videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
-            videoCall.enableVibration(true);
-            videoCall.enableLights(true);
-            videoCall.setLightColor(Color.RED);
+        NotificationChannel videoCall = new NotificationChannel(Const.CALL_NOTIFICATION_CHAN_ID,
+                getString(R.string.video_call_channel_name),
+                NotificationManager.IMPORTANCE_HIGH);
+        videoCall.setDescription(getString(R.string.video_call_channel_description));
+        videoCall.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE),
+                        new AudioAttributes.Builder()
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                .build());
+        videoCall.setVibrationPattern(new long[]{0, 1000, 500, 1000});
+        videoCall.enableVibration(true);
+        videoCall.enableLights(true);
+        videoCall.setLightColor(Color.RED);
 
-            NotificationManager nm = getSystemService(NotificationManager.class);
-            if (nm != null) {
-                nm.createNotificationChannel(newMessage);
-                nm.createNotificationChannel(videoCall);
-            }
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) {
+            nm.createNotificationChannel(newMessage);
+            nm.createNotificationChannel(videoCall);
         }
     }
 
@@ -343,106 +371,100 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     }
 
     // Read saved account credentials and try to connect to server using them.
-    // Suppressed lint warning because TindroidApp won't leak: it must exist for the entire lifetime of the app.
-    @SuppressLint("StaticFieldLeak")
-    private class LoginWithSavedAccount extends AsyncTask<String, Void, Void> {
-        @Override
-        protected Void doInBackground(String... uidWrapper) {
-            final AccountManager accountManager = AccountManager.get(TindroidApp.this);
-            final Account account = Utils.getSavedAccount(accountManager, uidWrapper[0]);
-            if (account != null) {
-                // Check if sync is enabled.
-                if (ContentResolver.getMasterSyncAutomatically()) {
-                    if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
-                        ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
-                    }
+    private void loginInBackground(String uid) {
+        final AccountManager accountManager = AccountManager.get(TindroidApp.this);
+        final Account account = Utils.getSavedAccount(accountManager, uid);
+        if (account != null) {
+            // Check if sync is enabled.
+            if (ContentResolver.getMasterSyncAutomatically()) {
+                if (!ContentResolver.getSyncAutomatically(account, Utils.SYNC_AUTHORITY)) {
+                    ContentResolver.setSyncAutomatically(account, Utils.SYNC_AUTHORITY, true);
                 }
+            }
 
-                // Account found, establish connection to the server and use save account credentials for login.
-                String token = null;
-                Date expires = null;
+            // Account found, establish connection to the server and use save account credentials for login.
+            String token = null;
+            Date expires = null;
+            try {
+                token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
+                String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
+                // FIXME: remove this check when all clients are updated; Apr 8, 2020.
+                if (!TextUtils.isEmpty(strExp)) {
+                    expires = new Date(Long.parseLong(strExp));
+                }
+            } catch (OperationCanceledException e) {
+                Log.i(TAG, "Request to get an existing account was canceled.", e);
+            } catch (AuthenticatorException e) {
+                Log.e(TAG, "No access to saved account", e);
+            } catch (Exception e) {
+                Log.e(TAG, "Failure to login with saved account", e);
+            }
+
+            // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
+            final Tinode tinode = Cache.getTinode();
+            if (!TextUtils.isEmpty(token) && expires != null && expires.after(new Date())) {
+                // Connecting with synchronous calls because this is not the UI thread.
+                tinode.setAutoLoginToken(token);
+                // Connect and login.
                 try {
-                    token = accountManager.blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);
-                    String strExp = accountManager.getUserData(account, Utils.TOKEN_EXPIRATION_TIME);
-                    // FIXME: remove this check when all clients are updated; Apr 8, 2020.
-                    if (!TextUtils.isEmpty(strExp)) {
-                        expires = new Date(Long.parseLong(strExp));
+                    SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
+                    // Sync call throws on error.
+                    tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
+                            pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
+                            false).getResult();
+                    if (!tinode.isAuthenticated()) {
+                        // The connection may already exist but not yet authenticated.
+                        tinode.loginToken(token).getResult();
                     }
-                } catch (OperationCanceledException e) {
-                    Log.i(TAG, "Request to get an existing account was canceled.", e);
-                } catch (AuthenticatorException e) {
-                    Log.e(TAG, "No access to saved account", e);
-                } catch (Exception e) {
-                    Log.e(TAG, "Failure to login with saved account", e);
-                }
-
-                // Must instantiate tinode cache even if token == null. Otherwise logout won't work.
-                final Tinode tinode = Cache.getTinode();
-                if (!TextUtils.isEmpty(token) && expires != null && expires.after(new Date())) {
-                    // Connecting with synchronous calls because this is not the UI thread.
-                    tinode.setAutoLoginToken(token);
-                    // Connect and login.
-                    try {
-                        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(TindroidApp.this);
-                        // Sync call throws on error.
-                        tinode.connect(pref.getString(Utils.PREFS_HOST_NAME, getDefaultHostName()),
-                                pref.getBoolean(Utils.PREFS_USE_TLS, getDefaultTLS()),
-                                false).getResult();
-                        if (!tinode.isAuthenticated()) {
-                            // The connection may already exist but not yet authenticated.
-                            tinode.loginToken(token).getResult();
-                        }
-                        Cache.attachMeTopic(null);
-                        // Logged in successfully. Save refreshed token for future use.
-                        accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
-                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
-                                String.valueOf(tinode.getAuthTokenExpiration().getTime()));
-                        startWatchingContacts(TindroidApp.this, account);
-                        // Trigger sync to be sure contacts are up to date.
-                        UiUtils.requestImmediateContactsSync(account);
-                    } catch (IOException ex) {
-                        Log.d(TAG, "Network failure during login", ex);
-                        // Do not invalidate token on network failure.
-                    } catch (ServerResponseException ex) {
-                        Log.w(TAG, "Server rejected login sequence", ex);
-                        int code = ex.getCode();
-                        // 401: Token expired or invalid login.
-                        // 404: 'me' topic is not found (user deleted, but token is still valid).
-                        if (code == 401 || code == 404) {
-                            // Another try-catch because some users revoke needed permission after granting it.
-                            try {
-                                // Login failed due to invalid (expired) token or missing/disabled account.
-                                accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
-                                accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
-                            } catch (SecurityException ex2) {
-                                Log.e(TAG, "Unable to access android account", ex2);
-                            }
-                            // Force new login.
-                            UiUtils.doLogout(TindroidApp.this);
-                        }
-                        // 409 Already authenticated should not be possible here.
-                    } catch (Exception ex) {
-                        Log.e(TAG, "Other failure during login", ex);
-                    }
-                } else {
-                    Log.i(TAG, "No token or expired token. Forcing re-login");
-                    try {
-                        if (!TextUtils.isEmpty(token)) {
+                    Cache.attachMeTopic(null);
+                    // Logged in successfully. Save refreshed token for future use.
+                    accountManager.setAuthToken(account, Utils.TOKEN_TYPE, tinode.getAuthToken());
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME,
+                            String.valueOf(tinode.getAuthTokenExpiration().getTime()));
+                    startWatchingContacts(TindroidApp.this, account);
+                    // Trigger sync to be sure contacts are up to date.
+                    UiUtils.requestImmediateContactsSync(account);
+                } catch (IOException ex) {
+                    Log.d(TAG, "Network failure during login", ex);
+                    // Do not invalidate token on network failure.
+                } catch (ServerResponseException ex) {
+                    Log.w(TAG, "Server rejected login sequence", ex);
+                    int code = ex.getCode();
+                    // 401: Token expired or invalid login.
+                    // 404: 'me' topic is not found (user deleted, but token is still valid).
+                    if (code == 401 || code == 404) {
+                        // Another try-catch because some users revoke needed permission after granting it.
+                        try {
+                            // Login failed due to invalid (expired) token or missing/disabled account.
                             accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                            accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                        } catch (SecurityException ex2) {
+                            Log.e(TAG, "Unable to access android account", ex2);
                         }
-                        accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
-                    } catch (SecurityException ex) {
-                        Log.e(TAG, "Unable to access android account", ex);
+                        // Force new login.
+                        UiUtils.doLogout(TindroidApp.this);
                     }
-                    // Force new login.
-                    UiUtils.doLogout(TindroidApp.this);
+                    // 409 Already authenticated should not be possible here.
+                } catch (Exception ex) {
+                    Log.e(TAG, "Other failure during login", ex);
                 }
             } else {
-                Log.i(TAG, "Account not found or no permission to access accounts");
-                // Force new login in case account existed before but was deleted.
+                Log.i(TAG, "No token or expired token. Forcing re-login");
+                try {
+                    if (!TextUtils.isEmpty(token)) {
+                        accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
+                    }
+                    accountManager.setUserData(account, Utils.TOKEN_EXPIRATION_TIME, null);
+                } catch (SecurityException ex) {
+                    Log.e(TAG, "Unable to access android account", ex);
+                }
+                // Force new login.
                 UiUtils.doLogout(TindroidApp.this);
             }
-            return null;
+        } else {
+            Log.i(TAG, "Account not found or no permission to access accounts");
+            // Force new login in case account existed before but was deleted.
+            UiUtils.doLogout(TindroidApp.this);
         }
     }
 }

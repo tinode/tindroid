@@ -1,18 +1,13 @@
 package co.tinode.tindroid.format;
 
-import android.graphics.Bitmap;
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.style.ReplacementSpan;
 import android.util.Log;
 import android.view.View;
-
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
-import com.squareup.picasso.Target;
 
 import java.lang.ref.WeakReference;
 import java.net.URL;
@@ -20,6 +15,11 @@ import java.net.URL;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import coil.Coil;
+import coil.request.ImageRequest;
+import coil.size.Scale;
+import coil.target.Target;
 
 /**
  * Spannable which updates associated image as it's loaded from the given URL.
@@ -51,36 +51,36 @@ public class RemoteImageSpan extends ReplacementSpan implements Target {
     }
 
     public void load(URL from) {
+        Context context = mParentRef.get().getContext();
         mSource = from;
-        RequestCreator req = Picasso.get().load(Uri.parse(from.toString())).resize(mWidth, mHeight);
+        ImageRequest.Builder req = new ImageRequest.Builder(context)
+                .data(Uri.parse(from.toString()))
+                .size(mWidth, mHeight);
         if (mCropCenter) {
-            req = req.centerCrop();
+            req.scale(Scale.FILL);
         }
-        req.into(this);
+        req.target(this);
+        Coil.imageLoader(context).enqueue(req.build());
     }
 
     @Override
-    public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+    public void onSuccess(@NonNull Drawable drawable) {
         View parent = mParentRef.get();
         if (parent != null) {
-            mDrawable = new BitmapDrawable(parent.getResources(), bitmap);
+            mDrawable = drawable;
             mDrawable.setBounds(0, 0, mWidth, mHeight);
             parent.postInvalidate();
         }
     }
 
     @Override
-    public void onBitmapFailed(Exception e, Drawable errorDrawable) {
-        Log.w(TAG, "Failed to get image: " + e.getMessage() + " (" + mSource + ")");
+    public void onError(Drawable errorDrawable) {
+        Log.w(TAG, "Failed to get image: " + mSource);
         View parent = mParentRef.get();
         if (parent != null) {
             mDrawable = mOnError;
             parent.postInvalidate();
         }
-    }
-
-    @Override
-    public void onPrepareLoad(Drawable placeHolderDrawable) {
     }
 
     @Override

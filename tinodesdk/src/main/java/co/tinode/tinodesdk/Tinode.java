@@ -109,8 +109,8 @@ public class Tinode {
 
     private static final String UPLOAD_PATH = "/file/u/";
 
-    // Value interpreted as 'content deleted'.
-    public static final String NULL_VALUE = "\u2421";
+    // Value interpreted as 'content deleted', unicode 0x2421.
+    public static final String NULL_VALUE = "␡";
 
     // Notifications {note}.
     protected static final String NOTE_CALL = "call";
@@ -376,7 +376,7 @@ public class Tinode {
      */
     public static Map<String, Object> headersForReply(final int seq) {
         Map<String, Object> head = new HashMap<>();
-        head.put("reply", "" + seq);
+        head.put("reply", Integer.toString(seq));
         return head;
     }
 
@@ -688,7 +688,7 @@ public class Tinode {
      */
     @SuppressWarnings("unchecked")
     private void dispatchPacket(String message) throws Exception {
-        if (message == null || message.equals(""))
+        if (message == null || message.isEmpty())
             return;
 
         Log.d(TAG, "in: " + message);

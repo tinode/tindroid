@@ -57,28 +57,29 @@ public class CallManager {
 
         Tinode tinode = Cache.getTinode();
         String myID = tinode.getMyId();
-        MeTopic<VxCard> me = tinode.getMeTopic();
-        VxCard card = null;
-        if (me != null) {
-            card = (VxCard) tinode.getMeTopic().getPub();
+        if (TextUtils.isEmpty(myID)) {
+            throw new IllegalStateException("Tinode ID is not set");
         }
+
         String accLabel = context.getString(R.string.current_user);
         Icon icon = null;
-        if (card != null) {
-            accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
-            Bitmap avatar = card.getBitmap();
-            if (avatar != null) {
-                icon = Icon.createWithBitmap(avatar);
+        MeTopic<VxCard> me = tinode.getMeTopic();
+        if (me != null) {
+            VxCard card = (VxCard) tinode.getMeTopic().getPub();
+            if (card != null) {
+                accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
+                Bitmap avatar = card.getBitmap();
+                if (avatar != null) {
+                    icon = Icon.createWithBitmap(avatar);
+                }
             }
         }
 
         // Register current user's phone account.
         mPhoneAccountHandle = new PhoneAccountHandle(new ComponentName(context, CallConnectionService.class), myID);
         int capabilities = PhoneAccount.CAPABILITY_VIDEO_CALLING;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            capabilities = capabilities | PhoneAccount.CAPABILITY_SELF_MANAGED |
-                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING;
-        }
+        capabilities = capabilities | PhoneAccount.CAPABILITY_SELF_MANAGED |
+                PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING;
 
         PhoneAccount.Builder builder = PhoneAccount.builder(mPhoneAccountHandle, accLabel)
                 .setAddress(Uri.fromParts("tinode", myID, null))
@@ -100,9 +101,12 @@ public class CallManager {
 
     // FIXME: this has to be called on logout.
     public static void unregisterCallingAccount() {
-        CallManager shared = CallManager.getShared();
-        TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
-        telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
+        try {
+            CallManager shared = CallManager.getShared();
+            TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
+            telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
+        } catch (IllegalStateException | UnsupportedOperationException ignored) {
+        }
     }
 
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
@@ -113,7 +117,15 @@ public class CallManager {
             return;
         }
 
-        CallManager shared = CallManager.getShared();
+        CallManager shared;
+        try {
+            shared = CallManager.getShared();
+        } catch (UnsupportedOperationException ex) {
+            Toast.makeText(TindroidApp.getAppContext(), R.string.calling_not_supported, Toast.LENGTH_SHORT).show();
+            Log.w(TAG, "Unable to place call", ex);
+            return;
+        }
+
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
         if (!audioOnly) {
@@ -191,10 +203,8 @@ public class CallManager {
         callParams.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
         callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
-                    VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
-        }
+        callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
+                VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
 
         callParams.putBundle(TelecomManager.EXTRA_INCOMING_CALL_EXTRAS, extras);
 
@@ -253,9 +263,7 @@ public class CallManager {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     builder.setFlag(Notification.FLAG_INSISTENT, true);
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
-                }
+                builder.setChannelId(Const.CALL_NOTIFICATION_CHAN_ID);
 
 
                 int seq = args.getInt(Const.INTENT_EXTRA_SEQ);
@@ -310,10 +318,9 @@ public class CallManager {
 
     private static Spannable getActionText(Context context, @StringRes int stringRes, @ColorRes int colorRes) {
         Spannable spannable = new SpannableString(context.getText(stringRes));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            spannable.setSpan(
-                    new ForegroundColorSpan(context.getColor(colorRes)), 0, spannable.length(), 0);
-        }
+        spannable.setSpan(
+                new ForegroundColorSpan(context.getColor(colorRes)), 0, spannable.length(), 0);
+
         return spannable;
     }
 
@@ -374,9 +381,7 @@ public class CallManager {
             }
             return disabled;
         }
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return true;
-        }
+
         boolean disabled = !tm.isIncomingCallPermitted(getShared().mPhoneAccountHandle);
         if (disabled) {
             Log.i(TAG, "Account cannot accept incoming calls");

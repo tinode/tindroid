@@ -35,9 +35,6 @@ import co.tinode.tinodesdk.model.Subscription;
 public class ChatsActivity extends AppCompatActivity
         implements UiUtils.ProgressIndicator, UiUtils.AvatarPreviewer,
         ImageViewFragment.AvatarCompletionHandler {
-
-    private static final String TAG = "ContactsActivity";
-
     static final String TAG_FRAGMENT_NAME = "fragment";
     static final String FRAGMENT_CHATLIST = "contacts";
     static final String FRAGMENT_ACCOUNT_INFO = "account_info";

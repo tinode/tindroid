@@ -3,6 +3,9 @@ package co.tinode.tindroid;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -11,7 +14,10 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -21,24 +27,14 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * A placeholder fragment containing a simple view.
  */
-public class CredentialsFragment extends Fragment implements View.OnClickListener {
+public class CredentialsFragment extends Fragment implements MenuProvider, View.OnClickListener {
     private String mMethod = null;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
-            return null;
-        }
+        final LoginActivity parent = (LoginActivity) requireActivity();
 
-        setHasOptionsMenu(false);
         ActionBar bar = parent.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
@@ -52,6 +48,11 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
         return fragment;
     }
 
+    @Override
+    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        ((MenuHost) requireActivity()).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+    }
 
     @Override
     public void onResume() {
@@ -72,6 +73,16 @@ public class CredentialsFragment extends Fragment implements View.OnClickListene
             TextView callToAction = parent.findViewById(R.id.call_to_validate);
             callToAction.setText(getString(R.string.enter_confirmation_code));
         }
+    }
+
+    @Override
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
+        menu.clear();
+    }
+
+    @Override
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
+        return false;
     }
 
     @Override

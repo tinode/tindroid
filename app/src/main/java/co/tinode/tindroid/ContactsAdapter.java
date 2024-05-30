@@ -16,12 +16,14 @@ import android.widget.ImageView;
 import android.widget.SectionIndexer;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
 import java.util.HashMap;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
+import coil.Coil;
+import coil.request.ImageRequest;
+import coil.size.Scale;
 
 /**
  * This is a subclass of CursorAdapter that supports binding Cursor columns to a view layout.
@@ -252,7 +254,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                     // something other than the display name
                     text2.setVisibility(View.VISIBLE);
                 }
-            } else if (mSearchTerm.length() > 0) {
+            } else if (!mSearchTerm.isEmpty()) {
                 // If the search string matched the display name, applies a SpannableString to
                 // highlight the search string with the displayed display name
 
@@ -278,13 +280,17 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                 itemView.setActivated(true);
             } else {
                 ImageView icon = (ImageView) switcher.getCurrentView();
+                Context context = icon.getContext();
                 if (photoUri != null) {
                     // Clear the icon then load the thumbnail from photoUri background.
-                    Picasso.get()
-                            .load(photoUri)
-                            .placeholder(R.drawable.disk)
-                            .error(R.drawable.ic_broken_image_round)
-                            .fit().into(icon);
+                    Coil.imageLoader(context).enqueue(
+                            new ImageRequest.Builder(context)
+                                .data(photoUri)
+                                .placeholder(R.drawable.disk)
+                                .error(R.drawable.ic_broken_image_round)
+                                .scale(Scale.FIT)
+                                .target(icon)
+                                .build());
                 } else {
                     icon.setImageDrawable(
                             UiUtils.avatarDrawable(icon.getContext(), null, displayName, unique, false));
@@ -304,12 +310,14 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
                     if (isSelected(unique)) {
                         ViewHolder.this.switcher.setImageResource(R.drawable.ic_selected);
                     } else if (photoUri != null) {
-                        Picasso.get()
-                            .load(photoUri)
-                            .placeholder(R.drawable.disk)
-                            .error(R.drawable.ic_broken_image_round)
-                            .fit()
-                            .into((ImageView) switcher.getNextView());
+                        Context context = switcher.getContext();
+                        Coil.imageLoader(context).enqueue(
+                                new ImageRequest.Builder(context)
+                                    .data(photoUri)
+                                    .placeholder(R.drawable.disk)
+                                    .error(R.drawable.ic_broken_image_round)
+                                    .scale(Scale.FIT)
+                                    .target((ImageView) switcher.getNextView()).build());
                     } else {
                         switcher.setImageDrawable(
                                 UiUtils.avatarDrawable(switcher.getContext(), null, displayName, unique,

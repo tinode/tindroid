@@ -120,7 +120,6 @@ public class FilePreviewFragment extends Fragment {
             ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(0));
             mSendButton.setEnabled(false);
         }
-        // setHasOptionsMenu(false);
     }
 
     private void updateFormValues(@NonNull Activity activity,

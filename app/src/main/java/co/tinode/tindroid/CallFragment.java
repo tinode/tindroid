@@ -202,7 +202,9 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
-        AudioManager audioManager = (AudioManager) requireContext().getSystemService(Context.AUDIO_SERVICE);
+
+        AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         audioManager.setSpeakerphoneOn(!mAudioOnly);
         mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
@@ -707,7 +709,7 @@ public class CallFragment extends Fragment {
         // Use ECDSA encryption.
         rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 
-        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
+        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
         mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
@@ -959,6 +961,9 @@ public class CallFragment extends Fragment {
 
     private void rearrangePeerViews(final Activity activity, boolean remoteVideoLive) {
         activity.runOnUiThread(() -> {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
             if (remoteVideoLive) {
                 ConstraintSet cs = new ConstraintSet();
                 cs.clone(mLayout);
@@ -979,7 +984,9 @@ public class CallFragment extends Fragment {
                 cs.setHorizontalBias(R.id.peerName, 0.5f);
                 cs.applyTo(mLayout);
                 mPeerAvatar.setVisibility(View.VISIBLE);
-                mRemoteVideoView.setVisibility(View.INVISIBLE);
+                if (mRemoteVideoView != null) {
+                    mRemoteVideoView.setVisibility(View.INVISIBLE);
+                }
             }
         });
     }

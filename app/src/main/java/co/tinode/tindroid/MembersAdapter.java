@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.view.LayoutInflater;
@@ -8,16 +9,18 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.recyclerview.widget.RecyclerView;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import co.tinode.tindroid.media.VxCard;
+
+import coil.Coil;
+import coil.request.ImageRequest;
 
 /**
  * In-memory adapter keeps selected members of the group: initial members before the editing,
@@ -201,7 +204,7 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
         }
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder {
         final int viewType;
         ImageView avatar;
         TextView displayName;
@@ -220,17 +223,19 @@ public class MembersAdapter extends RecyclerView.Adapter<MembersAdapter.ViewHold
 
         void bind(int pos) {
             Member user = mCurrentMembers.get(pos);
+            Context context = avatar.getContext();
             if (user.avatarBitmap != null) {
                 avatar.setImageBitmap(user.avatarBitmap);
             } else if (user.avatarUri != null) {
-                Picasso.get()
-                        .load(user.avatarUri)
+                Coil.imageLoader(context).enqueue(new ImageRequest.Builder(context)
+                        .data(user.avatarUri)
                         .placeholder(R.drawable.disk)
                         .error(R.drawable.ic_broken_image_round)
-                        .into(avatar);
+                        .target(avatar)
+                        .build());
             } else {
                 avatar.setImageDrawable(
-                        UiUtils.avatarDrawable(avatar.getContext(), null,
+                        UiUtils.avatarDrawable(context, null,
                                 user.displayName, user.unique, false));
             }
 

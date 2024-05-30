@@ -1,6 +1,9 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+
+import android.annotation.SuppressLint;
+
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -38,8 +41,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -57,7 +62,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * Topic Info fragment: p2p or a group topic.
  */
-public class TopicInfoFragment extends Fragment implements MessageActivity.DataSetChangeListener {
+public class TopicInfoFragment extends Fragment implements MenuProvider, MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicInfoFragment";
 
@@ -79,21 +84,15 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setHasOptionsMenu(true);
-    }
-
-    @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
+        final FragmentActivity activity = requireActivity();
+
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
         toolbar.setSubtitle(null);
         toolbar.setLogo(null);
+
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         mMembersAdapter = new MembersAdapter();
         mFailureListener = new UiUtils.ToastFailureListener(activity);
@@ -107,30 +106,38 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
         // Set up listeners
 
         final SwitchCompat muted = view.findViewById(R.id.switchMuted);
-        muted.setOnCheckedChangeListener((buttonView, isChecked) ->
-                mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(() -> muted.setChecked(!isChecked));
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
+        muted.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (mTopic == null) {
+                return;
+            }
+            mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                    activity.runOnUiThread(() -> muted.setChecked(!isChecked));
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     }
-                }));
+                    return null;
+                }
+            });
+        });
 
         final SwitchCompat archived = view.findViewById(R.id.switchArchived);
-        archived.setOnCheckedChangeListener((buttonView, isChecked) ->
-                mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
-                        activity.runOnUiThread(() -> archived.setChecked(!isChecked));
-                        if (err instanceof NotConnectedException) {
-                            Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
-                        }
-                        return null;
+        archived.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (mTopic == null) {
+                return;
+            }
+            mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                @Override
+                public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
+                    activity.runOnUiThread(() -> archived.setChecked(!isChecked));
+                    if (err instanceof NotConnectedException) {
+                        Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();
                     }
-                }));
+                    return null;
+                }
+            });
+        });
 
         view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -138,6 +145,21 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
                 clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
             }
+        });
+
+        view.findViewById(R.id.displayQRCode).setOnClickListener(v -> {
+            if (mTopic == null) {
+                return;
+            }
+            final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+            @SuppressLint("InflateParams") final View codeView =
+                    LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_qrcode, null);
+            ImageView qrCodeImageView = codeView.findViewById(R.id.qrCodeImageView);
+            UiUtils.generateQRCode(qrCodeImageView, UiUtils.TOPIC_URI_PREFIX + mTopic.getName());
+            builder.setView(codeView).setTitle(R.string.scan_code);
+            builder
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
         });
 
         view.findViewById(R.id.permissions).setOnClickListener(v ->
@@ -414,18 +436,17 @@ public class TopicInfoFragment extends Fragment implements MessageActivity.DataS
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
         // Inflate the menu; this adds items to the action bar if it is present.
         inflater.inflate(R.menu.menu_edit, menu);
-        super.onCreateOptionsMenu(menu, inflater);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_edit) {
-            FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            FragmentActivity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
                 return false;
             }
 

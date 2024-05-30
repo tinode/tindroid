@@ -363,4 +363,7 @@
     <string name="action_pin">Pin</string>
     <string name="action_unpin">Unpin</string>
     <string name="pinned_messages">Pinned messages</string>
+    <string name="calling_not_supported">Calling not supported</string>
+    <string name="display_code">Show QR code</string>
+
 </resources>

@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.app.DownloadManager;
 import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
@@ -14,6 +15,7 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -44,6 +46,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -128,13 +131,13 @@ public class MessageActivity extends AppCompatActivity
                     idx = c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE);
                     String mimeType = idx >= 0 ? c.getString(idx) : null;
                     if (fileUri != null) {
-                        intent = new Intent();
-                        intent.setAction(android.content.Intent.ACTION_VIEW);
-                        intent.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                        Intent intent2 = new Intent();
+                        intent2.setAction(android.content.Intent.ACTION_VIEW);
+                        intent2.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
                                 "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
                         try {
-                            startActivity(intent);
+                            startActivity(intent2);
                         } catch (ActivityNotFoundException ignored) {
                             Log.w(TAG, "No application can view downloaded file");
                             startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
@@ -170,6 +173,7 @@ public class MessageActivity extends AppCompatActivity
     // True when new subscriptions were added to the topic.
     private boolean mNewSubsAvailable = false;
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -200,8 +204,15 @@ public class MessageActivity extends AppCompatActivity
             }
         });
 
-        registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-        registerReceiver(onNotificationClick, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(onDownloadComplete,
+                    new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(onNotificationClick,
+                    new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED), Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(onDownloadComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            registerReceiver(onNotificationClick, new IntentFilter(DownloadManager.ACTION_NOTIFICATION_CLICKED));
+        }
 
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
@@ -210,7 +221,7 @@ public class MessageActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onNewIntent(Intent intent) {
+    protected void onNewIntent(@NonNull Intent intent) {
         super.onNewIntent(intent);
 
         setIntent(intent);
@@ -270,7 +281,9 @@ public class MessageActivity extends AppCompatActivity
         mSendReadReceipts = pref.getBoolean(Const.PREF_READ_RCPT, true);
         mSendTypingNotifications = pref.getBoolean(Const.PREF_TYPING_NOTIF, true);
 
-        BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+        if (mTopic != null) {
+            BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
+        }
     }
 
     @Override

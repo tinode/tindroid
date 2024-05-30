@@ -202,6 +202,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Checks if given topic name is a channel.
+     * @param name name to check
+     * @return true if the name is a name of a channel, false otherwise.
+     */
+    public static boolean isChannel(String name) {
+        // "cnhAbCDef123" or "nchAbCDef123".
+        return name.startsWith(Tinode.TOPIC_CHN_PREFIX) || name.startsWith(Tinode.CHANNEL_NEW);
+    }
+
+    /**
      * Set custom types of payload: {data} as well as public and private content. Needed for
      * deserialization of server messages.
      *
@@ -1880,12 +1890,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public int msgReadCount(int seq) {
         int count = 0;
-        if (seq > 0) {
-            String me = mTinode.getMyId();
+        String me = mTinode.getMyId();
+        if (seq > 0 && me != null) {
             Collection<Subscription<SP, SR>> subs = getSubscriptions();
             if (subs != null) {
                 for (Subscription sub : subs) {
-                    if (!sub.user.equals(me) && sub.read >= seq) {
+                    if (!me.equals(sub.user) && sub.read >= seq) {
                         count++;
                     }
                 }
@@ -2117,6 +2127,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         setSeq(data.seq);
         setTouched(data.ts);
 
+        // Use data message from another person to mark messages as read by him.
+        if (data.from != null && !mTinode.isMe(data.from) && !isChannel(getName())) {
+            MsgServerInfo info = new MsgServerInfo();
+            info.what = Tinode.NOTE_READ;
+            info.from = data.from;
+            info.seq = data.seq;
+            // Mark messages as read by the sender.
+            routeInfo(info);
+        }
+
         if (mListener != null) {
             mListener.onData(data);
         }
@@ -2245,16 +2265,27 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void routeInfo(MsgServerInfo info) {
-        if (!Tinode.NOTE_KP.equals(info.what)) {
-            setReadRecvByRemote(info.from, info.what, info.seq);
+        switch (info.what) {
+            case Tinode.NOTE_KP:
+            case Tinode.NOTE_REC_AUDIO:
+            case Tinode.NOTE_REC_VIDEO:
+            case Tinode.NOTE_CALL:
+                break;
 
-            // If this is an update from the current user, update the contact with the new count too.
-            if (mTinode.isMe(info.from)) {
-                MeTopic me = mTinode.getMeTopic();
-                if (me != null) {
-                    me.setMsgReadRecv(getName(), info.what, info.seq);
+            case Tinode.NOTE_READ:
+            case Tinode.NOTE_RECV:
+                setReadRecvByRemote(info.from, info.what, info.seq);
+
+                // If this is an update from the current user, update the contact with the new count too.
+                if (mTinode.isMe(info.from)) {
+                    MeTopic me = mTinode.getMeTopic();
+                    if (me != null) {
+                        me.setMsgReadRecv(getName(), info.what, info.seq);
+                    }
                 }
-            }
+                break;
+            default:
+                // Unknown value
         }
 
         if (mListener != null) {

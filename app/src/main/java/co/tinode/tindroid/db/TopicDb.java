@@ -597,12 +597,4 @@ public class TopicDb implements BaseColumns {
     public static boolean updateRecv(SQLiteDatabase db, long topicId, int recv) {
         return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_RECV, topicId, recv);
     }
-
-    public static boolean updateSeq(SQLiteDatabase db, long topicId, int seq) {
-        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_SEQ, topicId, seq);
-    }
-
-    public static boolean updateClear(SQLiteDatabase db, long topicId, int clear) {
-        return BaseDb.updateCounter(db, TABLE_NAME, COLUMN_NAME_CLEAR, topicId, clear);
-    }
 }

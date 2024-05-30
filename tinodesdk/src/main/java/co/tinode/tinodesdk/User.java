@@ -25,7 +25,7 @@ public class User<P> implements LocalData {
     }
 
     public User(Subscription<P,?> sub) {
-        if (sub.user != null && sub.user.length() > 0) {
+        if (sub.user != null && !sub.user.isEmpty()) {
             uid = sub.user;
             updated = sub.updated;
             pub = sub.pub;

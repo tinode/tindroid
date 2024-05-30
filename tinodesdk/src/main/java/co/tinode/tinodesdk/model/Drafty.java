@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import com.ibm.icu.text.BreakIterator;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,6 +152,9 @@ public class Drafty implements Serializable {
     public Style[] fmt;
     public Entity[] ent;
 
+    @JsonIgnore
+    private transient int[] sizes;
+
     public Drafty() {
         txt = null;
         fmt = null;
@@ -162,6 +167,7 @@ public class Drafty implements Serializable {
         this.txt = that.txt;
         this.fmt = that.fmt;
         this.ent = that.ent;
+        this.sizes = that.sizes;
     }
 
     /**
@@ -210,14 +216,14 @@ public class Drafty implements Serializable {
     // ranges from markup-ed offsets to plain text offsets.
     private static List<Span> chunkify(String line, int start, int end, List<Span> spans) {
 
-        if (spans == null || spans.size() == 0) {
+        if (spans == null || spans.isEmpty()) {
             return null;
         }
 
         List<Span> chunks = new ArrayList<>();
         for (Span span : spans) {
-
             // Grab the initial unstyled chunk.
+
             if (span.start > start) {
                 chunks.add(new Span(line.substring(start, span.start)));
             }
@@ -310,7 +316,7 @@ public class Drafty implements Serializable {
             }
         }
 
-        if (ranges.size() > 0) {
+        if (!ranges.isEmpty()) {
             block.fmt = ranges;
         }
 
@@ -360,8 +366,6 @@ public class Drafty implements Serializable {
         Map<String, Integer> entityMap = new HashMap<>();
         List<ExtractedEnt> entities;
         for (String line : lines) {
-            // The 'may be null' warning is a false positive: toTree() and chunkify() may return null only
-            // if spans is empty or null. But they are not called if it's empty or null.
             spans.clear();
             // Select styled spans.
             for (int i = 0;i < INLINE_STYLE_NAME.length; i++) {
@@ -406,19 +410,19 @@ public class Drafty implements Serializable {
         StringBuilder text = new StringBuilder();
         List<Style> fmt = new ArrayList<>();
         // Merge lines and save line breaks as BR inline formatting.
-        if (blks.size() > 0) {
+        if (!blks.isEmpty()) {
             Block b = blks.get(0);
             if (b.txt != null) {
                 text.append(b.txt);
             }
             if (b.fmt != null) {
                 for (Style s : b.fmt) {
-                    fmt.add(s.convertToCodePoints(text));
+                    fmt.add(s.toGraphemeCounts(text));
                 }
             }
 
             for (int i = 1; i<blks.size(); i++) {
-                int offset = text.codePointCount(0, text.length()) + 1;
+                int offset = gcLength(text) + 1;
                 fmt.add(new Style("BR", offset - 1, 1));
 
                 b = blks.get(i);
@@ -436,8 +440,8 @@ public class Drafty implements Serializable {
         }
 
         return new Drafty(text.toString(),
-                fmt.size() > 0 ? fmt.toArray(new Style[0]) : null,
-                refs.size() > 0 ? refs.toArray(new Entity[0]) : null);
+                !fmt.isEmpty() ? fmt.toArray(new Style[0]) : null,
+                !refs.isEmpty() ? refs.toArray(new Entity[0]) : null);
     }
 
     // Check if Drafty has at least one entity of the given type.
@@ -492,7 +496,7 @@ public class Drafty implements Serializable {
                 }
             }
         }
-        return result.size() > 0 ? result.toArray(new String[]{}) : null;
+        return !result.isEmpty() ? result.toArray(new String[]{}) : null;
     }
 
     // Ensure Drafty has enough space to add 'count' formatting styles.
@@ -798,7 +802,7 @@ public class Drafty implements Serializable {
             return this;
         }
 
-        int len = txt != null ? txt.length() : 0;
+        int len = txt != null ? gcLength(txt) : 0;
         if (that.txt != null) {
             if (txt != null) {
                 txt += that.txt;
@@ -828,7 +832,7 @@ public class Drafty implements Serializable {
                 int at = thatst.at >= 0 ? thatst.at + len : -1;
                 Style style = new Style(null, at, thatst.len);
                 int key = thatst.key != null ? thatst.key : 0;
-                if (thatst.tp != null && !thatst.tp.equals("")) {
+                if (thatst.tp != null && !thatst.tp.isEmpty()) {
                     style.tp = thatst.tp;
                 } else if (that.ent != null && that.ent.length > key) {
                     style.key = ent_idx;
@@ -854,7 +858,7 @@ public class Drafty implements Serializable {
         }
 
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style("BR", txt.length(), 1);
+        fmt[fmt.length - 1] = new Style("BR", gcLength(txt), 1);
 
         txt += " ";
 
@@ -863,14 +867,14 @@ public class Drafty implements Serializable {
 
     /**
      * Create a Drafty document consisting of a single mention.
-     * @param name is location where the button is inserted.
+     * @param name human-readable name of the mentioned user.
      * @param uid is the user ID to be mentioned.
      * @return new Drafty object.
      */
     public static Drafty mention(@NotNull String name, @NotNull String uid) {
         Drafty d = Drafty.fromPlainText(name);
         d.fmt = new Style[]{
-             new Style(0, name.length(), 0)
+             new Style(0, gcLength(name), 0)
         };
         d.ent = new Entity[]{
                 new Entity("MN").putData("val", uid)
@@ -925,9 +929,10 @@ public class Drafty implements Serializable {
      */
     public Drafty wrapInto(@NotNull String style) {
         prepareForStyle(1);
-        fmt[fmt.length - 1] = new Style(style, 0, txt.length());
+        fmt[fmt.length - 1] = new Style(style, 0, gcLength(txt));
         return this;
     }
+
     /**
      * Insert button into Drafty document.
      * @param at is the location where the button is inserted.
@@ -939,6 +944,7 @@ public class Drafty implements Serializable {
      *
      * @return 'this' Drafty object.
      */
+    @SuppressWarnings("unused")
     protected Drafty insertButton(int at, @Nullable String title, @Nullable String id,
                                   @NotNull String actionType,
                                   @Nullable String actionValue,
@@ -995,7 +1001,8 @@ public class Drafty implements Serializable {
      * @return a tree of components.
      */
     public <T> T format(@NotNull Formatter<T> formatter) {
-        return treeBottomUp(toTree(), formatter, new Stack<>());
+        Node tree = toTree();
+        return treeBottomUp(tree, formatter, new Stack<>());
     }
 
     /**
@@ -1065,13 +1072,18 @@ public class Drafty implements Serializable {
 
     // Returns a tree of nodes.
     @NotNull
-    private static Node spansToTree(@NotNull Node parent,
-                                    @NotNull CharSequence text,
+    private static Node spansToTree(int[] sizes, @NotNull Node parent,
+                                    final @NotNull CharSequence text,
                                     int start, int end,
                                     @Nullable List<Span> spans) {
+        if (end > sizes.length) {
+            end = sizes.length;
+        }
+
+        // Process unstyled range.
         if (spans == null) {
             if (start < end) {
-                parent.add(new Node(text.subSequence(start, end)));
+                parent.add(new Node(gcSubSequence(sizes, text, start, end)));
             }
             return parent;
         }
@@ -1088,7 +1100,7 @@ public class Drafty implements Serializable {
 
             // Add un-styled range before the styled span starts.
             if (start < span.start) {
-                parent.add(new Node(text.subSequence(start, span.start)));
+                parent.add(new Node(gcSubSequence(sizes, text, start, span.start)));
                 start = span.start;
             }
 
@@ -1110,18 +1122,19 @@ public class Drafty implements Serializable {
                 // else: overlapping subspan, ignore it.
             }
 
-            if (subspans.size() == 0) {
+            if (subspans.isEmpty()) {
                 subspans = null;
             }
 
-            parent.add(spansToTree(new Node(span.type, span.data, span.key), text, start, span.end, subspans));
+            parent.add(spansToTree(sizes, new Node(span.type, span.data, span.key),
+                    text, start, span.end, subspans));
 
             start = span.end;
         }
 
         // Add the last unformatted range.
         if (start < end) {
-            parent.add(new Node(text.subSequence(start, end)));
+            parent.add(new Node(gcSubSequence(sizes, text, start, end)));
         }
 
         return parent;
@@ -1187,8 +1200,8 @@ public class Drafty implements Serializable {
     // Convert Drafty document to a tree of formatted nodes.
     protected Node toTree() {
         CharSequence text = txt == null ? "" : txt;
-
         int entCount = ent != null ? ent.length : 0;
+        int[] sizes = gcSizes(text);
 
         // Handle special case when all values in fmt are 0 and fmt therefore was
         // skipped.
@@ -1204,7 +1217,8 @@ public class Drafty implements Serializable {
         // Sanitize spans
         List<Span> spans = new ArrayList<>();
         List<Span> attachments = new ArrayList<>();
-        int maxIndex = text.length();
+        int maxIndex = sizes.length;
+
         for (Style aFmt : fmt) {
             if (aFmt == null || aFmt.len < 0) {
                 // Invalid span.
@@ -1235,7 +1249,6 @@ public class Drafty implements Serializable {
                 spans.add(new Span(aFmt.tp, aFmt.at, aFmt.at + aFmt.len));
             }
         }
-
         // Sort spans first by start index (asc) then by length (desc).
         spans.sort((a, b) -> {
             int diff = a.start - b.start;
@@ -1250,7 +1263,7 @@ public class Drafty implements Serializable {
         });
 
         // Move attachments to the end of the list.
-        if (attachments.size() > 0) {
+        if (!attachments.isEmpty()) {
             spans.addAll(attachments);
         }
 
@@ -1265,8 +1278,7 @@ public class Drafty implements Serializable {
                 span.type = "HD";
             }
         }
-
-        Node tree = spansToTree(new Node(), text, 0, text.length(), spans);
+        Node tree = spansToTree(sizes, new Node(), text, 0, sizes.length, spans);
 
         // Flatten tree nodes, remove styling from buttons, copy button text to 'title' data.
         return treeTopDown(tree, new Transformer() {
@@ -1295,6 +1307,7 @@ public class Drafty implements Serializable {
 
     // Clip tree to the provided limit.
     // If the tree is shortened, prepend tail.
+    @SuppressWarnings("SameParameterValue")
     protected static Node shortenTree(Node tree, int length, String tail) {
         if (tail != null) {
             length -= tail.length();
@@ -1303,6 +1316,7 @@ public class Drafty implements Serializable {
         return treeTopDown(tree, new Transformer() {
             private int limit;
 
+            @SuppressWarnings("unused")
             Transformer init(int limit) {
                 this.limit = limit;
                 return this;
@@ -1323,9 +1337,9 @@ public class Drafty implements Serializable {
                     node.text = tail != null ? new StringBuilder(tail) : null;
                     limit = -1;
                 } else if (node.text != null) {
-                    int len = node.text.codePointCount(0, node.text.length());
+                    int len = gcLength(node.text);
                     if (len > limit) {
-                        int clipAt = node.text.offsetByCodePoints(0, limit);
+                        int clipAt = gcOffset(node.text, limit);
                         node.text.setLength(clipAt);
                         if (tail != null) {
                             node.text.append(tail);
@@ -1390,10 +1404,32 @@ public class Drafty implements Serializable {
         });
     }
 
+    /**
+     * Convert Drafty to plain text.
+     * @return plain text representation of the Drafty document.
+     */
+    @SuppressWarnings("unused")
     public String toPlainText() {
-        return "{txt: '" + txt + "'," +
-                "fmt: " + Arrays.toString(fmt) + "," +
-                "ent: " + Arrays.toString(ent) + "}";
+        StringBuilder sb = new StringBuilder("{");
+        if (txt != null) {
+            sb.append("txt: '").append(txt).append("', ");
+        }
+        if (fmt != null && fmt.length > 0) {
+            sb.append("fmt: [");
+            for (Style f : fmt) {
+                sb.append(f).append(", ");
+            }
+            sb.append("], ");
+        }
+        if (ent != null && ent.length > 0) {
+            sb.append("ent: [");
+            for (Entity e : ent) {
+                sb.append(e).append(", ");
+            }
+            sb.append("]");
+        }
+        sb.append("}");
+        return sb.toString();
     }
 
     // Convert Drafty to plain text;
@@ -1512,6 +1548,7 @@ public class Drafty implements Serializable {
     @NotNull
     public Drafty replyContent(int length, int maxAttachments) {
         Node tree = toTree();
+
         // Strip quote blocks, shorten leading mention, convert line breaks to spaces.
         tree = treeTopDown(tree, new Transformer() {
             @Override
@@ -1539,6 +1576,7 @@ public class Drafty implements Serializable {
                 return node;
             }
         });
+
         // Move attachments to the end of the doc.
         attachmentsToEnd(tree, maxAttachments);
         // Shorten the doc.
@@ -1575,6 +1613,7 @@ public class Drafty implements Serializable {
         public String tp;
         public Integer key;
 
+        @SuppressWarnings("unused")
         public Style() {}
 
         // Basic inline formatting
@@ -1595,12 +1634,21 @@ public class Drafty implements Serializable {
         }
 
         boolean isUnstyled() {
-            return tp == null || "".equals(tp);
+            return tp == null || tp.isEmpty();
         }
         @NotNull
         @Override
         public String toString() {
-            return "{tp: '" + tp + "', at: " + at + ", len: " + len + ", key: " + key + "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (tp != null) {
+                sb.append("tp: '").append(tp).append("', ");
+            }
+            sb.append("at: ").append(at).append(", len: ").append(len);
+            if (key != null) {
+                sb.append(", key: ").append(key);
+            }
+            sb.append("}");
+            return sb.toString();
         }
 
         @Override
@@ -1622,10 +1670,10 @@ public class Drafty implements Serializable {
             return false;
         }
 
-        // Convert 'at' and 'len' values from char indexes to codepoints.
-        Style convertToCodePoints(StringBuilder text) {
-            len = text.codePointCount(at, at + len);
-            at = text.codePointCount(0, at);
+        // Convert 'at' and 'len' values from char indexes to grapheme .
+        Style toGraphemeCounts(StringBuilder text) {
+            len = gcCount(text, at, at + len);
+            at = gcCount(text, 0, at);
             return this;
         }
     }
@@ -1634,8 +1682,10 @@ public class Drafty implements Serializable {
         public String tp;
         public Map<String,Object> data;
 
+        @SuppressWarnings("unused")
         public Entity() {}
 
+        @SuppressWarnings("unused")
         public Entity(String tp, Map<String,Object> data) {
             this.tp = tp;
             this.data = data;
@@ -1684,7 +1734,7 @@ public class Drafty implements Serializable {
 
     // Optionally insert nullable value into entity data: null values or empty strings are not inserted.
     private static void addOrSkip(@NotNull Map<String,Object> data, @NotNull String key, @Nullable String value) {
-        if (value != null && value.length() > 0) {
+        if (value != null && !value.isEmpty()) {
             data.put(key, value);
         }
     }
@@ -1728,6 +1778,7 @@ public class Drafty implements Serializable {
         return null;
     }
     // Create a copy of entity data with (light=false) or without (light=true) the large payload.
+    @SuppressWarnings("SameParameterValue")
     private static Map<String,Object> copyEntData(Map<String,Object> data, int maxLength) {
         return copyEntData(data, maxLength, null);
     }
@@ -1798,6 +1849,7 @@ public class Drafty implements Serializable {
             this(tp, data, key, false);
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull String tp, @Nullable Map<String,Object> data,
              @NotNull CharSequence content, int key) {
             parent = null;
@@ -1809,6 +1861,7 @@ public class Drafty implements Serializable {
             attachment = false;
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull String tp, @Nullable Map<String,Object> data, @NotNull Node node, int key) {
             parent = null;
             this.tp = tp;
@@ -1819,6 +1872,7 @@ public class Drafty implements Serializable {
             add(node);
         }
 
+        @SuppressWarnings("unused")
         public Node(@NotNull Node node) {
             parent = node.parent;
             tp = node.tp;
@@ -1859,7 +1913,7 @@ public class Drafty implements Serializable {
         }
 
         public boolean isUnstyled() {
-            return tp == null || "".equals(tp);
+            return tp == null || tp.isEmpty();
         }
 
         public CharSequence getText() {
@@ -1894,7 +1948,7 @@ public class Drafty implements Serializable {
 
         public int length() {
             if (text != null) {
-                return text.codePointCount(0, text.length());
+                return gcLength(text);
             }
             if (children == null) {
                 return 0;
@@ -1916,7 +1970,7 @@ public class Drafty implements Serializable {
             } else if (isUnstyled()) {
                 if (text != null) {
                     text = ltrim(text);
-                } else if (children != null && children.size() > 0) {
+                } else if (children != null && !children.isEmpty()) {
                     children.get(0).lTrim();
                 }
             }
@@ -1957,7 +2011,7 @@ public class Drafty implements Serializable {
 
         @NotNull
         private static StringBuilder ltrim(@NotNull StringBuilder str) {
-            int len = str.codePointCount(0, str.length());
+            int len = gcLength(str);
             if (len == 0) {
                 return str;
             }
@@ -1975,11 +2029,24 @@ public class Drafty implements Serializable {
         @NotNull
         @Override
         public String toString() {
-            return "{'" + tp + "'" +
-                    (data != null  ? ", data: " + data : "") +
-                    (text != null ? "; '" + text + "'" :
-                            (children != null ? ("; " + children) : "; NULL")) +
-                    "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (tp != null) {
+                sb.append("tp: ").append(tp).append("; ");
+            }
+            if (data != null) {
+                sb.append("data: ").append(data).append(" ");
+            }
+            if (text != null) {
+                sb.append("text: '").append(text).append("'");
+            } else if (children != null) {
+                sb.append("[");
+                for (Node c : children) {
+                    sb.append(c).append(",");
+                }
+                sb.append("]");
+            }
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -2044,7 +2111,7 @@ public class Drafty implements Serializable {
         }
 
         boolean isUnstyled() {
-            return type == null || "".equals(type);
+            return type == null || type.isEmpty();
         }
         static boolean isVoid(final String tp) {
             return Arrays.binarySearch(VOID_STYLES, tp) >= 0;
@@ -2062,14 +2129,26 @@ public class Drafty implements Serializable {
         @NotNull
         @Override
         public String toString() {
-            return "{" +
-                    "text='" + text + "'," +
-                    "start=" + start + "," +
-                    "end=" + end + "," +
-                    "type=" + type + "," +
-                    "data=" + (data != null ? data.toString() : "null") + "," +
-                    "\n  children=[" + children + "]" +
-                    "}";
+            StringBuilder sb = new StringBuilder("{");
+            if (type != null) {
+                sb.append("type: ").append(type).append(", ");
+            }
+            sb.append("start: ").append(start).append(", end: ").append(end);
+            if (text != null) {
+                sb.append(", text: '").append(text).append("'");
+            }
+            if (data != null) {
+                sb.append(", data: ").append(data);
+            }
+            if (children != null) {
+                sb.append(", children: [\n");
+                for (Span c : children) {
+                    sb.append("\t").append(c).append("\n");
+                }
+                sb.append("\n]");
+            }
+            sb.append("}");
+            return sb.toString();
         }
     }
 
@@ -2115,9 +2194,9 @@ public class Drafty implements Serializable {
             Drafty doc = txt != null ?
                     Drafty.fromPlainText(txt.toString()) : new Drafty();
 
-            if (fmt != null && fmt.size() > 0) {
+            if (fmt != null && !fmt.isEmpty()) {
                 doc.fmt = fmt.toArray(new Style[]{});
-                if (ent != null && ent.size() > 0) {
+                if (ent != null && !ent.isEmpty()) {
                     doc.ent = ent.toArray(new Entity[]{});
                 }
             }
@@ -2126,7 +2205,7 @@ public class Drafty implements Serializable {
         }
 
         int length() {
-            return txt != null ? txt.codePointCount(0, txt.length()) : 0;
+            return txt != null ? gcLength(txt) : 0;
         }
 
         void append(CharSequence text) {
@@ -2156,5 +2235,64 @@ public class Drafty implements Serializable {
             }
             return key;
         }
+    }
+
+    /**
+     * Methods related to grapheme clusters.
+     */
+
+    // Get array of grapheme cluster sizes in the string.
+    private static int[] gcSizes(CharSequence seq) {
+        List<Integer> sizes = new ArrayList<>();
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq);
+        int start = bi.first();
+        for (int end = bi.next(); end != BreakIterator.DONE; start = end, end = bi.next()) {
+            sizes.add(end - start);
+        }
+        return sizes.stream().mapToInt(i -> i).toArray();
+    }
+
+    // Extract subsequences of grapheme clusters between start and end clusters.
+    private static CharSequence gcSubSequence(int[] sizes, CharSequence seq, int start, int end) {
+        int from = 0;
+        for (int i = 0; i < start; i++) {
+            from += sizes[i];
+        }
+        int to = from;
+        for (int i = start; i < end; i++) {
+            to += sizes[i];
+        }
+        return seq.subSequence(from, to);
+    }
+
+    private static int gcLength(CharSequence seq) {
+        // return str.codePointCount(0, str.length());
+        return gcCount(seq, 0, seq.length());
+    }
+
+    // Convert offset measured in grapheme count to offset in character count.
+    private static int gcOffset(CharSequence seq, int graphemeCount) {
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq);
+        bi.first();
+        int offset = 0;
+        for (int end = bi.next(), count = 0;
+             end != BreakIterator.DONE && count < graphemeCount;
+             end = bi.next(), count ++) {
+            offset = end;
+        }
+        return offset;
+    }
+
+    // Count grapheme clusters in the string between start and end.
+    private static int gcCount(CharSequence seq, int start, int end) {
+        BreakIterator bi = BreakIterator.getCharacterInstance();
+        bi.setText(seq.subSequence(start, end));
+        int count = 0;
+        for (bi.first(); bi.next() != BreakIterator.DONE;){
+            ++ count;
+        }
+        return count;
     }
 }

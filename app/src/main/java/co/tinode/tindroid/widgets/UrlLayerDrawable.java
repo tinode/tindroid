@@ -1,21 +1,26 @@
 package co.tinode.tindroid.widgets;
 
+import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.util.Log;
 
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.RequestCreator;
-import com.squareup.picasso.Target;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.HashMap;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+
 import co.tinode.tindroid.Const;
+import co.tinode.tindroid.UiUtils;
+
+import coil.request.ImageRequest;
+import coil.size.Scale;
+import coil.target.Target;
 
 /**
  * LayerDrawable with some of the layers set by Picasso.
@@ -24,10 +29,13 @@ public class UrlLayerDrawable extends LayerDrawable {
     private static final String TAG = "UrlLayerDrawable";
     private static final int INTRINSIC_SIZE = 128;
 
-    HashMap<Integer,Target> mTargets = null;
+    private HashMap<Integer,Target> mTargets = null;
 
-    public UrlLayerDrawable(@NonNull Drawable[] layers) {
+    private final WeakReference<Context> mContext;
+
+    public UrlLayerDrawable(@NonNull Context context, @NonNull Drawable[] layers) {
         super(layers);
+        mContext = new WeakReference<>(context);
     }
 
     @Override
@@ -51,37 +59,40 @@ public class UrlLayerDrawable extends LayerDrawable {
             final int mLayerId = layerId;
             final Resources mRes = res;
             @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                setDrawableByLayerId(mLayerId, new RoundImageDrawable(mRes, bitmap));
+            public void onSuccess(@NonNull Drawable result) {
+                setDrawableByLayerId(mLayerId,
+                        new RoundImageDrawable(mRes, UiUtils.bitmapFromDrawable(result)));
             }
 
             @Override
-            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+            public void onError(@Nullable Drawable errorDrawable) {
                 if (errorDrawable != null) {
                     setDrawableByLayerId(mLayerId, errorDrawable);
                     invalidateSelf();
                 }
-                Log.w(TAG, "Error loading avatar", e);
+                Log.w(TAG, "Error loading avatar");
             }
 
             @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-                if (placeHolderDrawable != null) {
-                    setDrawableByLayerId(mLayerId, placeHolderDrawable);
+            public void onStart(@Nullable Drawable placeholder) {
+                if (placeholder != null) {
+                    setDrawableByLayerId(mLayerId, placeholder);
                 }
             }
         };
-        RequestCreator c = Picasso.get()
-                .load(Uri.decode(url))
-                .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
-                .centerCrop();
+
+        ImageRequest.Builder c = new ImageRequest.Builder(mContext.get())
+                .data(Uri.decode(url))
+                .size(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
+                .scale(Scale.FILL);
         if (error != 0) {
-            c = c.error(error);
+            c.error(error);
         }
         if (placeholder != null) {
-            c = c.placeholder(placeholder);
+            c.placeholder(placeholder);
         }
-        c.into(target);
+        c.target(target);
+        c.build();
         mTargets.put(layerId, target);
     }
 }

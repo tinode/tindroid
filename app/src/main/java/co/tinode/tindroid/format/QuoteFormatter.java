@@ -12,7 +12,6 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.CharacterStyle;
 import android.text.style.ForegroundColorSpan;
-import android.util.Base64;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -47,7 +46,7 @@ public class QuoteFormatter extends PreviewFormatter {
         Resources res = parent.getResources();
         if (sColorsDark == null) {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
-            sTextColor = res.getColor(R.color.colorReplyText);
+            sTextColor = res.getColor(R.color.colorReplyText, null);
         }
     }
 
@@ -92,9 +91,11 @@ public class QuoteFormatter extends PreviewFormatter {
             try {
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                byte[] bits = UiUtils.decodeByteArray(val);
+                Bitmap bmp = null;
+                if (bits != null) {
+                    bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                }
                 if (bmp != null) {
                     if (dim.square) {
                         thumbnail = new BitmapDrawable(res,

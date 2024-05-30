@@ -209,7 +209,10 @@ public class AttachmentHandler extends Worker {
 
         UploadType type = UploadType.parse(operation);
         Uri uri = args.getParcelable(AttachmentHandler.ARG_LOCAL_URI);
-        assert uri != null;
+        if (uri == null) {
+            Log.w(TAG, "Missing local attachment URI");
+            return null;
+        }
 
         Data.Builder data = new Data.Builder()
                 .putString(ARG_OPERATION, operation)

@@ -17,6 +17,7 @@ import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
@@ -49,7 +50,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.squareup.picasso.Picasso;
+import org.jetbrains.annotations.NotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -75,7 +76,7 @@ import java.util.concurrent.Executors;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.StringRes;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -83,8 +84,8 @@ import androidx.core.content.res.ResourcesCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-
 import androidx.preference.PreferenceManager;
+
 import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
@@ -92,7 +93,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
-
 import co.tinode.tindroid.widgets.UrlLayerDrawable;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.MeTopic;
@@ -105,6 +105,12 @@ import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+
+import coil.Coil;
+import coil.ImageLoaders;
+import coil.request.ImageRequest;
+
+import io.nayuki.qrcodegen.QrCode;
 
 /**
  * Static utilities for UI support.
@@ -130,6 +136,12 @@ public class UiUtils {
     private static String sVisibleTopic = null;
 
     private static final String PREF_FIRST_RUN = "firstRun";
+
+    static final String TOPIC_URI_PREFIX = "tinode:topic/";
+    private static final int QRCODE_BORDER = 1;
+    private static final int QRCODE_SCALE = 10;
+    private static final int QRCODE_FG_COLOR = Color.BLACK;
+    private static final int QRCODE_BG_COLOR = Color.WHITE;
 
     public enum MsgAction {
         NONE, REPLY, FORWARD, EDIT
@@ -186,7 +198,6 @@ public class UiUtils {
             return;
         }
 
-        Resources res = activity.getResources();
         ArrayList<Drawable> drawables = new ArrayList<>();
         AnimationDrawable typing = null;
         Bitmap bmp = null;
@@ -205,10 +216,13 @@ public class UiUtils {
             drawables.add(new ColorDrawable(0x00000000));
         }
 
+        Resources res = activity.getResources();
+
         if (online != null) {
             drawables.add(new OnlineDrawable(online));
 
-            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res, R.drawable.typing_indicator, null);
+            typing = (AnimationDrawable) ResourcesCompat.getDrawable(res,
+                    R.drawable.typing_indicator, null);
             if (typing != null) {
                 typing.setOneShot(false);
                 typing.setVisible(false, true);
@@ -217,7 +231,7 @@ public class UiUtils {
             }
         }
 
-        UrlLayerDrawable layers = new UrlLayerDrawable(drawables.toArray(new Drawable[]{}));
+        UrlLayerDrawable layers = new UrlLayerDrawable(activity, drawables.toArray(new Drawable[]{}));
         layers.setId(0, LOGO_LAYER_AVATAR);
 
         if (ref != null) {
@@ -509,9 +523,8 @@ public class UiUtils {
             return false;
         }
 
-        return (one.getDate() == two.getDate()) &&
-                (one.getMonth() == two.getMonth()) &&
-                (one.getYear() == two.getYear());
+        final long oneDay = 24 * 60 * 60 * 1000;
+        return one.getTime() / oneDay == two.getTime() / oneDay;
     }
 
     static Intent avatarSelectorIntent(@NonNull final Activity activity,
@@ -649,8 +662,8 @@ public class UiUtils {
 
         // Scale down.
         if (upscale || factor > 1.0) {
-            height /= factor;
-            width /= factor;
+            height = (int) (height / factor);
+            width = (int) (width / factor);
             return Bitmap.createScaledBitmap(bmp, width, height, true);
         }
         return bmp;
@@ -724,15 +737,17 @@ public class UiUtils {
             ref = pub.getPhotoRef();
         }
 
-        Drawable local = avatarDrawable(avatarView.getContext(), avatar, fullName, address, disabled);
+        final Context context = avatarView.getContext();
+        Drawable local = avatarDrawable(context, avatar, fullName, address, disabled);
         if (ref != null) {
-            Picasso
-                    .get()
-                    .load(ref)
-                    .resize(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
-                    .placeholder(local)
-                    .error(R.drawable.ic_broken_image_round)
-                    .into(avatarView);
+            Coil.imageLoader(context)
+                    .enqueue(new ImageRequest.Builder(context)
+                            .data(ref)
+                            .size(Const.MAX_AVATAR_SIZE, Const.MAX_AVATAR_SIZE)
+                            .placeholder(local)
+                            .error(R.drawable.ic_broken_image_round)
+                            .target(avatarView)
+                            .build());
         } else {
             avatarView.setImageDrawable(local);
         }
@@ -824,13 +839,12 @@ public class UiUtils {
             fullName = pub.fn;
             String ref = pub.getPhotoRef();
             if (ref != null) {
-                try {
-                    bitmap = Picasso.get()
-                            .load(ref)
-                            .resize(size, size).get();
-                } catch (IOException ex) {
-                    Log.w(TAG, "Failed to load avatar", ex);
-                }
+                ImageRequest req = new ImageRequest.Builder(context)
+                        .data(ref)
+                        .size(size, size)
+                        .build();
+                Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(context), req).getDrawable();
+                bitmap = bitmapFromDrawable(drw);
             } else {
                 bitmap = pub.getBitmap();
             }
@@ -1111,7 +1125,7 @@ public class UiUtils {
                 if (pub == null) {
                     pub = new VxCard();
                 }
-                pub.note = description.equals("") ? Tinode.NULL_VALUE : description;
+                pub.note = description.isEmpty() ? Tinode.NULL_VALUE : description;
             }
         }
 
@@ -1211,7 +1225,7 @@ public class UiUtils {
             }
         }
 
-        if (tags.size() == 0) {
+        if (tags.isEmpty()) {
             return null;
         }
 
@@ -1448,11 +1462,20 @@ public class UiUtils {
         return url != null ? Uri.parse(url.toString()) : null;
     }
 
-    static public @Nullable byte[] getByteArray(String name, @NonNull Map<String, Object> data) {
-        Object val = data.get(name);
-        return val instanceof String ?
-                Base64.decode((String) val, Base64.DEFAULT) :
-                val instanceof byte[] ? (byte[]) val : null;
+    static public @Nullable byte[] decodeByteArray(Object val) {
+        byte[] bits = null;
+        if (val instanceof String) {
+            try {
+                bits = Base64.decode((String) val, Base64.DEFAULT);
+            } catch (IllegalArgumentException ignored) {}
+        } else {
+            bits = val instanceof byte[] ? (byte[]) val : null;
+        }
+        return bits;
+    }
+
+    static public @Nullable byte[] getByteArray(String name, @NotNull Map<String, Object> data) {
+        return decodeByteArray(data.get(name));
     }
 
     static public @NonNull List<String> getRequiredCredMethods(@NonNull Tinode tinode,
@@ -1495,11 +1518,11 @@ public class UiUtils {
 
             View byTinode = view.findViewById(R.id.byTinode);
             byTinode.setVisibility(View.VISIBLE);
-            UiUtils.clickToBrowseURL(byTinode, R.string.tinode_url);
+            UiUtils.clickToBrowseTinodeURL(byTinode);
         }
     }
     // Click on a view to open the given URL.
-    static void clickToBrowseURL(View view, String url) {
+    static void clickToBrowseTinodeURL(View view, String url) {
         Uri uri =  Uri.parse(url);
         if (uri == null) {
             return;
@@ -1513,8 +1536,8 @@ public class UiUtils {
         });
     }
 
-    static void clickToBrowseURL(@NonNull View view, @StringRes int url) {
-        clickToBrowseURL(view, view.getResources().getString(url));
+    static void clickToBrowseTinodeURL(@NonNull View view) {
+        clickToBrowseTinodeURL(view, view.getResources().getString(R.string.tinode_url));
     }
 
     static boolean isAppFirstRun(Context context) {
@@ -1525,6 +1548,21 @@ public class UiUtils {
     static void doneAppFirstRun(Context context) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         prefs.edit().putBoolean(PREF_FIRST_RUN, false).apply();
+    }
+
+    static void generateQRCode(ImageView view, String uri) {
+        QrCode qr = QrCode.encodeText(uri, QrCode.Ecc.LOW);
+
+        Bitmap result = Bitmap.createBitmap((qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE,
+                (qr.size + QRCODE_BORDER * 2) * QRCODE_SCALE, Bitmap.Config.ARGB_8888);
+        for (int y = 0; y < result.getHeight(); y++) {
+            for (int x = 0; x < result.getWidth(); x++) {
+                boolean color = qr.getModule(x / QRCODE_SCALE - QRCODE_BORDER, y / QRCODE_SCALE - QRCODE_BORDER);
+                result.setPixel(x, y, color ? QRCODE_FG_COLOR : QRCODE_BG_COLOR);
+            }
+        }
+
+        view.setImageBitmap(result);
     }
 
     interface ProgressIndicator {

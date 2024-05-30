@@ -271,18 +271,6 @@ public class SubscriberDb implements BaseColumns {
         }
     }
 
-    /**
-     * Get the next available senderId for the given topic. Min Id == 1.
-     *
-     * @param db      database
-     * @param topicId _id of the topic to query
-     * @return _id of the user
-     */
-    private static int getNextSenderIndex(SQLiteDatabase db, long topicId) {
-        return (int) db.compileStatement("SELECT count(*) FROM " + TABLE_NAME +
-                " WHERE " + COLUMN_NAME_TOPIC_ID + "=" + topicId).simpleQueryForLong() + 1;
-    }
-
     protected static Cursor query(SQLiteDatabase db, long topicId) {
         return db.rawQuery("SELECT " +
                 TABLE_NAME + "." + _ID + "," +

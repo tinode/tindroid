@@ -35,7 +35,7 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
 
     @JsonIgnore
     public void setComment(String comment) {
-        put("comment", comment != null && comment.length() > 0 ? comment : Tinode.NULL_VALUE);
+        put("comment", comment != null && !comment.isEmpty() ? comment : Tinode.NULL_VALUE);
     }
 
     public Boolean isArchived() {

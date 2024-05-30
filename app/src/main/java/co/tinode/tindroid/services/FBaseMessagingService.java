@@ -10,7 +10,6 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.media.RingtoneManager;
-import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -114,7 +113,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
         NotificationCompat.Builder builder;
 
         // Check if message contains a data payload.
-        if (remoteMessage.getData().size() > 0) {
+        if (!remoteMessage.getData().isEmpty()) {
             Map<String, String> data = remoteMessage.getData();
 
             // Check notification type: message, subscription.
@@ -193,7 +192,7 @@ public class FBaseMessagingService extends FirebaseMessagingService {
                         if (draftyBody != null) {
                             @SuppressLint("ResourceType") @StyleableRes int[] attrs = {android.R.attr.textSize};
                             float fontSize = 14f;
-                            TypedArray ta = obtainStyledAttributes(R.style.TextAppearance_Compat_Notification, attrs);
+                            TypedArray ta = obtainStyledAttributes(androidx.core.R.style.TextAppearance_Compat_Notification, attrs);
                             fontSize = ta.getDimension(0, fontSize);
                             ta.recycle();
                             body = draftyBody.shorten(MAX_MESSAGE_LENGTH, true)
@@ -320,7 +319,6 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     private void handleCallNotification(@NonNull String webrtc, boolean isMe, @NonNull Map<String, String> data) {
         String seqStr = data.get("seq");
         String topicName = data.get("topic");
-        boolean audioOnly = Boolean.parseBoolean(data.get("aonly"));
         try {
             int seq = seqStr != null ? Integer.parseInt(seqStr) : 0;
             if (seq <= 0) {
@@ -370,10 +368,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
      * @param avatar sender's avatar.
      */
     private NotificationCompat.Builder composeNotification(String title, CharSequence body, Bitmap avatar) {
-        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
-                        new NotificationCompat.Builder(this);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID);
 
         return notificationBuilder
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -389,10 +385,8 @@ public class FBaseMessagingService extends FirebaseMessagingService {
     }
 
     private NotificationCompat.Builder composeNotification(@NonNull RemoteMessage.Notification remote) {
-        @SuppressWarnings("deprecation") NotificationCompat.Builder notificationBuilder =
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ?
-                        new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID) :
-                        new NotificationCompat.Builder(this);
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, Const.NEWMSG_NOTIFICATION_CHAN_ID);
 
         final Resources res = getResources();
         final String packageName = getPackageName();

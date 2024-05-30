@@ -88,8 +88,8 @@ public class ButtonSpan extends ReplacementSpan implements LineHeightSpan {
         float diff = mButtonHeight * mDipSize - (fm.bottom - fm.top);
 
         // Adjust height.
-        fm.descent += diff;
-        fm.bottom += diff;
+        fm.descent += (int) diff;
+        fm.bottom += (int) diff;
     }
 
     @Override

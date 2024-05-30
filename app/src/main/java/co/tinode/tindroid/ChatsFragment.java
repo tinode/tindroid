@@ -19,7 +19,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.view.MenuHost;
+import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.recyclerview.selection.Selection;
 import androidx.recyclerview.selection.SelectionTracker;
 import androidx.recyclerview.selection.StorageStrategy;
@@ -33,10 +36,8 @@ import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUtils.ProgressIndicator {
+public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUtils.ProgressIndicator, MenuProvider {
     private static final String TAG = "ChatsFragment";
-
-    //private static final int ACTION_MANAGE_OVERLAY_PERMISSION_REQUEST_CODE = 1001;
 
     private Boolean mIsArchive;
     private Boolean mIsBanned;
@@ -61,18 +62,13 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             mIsBanned = false;
         }
 
-        setHasOptionsMenu(!mIsBanned);
-
         return inflater.inflate(mIsArchive ? R.layout.fragment_archive : R.layout.fragment_chats,
                 container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        final AppCompatActivity activity = (AppCompatActivity) getActivity();
-        if (activity == null) {
-            return;
-        }
+        final AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         final ActionBar bar = activity.getSupportActionBar();
         if (mIsArchive || mIsBanned) {
@@ -92,6 +88,8 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 startActivity(intent);
             });
         }
+
+        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
@@ -133,7 +131,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                     mActionMode = null;
                 }
                 if (mActionMode != null) {
-                    mActionMode.setTitle("" + mSelectionTracker.getSelection().size());
+                    mActionMode.setTitle(Integer.toString(mSelectionTracker.getSelection().size()));
                 }
             }
 
@@ -187,24 +185,25 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     }
 
     @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+    public void onCreateMenu(@NonNull Menu menu, @NonNull MenuInflater menuInflater) {
         menu.clear();
 
-        inflater.inflate(R.menu.menu_chats, menu);
-        menu.setGroupVisible(R.id.not_archive, !mIsArchive);
+        if (!mIsBanned) {
+            menuInflater.inflate(R.menu.menu_chats, menu);
+            menu.setGroupVisible(R.id.not_archive, !mIsArchive);
+        }
     }
 
     /**
      * This menu is shown when no items are selected
      */
     @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+    public boolean onMenuItemSelected(@NonNull MenuItem menuItem) {
         final ChatsActivity activity = (ChatsActivity) getActivity();
         if (activity == null) {
             return true;
         }
-        int id = item.getItemId();
+        int id = menuItem.getItemId();
         if (id == R.id.action_show_archive) {
             activity.showFragment(ChatsActivity.FRAGMENT_ARCHIVE, null);
             return true;
@@ -417,16 +416,6 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     void datasetChanged() {
         toggleProgressIndicator(false);
         mAdapter.resetContent(getActivity());
-    }
-
-    // TODO: Add onBackPressed handing to parent Activity.
-    public boolean onBackPressed() {
-        if (mSelectionTracker.hasSelection()) {
-            mSelectionTracker.clearSelection();
-        } else {
-            return true;
-        }
-        return false;
     }
 
     @Override

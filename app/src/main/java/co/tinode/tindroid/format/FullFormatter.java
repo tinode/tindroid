@@ -73,9 +73,6 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
     private static final int MIN_AUDIO_PREVIEW_LENGTH = 16;
 
-    // Size of the [PLAY] control in video in dip.
-    private static final int PLAY_CONTROL_SIZE = 42;
-
     private static TypedArray sColorsDark;
     private static int sDefaultColor;
 
@@ -227,7 +224,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Object val = data.get("preview");
         byte[] preview = null;
         if (val instanceof String) {
-            preview = Base64.decode((String) val, Base64.DEFAULT);
+            try {
+                preview = Base64.decode((String) val, Base64.DEFAULT);
+            } catch (IllegalArgumentException ignored) {}
         }
 
         if (preview != null && preview.length > MIN_AUDIO_PREVIEW_LENGTH) {
@@ -387,9 +386,10 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
                 boolean usePreviewAsMainImage = false;
                 // If the message is not yet sent, the bits could be raw byte[] as opposed to
                 // base64-encoded.
-                byte[] bits = (val instanceof String) ?
-                        Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
-                bmpPreview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                byte[] bits = UiUtils.decodeByteArray(val);
+                if (bits != null) {
+                    bmpPreview = BitmapFactory.decodeByteArray(bits, 0, bits.length);
+                }
                 if (bmpPreview != null) {
                     // Check if the inline bitmap is big enough to be used as primary image.
                     int previewWidth = bmpPreview.getWidth();
@@ -605,7 +605,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     @Override
     protected SpannableStringBuilder handleForm(Context ctx, List<SpannableStringBuilder> content,
                                                 Map<String, Object> data) {
-        if (content == null || content.size() == 0) {
+        if (content == null || content.isEmpty()) {
             return null;
         }
 
@@ -655,9 +655,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         int byteCount = getIntVal("size", data);
         if (byteCount <= 0) {
-            Object val = data.get("val");
-            byte[] bits = (val instanceof String) ?
-                    Base64.decode((String) val, Base64.DEFAULT) : (byte[]) val;
+            byte[] bits = UiUtils.decodeByteArray(data.get("val"));
             if (bits != null) {
                 byteCount = bits.length;
             }

@@ -39,7 +39,6 @@ import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
 
 import com.google.android.exoplayer2.video.VideoSize;
-import com.squareup.picasso.Picasso;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -59,6 +58,9 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tinodesdk.Tinode;
 
+import coil.Coil;
+import coil.request.ImageRequest;
+
 /**
  * Fragment for viewing a video: before being attached or received.
  */
@@ -71,8 +73,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     // Max size of the video and poster bitmap to be sent as byte array.
     // Otherwise write to temp file.
-    private static final int MAX_POSTER_BYTES = 4096; // 4K.
-    private static final int MAX_VIDEO_BYTES = 6144;
+    private static final int MAX_POSTER_BYTES = 1024*3; // 3K.
+    private static final int MAX_VIDEO_BYTES = 1024*4; // 4K.
 
     private ExoPlayer mExoPlayer;
     // Media source factory for remote videos from Tinode server.
@@ -174,8 +176,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((MenuHost) requireActivity()).addMenuProvider(this,
-                getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        ((MenuHost) requireActivity()).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
     @Override
@@ -300,7 +301,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_video);
-                filename += "" + (System.currentTimeMillis() % 10000);
+                filename += Long.toString(System.currentTimeMillis() % 10000);
             }
 
             Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
@@ -333,10 +334,12 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // Poster is included as a reference.
         final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
         if (ref != null) {
-            Picasso.get().load(ref)
-                    .placeholder(placeholder)
-                    .error(placeholder)
-                    .into(mPosterView);
+            Coil.imageLoader(activity).enqueue(
+                    new ImageRequest.Builder(activity)
+                        .data(ref)
+                        .placeholder(placeholder)
+                        .error(placeholder)
+                        .target(mPosterView).build());
             return;
         }
 
@@ -350,12 +353,6 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         super.onPause();
         mExoPlayer.stop();
         mExoPlayer.release();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Picasso.get().cancelRequest(mPosterView);
     }
 
     private Uri writeToTempFile(Context ctx, byte[] bits, String prefix, String suffix) {

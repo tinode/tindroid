@@ -341,4 +341,6 @@
     <string name="hint_enter_code">Código de configuración</string>
     <string name="code_required">Código requerido</string>
     <string name="configure_connection">Configurar conexión</string>
+    <string name="calling_not_supported">Llamadas no admitidas</string>
+    <string name="display_code">Mostrar código QR</string>
 </resources>
