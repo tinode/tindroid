@@ -49,7 +49,7 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
         try {
             mediaUri = createTempPhotoUri(context);
             camera.putExtra(MediaStore.EXTRA_OUTPUT, mediaUri);
-        } catch (IOException ex) {
+        } catch (IllegalArgumentException | IOException ex) {
             Log.w(TAG, "Failed to create a temp file for taking a photo", ex);
         }
 
