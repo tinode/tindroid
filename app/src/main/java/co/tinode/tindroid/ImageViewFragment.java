@@ -45,6 +45,7 @@ import androidx.lifecycle.Lifecycle;
 
 import co.tinode.tindroid.widgets.OverlaidImageView;
 
+import coil.Coil;
 import coil.request.ImageRequest;
 import coil.target.Target;
 
@@ -333,6 +334,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                         ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
                     }
                 });
+                Coil.imageLoader(activity).enqueue(rc.build());
             }
         }
 
