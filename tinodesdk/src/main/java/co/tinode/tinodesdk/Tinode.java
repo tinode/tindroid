@@ -2289,7 +2289,7 @@ public class Tinode {
      * @return true if the URL is trusted, false otherwise.
      */
     public boolean isTrustedURL(@NotNull URL url) {
-        return ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
+        return mServerURI != null && ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
                 && url.getAuthority().equals(mServerURI.getAuthority()));
     }
 

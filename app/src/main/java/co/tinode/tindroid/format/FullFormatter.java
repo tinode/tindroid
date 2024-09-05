@@ -504,12 +504,14 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         } else if (mClicker != null) {
             // Make image clickable by wrapping ImageSpan into a ClickableSpan.
             result = assignStyle(span, content);
-            result.setSpan(new ClickableSpan() {
-                @Override
-                public void onClick(@NonNull View widget) {
-                    mClicker.onClick("IM", data, null);
-                }
-            }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE );
+            if (result != null) {
+                result.setSpan(new ClickableSpan() {
+                    @Override
+                    public void onClick(@NonNull View widget) {
+                        mClicker.onClick("IM", data, null);
+                    }
+                }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
         } else {
             result = assignStyle(span, content);
         }

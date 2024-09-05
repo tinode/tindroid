@@ -152,11 +152,6 @@ public class SignUpFragment extends Fragment
 
     // Configure email or phone field.
     private void setupCredentials(Activity activity, String[] methods) {
-        // This is called on a network thread. Make sure the activity is still alive.
-        if (activity.isFinishing() || activity.isDestroyed()) {
-            return;
-        }
-
         if (methods == null || methods.length == 0) {
             mCredMethods = new String[]{"email"};
         } else {
@@ -164,6 +159,11 @@ public class SignUpFragment extends Fragment
         }
 
         activity.runOnUiThread(() -> {
+            // This is called on a network thread. Make sure the activity is still alive.
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+
             for (final String method : mCredMethods) {
                 if (TextUtils.isEmpty(method)) {
                     continue;
