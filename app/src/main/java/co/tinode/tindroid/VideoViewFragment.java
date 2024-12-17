@@ -298,6 +298,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             String filename = args.getString(AttachmentHandler.ARG_FILE_NAME);
             String mime = args.getString(AttachmentHandler.ARG_MIME_TYPE);
 
+            if (filename != null) {
+                filename = filename.trim();
+            }
             if (TextUtils.isEmpty(filename)) {
                 filename = getResources().getString(R.string.tinode_video);
                 filename += Long.toString(System.currentTimeMillis() % 10000);
