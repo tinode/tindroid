@@ -313,7 +313,8 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                             return;
                         }
 
-                        final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+                        final Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
+                        mImageView.setImageDrawable(drawable);
                         mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
                         mWorkingRect = new RectF(mInitialRect);
                         mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
