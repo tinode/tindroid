@@ -7,7 +7,7 @@ buildscript {
         maven { url 'https://maven.google.com/' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.5.2'
+        classpath 'com.android.tools.build:gradle:8.7.3'
 
         // For FCM push notifications
         classpath 'com.google.gms:google-services:4.4.2'
