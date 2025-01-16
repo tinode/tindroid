@@ -378,6 +378,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             return;
         }
 
+        if (mVideoWidth <= 0 || mVideoHeight <= 0) {
+            Log.w(TAG, "sendVideo called for 0x0 video");
+            return;
+        }
+
         Bundle inputArgs = getArguments();
         if (inputArgs == null) {
             Log.w(TAG, "sendVideo called with no arguments");
