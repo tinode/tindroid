@@ -1327,8 +1327,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             }
 
+            if (fname != null) {
+                fname = fname.trim();
+            }
             if (TextUtils.isEmpty(fname)) {
                 fname = mActivity.getString(R.string.default_attachment_name);
+                fname += Long.toString(System.currentTimeMillis() % 10000);
             }
 
             AttachmentHandler.enqueueDownloadAttachment(mActivity,

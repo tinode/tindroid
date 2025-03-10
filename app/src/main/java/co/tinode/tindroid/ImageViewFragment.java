@@ -45,6 +45,7 @@ import androidx.lifecycle.Lifecycle;
 
 import co.tinode.tindroid.widgets.OverlaidImageView;
 
+import coil.Coil;
 import coil.request.ImageRequest;
 import coil.target.Target;
 
@@ -312,7 +313,8 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                             return;
                         }
 
-                        final Bitmap bmp = ((BitmapDrawable) mImageView.getDrawable()).getBitmap();
+                        final Bitmap bmp = ((BitmapDrawable) drawable).getBitmap();
+                        mImageView.setImageDrawable(drawable);
                         mInitialRect = new RectF(0, 0, bmp.getWidth(), bmp.getHeight());
                         mWorkingRect = new RectF(mInitialRect);
                         mMatrix.setRectToRect(mInitialRect, mScreenRect, Matrix.ScaleToFit.CENTER);
@@ -333,6 +335,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                         ((MenuHost) activity).removeMenuProvider(ImageViewFragment.this);
                     }
                 });
+                Coil.imageLoader(activity).enqueue(rc.build());
             }
         }
 

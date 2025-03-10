@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import co.tinode.tindroid.R;
 import co.tinode.tinodesdk.model.Drafty;
 
@@ -154,7 +155,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return handlePlain(content);
     }
 
-    protected static SpannableStringBuilder join(List<SpannableStringBuilder> content) {
+    protected static @Nullable SpannableStringBuilder join(List<SpannableStringBuilder> content) {
         SpannableStringBuilder ssb = null;
         if (content != null) {
             Iterator<SpannableStringBuilder> it = content.iterator();
@@ -166,7 +167,8 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         return ssb;
     }
 
-    protected static SpannableStringBuilder assignStyle(@NonNull Object style, List<SpannableStringBuilder> content) {
+    protected static @Nullable SpannableStringBuilder assignStyle(@NonNull Object style,
+                                                                  List<SpannableStringBuilder> content) {
         SpannableStringBuilder ssb = join(content);
         if (ssb != null) {
             ssb.setSpan(style, 0, ssb.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

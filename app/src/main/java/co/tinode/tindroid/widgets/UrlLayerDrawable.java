@@ -18,12 +18,13 @@ import androidx.annotation.NonNull;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.UiUtils;
 
+import coil.Coil;
 import coil.request.ImageRequest;
 import coil.size.Scale;
 import coil.target.Target;
 
 /**
- * LayerDrawable with some of the layers set by Picasso.
+ * LayerDrawable with some of the layers set by Coil.
  */
 public class UrlLayerDrawable extends LayerDrawable {
     private static final String TAG = "UrlLayerDrawable";
@@ -51,6 +52,11 @@ public class UrlLayerDrawable extends LayerDrawable {
 
     public void setUrlByLayerId(Resources res, int layerId, String url,
                                 Drawable placeholder, @DrawableRes int error) {
+        Context context = mContext.get();
+        if (context == null) {
+            return;
+        }
+
         if (mTargets == null) {
             mTargets = new HashMap<>(getNumberOfLayers());
         }
@@ -92,7 +98,8 @@ public class UrlLayerDrawable extends LayerDrawable {
             c.placeholder(placeholder);
         }
         c.target(target);
-        c.build();
+
+        Coil.imageLoader(context).enqueue(c.build());
         mTargets.put(layerId, target);
     }
 }

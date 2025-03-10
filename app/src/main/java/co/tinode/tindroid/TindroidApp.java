@@ -242,7 +242,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         crb.add((Keyer<Uri>) (uri, options) -> {
             // For caching purposes, remove transient query parameters from Uri
             // such as X-Amz-Signature or X-Goog-Date.
-            // Credential is removed because X-Amz-Credentialalice contains current date.
+            // Credential is removed because X-Amz-Credential contains current date.
             String[] tempKeys = {"credential", "date", "signature"};
             Set<String> query = uri.getQueryParameterNames();
             query.removeIf(key -> Arrays.stream(tempKeys).anyMatch(key.toLowerCase()::contains));

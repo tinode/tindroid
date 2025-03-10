@@ -121,6 +121,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
     }
 
     private int getItemPosition(String key) {
+        if (mTopicIndex == null) {
+            return -1;
+        }
         Integer pos = mTopicIndex.get(key);
         return pos == null ? -1 : pos;
     }

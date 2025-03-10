@@ -817,6 +817,10 @@ public class UiUtils {
      * @return bitmap extracted from the drawable.
      */
     public static Bitmap bitmapFromDrawable(Drawable drawable) {
+        if (drawable == null) {
+            return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        }
+
         if (drawable instanceof BitmapDrawable) {
             return ((BitmapDrawable) drawable).getBitmap();
         }

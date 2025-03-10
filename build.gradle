@@ -7,13 +7,13 @@ buildscript {
         maven { url 'https://maven.google.com/' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.4.1'
+        classpath 'com.android.tools.build:gradle:8.7.3'
 
         // For FCM push notifications
         classpath 'com.google.gms:google-services:4.4.2'
 
         // Crashlytics
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.1'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:3.0.3'
 
         // Legal compliance: plugin to collect and display OSS licenses.
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.6'

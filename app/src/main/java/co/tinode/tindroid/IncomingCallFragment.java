@@ -137,7 +137,11 @@ public class IncomingCallFragment extends Fragment
         }
 
         mMediaPlayer = MediaPlayer.create(activity, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
-        mMediaPlayer.start();
+        if (mMediaPlayer != null) {
+            mMediaPlayer.start();
+        } else {
+            Log.e(TAG, "Failed to create MediaPlayer");
+        }
 
         startCamera(activity);
     }
