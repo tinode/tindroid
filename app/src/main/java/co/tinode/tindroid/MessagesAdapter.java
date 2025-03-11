@@ -25,10 +25,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-<<<<<<< HEAD
-=======
 import android.text.style.CharacterStyle;
->>>>>>> devel
 import android.text.style.ForegroundColorSpan;
 import android.text.style.IconMarginSpan;
 import android.text.style.RelativeSizeSpan;
@@ -788,7 +785,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         });
     }
 
-<<<<<<< HEAD
     // Scroll to and animate message bubble.
     void scrollToAndAnimate(int seq) {
         final int pos = findInCursor(mCursor, seq);
@@ -824,7 +820,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 mRecyclerView.smoothScrollToPosition(pos);
             }
         }
-=======
+    }
+
     // If string contains emoji only, count the number of emojis up to 5.
     private static int countEmoji(CharSequence text, int maxCount) {
         if (TextUtils.isEmpty(text)) {
@@ -882,7 +879,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
         }
         return count;
->>>>>>> devel
     }
 
     @Override
