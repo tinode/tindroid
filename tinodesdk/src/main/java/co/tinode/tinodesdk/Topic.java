@@ -161,6 +161,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 return TopicType.ME;
             } else if (name.equals(Tinode.TOPIC_SYS)) {
                 return TopicType.SYS;
+            } else if (name.equals(Tinode.TOPIC_SLF)) {
+                return TopicType.SLF;
             } else if (name.equals(Tinode.TOPIC_FND)) {
                 return TopicType.FND;
             } else if (name.startsWith(Tinode.TOPIC_GRP_PREFIX) || name.startsWith(Tinode.TOPIC_NEW) ||
@@ -189,6 +191,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public static boolean isGrpType(final String name) {
         return getTopicTypeByName(name) == TopicType.GRP;
+    }
+
+    /**
+     * Check if the topic is a Slf (self) topic.
+     * @param name name of the topic to check.
+     * @return true if the topic is a Slf topic, false otherwise.
+     */
+    public static boolean isSlfType(String name) {
+        return getTopicTypeByName(name) == TopicType.SLF;
     }
 
     /**
@@ -1932,12 +1943,22 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
-     * Check if topic is a communication topic, i.e. a 'p2p' or 'grp' type.
+     * Check if topic is 'slf' type.
      *
-     * @return true if topic is 'p2p' or 'grp', false otherwise.
+     * @return true if topic is 'slf' type, false otherwise.
+     */
+    public boolean isSlfType() {
+        return getTopicType() == TopicType.SLF;
+    }
+
+    /**
+     * Check if topic is a communication topic, i.e. a 'slf', 'p2p' or 'grp' type.
+     *
+     * @return true if topic is user-visible, like 'p2p' or 'grp', false otherwise.
      */
     public boolean isUserType() {
         switch (getTopicType()) {
+            case SLF:
             case P2P:
             case GRP:
                 return true;
@@ -2308,9 +2329,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     public enum TopicType {
-        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08), SYS(0x10),
-        USER(0x04 | 0x08), INTERNAL(0x01 | 0x02 | 0x10), UNKNOWN(0x00),
-        ANY(0x01 | 0x02 | 0x04 | 0x08);
+        ME(0x01), FND(0x02), GRP(0x04), P2P(0x08), SYS(0x10), SLF(0x20),
+        USER(0x04 | 0x08 | 0x20), INTERNAL(0x01 | 0x02 | 0x10), UNKNOWN(0x00),
+        ANY(0x01 | 0x02 | 0x04 | 0x08 | 0x10 | 0x20);
 
         private final int val;
 

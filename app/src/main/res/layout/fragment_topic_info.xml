@@ -62,6 +62,7 @@
             tools:text="Some private notes" />
 
         <LinearLayout
+            android:id="@+id/topicIdWrapper"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical">
@@ -188,6 +189,7 @@
             tools:ignore="SmallSp" />
 
         <LinearLayout
+            android:id="@+id/switchMutedWrapper"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"

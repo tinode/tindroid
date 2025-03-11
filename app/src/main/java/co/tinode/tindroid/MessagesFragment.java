@@ -276,7 +276,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         final MessageActivity activity = (MessageActivity) requireActivity();
 
-        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(),
+        activity.addMenuProvider(this, getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED);
 
         mGoToLatest = activity.findViewById(R.id.goToLatest);
@@ -949,8 +949,11 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 menu.clear();
                 activity.getMenuInflater().inflate(R.menu.menu_topic_deleted, menu);
             } else {
-                menu.findItem(R.id.action_unmute).setVisible(mTopic.isMuted());
-                menu.findItem(R.id.action_mute).setVisible(!mTopic.isMuted());
+                boolean isSelf = mTopic.isSlfType();
+                boolean isMuted = mTopic.isMuted();
+                // Self-topic is always muted.
+                menu.findItem(R.id.action_unmute).setVisible(!isSelf && isMuted);
+                menu.findItem(R.id.action_mute).setVisible(!isSelf && !isMuted);
 
                 menu.findItem(R.id.action_delete).setVisible(mTopic.isOwner());
                 menu.findItem(R.id.action_leave).setVisible(!mTopic.isOwner());

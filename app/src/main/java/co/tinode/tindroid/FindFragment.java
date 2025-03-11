@@ -116,7 +116,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
             return;
         }
 
-        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         RecyclerView rv = fragment.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));

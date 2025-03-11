@@ -22,6 +22,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Subscription;
 
 import coil.Coil;
@@ -115,12 +116,35 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         holder.bind(position, getItemAt(position));
     }
 
+    // Clear the avatar: there is some bug(?) in RecyclerView(?) which causes avatars to be
+    // displayed in the wrong places.
+    @Override
+    public void onViewRecycled(@NonNull ViewHolder holder) {
+        if (holder instanceof ViewHolderItem) {
+            ImageView avatar = ((ViewHolderItem) holder).avatar;
+            if (avatar != null) {
+                avatar.setImageDrawable(null);
+            }
+        }
+    }
+
     @Override
     public int getItemViewType(int position) {
+        if (TextUtils.isEmpty(mSearchTerm)) {
+            // Self topic is present.
+            if (position == 0) {
+                return R.layout.contact;
+            }
+
+            position--;
+        }
+
         if (position == 0) {
+            // Phone contacts section title.
             return R.layout.contact_section;
         }
 
+        // Subtract section title.
         position--;
 
         int count = getCursorItemCount();
@@ -153,6 +177,15 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
     @Override
     public long getItemId(int position) {
+        if (TextUtils.isEmpty(mSearchTerm)) {
+            // Self topic is present.
+            if (position == 0) {
+                return "slf".hashCode();
+            }
+
+            position--;
+        }
+
         if (position == 0) {
             return "section_one".hashCode();
         }
@@ -204,11 +237,21 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
     }
 
     private Object getItemAt(int position) {
-        if (position == 0) {
-            // Section title 'PHONE CONTACTS';
-            return null;
+        if (TextUtils.isEmpty(mSearchTerm)) {
+            // Self topic is present.
+            if (position == 0) {
+                return new FoundMember("slf", null, null);
+            }
+
+            position--;
         }
 
+        if (position == 0) {
+            // Section title 'PHONE CONTACTS';
+            return R.string.contacts_section_contacts;
+        }
+
+        // Subtract section title.
         position--;
 
         // Count the section title element.
@@ -230,7 +273,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
 
         if (position == 0) {
             // Section title DIRECTORY;
-            return null;
+            return R.string.contacts_section_directory;
         }
 
         // Skip the 'DIRECTORY' element;
@@ -250,6 +293,11 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         // At least 2 section titles.
         int itemCount = 2;
 
+        if (TextUtils.isEmpty(mSearchTerm)) {
+            // Self topic is present.
+            itemCount++;
+        }
+
         int count = getFoundItemCount();
         itemCount += count == 0 ? 1 : count;
         count = getCursorItemCount();
@@ -268,11 +316,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
 
         public void bind(int position, Object data) {
-            if (position == 0) {
-                ((TextView) itemView).setText(R.string.contacts_section_contacts);
-            } else {
-                ((TextView) itemView).setText(R.string.contacts_section_directory);
-            }
+            ((TextView) itemView).setText((int) data);
         }
     }
 
@@ -318,7 +362,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         public void bind(int position, final Object data) {
             if (data instanceof FoundMember) {
                 bind((FoundMember) data);
-            } else {
+            } else if (data instanceof Cursor) {
                 bind((Cursor) data);
             }
         }
@@ -377,9 +421,10 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                             .target(avatar)
                             .scale(Scale.FIT)
                             .build());
+
             } else {
                 avatar.setImageDrawable(
-                        UiUtils.avatarDrawable(itemView.getContext(), null, displayName, unique, false));
+                        UiUtils.avatarDrawable(context, null, displayName, unique, false));
             }
 
             itemView.setOnClickListener(view -> clickListener.onClick(unique));
@@ -391,6 +436,9 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             UiUtils.setAvatar(avatar, member.pub, userId, false);
             if (member.pub != null) {
                 name.setText(member.pub.fn);
+                name.setTypeface(null, Typeface.NORMAL);
+            } else if (Topic.isSlfType(userId)) {
+                name.setText(R.string.self_topic_title);
                 name.setTypeface(null, Typeface.NORMAL);
             } else {
                 name.setText(R.string.placeholder_contact_title);
@@ -406,6 +454,8 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
                             startIndex + mSearchTerm.length(), 0);
                 }
                 contactPriv.setText(highlightedName);
+            } else if (Topic.isSlfType(userId)) {
+                contactPriv.setText(R.string.self_topic_description);
             } else {
                 contactPriv.setText("");
             }

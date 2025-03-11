@@ -303,6 +303,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             if (pub != null && pub.fn != null) {
                 name.setText(pub.fn);
                 name.setTypeface(null, Typeface.NORMAL);
+            } else if (topic.isSlfType()) {
+                name.setText(R.string.self_topic_title);
+                name.setTypeface(null, Typeface.NORMAL);
             } else {
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
@@ -336,6 +339,9 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             if (topic.isChannel()) {
                 online.setVisibility(View.INVISIBLE);
                 channel.setVisibility(View.VISIBLE);
+            } else if (topic.isSlfType()) {
+                online.setVisibility(View.INVISIBLE);
+                channel.setVisibility(View.GONE);
             } else {
                 channel.setVisibility(View.GONE);
                 if (topic.isGrpType()) {
@@ -363,7 +369,11 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             staff.setVisibility(topic.isTrustedStaff() ? View.VISIBLE : View.GONE);
             danger.setVisibility(topic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
-            muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
+            if (topic.isSlfType()) {
+                muted.setVisibility(View.GONE);
+            } else {
+                muted.setVisibility(topic.isMuted() ? View.VISIBLE : View.GONE);
+            }
             archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);
             blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);
 

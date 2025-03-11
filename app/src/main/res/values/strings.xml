@@ -365,5 +365,7 @@
     <string name="pinned_messages">Pinned messages</string>
     <string name="calling_not_supported">Calling not supported</string>
     <string name="display_code">Show QR code</string>
+    <string name="self_topic_title">Saved messages</string>
+    <string name="self_topic_description">Notes, messages, links, files saved for posterity</string>
 
 </resources>

@@ -91,6 +91,7 @@ public class Tinode {
     public static final String TOPIC_ME = "me";
     public static final String TOPIC_FND = "fnd";
     public static final String TOPIC_SYS = "sys";
+    public static final String TOPIC_SLF = "slf";
 
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_CHN_PREFIX = "chn";
@@ -2208,11 +2209,11 @@ public class Tinode {
             // Sanity check: verify that we got "Json Object":
             if (parser.nextToken() != JsonToken.START_OBJECT) {
                 throw new JsonParseException(parser, "Packet must start with an object",
-                        parser.getCurrentLocation());
+                        parser.currentLocation());
             }
             // Iterate over object fields:
             while (parser.nextToken() != JsonToken.END_OBJECT) {
-                String name = parser.getCurrentName();
+                String name = parser.currentName();
                 parser.nextToken();
                 JsonNode node = mapper.readTree(parser);
                 try {

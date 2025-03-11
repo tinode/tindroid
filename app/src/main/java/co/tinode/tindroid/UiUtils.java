@@ -161,10 +161,12 @@ public class UiUtils {
         activity.runOnUiThread(() -> {
             if (!TextUtils.isEmpty(topicName)) {
                 Boolean showOnline = online;
-                final String title = pub != null && pub.fn != null ?
-                        pub.fn : activity.getString(R.string.placeholder_contact_title);
-                toolbar.setTitle(title);
-                if (ComTopic.isChannel(topicName)) {
+                String title = null;
+                if (Topic.isSlfType(topicName)) {
+                    showOnline = null;
+                    title = activity.getString(R.string.self_topic_title);
+                    toolbar.setSubtitle(null);
+                } else if (ComTopic.isChannel(topicName)) {
                     showOnline = null;
                     toolbar.setSubtitle(R.string.channel);
                 } else if (deleted) {
@@ -177,6 +179,11 @@ public class UiUtils {
                 } else {
                     toolbar.setSubtitle(null);
                 }
+                if (TextUtils.isEmpty(title)) {
+                    title = pub != null && pub.fn != null ?
+                            pub.fn : activity.getString(R.string.placeholder_contact_title);
+                }
+                toolbar.setTitle(title);
                 constructToolbarLogo(activity, pub, topicName, showOnline, deleted);
             } else {
                 toolbar.setTitle(R.string.app_name);
@@ -748,6 +755,7 @@ public class UiUtils {
                             .error(R.drawable.ic_broken_image_round)
                             .target(avatarView)
                             .build());
+
         } else {
             avatarView.setImageDrawable(local);
         }
@@ -777,9 +785,9 @@ public class UiUtils {
         } else {
             LetterTileDrawable drawable = new LetterTileDrawable(context);
             drawable.setContactTypeAndColor(
-                    Topic.isP2PType(address) ?
-                            LetterTileDrawable.ContactType.PERSON :
-                            LetterTileDrawable.ContactType.GROUP, disabled)
+                    Topic.isP2PType(address) ? LetterTileDrawable.ContactType.PERSON :
+                            Topic.isSlfType(address) ? LetterTileDrawable.ContactType.SELF :
+                                    LetterTileDrawable.ContactType.GROUP, disabled)
                     .setLetterAndColor(name, address, disabled)
                     .setIsCircular(true);
             return drawable;
@@ -860,6 +868,7 @@ public class UiUtils {
             bitmap = new LetterTileDrawable(context)
                     .setContactTypeAndColor(tp == Topic.TopicType.GRP ?
                             LetterTileDrawable.ContactType.GROUP :
+                            tp == Topic.TopicType.SLF ? LetterTileDrawable.ContactType.SELF :
                             LetterTileDrawable.ContactType.PERSON, false)
                     .setLetterAndColor(fullName, id, false)
                     .getSquareBitmap(size);

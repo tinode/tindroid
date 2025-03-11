@@ -157,20 +157,11 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
     }
 
     /**
-     * Checks if the topic is archived. Not all topics support archiving.
-     * @return true if the topic is archived, false otherwise.
+     * Checks if the topic is a channel.
+     * @return true if the topic is a channel, false otherwise.
      */
     public boolean isChannel() {
         return mName != null && isChannel(mName);
-    }
-
-    /**
-     * Checks if given topic name is a name of a channel.
-     * @param name name to check.
-     * @return true if the name is a name of a channel, false otherwise.
-     */
-    public static boolean isChannel(String name) {
-        return name.startsWith(Tinode.TOPIC_CHN_PREFIX);
     }
 
     /**

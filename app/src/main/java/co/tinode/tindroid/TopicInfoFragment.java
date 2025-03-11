@@ -4,6 +4,7 @@ import android.Manifest;
 
 import android.annotation.SuppressLint;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -60,7 +61,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
- * Topic Info fragment: p2p or a group topic.
+ * Topic Info fragment: slf, p2p or a group topic.
  */
 public class TopicInfoFragment extends Fragment implements MenuProvider, MessageActivity.DataSetChangeListener {
 
@@ -191,7 +192,12 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             return;
         }
 
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
+        if (mTopic.isSlfType()) {
+            activity.findViewById(R.id.topicIdWrapper).setVisibility(View.GONE);
+        } else {
+            ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
+            activity.findViewById(R.id.topicIdWrapper).setVisibility(View.VISIBLE);
+        }
 
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
@@ -391,6 +397,12 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             } else {
                 descriptionWrapper.setVisibility(View.GONE);
             }
+        } else if (mTopic.isSlfType()) {
+            title.setText(R.string.self_topic_title);
+            title.setTypeface(null, Typeface.NORMAL);
+            title.setTextIsSelectable(false);
+            description.setText(R.string.self_topic_description);
+            descriptionWrapper.setVisibility(View.VISIBLE);
         } else {
             title.setText(R.string.placeholder_contact_title);
             title.setTypeface(null, Typeface.ITALIC);
@@ -431,7 +443,12 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             subtitle.setVisibility(View.GONE);
         }
 
-        ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+        if (mTopic.isSlfType()) {
+            activity.findViewById(R.id.switchMutedWrapper).setVisibility(View.GONE);
+        } else {
+            ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+            activity.findViewById(R.id.switchMutedWrapper).setVisibility(View.VISIBLE);
+        }
         ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
     }
 
@@ -455,6 +472,14 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void onPrepareMenu(@NonNull Menu menu) {
+        MenuProvider.super.onPrepareMenu(menu);
+        if (mTopic != null && mTopic.isSlfType()) {
+            menu.clear();
+        }
     }
 
     private static class MemberViewHolder extends RecyclerView.ViewHolder {

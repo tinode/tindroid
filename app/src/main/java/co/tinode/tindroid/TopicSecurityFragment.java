@@ -173,7 +173,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             }
             defaultPermissions.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
 
-        } else {
+        } else if (mTopic.isP2PType()) {
             // P2P topic
             activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
             activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.VISIBLE);
@@ -189,6 +189,16 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             reportChannel.setVisibility(View.GONE);
             reportContact.setVisibility(View.VISIBLE);
             blockContact.setVisibility(View.VISIBLE);
+        } else {
+            // Slf topic
+            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
+            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
+            defaultPermissions.setVisibility(View.GONE);
+            deleteGroup.setVisibility(View.GONE);
+            reportGroup.setVisibility(View.GONE);
+            reportChannel.setVisibility(View.GONE);
+            reportContact.setVisibility(View.GONE);
+            blockContact.setVisibility(View.GONE);
         }
 
         notifyContentChanged();

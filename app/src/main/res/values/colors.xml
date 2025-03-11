@@ -113,6 +113,6 @@
     </array>
     <color name="letter_tile_text_color_dark">#dedede</color>
     <color name="letter_tile_bg_color_dark">#777</color>
-
+    <color name="letter_tile_self_bg_color">#eee</color>
     <color name="launcherBackground">#ffffff</color>
 </resources>

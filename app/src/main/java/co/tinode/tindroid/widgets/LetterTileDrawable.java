@@ -37,11 +37,13 @@ public class LetterTileDrawable extends Drawable {
     private static TypedArray sColorsDark;
     private static int sDefaultColorLight;
     private static int sDefaultColorDark;
+    private static int sSelfBackgroundColor;
     private static int sTileFontColorLight;
     private static int sTileFontColorDark;
     private static float sLetterToTileRatio;
     private static Bitmap DEFAULT_PERSON_AVATAR;
     private static Bitmap DEFAULT_GROUP_AVATAR;
+    private static Bitmap DEFAULT_SELF_AVATAR;
     private final Paint mPaint;
     private ContactType mContactType = TYPE_DEFAULT;
     private float mScale = 0.7f;
@@ -58,11 +60,13 @@ public class LetterTileDrawable extends Drawable {
             sColorsDark = res.obtainTypedArray(R.array.letter_tile_colors_dark);
             sDefaultColorLight = res.getColor(R.color.letter_tile_bg_color_light, null);
             sDefaultColorDark = res.getColor(R.color.letter_tile_bg_color_dark, null);
+            sSelfBackgroundColor = res.getColor(R.color.letter_tile_self_bg_color, null);
             sTileFontColorLight = res.getColor(R.color.letter_tile_text_color_light, null);
             sTileFontColorDark = res.getColor(R.color.letter_tile_text_color_dark, null);
             sLetterToTileRatio = 0.75f;
             DEFAULT_PERSON_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_person_white);
             DEFAULT_GROUP_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_group_white);
+            DEFAULT_SELF_AVATAR = getBitmapFromVectorDrawable(context, R.drawable.ic_bookmark_ol);
             sPaint.setTextAlign(Align.CENTER);
             sPaint.setAntiAlias(true);
         }
@@ -96,11 +100,13 @@ public class LetterTileDrawable extends Drawable {
 
     private static Bitmap getBitmapForContactType(ContactType contactType) {
         switch (contactType) {
+            case SELF:
+                return DEFAULT_SELF_AVATAR;
+            case GROUP:
+                return DEFAULT_GROUP_AVATAR;
             case PERSON:
             default:
                 return DEFAULT_PERSON_AVATAR;
-            case GROUP:
-                return DEFAULT_GROUP_AVATAR;
         }
     }
 
@@ -291,6 +297,10 @@ public class LetterTileDrawable extends Drawable {
      * Returns a deterministic color based on the provided contact identifier string.
      */
     private static int pickColor(ContactType ct, int hashCode) {
+        if (ct == ContactType.SELF) {
+            return sSelfBackgroundColor;
+        }
+
         int color = ct == ContactType.PERSON ? sDefaultColorDark : sDefaultColorLight;
         if (hashCode == 0) {
             return color;
@@ -304,6 +314,6 @@ public class LetterTileDrawable extends Drawable {
      * Contact type constants
      */
     public enum ContactType {
-        PERSON, GROUP
+        PERSON, GROUP, SELF
     }
 }
