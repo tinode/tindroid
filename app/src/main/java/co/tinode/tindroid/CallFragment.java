@@ -372,11 +372,13 @@ public class CallFragment extends Fragment {
     }
 
     private void toggleSpeakerphone(FloatingActionButton b) {
-        AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) requireContext().getSystemService(Context.AUDIO_SERVICE);
         if (audioManager != null) {
             boolean enabled = audioManager.isSpeakerphoneOn();
             audioManager.setSpeakerphoneOn(!enabled);
             b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+        } else {
+            Log.w(TAG, "Failed to get AudioManager");
         }
     }
 
