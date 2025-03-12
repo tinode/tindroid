@@ -46,7 +46,6 @@ public class CallInProgress {
         }
     }
 
-
     public void setCallConnected() {
         mConnected = true;
         if (mConnection != null && mConnection.getState() == Connection.STATE_INITIALIZING) {
@@ -62,6 +61,12 @@ public class CallInProgress {
             }
             mConnection.destroy();
             mConnection = null;
+        }
+    }
+
+    public void setAudioRoute(int route) {
+        if (mConnection != null) {
+            mConnection.setAudioRoute(route);
         }
     }
 

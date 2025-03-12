@@ -190,6 +190,12 @@ public class Cache {
         }
     }
 
+    public static void setCallAudioRoute(int route) {
+        if (sInstance.mCallInProgress != null) {
+            sInstance.mCallInProgress.setAudioRoute(route);
+        }
+    }
+
     public static String getSelectedTopicName() {
         return sInstance.mTopicSelected;
     }
