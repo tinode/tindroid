@@ -63,7 +63,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.ContentInfoCompat;
-import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.core.view.OnReceiveContentListener;
 import androidx.core.view.ViewCompat;
@@ -109,7 +108,6 @@ import co.tinode.tinodesdk.model.Subscription;
  */
 public class MessagesFragment extends Fragment implements MenuProvider {
     private static final String TAG = "MessageFragment";
-    private static final int MESSAGES_TO_LOAD = 24;
 
     private static final String[] SUPPORTED_MIME_TYPES = new String[]{"image/*"};
 
@@ -542,10 +540,15 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     @SuppressLint("NotifyDataSetChanged")
     void pinnedStateChanged(int seq) {
-        Activity activity = requireActivity();
+        final MessageActivity activity = (MessageActivity) requireActivity();
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
+
+        if (mPinnedAdapter == null) {
+            setupPinnedMessages(activity.findViewById(android.R.id.content), activity);
+        }
+
         mMessagesAdapter.updateSelectedOnPinnedChange(seq);
         int count = mTopic.pinnedCount();
         if (mSelectedPin >= count) {
