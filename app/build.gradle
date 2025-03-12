@@ -23,8 +23,8 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 26
-        targetSdkVersion 34
-        compileSdk 34
+        targetSdkVersion 35
+        compileSdk 35
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being setup comment out lines gitVersion*()
