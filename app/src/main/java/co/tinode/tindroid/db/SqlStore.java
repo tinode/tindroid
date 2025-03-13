@@ -527,13 +527,11 @@ public class SqlStore implements Storage {
         }
         T msg = null;
         Cursor c = MessageDb.getMessageBySeq(mDbh.getReadableDatabase(), st.id, seq);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                //noinspection unchecked
-                msg = (T) StoredMessage.readMessage(c, -1);
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            //noinspection unchecked
+            msg = (T) StoredMessage.readMessage(c, -1);
         }
+        c.close();
         return msg;
     }
 

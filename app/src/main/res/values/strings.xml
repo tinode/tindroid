@@ -367,5 +367,7 @@
     <string name="display_code">Show QR code</string>
     <string name="self_topic_title">Saved messages</string>
     <string name="self_topic_description">Notes, messages, links, files saved for posterity</string>
+    <string name="message_deleted">message deleted</string>
+    <string name="message_not_found">not found</string>
 
 </resources>

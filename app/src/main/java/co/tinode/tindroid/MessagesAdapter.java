@@ -409,13 +409,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         if (pos < 0) {
             return;
         }
-        mActivity.runOnUiThread(() -> {
-            notifyItemChanged(pos);
-            if (mSelectedItems != null) {
-                toggleSelectionAt(pos);
-                updateSelectionMode();
-            }
-        });
+
+        notifyItemChanged(pos);
+        if (mSelectedItems != null) {
+            toggleSelectionAt(pos);
+            updateSelectionMode();
+        }
     }
 
     private String messageFrom(StoredMessage msg) {

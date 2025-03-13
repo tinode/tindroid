@@ -9,6 +9,7 @@ import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -135,6 +136,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     private int mSelectedPin = -1;
     private PinnedAdapter mPinnedAdapter = null;
+    private ViewPager2 mPinnedViewPager = null;
 
     private FloatingActionButton mGoToLatest;
 
@@ -366,6 +368,30 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         AppCompatImageButton doneEditing = view.findViewById(R.id.chatEditDoneButton);
         doneEditing.setOnClickListener(v -> sendText(activity));
 
+        // The [X] unpin button.
+        // activity.findViewById(android.R.id.content)
+        view.findViewById(R.id.unpinMessage).setOnClickListener(v -> {
+            // Click on the [ X ] button to unpin current message.
+            int[] pinned = mTopic.getPinned();
+            if (pinned != null) {
+                ((MessageActivity) requireActivity()).sendPinMessage(pinned[pinned.length - mSelectedPin - 1],
+                        false);
+            }
+        });
+        mPinnedViewPager = view.findViewById(R.id.previewPager);
+        mPinnedViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
+            @Override
+            public void onPageSelected(int position) {
+                super.onPageSelected(position);
+                mSelectedPin = position;
+                ImageView dots = activity.findViewById(R.id.dotSelector);
+                DotSelectorDrawable drawable = (DotSelectorDrawable) dots.getDrawable();
+                if (drawable != null) {
+                    drawable.setSelected(position);
+                }
+            }
+        });
+
         // Send image button
         view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity, true));
 
@@ -545,16 +571,15 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
-        if (mPinnedAdapter == null) {
-            setupPinnedMessages(activity.findViewById(android.R.id.content), activity);
-        }
-
-        mMessagesAdapter.updateSelectedOnPinnedChange(seq);
-        int count = mTopic.pinnedCount();
-        if (mSelectedPin >= count) {
-            mSelectedPin = 0;
-        }
         requireActivity().runOnUiThread(() -> {
+            setupPinnedMessages();
+
+            mMessagesAdapter.updateSelectedOnPinnedChange(seq);
+            int count = mTopic.pinnedCount();
+            if (mSelectedPin >= count) {
+                mSelectedPin = 0;
+            }
+
             if (count > 0) {
                 activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
                 ((ImageView) activity.findViewById(R.id.dotSelector))
@@ -787,37 +812,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     }
 
     // Form with pinned messages.
-    private void setupPinnedMessages(View view, MessageActivity activity) {
-        if (mPinnedAdapter != null) {
-            return;
-        }
-
-        // The [X] unpin button.
-        view.findViewById(R.id.unpinMessage).setOnClickListener(v -> {
-            // Click on the [ X ] button to unpin current message.
-            int[] pinned = mTopic.getPinned();
-            if (pinned != null) {
-                ((MessageActivity) requireActivity()).sendPinMessage(pinned[pinned.length - mSelectedPin - 1],
-                        false);
-            }
-        });
-
-        mPinnedAdapter = new PinnedAdapter(activity);
-        final ViewPager2 viewPager = view.findViewById(R.id.previewPager);
-        viewPager.setAdapter(mPinnedAdapter);
-
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                super.onPageSelected(position);
-                mSelectedPin = position;
-                ImageView dots = activity.findViewById(R.id.dotSelector);
-                DotSelectorDrawable drawable = (DotSelectorDrawable) dots.getDrawable();
-                if (drawable != null) {
-                    drawable.setSelected(position);
-                }
-            }
-        });
+    private void setupPinnedMessages() {
+        // The has to be recreated every time due to some weird ViewPager2 behavior.
+        mPinnedAdapter = new PinnedAdapter(this);
+        mPinnedViewPager.setAdapter(mPinnedAdapter);
     }
 
     private void updateFormValues() {
@@ -851,14 +849,13 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         if (pinned == null) {
             activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
         } else {
-            setupPinnedMessages(activity.findViewById(android.R.id.content), activity);
+            setupPinnedMessages();
 
-            activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
             ((ImageView) activity.findViewById(R.id.dotSelector))
                     .setImageDrawable(new DotSelectorDrawable(getResources(), pinned.length, 0));
-            AppCompatImageButton unpin = activity.findViewById(R.id.unpinMessage);
-            unpin.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
+            activity.findViewById(R.id.unpinMessage).setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
             activity.findViewById(R.id.staticPin).setVisibility(mTopic.isManager() ? View.GONE : View.VISIBLE);
+            activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
         }
 
         activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
@@ -1657,10 +1654,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     }
 
     public class PinnedAdapter extends FragmentStateAdapter {
-        private final SparseArray<WeakReference<Fragment>> mFragments;
+        private final SparseArray<PinnedMessageFragment> mFragments;
 
-        public PinnedAdapter(@NonNull FragmentActivity activity) {
-            super(activity);
+        public PinnedAdapter(Fragment fragment) {
+            super(fragment);
             mFragments = new SparseArray<>();
         }
 
@@ -1668,7 +1665,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         @Override
         public Fragment createFragment(int position) {
             Bundle args = new Bundle();
-            Fragment frag = new PinnedMessageFragment(mMessagesAdapter);
+            PinnedMessageFragment frag = new PinnedMessageFragment(mMessagesAdapter);
             if (mTopic != null && mTopic.getPinned() != null) {
                 int[] pinned = mTopic.getPinned();
                 args.putString(PinnedMessageFragment.ARG_TOPIC_NAME, mTopicName);
@@ -1676,7 +1673,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 args.putInt(PinnedMessageFragment.ARG_CONTENT_ID, pinned[pinned.length - position - 1]);
             }
             frag.setArguments(args);
-            mFragments.put(position, new WeakReference<>(frag));
+            mFragments.put(position, frag);
             return frag;
         }
 
@@ -1703,13 +1700,17 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             }
 
             for(int i = 0, nsize = mFragments.size(); i < nsize; i++) {
-                WeakReference<Fragment> ref = mFragments.valueAt(i);
-                Fragment frag = ref.get();
-                if (frag != null && ((PinnedMessageFragment) frag).mSeq == seq) {
-                    ((PinnedMessageFragment) frag).reloadMessage();
+                PinnedMessageFragment frag =  mFragments.valueAt(i);
+                if (frag.mSeq == seq) {
+                    frag.reloadMessage();
                     return;
                 }
             }
+        }
+
+        public void reloadItemAt(int position) {
+            PinnedMessageFragment frag =  mFragments.valueAt(position);
+            frag.reloadMessage();
         }
     }
 
@@ -1738,7 +1739,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 mTopicName = args.getString(ARG_TOPIC_NAME);
                 mSeq = args.getInt(ARG_CONTENT_ID);
                 TextView view = (TextView) getView();
-                if (view != null && loadMessageContent(view)) {
+                if (view != null) {
+                    loadMessageContent(view);
                     MessagesAdapter adapter = mAdapterRef.get();
                     if (adapter != null) {
                         view.setOnClickListener(v -> adapter.scrollToAndAnimate(mSeq));
@@ -1756,15 +1758,24 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             }
         }
 
-        private boolean loadMessageContent(TextView view) {
+        private void loadMessageContent(TextView view) {
             Topic topic = Cache.getTinode().getTopic(mTopicName);
             Storage.Message msg = topic != null && mSeq > 0 ? topic.getMessage(mSeq) : null;
-            Drafty content = msg != null ? msg.getContent() : null;
-            if (content != null) {
-                view.setText(content.format(new SendReplyFormatter(view)));
-                return true;
+            if (msg != null) {
+                if (msg.isDeleted()) {
+                    view.setText(R.string.message_deleted);
+                    view.setTypeface(null, Typeface.ITALIC);
+                    return;
+                }
+                Drafty content = msg.getContent();
+                if (content != null) {
+                    view.setText(content.format(new SendReplyFormatter(view)));
+                    view.setTypeface(null, Typeface.NORMAL);
+                    return;
+                }
             }
-            return false;
+            view.setText(R.string.message_not_found);
+            view.setTypeface(null, Typeface.ITALIC);
         }
     }
 }

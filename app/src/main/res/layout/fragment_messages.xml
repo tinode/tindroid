@@ -10,7 +10,7 @@
 
     <include layout="@layout/fragment_pinned"
         android:id="@+id/pinned_messages"
-        android:visibility="visible" />
+        android:visibility="gone" />
 
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/swipe_refresher"
