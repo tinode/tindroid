@@ -344,4 +344,11 @@
     <string name="configure_connection">配置連接</string>
     <string name="calling_not_supported">不支援通話</string>
     <string name="display_code">顯示二維碼</string>
+    <string name="action_pin">固定</string>
+    <string name="action_unpin">取消固定</string>
+    <string name="pinned_messages">固定訊息</string>
+    <string name="self_topic_title">已儲存的訊息</string>
+    <string name="self_topic_description">為後代所儲存的註解、訊息、連結、檔案</string>
+    <string name="message_deleted">訊息已刪除</string>
+    <string name="message_not_found">找不到</string>
 </resources>

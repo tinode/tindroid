@@ -29,7 +29,6 @@
     <!-- mode-like access statuses -->
     <string name="modeInvited">invitat</string>
     <string name="modeRequested">cerut</string>
-    <string name="modeUndefined">nedefinit</string>
     <string name="modePending">în aşteptare</string>
 
     <!-- Menu actions -->
@@ -38,7 +37,6 @@
     <string name="action_mute">Amuţeşte conveersaţia</string>
     <string name="action_unmute">Dezmuţeşte conversatia</string>
     <string name="action_clear_messages">Şterge toate mesajele</string>
-    <string name="action_view_contact">Vezi contact</string>
     <string name="action_new_chat">Conversaţie nouă</string>
     <string name="action_about">Despre</string>
     <string name="action_search">Caută</string>
@@ -53,10 +51,8 @@
 
     <string name="avatar">Poză avatar</string>
     <string name="select_image">Selectează imagine</string>
-    <string name="select_file">Selectează fişier</string>
     <string name="image_is_unavailable">Imaginea nu este disponibilă</string>
     <string name="error_login_failed">Conectare eşuată: </string>
-    <string name="error_connection_failed">Conectare la server eşuată: </string>
     <string name="login_required">Conectare obligatorie</string>
     <string name="password_required">Parolă obligatorie</string>
     <string name="error_new_account_failed">Înregistrare cont nereuşită:</string>
@@ -78,7 +74,6 @@
     <string name="no_members">Nimeni în grup</string>
     <string name="add_one_member">Adauga cel puţin un membru în grup</string>
     <string name="add_members">Adaugă membrii</string>
-    <string name="leave_group">Părăseşte grupul</string>
     <string name="id">ID:</string>
     <string name="topic_muted">Amuţit</string>
     <string name="permissions">Permisii</string>
@@ -97,7 +92,6 @@
     <string name="auth_permissions">Authenticated users</string>
     <string name="anon_permissions">Anonymous users</string>
     <string name="topic_private">Informaţii adiţionale (Vizibin numai de către tine)</string>
-    <string name="edit_topic">Edit group</string>
     <string name="edit_permissions">Edit Permissions</string>
 
     <string name="permission_owner">Control total (proprietar)</string>
@@ -121,7 +115,6 @@
     <string name="confirm_delete_topic">Eşti sigur că vrei să ştergi această conversaţie pentru toţi?</string>
     <string name="confirm_delete_multiple_topics">Eşti sigur că vrei să ştergi aceste conversaţii?</string>
     <string name="modeWriteOnly">numai scriere</string>
-    <string name="owner_cannot_unsubscribe">Proprietarul nu se poate dezabona</string>
     <string name="read_receipts_enabled">Trimite răspuns la mesajele citite</string>
 	<string name="typing_notifications_enabled">Afișează notificările de tastare</string>
     <string name="logout">Deconectează-te</string>
@@ -129,12 +122,10 @@
     <string name="account_settings">Setări cont</string>
     <string name="enter_new_password">Introduce parola nouă</string>
     <string name="confirm_logout">Eşti sigur că vrei să te deconectezi?</string>
-    <string name="edit_account">Schimbă numele contului</string>
     <string name="invalid_login">Conexiunea este invalidă</string>
 
     <string name="download_attachment">salvează</string>
     <string name="broken_image">Formatul imaginii este necunoscut sau invalid</string>
-    <string name="file_manager_not_found">Gestionarul de fişiere nu a fost găsit</string>
     <string name="attachment_too_large">Mărimea fişierului este de %1$s şi depăşeşte lişita de %2$s.</string>
 
     <string name="failed_to_download">Descărcarea fişierului a eşuat</string>
@@ -142,7 +133,6 @@
     <string name="failed_to_open_file">Nici o aplicaţie nu poate deschide acest tip de fişier</string>
     <string name="failed_empty_password">Neschimbat: parolă goală</string>
     <string name="failed_credential_confirmation">Cod de confirmare incorect</string>
-    <string name="failed_to_create_topic">Crearea conversaţiei a eşuat</string>
 
     <string name="contacts_section_contacts">Agendă telefon</string>
     <string name="contacts_section_directory">Director contacte</string>
@@ -171,7 +161,6 @@
 	<string name="request">Cere</string>
     <string name="forgot_password">Parolă uitată</string>
     <string name="invalid_or_unknown_credential">Date necunoscute sau invalide</string>
-    <string name="password_reset_message_sent">Mesajul cu instrucţiuni a fost trimis</string>
     <string name="user_not_found">Utilizator negăsit</string>
     <string name="topic_tags">Taguri, listă separată cu virgulă</string>
     <string name="sender_unknown">Necunoscut</string>
@@ -198,7 +187,6 @@
     <string name="file_name_label">Nuşe fişier:</string>
     <string name="content_type_label">Tip conţinut:</string>
     <string name="image_size_label">Mărime:</string>
-    <string name="must_subscribe_first">Trebuie să te inscrii întăi</string>
     <string name="topic_blocked">Blocat</string>
     <string name="topic_archived">Arhivat</string>
     <string name="action_unarchive">Dezarhivat</string>
@@ -206,8 +194,6 @@
     <string name="tags_management">Taguri</string>
     <string name="contacts">Contacte</string>
     <string name="manage">Gestionează</string>
-    <string name="delete">Şterge</string>
-    <string name="add_credential_title">Adaugă contact</string>
     <string name="delete_credential_title">Şterge contact</string>
     <string name="delete_credential_confirmation">Eşti sigur că vrei să ştergi %1$s:%2$s?</string>
     <string name="leave_conversation">Părăseşte Conversaţia</string>
@@ -290,7 +276,6 @@
     <string name="hint_search_contacts">Caută contacte</string>
     <string name="report_channel">Semnalează canal</string>
     <string name="hint_contact_name">Nume contact</string>
-    <string name="cannot_reply">Nu poţi răspunde la acest mesaj</string>
 
     <string name="record_audio_button_hint"> Ţine apăsat pentru a înregistra un mesaj vocal</string>
     <string name="audio">Audio</string>
@@ -314,7 +299,6 @@
     <string name="toggle_microphone_button">Dezactivează/activează sunetul apelulu</string>
     <string name="finish_call_button">Termină apelul</string>
     <string name="video_calls_unavailable">Apel video indisponibil</string>
-    <string name="voice_calls_limited">Nu vei putea primi unele apeluri vocale primite.</string>
     <string name="copied_to_clipboard">Copiat în clipboard</string>
     <string name="image_preview">Previzualizare imagine</string>
     <string name="image_download_success">Imagine salvată in galerie</string>
@@ -335,7 +319,6 @@
     <string name="action_call">Sună</string>
     <string name="tinode_audio_call">Apel Tinode</string>
     <string name="unable_to_place_call">Nu se poate efectua acest apel</string>
-    <string name="unable_to_answer_call">Nu se poate răspunde la acest apel</string>
     <string name="phone_sms_explained">O să trişitem un SMS cu codul de confirmare la următorul număr.</string>
     <string name="phone_number_required">Numărul de telefon trebuie să fie valid</string>
     <string name="phone_number_hint">Numărul de telefon mobil</string>
@@ -362,4 +345,11 @@
     <string name="configure_connection">Configurare conexiune</string>
     <string name="calling_not_supported">Apelarea nu este acceptată</string>
     <string name="display_code">Afișați codul QR</string>
+    <string name="action_pin">Fixați</string>
+    <string name="action_unpin">Anulați fixarea</string>
+    <string name="pinned_messages">Mesaje fixate</string>
+    <string name="self_topic_title">Mesaje salvate</string>
+    <string name="self_topic_description">Note, mesaje, linkuri, fișiere salvate pentru posteritate</string>
+    <string name="message_deleted">mesaj șters</string>
+    <string name="message_not_found">nu a fost găsit</string>
 </resources>

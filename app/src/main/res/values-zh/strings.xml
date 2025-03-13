@@ -345,4 +345,11 @@
     <string name="configure_connection">配置连接</string>
     <string name="calling_not_supported">不支持通话</string>
     <string name="display_code">显示二维码</string>
+    <string name="action_pin">置顶</string>
+    <string name="action_unpin">取消置顶</string>
+    <string name="pinned_messages">置顶消息</string>
+    <string name="self_topic_title">已保存消息</string>
+    <string name="self_topic_description">为后人保存的注释、消息、链接、文件</string>
+    <string name="message_deleted">消息已删除</string>
+    <string name="message_not_found">未找到</string>
 </resources>

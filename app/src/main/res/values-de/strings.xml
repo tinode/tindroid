@@ -346,4 +346,11 @@
     <string name="configure_connection">Verbindung konfigurieren</string>
     <string name="calling_not_supported">Anruf wird nicht unterstützt</string>
     <string name="display_code">QR-Code anzeigen</string>
+    <string name="action_pin">Anheften</string>
+    <string name="action_unpin">Lösen</string>
+    <string name="pinned_messages">Angepinnte Nachrichten</string>
+    <string name="self_topic_title">Gespeicherte Nachrichten</string>
+    <string name="self_topic_description">Notizen, Nachrichten, Links, Dateien, die für die Nachwelt gespeichert sind</string>
+    <string name="message_deleted">Nachricht gelöscht</string>
+    <string name="message_not_found">nicht gefunden</string>
 </resources>

@@ -20,7 +20,6 @@
     <string name="settings_host_name_explained">Підключення до серверу \'%1$s\'</string>
 
     <string name="action_clear_messages">Очистити історію повідомлень</string>
-    <string name="action_view_contact">Переглянути</string>
     <string name="action_new_chat">Новий чат</string>
     <string name="action_about">Про додаток</string>
     <string name="action_search">Шукати</string>
@@ -33,14 +32,12 @@
     <string name="action_delete_group">Видалити чат…</string>
     <string name="avatar">Аватарка</string>
     <string name="select_image">Вибрати картинку</string>
-    <string name="select_file">Вибрати файл</string>
     <string name="image_is_unavailable">Зображення недоступне</string>
     <string name="error_login_failed">Помилка входу:</string>
     <string name="no_chats">Чатів немає\n\n¯\\_(ツ)_/¯</string>
     <string name="error_new_account_failed">Помилка реєстрації:</string>
     <string name="password_required">Введіть пароль</string>
     <string name="login_required">Введіть логін</string>
-    <string name="error_connection_failed">Немає зв\'язку:</string>
     <string name="invalid_confirmation_code">Код невірний</string>
     <string name="email_rejected">Емейл помилковий</string>
     <string name="login_rejected">Логин невірний</string>
@@ -92,14 +89,11 @@
     <string name="permission_join">Підписка</string>
     <string name="permission_delete">Видалення повідомлень</string>
     <string name="permission_approve">Адміністратор</string>
-    <string name="password_reset_message_sent">Повідомлення з інструкціями надіслано</string>
-    <string name="owner_cannot_unsubscribe">Власник не може покинути групу</string>
     <string name="options_menu">Налаштування</string>
     <string name="no_members">Учасників немає</string>
     <string name="no_connection">Немає зв\'язку з інтернетом</string>
     <string name="name_required">Введіть назву групи</string>
     <string name="modeWriteOnly">тільки запис</string>
-    <string name="modeUndefined">не визначено</string>
     <string name="modeRequested">запрошено</string>
     <string name="modeReadOnly">тільки читання</string>
     <string name="modePending">оброблюється</string>
@@ -109,7 +103,6 @@
     <string name="modeAdmin">адміністратор</string>
     <string name="make_owner">Зробити власником</string>
     <string name="logout">Вийти</string>
-    <string name="leave_group">Вийти з чату</string>
     <string name="invalid_login">Невірний логін</string>
     <string name="invalid_or_unknown_credential">Невірний або невідомий адрес</string>
     <string name="action_mute">Вимкнути сповіщення</string>
@@ -120,11 +113,9 @@
     <string name="confirm_delete_multiple_topics">Ви дійсно бажаєте видалити ці чати?</string>
     <string name="group_members">Учасники чату</string>
     <string name="forgot_password">Нагадування пароля</string>
-    <string name="failed_to_create_topic">Помилка створення чату</string>
     <string name="failed_to_download">Скачати файл не вдалося</string>
     <string name="failed_to_save_download">Помилка збереження файлу</string>
     <string name="failed_to_open_file">Невідомий тип файлу</string>
-    <string name="file_manager_not_found">Відсутня можливість перегляду файлів</string>
     <string name="confirm_logout">Ви дійсно бажаєте вийти з програми?</string>
     <string name="confirm_member_ban">Видалити %1$s із \"%2$s\" та заблокувати?</string>
     <string name="confirm_member_removal">Видалити %1$s із \"%2$s\"?</string>
@@ -133,9 +124,7 @@
     <string name="default_permissions">Права доступу по замовчуванню</string>
     <string name="download_attachment">зберегти</string>
     <string name="download_title">Tinode завантажити</string>
-    <string name="edit_account">Редагувати акаунт</string>
     <string name="edit_permissions">Редагувати права доступу</string>
-    <string name="edit_topic">Редагувати чат</string>
     <string name="email">Емейл</string>
     <string name="email_required">Потрібен емейл</string>
     <string name="full_name_required">Повне ім\'я обов\'язкове</string>
@@ -174,7 +163,6 @@
     <string name="file_name_label">Ім\'я файлу:</string>
     <string name="content_type_label">Тип:</string>
     <string name="image_size_label">Розмір:</string>
-    <string name="must_subscribe_first">Спочатку потрібно підписатися</string>
     <string name="topic_blocked">Заблоковано</string>
     <string name="topic_archived">В архіві</string>
     <string name="action_unarchive">Відновити</string>
@@ -182,8 +170,6 @@
     <string name="tags_management">Теги для пошуку</string>
     <string name="contacts">Контакти</string>
     <string name="manage">Редагувати</string>
-    <string name="delete">Видалити</string>
-    <string name="add_credential_title">Контакти</string>
     <string name="delete_credential_title">Видалити контакт</string>
     <string name="delete_credential_confirmation">Видалити контакт %1$s:%2$s?</string>
     <string name="leave_conversation">Видалити з чату</string>
@@ -264,7 +250,6 @@
     <string name="badge_staff">Адміністрація</string>
     <string name="badge_verified">Верифікований</string>
     <string name="badge_danger">Підозрільний</string>
-    <string name="cannot_reply">Неможливо відповісти на це повідомлення</string>
     <string name="record_audio_button_hint">Утримуйте для запису голосового повідомлення</string>
     <string name="audio">Аудіо</string>
     <string name="button_hint_start_audio">Почати запис аудіо</string>
@@ -287,7 +272,6 @@
     <string name="action_video_call">Відео дзвінок</string>
     <string name="outgoing_call">Вихідний дзвінок</string>
     <string name="incoming_call">Вхідний дзвінок</string>
-    <string name="voice_calls_limited">Ви не зможете приймати деякі вхідні дзвінки.</string>
     <string name="copied_to_clipboard">Скопійовано в буфер обміну</string>
     <string name="image_preview">Прев\'ю картинки</string>
     <string name="image_download_success">Зображення збережено у галереї</string>
@@ -312,7 +296,6 @@
     <string name="document_preview">Попередній перегляд документа</string>
     <string name="action_call">Зателефонувати</string>
     <string name="unable_to_place_call">Неможливо зробити цей дзвінок</string>
-    <string name="unable_to_answer_call">Неможливо відповісти на цей дзвінок</string>
     <string name="busy_call">зайнято</string>
 
     <string name="phone_sms_explained">Ми надішлемо SMS з кодом підтвердження на вказаний вище номер.</string>
@@ -341,4 +324,11 @@
     <string name="configure_connection">Налаштувати з\'єднання</string>
     <string name="calling_not_supported">Дзвінки не підтримуються</string>
     <string name="display_code">Показати QR-код</string>
+    <string name="action_pin">Закріпити</string>
+    <string name="action_unpin">Відкріпити</string>
+    <string name="pinned_messages">Закріплені повідомлення</string>
+    <string name="self_topic_title">Збережені повідомлення</string>
+    <string name="self_topic_description">Нотатки, повідомлення, посилання, файли, збережені для нащадків</string>
+    <string name="message_deleted">повідомлення видалено</string>
+    <string name="message_not_found">не знайдено</string>
 </resources>

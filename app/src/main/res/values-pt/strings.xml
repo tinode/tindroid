@@ -345,4 +345,11 @@
     <string name="configure_connection">Configurar conexão</string>
     <string name="calling_not_supported">Chamada não suportada</string>
     <string name="display_code">Mostrar código QR</string>
+    <string name="action_pin">Fixar</string>
+    <string name="action_unpin">Desfixar</string>
+    <string name="pinned_messages">Mensagens fixadas</string>
+    <string name="self_topic_title">Mensagens salvas</string>
+    <string name="self_topic_description">Notas, mensagens, links, arquivos salvos para a posteridade</string>
+    <string name="message_deleted">mensagem excluída</string>
+    <string name="message_not_found">não encontrado</string>
 </resources>

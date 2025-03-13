@@ -322,6 +322,13 @@
     <string name="hint_enter_code">Код конфигурации</string>
     <string name="code_required">Требуется код</string>
     <string name="configure_connection">Настроить подключение</string>
+    <string name="pinned_messages">Закрепленные сообщения</string>
     <string name="calling_not_supported">Звонки не поддерживаются</string>
     <string name="display_code">Показать QR-код</string>
+    <string name="action_pin">Закрепить</string>
+    <string name="action_unpin">Открепить</string>
+    <string name="self_topic_title">Сохраненные сообщения</string>
+    <string name="self_topic_description">Примечания, сообщения, ссылки, файлы, сохраненные для потомков</string>
+    <string name="message_deleted">сообщение удалено</string>
+    <string name="message_not_found">не найдено</string>
 </resources>

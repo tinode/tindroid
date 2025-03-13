@@ -343,4 +343,12 @@
     <string name="configure_connection">Configurar conexión</string>
     <string name="calling_not_supported">Llamadas no admitidas</string>
     <string name="display_code">Mostrar código QR</string>
+    <string name="action_pin">Fijar</string>
+    <string name="action_unpin">Desfijar</string>
+    <string name="pinned_messages">Mensajes fijados</string>
+    <string name="self_topic_title">Mensajes guardados</string>
+    <string name="self_topic_description">Notas, mensajes, enlaces y archivos guardados</string>
+    <string name="message_deleted">Mensaje eliminado</string>
+    <string name="message_not_found">No encontrado</string>
+
 </resources>

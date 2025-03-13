@@ -343,4 +343,11 @@
     <string name="configure_connection">연결 설정</string>
     <string name="calling_not_supported">통화가 지원되지 않음</string>
     <string name="display_code">QR 코드 표시</string>
+    <string name="action_pin">고정</string>
+    <string name="action_unpin">고정 해제</string>
+    <string name="pinned_messages">고정된 메시지</string>
+    <string name="self_topic_title">저장된 메시지</string>
+    <string name="self_topic_description">후세를 위해 저장된 메모, 메시지, 링크, 파일</string>
+    <string name="message_deleted">메시지 삭제됨</string>
+    <string name="message_not_found">찾을 수 없음</string>
 </resources>

@@ -344,4 +344,11 @@
     <string name="configure_connection">Configurer la connexion</string>
     <string name="calling_not_supported">Appel non pris en charge</string>
     <string name="display_code">Afficher le code QR</string>
+    <string name="action_pin">Épingler</string>
+    <string name="action_unpin">Désépingler</string>
+    <string name="pinned_messages">Messages épinglés</string>
+    <string name="self_topic_title">Messages enregistrés</string>
+    <string name="self_topic_description">Notes, messages, liens, fichiers enregistrés pour la postérité</string>
+    <string name="message_deleted">Message supprimé</string>
+    <string name="message_not_found">Introuvable</string>
 </resources>
