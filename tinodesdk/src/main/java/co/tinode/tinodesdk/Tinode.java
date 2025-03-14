@@ -96,13 +96,15 @@ public class Tinode {
     public static final String TOPIC_GRP_PREFIX = "grp";
     public static final String TOPIC_CHN_PREFIX = "chn";
     public static final String TOPIC_USR_PREFIX = "usr";
-    // Names of server-provided numeric limits.
+
+    // Names of server-provided numeric limits and parameters.
     public static final String MAX_MESSAGE_SIZE = "maxMessageSize";
     public static final String MAX_SUBSCRIBER_COUNT = "maxSubscriberCount";
     public static final String MAX_TAG_LENGTH = "maxTagLength";
     public static final String MIN_TAG_LENGTH = "minTagLength";
     public static final String MAX_TAG_COUNT = "maxTagCount";
     public static final String MAX_FILE_UPLOAD_SIZE = "maxFileUploadSize";
+    public static final String MSG_DELETE_AGE = "msgDelAge";
 
     private static final String[] SERVER_LIMITS = new String[]{
             MAX_MESSAGE_SIZE, MAX_SUBSCRIBER_COUNT, MAX_TAG_LENGTH, MIN_TAG_LENGTH,

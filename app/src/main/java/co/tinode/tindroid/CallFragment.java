@@ -3,8 +3,12 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
+import android.media.AudioFocusRequest;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -104,6 +108,11 @@ public class CallFragment extends Fragment {
     private List<PeerConnection.IceServer> mIceServers;
     private EglBase mRootEglBase;
 
+    private AudioManager mAudioManager;
+    private boolean mIsAudioFocused = false;
+    private AudioFocusRequest mAudioFocusRequest;
+    private AudioSettings mAudioSettings = null;
+
     private CallDirection mCallDirection;
     // If true, the client has received a remote SDP from the peer and has sent a local SDP to the peer.
     private boolean mCallInitialSetupComplete;
@@ -202,11 +211,19 @@ public class CallFragment extends Fragment {
         }
 
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
+        mAudioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
 
-        AudioManager audioManager = (AudioManager) activity.getSystemService(Context.AUDIO_SERVICE);
+        // Save original settings, restore them on exit.
+        // Saved original audio settings.
+        mAudioSettings = new AudioSettings();
+        mAudioSettings.audioMode = mAudioManager.getMode();
+        mAudioSettings.microphone = mAudioManager.isMicrophoneMute();
+        mAudioSettings.speakerphone = mAudioManager.isSpeakerphoneOn();
 
-        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
-        audioManager.setSpeakerphoneOn(!mAudioOnly);
+        requestAudioFocus();
+
+        mAudioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        setSpeakerphoneOn(!mAudioOnly);
         mToggleSpeakerphoneBtn.setImageResource(mAudioOnly ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
 
         if (!mTopic.isAttached()) {
@@ -252,15 +269,10 @@ public class CallFragment extends Fragment {
         Cache.getTinode().removeListener(mTinodeListener);
         mTopic.setListener(null);
 
-        Context ctx = getContext();
-        if (ctx != null) {
-            AudioManager audioManager = (AudioManager) ctx.getSystemService(Context.AUDIO_SERVICE);
-            if (audioManager != null) {
-                audioManager.setMode(AudioManager.MODE_NORMAL);
-                audioManager.setMicrophoneMute(false);
-                audioManager.setSpeakerphoneOn(false);
-            }
-        }
+        mAudioManager.setMode(mAudioSettings.audioMode);
+        mAudioManager.setMicrophoneMute(mAudioSettings.microphone);
+        setSpeakerphoneOn(mAudioSettings.speakerphone);
+        abandonAudioFocus();
 
         super.onDestroyView();
     }
@@ -354,10 +366,7 @@ public class CallFragment extends Fragment {
         mLocalAudioTrack.setEnabled(!disabled);
 
         // Need to disable microphone too, otherwise webrtc LocalPeer produces echo.
-        AudioManager audioManager = (AudioManager) b.getContext().getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager != null) {
-            audioManager.setMicrophoneMute(disabled);
-        }
+        mAudioManager.setMicrophoneMute(disabled);
 
         if (mLocalPeer == null) {
             return;
@@ -372,13 +381,97 @@ public class CallFragment extends Fragment {
     }
 
     private void toggleSpeakerphone(FloatingActionButton b) {
-        AudioManager audioManager = (AudioManager) requireContext().getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager != null) {
-            boolean enabled = audioManager.isSpeakerphoneOn();
-            audioManager.setSpeakerphoneOn(!enabled);
-            b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+        boolean enabled = mAudioManager.isSpeakerphoneOn();
+        setSpeakerphoneOn(!enabled);
+        b.setImageResource(enabled ? R.drawable.ic_volume_off : R.drawable.ic_volume_up);
+    }
+
+    private void setSpeakerphoneOn(final boolean enable) {
+        // Request audio focus to ensure the app can control audio output
+        requestAudioFocus();
+
+        // Set the appropriate audio mode based on whether the speakerphone is being enabled or disabled
+        mAudioManager.setMode(enable ? AudioManager.MODE_IN_COMMUNICATION : AudioManager.MODE_NORMAL);
+
+        // Check if the device is running Android 12 (API level 31) or higher
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) { // Android 12 and above
+            if (enable) {
+                // Retrieve a list of all available output audio devices
+                AudioDeviceInfo[] devices = mAudioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS);
+
+                // Iterate through the list to find the built-in speaker
+                for (AudioDeviceInfo device : devices) {
+                    if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                        // Set the communication device to the built-in speaker
+                        mAudioManager.setCommunicationDevice(device);
+                        break; // Exit the loop once the speaker is set
+                    }
+                }
+            } else {
+                // Clear the communication device to revert to the default audio routing.
+                mAudioManager.clearCommunicationDevice();
+            }
         } else {
-            Log.w(TAG, "Failed to get AudioManager");
+            // For Android versions below API level 31, use the traditional method to toggle the speakerphone
+            mAudioManager.setSpeakerphoneOn(enable);
+        }
+    }
+
+    private void requestAudioFocus() {
+        if (mIsAudioFocused) {
+            return;
+        }
+
+        if (mAudioFocusRequest == null) {
+            mAudioFocusRequest = new AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .build())
+                    .setAcceptsDelayedFocusGain(false)
+                    .setWillPauseWhenDucked(false)
+                    .build();
+        }
+
+        String status = null;
+        switch (mAudioManager.requestAudioFocus(mAudioFocusRequest)) {
+            case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
+                status = "AUDIOFOCUS_REQUEST_FAILED";
+                break;
+            case AudioManager.AUDIOFOCUS_REQUEST_GRANTED:
+                mIsAudioFocused = true;
+                break;
+            case AudioManager.AUDIOFOCUS_REQUEST_DELAYED:
+                status = "AUDIOFOCUS_REQUEST_DELAYED";
+                break;
+            default:
+                status = "AUDIOFOCUS_REQUEST_UNKNOWN";
+                break;
+        }
+        if (status != null) {
+            Log.w(TAG, "requestAudioFocus failed: " + status);
+        }
+    }
+
+    private void abandonAudioFocus() {
+        if (!mIsAudioFocused || mAudioFocusRequest == null) {
+            return;
+        }
+
+        String status = null;
+        switch (mAudioManager.abandonAudioFocusRequest(mAudioFocusRequest)) {
+            case AudioManager.AUDIOFOCUS_REQUEST_FAILED:
+                status = "AUDIOFOCUS_REQUEST_FAILED";
+                break;
+            case AudioManager.AUDIOFOCUS_REQUEST_GRANTED:
+                mIsAudioFocused = false;
+                break;
+            default:
+                status = "AUDIOFOCUS_REQUEST_UNKNOWN";
+                break;
+        }
+        if (status != null) {
+            Log.w(TAG, "abandonAudioFocus failed: " + status);
         }
     }
 
@@ -1093,5 +1186,11 @@ public class CallFragment extends Fragment {
             handleCallClose();
             return super.onFailure(err);
         }
+    }
+
+    private static class AudioSettings {
+        boolean speakerphone;
+        boolean microphone;
+        int audioMode;
     }
 }
