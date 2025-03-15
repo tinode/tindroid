@@ -2070,6 +2070,20 @@ public class Tinode {
     }
 
     /**
+     * Get topic by name ensuring it's of ComTopic type.
+     *
+     * @param name name of the topic to find.
+     * @return existing topic or null if no such topic was found or if it's not a ComTopic.
+     */
+    public ComTopic getComTopic(@Nullable String name) {
+        Topic t = getTopic(name);
+        if (!(t instanceof ComTopic)) {
+            return null;
+        }
+        return (ComTopic) t;
+    }
+
+    /**
      * Start tracking topic: add it to in-memory cache.
      */
     void startTrackingTopic(final @NotNull Topic topic) {

@@ -3,6 +3,7 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -39,6 +40,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -57,6 +59,7 @@ import java.util.concurrent.ExecutionException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
@@ -200,14 +203,19 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                     }
                     return true;
                 } else if (id == R.id.action_delete) {
-                    sendDeleteMessages(selected);
+                    if (selected != null) {
+                        final Topic topic = Cache.getTinode().getTopic(mTopicName);
+                        if (topic != null) {
+                            showDeleteMessageConfirmationDialog(mActivity, selected, topic.isDeleter());
+                        }
+                    }
                     return true;
                 } else if (id == R.id.action_copy) {
                     copyMessageText(selected);
                     return true;
                 } else if (id == R.id.action_send_now) {
-                    // FIXME: implement resending now.
-                    Log.d(TAG, "Try re-sending selected item");
+                    // Just try to resend all messages, regardless of selection.
+                    mActivity.syncAllMessages(true);
                     return true;
                 } else if (id == R.id.action_reply) {
                     if (selected != null) {
@@ -282,6 +290,48 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         mRecyclerView = recyclerView;
     }
 
+    // Confirmation dialog "Do you really want to delete message(s)"
+    private void showDeleteMessageConfirmationDialog(final Activity activity, final int[] positions,
+                                                     boolean forAll) {
+        final AlertDialog.Builder confirmBuilder = new AlertDialog.Builder(activity);
+        boolean multiple = positions.length > 1;
+        confirmBuilder.setTitle(multiple ?
+                R.string.delete_message_title_plural :
+                R.string.delete_message_title_single);
+        confirmBuilder.setNegativeButton(android.R.string.cancel, null);
+
+        if (forAll && !Topic.isSlfType(mTopicName)) {
+            // Set the custom layout with the checkbox.
+            LayoutInflater inflater = activity.getLayoutInflater();
+            View layout = inflater.inflate(R.layout.dialog_confirm_delete, null);
+            ((TextView) layout.findViewById(R.id.confirmDelete)).setText(multiple ?
+                    R.string.confirm_delete_message_plural :
+                    R.string.confirm_delete_message_single);
+                CheckBox forAllCheckbox = layout.findViewById(R.id.deleteForAll);
+                if (Topic.isP2PType(mTopicName)) {
+                    final ComTopic topic = Cache.getTinode().getComTopic(mTopicName);
+                    VxCard card = topic != null ? (VxCard) topic.getPub() : null;
+                    String peer = card != null ? card.fn : mTopicName;
+                    forAllCheckbox.setText(activity.getString(R.string.delete_for_peer, peer));
+                } else {
+                    forAllCheckbox.setText(R.string.delete_for_everybody);
+                }
+
+            confirmBuilder.setView(layout);
+        } else {
+            confirmBuilder.setMessage(multiple ?
+                    R.string.confirm_delete_message_plural :
+                    R.string.confirm_delete_message_single);
+        }
+
+        confirmBuilder.setPositiveButton(android.R.string.ok, (dialog, which) -> {
+                    CheckBox forAllCheckbox = ((AlertDialog) dialog).findViewById(R.id.deleteForAll);
+                    boolean hard = forAllCheckbox != null && forAllCheckbox.isChecked();
+                    sendDeleteMessages(positions, hard);
+                });
+        confirmBuilder.show();
+    }
+
     private int[] getSelectedArray() {
         if (mSelectedItems == null || mSelectedItems.size() == 0) {
             return null;
@@ -341,7 +391,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     }
 
     @SuppressWarnings("unchecked")
-    private void sendDeleteMessages(final int[] positions) {
+    private void sendDeleteMessages(final int[] positions, final boolean hard) {
         if (positions == null || positions.length == 0) {
             return;
         }
@@ -380,7 +430,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             if (!toDelete.isEmpty()) {
-                topic.delMessages(toDelete, true)
+                topic.delMessages(toDelete, hard)
                         .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
@@ -1364,7 +1414,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return true;
         }
 
-        // Button click.
+        // Button click in Drafty form.
         private boolean clickButton(Map<String, Object> data) {
             if (data == null) {
                 return false;

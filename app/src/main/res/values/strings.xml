@@ -8,7 +8,7 @@
     <string name="privacy_policy_uri" translatable="false">https://tinode.co/privacy.html</string>
     <string name="app_name" translatable="false">Tinode</string>
     <string name="app_name_full" translatable="false">Tinode Chat</string>
-    <string name="copyright" translatable="false">© 2014 – 2023 Tinode</string>
+    <string name="copyright" translatable="false">© 2014 – 2025 Tinode</string>
     <string name="tinode" translatable="false">Tinode</string>
 
     <string name="app_version">Version</string>
@@ -369,4 +369,10 @@
     <string name="self_topic_description">Notes, messages, links, files saved for posterity</string>
     <string name="message_deleted">message deleted</string>
     <string name="message_not_found">not found</string>
+    <string name="delete_message_title_single">Delete message</string>
+    <string name="delete_message_title_plural">Delete messages</string>
+    <string name="delete_for_peer">Also delete for %1$s</string>
+    <string name="delete_for_everybody">Delete for everybody</string>
+    <string name="confirm_delete_message_single">Are you sure you want to delete the message?</string>
+    <string name="confirm_delete_message_plural">Are you sure you want to delete these messages?</string>
 </resources>
