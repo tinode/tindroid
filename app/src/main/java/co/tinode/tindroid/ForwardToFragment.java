@@ -160,7 +160,6 @@ public class ForwardToFragment extends BottomSheetDialogFragment implements Mess
         }
 
         String query = mSearchTerm != null ? mSearchTerm.trim() : null;
-        //noinspection ConstantConditions
         if (TextUtils.isEmpty(query) || query.length() < MIN_TERM_LENGTH) {
             return true;
         }

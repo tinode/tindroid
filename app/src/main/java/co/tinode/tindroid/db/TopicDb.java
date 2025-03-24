@@ -480,12 +480,10 @@ public class TopicDb implements BaseColumns {
                 COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() + " AND " +
                 COLUMN_NAME_TOPIC + "='" + name + "'";
         Cursor c = db.rawQuery(sql, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                topic = readOne(tinode, c);
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            topic = readOne(tinode, c);
         }
+        c.close();
         return topic;
     }
 

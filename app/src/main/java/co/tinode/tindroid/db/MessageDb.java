@@ -492,12 +492,10 @@ public class MessageDb implements BaseColumns {
                 " AND m1." + COLUMN_NAME_TOPIC_ID + "=" + topicId;
 
         Cursor c = db.rawQuery(sqlHigh, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                high = c.getInt(0);
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            high = c.getInt(0);
         }
+        c.close();
 
         if (high <= 0) {
             // No gap is found.
@@ -510,12 +508,10 @@ public class MessageDb implements BaseColumns {
                 " AND " + COLUMN_NAME_TOPIC_ID + "=" + topicId;
         int low = 1;
         c = db.rawQuery(sqlLow, null);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                low = c.getInt(0) + 1; // Low is inclusive thus +1.
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            low = c.getInt(0) + 1; // Low is inclusive thus +1.
         }
+        c.close();
 
         return new MsgRange(low, high);
     }
@@ -610,20 +606,18 @@ public class MessageDb implements BaseColumns {
                     "MIN(" + COLUMN_NAME_SEQ + "),MAX(" + COLUMN_NAME_HIGH + ")" +
                     " FROM " + TABLE_NAME +
                     " WHERE " + rangeConsumeSelector + rangeNarrow, null);
-            if (cursor != null) {
-                if (cursor.getCount() > 0 && cursor.moveToFirst()) {
-                    // Read the bounds and use them to expand the current range to overlap earlier ranges.
-                    if (!cursor.isNull(0)) {
-                        int min_low = cursor.getInt(0);
-                        fromId = Math.min(min_low, fromId);
-                    }
-                    if (!cursor.isNull(1)) {
-                        int max_high = cursor.getInt(1);
-                        toId = Math.max(max_high, toId);
-                    }
+            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                // Read the bounds and use them to expand the current range to overlap earlier ranges.
+                if (!cursor.isNull(0)) {
+                    int min_low = cursor.getInt(0);
+                    fromId = Math.min(min_low, fromId);
                 }
-                cursor.close();
+                if (!cursor.isNull(1)) {
+                    int max_high = cursor.getInt(1);
+                    toId = Math.max(max_high, toId);
+                }
             }
+            cursor.close();
 
             // 3. Consume partially overlapped ranges. They will be replaced with the new expanded range.
             String rangeWide = "";

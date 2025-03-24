@@ -121,17 +121,24 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                 return;
             }
 
+            // Get the fragment's root view.
+            View fragmentView = getView();
+            if (fragmentView == null || !isVisible()) {
+                Log.e(TAG, "Fragment view is null in setupCredentials");
+                return;
+            }
+
             String method = mCredMethods[0];
             if (method.equals("tel")) {
-                activity.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
-                activity.findViewById(R.id.will_send_email).setVisibility(View.GONE);
-                activity.findViewById(R.id.phone).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.will_send_sms).setVisibility(View.VISIBLE);
+                fragmentView.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
+                fragmentView.findViewById(R.id.will_send_email).setVisibility(View.GONE);
+                fragmentView.findViewById(R.id.phone).setVisibility(View.VISIBLE);
+                fragmentView.findViewById(R.id.will_send_sms).setVisibility(View.VISIBLE);
             } else if (method.equals("email")) {
-                activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.will_send_email).setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.phone).setVisibility(View.GONE);
-                activity.findViewById(R.id.will_send_sms).setVisibility(View.GONE);
+                fragmentView.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                fragmentView.findViewById(R.id.will_send_email).setVisibility(View.VISIBLE);
+                fragmentView.findViewById(R.id.phone).setVisibility(View.GONE);
+                fragmentView.findViewById(R.id.will_send_sms).setVisibility(View.GONE);
             } else {
                 // TODO: show generic text prompt for unknown method.
                 Log.i(TAG, "Show generic validation field for " + method);
