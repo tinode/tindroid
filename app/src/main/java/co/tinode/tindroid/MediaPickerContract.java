@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -45,6 +46,7 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
     }
 
     private Intent openImageIntent(Context context) {
+        Intent chooser;
         Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         try {
             mediaUri = createTempPhotoUri(context);
@@ -52,11 +54,6 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
         } catch (IllegalArgumentException | IOException ex) {
             Log.w(TAG, "Failed to create a temp file for taking a photo", ex);
         }
-
-        Intent gallery = new Intent(Intent.ACTION_GET_CONTENT);
-        gallery.addCategory(Intent.CATEGORY_OPENABLE);
-        gallery.setType("*/*");
-        gallery.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
 
         List<Intent> foundIntents = new ArrayList<>();
         PackageManager pm = context.getPackageManager();
@@ -69,16 +66,30 @@ public class MediaPickerContract extends ActivityResultContract<Object, Uri> {
             foundIntents.add(intent);
         }
 
-        // Find default gallery app.
-        found = pm.queryIntentActivities(gallery, PackageManager.MATCH_DEFAULT_ONLY);
-        for (ResolveInfo ri : found) {
-            Intent intent = new Intent(gallery);
-            intent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
-            foundIntents.add(intent);
+        Intent gallery;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            gallery = new Intent(MediaStore.ACTION_PICK_IMAGES);
+            gallery.putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 1);
+        } else {
+            gallery = new Intent(Intent.ACTION_GET_CONTENT);
+            gallery.setType("*/*");
+
+            // Find default gallery app.
+            found = pm.queryIntentActivities(gallery, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo ri : found) {
+                Intent intent = new Intent(gallery);
+                intent.setComponent(new ComponentName(ri.activityInfo.packageName, ri.activityInfo.name));
+                foundIntents.add(intent);
+            }
         }
 
-        Intent chooser = Intent.createChooser(gallery, context.getString(R.string.select_image_or_video));
-        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, foundIntents.toArray(new Intent[]{}));
+        gallery.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/*", "video/*"});
+        gallery.addCategory(Intent.CATEGORY_OPENABLE);
+        chooser = Intent.createChooser(gallery, context.getString(R.string.select_image_or_video));
+        if (!foundIntents.isEmpty()) {
+            chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS,
+                    foundIntents.toArray(new Intent[]{}));
+        }
 
         return chooser;
     }

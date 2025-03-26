@@ -19,6 +19,7 @@ import android.content.pm.PackageManager;
 import android.database.ContentObserver;
 import android.graphics.Color;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -96,6 +97,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
 
     private static String sAppVersion = null;
     private static int sAppBuild = 0;
+
+    private AudioControl mAudioControl = null;
 
     public TindroidApp() {
         sContext = this;
@@ -272,6 +275,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 .build();
         Coil.setImageLoader(loader);
 
+        mAudioControl = new AudioControl(this);
+
         // Listen to connectivity changes.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         if (cm == null) {
@@ -368,6 +373,29 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         }
 
         return sVideoCache;
+    }
+
+    public static AudioManager getAudioManager() {
+        return sContext.mAudioControl.getAudioManager();
+    }
+    public static void setAudioMode(int mode) {
+        sContext.mAudioControl.setMode(mode);
+    }
+
+    public static void setMicrophoneMute(boolean mute) {
+        sContext.mAudioControl.setMicrophoneMute(mute);
+    }
+
+    public static boolean setSpeakerphoneOn(boolean enable) {
+        return sContext.mAudioControl.setSpeakerphoneOn(enable);
+    }
+
+    public static void abandonAudioFocus() {
+        sContext.mAudioControl.abandonAudioFocus();
+    }
+
+    public static boolean isSpeakerphoneOn() {
+        return sContext.mAudioControl.isSpeakerphoneOn();
     }
 
     // Read saved account credentials and try to connect to server using them.

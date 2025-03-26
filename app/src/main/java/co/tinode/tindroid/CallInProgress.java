@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.DisconnectCause;
 
@@ -53,6 +54,7 @@ public class CallInProgress {
     }
 
     public synchronized void endCall() {
+        mConnected = false;
         if (mConnection != null) {
             if (mConnection.getState() != Connection.STATE_DISCONNECTED) {
                 mConnection.setDisconnected(new DisconnectCause(DisconnectCause.LOCAL));
@@ -62,16 +64,30 @@ public class CallInProgress {
         }
     }
 
-    public void setAudioRoute(int route) {
+    public boolean isConnectionUseful() {
+        return mConnection != null && mConnection.getState() != Connection.STATE_DISCONNECTED;
+    }
+
+    public boolean setAudioRoute(int route) {
         if (mConnection != null) {
             mConnection.setAudioRoute(route);
+            return true;
         }
+        return false;
+    }
+
+    public int getAudioRoute() {
+        CallAudioState state = mConnection != null ? mConnection.getCallAudioState() : null;
+        return state != null ? state.getRoute() : CallAudioState.ROUTE_EARPIECE;
     }
 
     public boolean equals(String topic, int seq) {
         return mTopic.equals(topic) && mSeq == seq;
     }
-    public boolean isConnected() { return mConnected; }
+
+    public boolean isConnected() {
+        return mConnected;
+    }
 
     @Override
     @NonNull

@@ -120,12 +120,18 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                 return;
             }
 
+            // Get the fragment's root view.
+            View fragmentView = getView();
+            if (fragmentView == null || !isVisible()) {
+                return;
+            }
+
             String method = mCredMethods[0];
-            View emailWrapper = activity.findViewById(R.id.emailWrapper);
+            View emailWrapper = fragmentView.findViewById(R.id.emailWrapper);
             if (emailWrapper != null) {
-                View willSendEmail = activity.findViewById(R.id.will_send_email);
-                View phone = activity.findViewById(R.id.phone);
-                View willSendSMS = activity.findViewById(R.id.will_send_sms);
+                View willSendEmail = fragmentView.findViewById(R.id.will_send_email);
+                View phone = fragmentView.findViewById(R.id.phone);
+                View willSendSMS = fragmentView.findViewById(R.id.will_send_sms);
 
                 if (method.equals("tel")) {
                     emailWrapper.setVisibility(View.GONE);

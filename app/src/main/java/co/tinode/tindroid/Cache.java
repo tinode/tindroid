@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.os.Build;
+import android.telecom.CallAudioState;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -189,10 +190,22 @@ public class Cache {
         }
     }
 
-    public static void setCallAudioRoute(int route) {
+    public static boolean setCallAudioRoute(int route) {
         if (sInstance.mCallInProgress != null) {
-            sInstance.mCallInProgress.setAudioRoute(route);
+            return sInstance.mCallInProgress.setAudioRoute(route);
         }
+        return false;
+    }
+
+    public static int getCallAudioRoute() {
+        if (sInstance.mCallInProgress != null) {
+            return sInstance.mCallInProgress.getAudioRoute();
+        }
+        return CallAudioState.ROUTE_EARPIECE;
+    }
+
+    public static boolean isCallUseful() {
+        return sInstance.mCallInProgress != null && sInstance.mCallInProgress.isConnectionUseful();
     }
 
     public static String getSelectedTopicName() {

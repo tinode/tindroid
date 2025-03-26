@@ -203,7 +203,7 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
         // Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
-        if (c != null) {
+        if (c.getCount() > 0) {
             if (c.moveToFirst()) {
                 id = c.getLong(0);
             }
@@ -224,7 +224,8 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
 
         Cursor c = db.rawQuery(sql, null);
-        if (c != null) {
+        if (c.getCount() > 0) {
+            user = new User<>(uid);
             if (c.moveToFirst()) {
                 user = new User<>(uid);
                 StoredUser.deserialize(user, c);

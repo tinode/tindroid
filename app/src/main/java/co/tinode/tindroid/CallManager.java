@@ -202,7 +202,7 @@ public class CallManager {
         Bundle callParams = new Bundle();
         callParams.putParcelable(TelecomManager.EXTRA_INCOMING_CALL_ADDRESS, uri);
         callParams.putParcelable(TelecomManager.EXTRA_PHONE_ACCOUNT_HANDLE, shared.mPhoneAccountHandle);
-        callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, true);
+        callParams.putBoolean(TelecomManager.EXTRA_START_CALL_WITH_SPEAKERPHONE, !audioOnly);
         callParams.putInt(TelecomManager.EXTRA_INCOMING_VIDEO_STATE, audioOnly ?
                 VideoProfile.STATE_AUDIO_ONLY : VideoProfile.STATE_BIDIRECTIONAL);
 

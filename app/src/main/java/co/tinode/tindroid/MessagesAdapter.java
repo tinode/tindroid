@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteBlobTooBigException;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
@@ -983,12 +984,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             return -1;
         }
 
-        for (int i = first; i <= last; i++) {
-            if (mCursor.moveToPosition(i)) {
-                if (MessageDb.getLocalId(mCursor) == itemId) {
-                    return i;
+        try {
+            for (int i = first; i <= last; i++) {
+                if (mCursor.moveToPosition(i)) {
+                    if (MessageDb.getLocalId(mCursor) == itemId) {
+                        return i;
+                    }
                 }
             }
+        } catch (SQLiteBlobTooBigException ex) {
+            Log.w(TAG, "Failed to read message (misconfigured server):", ex);
         }
         return -1;
     }

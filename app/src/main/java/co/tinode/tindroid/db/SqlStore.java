@@ -2,6 +2,7 @@ package co.tinode.tindroid.db;
 
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteBlobTooBigException;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -504,13 +505,11 @@ public class SqlStore implements Storage {
     private <T extends Storage.Message> T messageById(long dbMessageId, int previewLength) {
         T msg = null;
         Cursor c = MessageDb.getMessageById(mDbh.getReadableDatabase(), dbMessageId);
-        if (c != null) {
-            if (c.moveToFirst()) {
-                //noinspection unchecked
-                msg = (T) StoredMessage.readMessage(c, previewLength);
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            //noinspection unchecked
+            msg = (T) StoredMessage.readMessage(c, previewLength);
         }
+        c.close();
         return msg;
     }
 
@@ -556,7 +555,7 @@ public class SqlStore implements Storage {
         StoredTopic st = (StoredTopic) topic.getLocal();
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
-            if (c != null && c.moveToFirst()) {
+            if (c.moveToFirst()) {
                 list = new MessageList(c, -1);
             }
         }
@@ -568,8 +567,12 @@ public class SqlStore implements Storage {
     public <R extends Iterator<Message> & Closeable> R getLatestMessagePreviews() {
         MessageList list = null;
         Cursor c = MessageDb.getLatestMessages(mDbh.getReadableDatabase());
-        if (c != null && c.moveToFirst()) {
-            list = new MessageList(c, MessageDb.MESSAGE_PREVIEW_LENGTH);
+        try {
+            if (c.moveToFirst()) {
+                list = new MessageList(c, MessageDb.MESSAGE_PREVIEW_LENGTH);
+            }
+        } catch (SQLiteBlobTooBigException ex) {
+            Log.w(TAG, "Failed to read message (misconfigured server):", ex);
         }
         return (R) list;
     }
@@ -580,16 +583,14 @@ public class SqlStore implements Storage {
         MsgRange[] range = null;
         if (st != null && st.id > 0) {
             Cursor c = MessageDb.queryDeleted(mDbh.getReadableDatabase(), st.id, hard);
-            if (c != null) {
-                if (c.moveToFirst()) {
-                    range = new MsgRange[c.getCount()];
-                    int i = 0;
-                    do {
-                        range[i++] = StoredMessage.readDelRange(c);
-                    } while (c.moveToNext());
-                }
-                c.close();
+            if (c.moveToFirst()) {
+                range = new MsgRange[c.getCount()];
+                int i = 0;
+                do {
+                    range[i++] = StoredMessage.readDelRange(c);
+                } while (c.moveToNext());
             }
+            c.close();
         }
         return range;
     }

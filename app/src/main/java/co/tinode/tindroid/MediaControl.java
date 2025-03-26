@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.app.Activity;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -22,7 +21,6 @@ public class MediaControl {
     private static final String TAG = "MediaControl";
 
     private final Context mContext;
-    private AudioManager mAudioManager = null;
     private MediaPlayer mAudioPlayer = null;
     private int mPlayingAudioSeq = -1;
     private FullFormatter.AudioControlCallback mAudioControlCallback = null;
@@ -58,11 +56,8 @@ public class MediaControl {
             mAudioPlayer = new MediaPlayer();
         }
 
-        if (mAudioManager == null) {
-            mAudioManager = (AudioManager) mContext.getSystemService(Activity.AUDIO_SERVICE);
-            mAudioManager.setMode(AudioManager.MODE_IN_CALL);
-            mAudioManager.setSpeakerphoneOn(true);
-        }
+        TindroidApp.setAudioMode(AudioManager.MODE_IN_COMMUNICATION);
+        TindroidApp.setSpeakerphoneOn(true);
 
         mAudioControlCallback = control;
         mAudioPlayer.setOnPreparedListener(mp -> {
@@ -169,6 +164,10 @@ public class MediaControl {
         if (mAudioControlCallback != null) {
             mAudioControlCallback.reset();
         }
+
+        TindroidApp.setAudioMode(AudioManager.MODE_NORMAL);
+        TindroidApp.setSpeakerphoneOn(false);
+        TindroidApp.abandonAudioFocus();
     }
 
     // Start playing at the current position.

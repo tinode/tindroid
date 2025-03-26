@@ -910,9 +910,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         final MessageActivity activity = (MessageActivity) requireActivity();
 
-        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_NORMAL);
-        audioManager.setSpeakerphoneOn(false);
+        TindroidApp.setAudioMode(AudioManager.MODE_NORMAL);
+        TindroidApp.setSpeakerphoneOn(false);
+        TindroidApp.abandonAudioFocus();
 
         Bundle args = getArguments();
         if (args != null) {
@@ -1062,11 +1062,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
-        final MessageActivity activity = (MessageActivity) requireActivity();
-
-        AudioManager audioManager = (AudioManager) activity.getSystemService(Activity.AUDIO_SERVICE);
-        audioManager.setMode(AudioManager.MODE_IN_CALL);
-        audioManager.setSpeakerphoneOn(true);
+        TindroidApp.setAudioMode(AudioManager.MODE_IN_COMMUNICATION);
+        TindroidApp.setSpeakerphoneOn(true);
 
         mAudioPlayer = new MediaPlayer();
         mAudioPlayer.setOnCompletionListener(mp -> {

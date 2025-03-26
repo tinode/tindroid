@@ -13,7 +13,6 @@ import android.util.Log;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -511,16 +510,14 @@ public class MessageDb implements BaseColumns {
 
         Cursor c = db.rawQuery(sql, null);
         List<MsgRange> found = new LinkedList<>();
-        if (c != null) {
-            if (c.moveToFirst()) {
-                do {
-                    MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
-                            new MsgRange(c.getInt(0), c.getInt(0));
-                    found.add(range);
-                } while (c.moveToNext());
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            do {
+                MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
+                        new MsgRange(c.getInt(0), c.getInt(0));
+                found.add(range);
+            } while (c.moveToNext());
         }
+        c.close();
         Collections.sort(found);
         return MsgRange.collapse(found.toArray(new MsgRange[]{}));
     }
@@ -552,16 +549,14 @@ public class MessageDb implements BaseColumns {
 
         Cursor c = db.rawQuery(sql, null);
         List<MsgRange> found = new LinkedList<>();
-        if (c != null) {
-            if (c.moveToFirst()) {
-                do {
-                    MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
-                            new MsgRange(c.getInt(0), c.getInt(0));
-                    found.add(range);
-                } while (c.moveToNext());
-            }
-            c.close();
+        if (c.moveToFirst()) {
+            do {
+                MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
+                        new MsgRange(c.getInt(0), c.getInt(0));
+                found.add(range);
+            } while (c.moveToNext());
         }
+        c.close();
         Collections.sort(found);
         MsgRange[] gaps = MsgRange.gaps(MsgRange.collapse(found.toArray(new MsgRange[0])));
         return gaps.length > 0 ? gaps : null;
@@ -657,20 +652,18 @@ public class MessageDb implements BaseColumns {
                     "MIN(" + COLUMN_NAME_SEQ + "),MAX(" + COLUMN_NAME_HIGH + ")" +
                     " FROM " + TABLE_NAME +
                     " WHERE " + rangeConsumeSelector + rangeNarrow, null);
-            if (cursor != null) {
-                if (cursor.getCount() > 0 && cursor.moveToFirst()) {
-                    // Read the bounds and use them to expand the current range to overlap earlier ranges.
-                    if (!cursor.isNull(0)) {
-                        int min_low = cursor.getInt(0);
-                        fromId = Math.min(min_low, fromId);
-                    }
-                    if (!cursor.isNull(1)) {
-                        int max_high = cursor.getInt(1);
-                        toId = Math.max(max_high, toId);
-                    }
+            if (cursor.getCount() > 0 && cursor.moveToFirst()) {
+                // Read the bounds and use them to expand the current range to overlap earlier ranges.
+                if (!cursor.isNull(0)) {
+                    int min_low = cursor.getInt(0);
+                    fromId = Math.min(min_low, fromId);
                 }
-                cursor.close();
+                if (!cursor.isNull(1)) {
+                    int max_high = cursor.getInt(1);
+                    toId = Math.max(max_high, toId);
+                }
             }
+            cursor.close();
 
             // 3. Consume partially overlapped ranges. They will be replaced with the new expanded range.
             String rangeWide = "";
