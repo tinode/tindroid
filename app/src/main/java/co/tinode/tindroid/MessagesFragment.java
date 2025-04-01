@@ -49,10 +49,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -80,6 +80,7 @@ import co.tinode.tindroid.db.StoredTopic;
 import co.tinode.tindroid.format.SendForwardedFormatter;
 import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.MovableActionButton;
 import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
@@ -162,23 +163,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     private final ActivityResultLauncher<String> mFileOpenerRequestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
-        // Check if permission is granted.
-        if (isGranted) {
-            openFileSelector(requireActivity(), false);
-        }
-    });
-
-    private final ActivityResultLauncher<String[]> mImagePickerRequestPermissionLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
+                if (isGranted) {
+                    openFileSelector(requireActivity(), false);
                 }
-
-                // Try to open the image selector again.
-                openMediaSelector(requireActivity(), false);
             });
 
     private final ActivityResultLauncher<String[]> mAudioRecorderPermissionLauncher =
@@ -226,33 +213,71 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 }
             });
 
-    private final ActivityResultLauncher<Object> mMediaPickerLauncher =
-            registerForActivityResult(new MediaPickerContract(), uri -> {
-                if (uri == null) {
+    private Uri mTempPhotoUri = null;
+    private final ActivityResultLauncher<Uri> mTakePhotoLauncher = registerForActivityResult(
+            new ActivityResultContracts.TakePicture(), success -> {
+                if (!success) {
                     return;
                 }
 
-                final MessageActivity activity = (MessageActivity) requireActivity();
-                if (activity.isFinishing() || activity.isDestroyed()) {
-                    return;
-                }
-
-                String mimeType = activity.getContentResolver().getType(uri);
-                boolean isVideo = mimeType != null && mimeType.startsWith("video");
-
-                final Bundle args = new Bundle();
-                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
-                args.putString(AttachmentHandler.ARG_FILE_NAME, uri.getLastPathSegment());
-                args.putString(AttachmentHandler.ARG_FILE_PATH, uri.getPath());
-                args.putString(AttachmentHandler.ARG_OPERATION,
-                        isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO :
-                                AttachmentHandler.ARG_OPERATION_IMAGE);
-                args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
-
-                // Show attachment preview.
-                activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
-                        MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+                handleMediaUri(mTempPhotoUri);
+                mTempPhotoUri = null;
             });
+
+    private Uri mTempVideoUri = null;
+    private final ActivityResultLauncher<Uri> mRecordVideoLauncher = registerForActivityResult(
+            new ActivityResultContracts.CaptureVideo(), success -> {
+                if (!success) {
+                    return;
+                }
+
+                handleMediaUri(mTempVideoUri);
+                mTempVideoUri = null;
+            });
+
+    private final ActivityResultLauncher<PickVisualMediaRequest> mGalleryLauncher = registerForActivityResult(
+            new ActivityResultContracts.PickVisualMedia(), this::handleMediaUri);
+
+    private final ActivityResultLauncher<String> mCameraRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    mTakePhotoLauncher.launch(mTempPhotoUri);
+                }
+            });
+
+    private final ActivityResultLauncher<String> mVideoRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    mRecordVideoLauncher.launch(mTempVideoUri);
+                }
+            });
+
+    private void handleMediaUri(Uri uri) {
+        if (uri == null) {
+            return;
+        }
+
+        final MessageActivity activity = (MessageActivity) requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        String mimeType = activity.getContentResolver().getType(uri);
+        boolean isVideo = mimeType != null && mimeType.startsWith("video");
+
+        final Bundle args = new Bundle();
+        args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
+        args.putString(AttachmentHandler.ARG_FILE_NAME, uri.getLastPathSegment());
+        args.putString(AttachmentHandler.ARG_FILE_PATH, uri.getPath());
+        args.putString(AttachmentHandler.ARG_OPERATION,
+                isVideo ? AttachmentHandler.ARG_OPERATION_VIDEO :
+                        AttachmentHandler.ARG_OPERATION_IMAGE);
+        args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
+
+        // Show attachment preview.
+        activity.showFragment(isVideo ? MessageActivity.FRAGMENT_VIEW_VIDEO :
+                MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -357,7 +382,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         doneEditing.setOnClickListener(v -> sendText(activity));
 
         // Send image button
-        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity, true));
+        view.findViewById(R.id.attachImage).setOnClickListener(v -> openMediaSelector(activity));
 
         // Send file button
         view.findViewById(R.id.attachFile).setOnClickListener(v -> openFileSelector(activity, true));
@@ -579,10 +604,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     mAudioSampler.put(x);
                     if (mVisibleSendPanel == R.id.recordAudioPanel) {
                         ((WaveDrawable) wave.getBackground()).put(x);
-                        timerView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                        timerView.setText(UtilsString.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
                     } else if (mVisibleSendPanel == R.id.recordAudioShortPanel) {
                         ((WaveDrawable) waveShort.getBackground()).put(x);
-                        timerShortView.setText(UiUtils.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
+                        timerShortView.setText(UtilsString.millisToTime((int) (SystemClock.uptimeMillis() - mRecordingStarted)));
                     }
                     mAudioSamplingHandler.postDelayed(this, AUDIO_SAMPLING);
                     ((MessageActivity) activity).sendRecordingProgress(true);
@@ -1179,28 +1204,24 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
     }
 
-    private void openMediaSelector(@NonNull final Activity activity, boolean checkPermissions) {
+    private void openMediaSelector(@NonNull final Activity activity) {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        if (checkPermissions) {
-            LinkedList<String> permissions = new LinkedList<>();
-            permissions.add(Manifest.permission.CAMERA);
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
-            } else {
-                permissions.add(Manifest.permission.READ_MEDIA_VIDEO);
-                permissions.add(Manifest.permission.READ_MEDIA_IMAGES);
-            }
-            LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions.toArray(new String[]{}));
-            if (!missing.isEmpty()) {
-                mImagePickerRequestPermissionLauncher.launch(missing.toArray(new String[]{}));
-                return;
-            }
+        try {
+            mTempPhotoUri = UtilsMedia.createTempPhotoUri(activity);
+            mTempVideoUri = UtilsMedia.createTempVideoUri(activity);
+            new AttachmentPickerDialog.Builder()
+                    .setGalleryLauncher(mGalleryLauncher)
+                    .setCameraLauncher(mTakePhotoLauncher, mCameraRequestPermissionLauncher, mTempPhotoUri)
+                    .setVideoLauncher(mRecordVideoLauncher, mVideoRequestPermissionLauncher, mTempVideoUri)
+                    .build()
+                    .show(getChildFragmentManager());
+        } catch (IOException ex) {
+            Log.w(TAG, "Failed to create temp file for photo", ex);
+            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
-
-        mMediaPickerLauncher.launch(null);
     }
 
     private boolean sendMessage(Drafty content, int seqId, boolean isReplacement) {

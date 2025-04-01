@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -15,9 +14,8 @@ import android.widget.TextView;
 
 import com.google.android.flexbox.FlexboxLayout;
 
-import java.util.Map;
-
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -25,12 +23,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
@@ -42,25 +40,18 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for editing current user details.
  */
 public class AccPersonalFragment extends Fragment
-        implements ChatsActivity.FormUpdatable, UiUtils.AvatarPreviewer, MenuProvider {
+        implements ChatsActivity.FormUpdatable, UtilsMedia.MediaPreviewer, MenuProvider {
 
-    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
-            UiUtils.avatarPickerLauncher(this, this);
+    private final ActivityResultLauncher<PickVisualMediaRequest> mRequestAvatarLauncher =
+            UtilsMedia.pickMediaLauncher(this, this);
 
-    private final ActivityResultLauncher<String[]> mRequestPermissionsLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String, Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
-                }
+    private final ActivityResultLauncher<Void> mThumbPhotoLauncher =
+            UtilsMedia.takePreviewPhotoLauncher(this, this);
 
-                FragmentActivity activity = requireActivity();
-                // Try to open the image selector again.
-                Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                if (launcher != null) {
-                    mAvatarPickerLauncher.launch(launcher);
+    private final ActivityResultLauncher<String> mRequestPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    mThumbPhotoLauncher.launch(null);
                 }
             });
 
@@ -85,7 +76,7 @@ public class AccPersonalFragment extends Fragment
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        ((MenuHost) requireActivity()).addMenuProvider(this,
+        requireActivity().addMenuProvider(this,
                 getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
@@ -100,12 +91,12 @@ public class AccPersonalFragment extends Fragment
 
         // Attach listeners to editable form fields.
 
-        activity.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestPermissionsLauncher);
-            if (launcher != null) {
-                mAvatarPickerLauncher.launch(launcher);
-            }
-        });
+        activity.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                new AttachmentPickerDialog.Builder()
+                        .setGalleryLauncher(mRequestAvatarLauncher)
+                        .setCameraPreviewLauncher(mThumbPhotoLauncher, mRequestPermissionsLauncher)
+                        .build()
+                        .show(getChildFragmentManager()));
 
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
@@ -303,7 +294,7 @@ public class AccPersonalFragment extends Fragment
         tagsEditor.setText(tags);
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
+                    String[] tags1 = UtilsString.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
                     me.setMeta(new MsgSetMeta.Builder().with(tags1).build())
                             .thenCatch(new UiUtils.ToastFailureListener(activity));
@@ -337,7 +328,7 @@ public class AccPersonalFragment extends Fragment
     }
 
     @Override
-    public void showAvatarPreview(final Bundle args) {
+    public void handleMedia(final Bundle args) {
         final Activity activity = requireActivity();
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;

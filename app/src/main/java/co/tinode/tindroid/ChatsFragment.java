@@ -19,7 +19,6 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.Toolbar;
-import androidx.core.view.MenuHost;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
@@ -89,7 +88,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             });
         }
 
-        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         RecyclerView rv = view.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
@@ -167,12 +166,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             mIsBanned = false;
         }
 
-        final Activity activity = getActivity();
-        if (activity == null) {
-            return;
-        }
-
-        mAdapter.resetContent(activity);
+        mAdapter.resetContent(requireActivity());
     }
 
     @Override
