@@ -24,6 +24,7 @@
             android:gravity="top|start"
             android:maxLines="4"
             android:scrollbars="vertical"
+            android:minHeight="@dimen/min_touch_height"
             tools:text="ttag1, ttag2, ttag3"/>
     </com.google.android.material.textfield.TextInputLayout>
 

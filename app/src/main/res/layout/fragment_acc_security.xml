@@ -95,13 +95,14 @@
             android:fontFamily="monospace"
             android:textIsSelectable="false"
             android:typeface="monospace"
+            android:minWidth="@dimen/min_touch_height"
             tools:text="RWPD"/>
 
     </LinearLayout>
 
     <androidx.legacy.widget.Space
         android:layout_width="match_parent"
-        android:layout_height="6dp"/>
+        android:layout_height="8dp"/>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -128,6 +129,7 @@
             android:fontFamily="monospace"
             android:textIsSelectable="false"
             android:typeface="monospace"
+            android:minWidth="@dimen/min_touch_height"
             tools:text="RWPD"/>
     </LinearLayout>
 

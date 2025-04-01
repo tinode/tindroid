@@ -21,12 +21,10 @@
             android:id="@+id/switchIncognitoMode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/min_touch_height"
+            android:minWidth="@dimen/min_touch_height"
             android:layout_margin="4dp" />
     </LinearLayout>
-
-    <androidx.legacy.widget.Space
-        android:layout_width="match_parent"
-        android:layout_height="8dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -44,12 +42,10 @@
             android:id="@+id/switchReadReceipts"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/min_touch_height"
+            android:minWidth="@dimen/min_touch_height"
             android:layout_margin="4dp" />
     </LinearLayout>
-
-    <androidx.legacy.widget.Space
-        android:layout_width="match_parent"
-        android:layout_height="8dp" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -67,6 +63,8 @@
             android:id="@+id/switchTypingNotifications"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/min_touch_height"
+            android:minWidth="@dimen/min_touch_height"
             android:layout_margin="4dp" />
     </LinearLayout>
 
