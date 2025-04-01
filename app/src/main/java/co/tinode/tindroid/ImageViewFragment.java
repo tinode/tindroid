@@ -425,7 +425,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         ((TextView) activity.findViewById(R.id.content_type)).setText(args.getString("mime"));
         ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
         ((TextView) activity.findViewById(R.id.image_size))
-                .setText(String.format("%s%s", size, UiUtils.bytesToHumanSize(length)));
+                .setText(String.format("%s%s", size, UtilsString.bytesToHumanSize(length)));
         ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED);
     }

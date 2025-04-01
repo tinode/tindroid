@@ -234,7 +234,7 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
             displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
             unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
 
-            final int startIndex = UiUtils.indexOfSearchQuery(displayName, mSearchTerm);
+            final int startIndex = UtilsString.indexOfSearchQuery(displayName, mSearchTerm);
 
             if (startIndex == -1) {
                 // If the user didn't do a search, or the search string didn't match a display

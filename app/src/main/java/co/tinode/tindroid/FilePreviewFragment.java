@@ -117,7 +117,7 @@ public class FilePreviewFragment extends Fragment {
             mImageView.setImageDrawable(ResourcesCompat.getDrawable(activity.getResources(), INVALID_ICON_ID, null));
             ((TextView) activity.findViewById(R.id.content_type)).setText(getString(R.string.invalid_file));
             ((TextView) activity.findViewById(R.id.file_name)).setText(getString(R.string.invalid_file));
-            ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(0));
+            ((TextView) activity.findViewById(R.id.file_size)).setText(UtilsString.bytesToHumanSize(0));
             mSendButton.setEnabled(false);
         }
     }
@@ -154,7 +154,7 @@ public class FilePreviewFragment extends Fragment {
                 getIconIdForMimeType(mimeType), null));
         ((TextView) activity.findViewById(R.id.content_type)).setText(mimeType);
         ((TextView) activity.findViewById(R.id.file_name)).setText(fileName);
-        ((TextView) activity.findViewById(R.id.file_size)).setText(UiUtils.bytesToHumanSize(fileSize));
+        ((TextView) activity.findViewById(R.id.file_size)).setText(UtilsString.bytesToHumanSize(fileSize));
 
         activity.findViewById(R.id.missingPermission).setVisibility(accessGranted ? View.GONE : View.VISIBLE);
         mSendButton.setEnabled(accessGranted);

@@ -96,11 +96,11 @@ public class LetterTileDrawable extends Drawable {
 
     private static Bitmap getBitmapForContactType(ContactType contactType) {
         switch (contactType) {
+            case GROUP:
+                return DEFAULT_GROUP_AVATAR;
             case PERSON:
             default:
                 return DEFAULT_PERSON_AVATAR;
-            case GROUP:
-                return DEFAULT_GROUP_AVATAR;
         }
     }
 

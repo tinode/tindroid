@@ -51,6 +51,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.UtilsString;
 import co.tinode.tindroid.widgets.TextDrawable;
 import co.tinode.tindroid.widgets.WaveDrawable;
 
@@ -665,7 +666,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             }
         }
         if (byteCount > 0) {
-            result.append("\u2009(" + UiUtils.bytesToHumanSize(byteCount) +")",
+            result.append("\u2009(" + UtilsString.bytesToHumanSize(byteCount) +")",
                     new ForegroundColorSpan(Color.GRAY), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
 
