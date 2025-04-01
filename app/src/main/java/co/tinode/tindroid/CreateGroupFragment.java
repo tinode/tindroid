@@ -21,6 +21,7 @@ import com.google.android.flexbox.JustifyContent;
 import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SwitchCompat;
@@ -32,6 +33,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
@@ -41,7 +43,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * Fragment for adding/editing a group topic
  */
-public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPreviewer {
+public class CreateGroupFragment extends Fragment implements UtilsMedia.MediaPreviewer {
     private static final int LOADER_ID = 102;
 
     private PromisedReply.FailureListener<ServerMessage> mFailureListener;
@@ -54,24 +56,16 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
     // Callback which receives notifications of contacts loading status;
     private ContactsLoaderCallback mContactsLoaderCallback;
 
-    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
-            UiUtils.avatarPickerLauncher(this, this);
+    private final ActivityResultLauncher<PickVisualMediaRequest> mGalleryPickerLauncher =
+            UtilsMedia.pickMediaLauncher(this, this);
 
-    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
-                }
-                FragmentActivity activity = getActivity();
-                if (activity != null) {
-                    // Try to open the image selector again.
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
+    private final ActivityResultLauncher<Void> mCameraPreviewLauncher =
+            UtilsMedia.takePreviewPhotoLauncher(this, this);
+
+    private final ActivityResultLauncher<String> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    mCameraPreviewLauncher.launch(null);
                 }
             });
 
@@ -126,11 +120,11 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
             if (activity.isDestroyed() || activity.isFinishing()) {
                 return;
             }
-
-            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
-            if (launcher != null) {
-                mAvatarPickerLauncher.launch(launcher);
-            }
+            new AttachmentPickerDialog.Builder()
+                    .setGalleryLauncher(mGalleryPickerLauncher)
+                    .setCameraPreviewLauncher(mCameraPreviewLauncher, mRequestAvatarPermissionsLauncher)
+                    .build()
+                    .show(getChildFragmentManager());
         });
 
         // Recycler view with selected contacts.
@@ -205,7 +199,8 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
                 // If image is not loaded, the drawable is a vector. Ignore it.
             }
 
-            createTopic(activity, topicTitle, bmp, description, pcomment, isChannel, UiUtils.parseTags(tags), members);
+            createTopic(activity, topicTitle, bmp, description, pcomment, isChannel,
+                    UtilsString.parseTags(tags), members);
         });
     }
 
@@ -267,7 +262,7 @@ public class CreateGroupFragment extends Fragment implements UiUtils.AvatarPrevi
     }
 
     @Override
-    public void showAvatarPreview(Bundle args) {
+    public void handleMedia(Bundle args) {
         StartChatActivity activity = (StartChatActivity) getActivity();
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
