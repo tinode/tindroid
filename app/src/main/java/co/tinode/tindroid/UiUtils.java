@@ -1,6 +1,5 @@
 package co.tinode.tindroid;
 
-import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.annotation.SuppressLint;
@@ -12,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -31,11 +29,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.Parcelable;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.text.format.DateUtils;
 import android.util.Base64;
 import android.util.Log;
 import android.util.Patterns;
@@ -52,15 +48,14 @@ import android.widget.Toast;
 
 import org.jetbrains.annotations.NotNull;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -71,10 +66,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
@@ -115,11 +106,6 @@ import io.nayuki.qrcodegen.QrCode;
  */
 public class UiUtils {
     private static final String TAG = "UiUtils";
-
-    // Default tag parameters
-    private static final int DEFAULT_MIN_TAG_LENGTH = 4;
-    private static final int DEFAULT_MAX_TAG_LENGTH = 96;
-    private static final int DEFAULT_MAX_TAG_COUNT = 16;
 
     private static final int COLOR_GREEN_BORDER = 0xFF4CAF50;
     private static final int COLOR_RED_BORDER = 0xFFE57373;
@@ -171,7 +157,7 @@ public class UiUtils {
                 } else if (online) {
                     toolbar.setSubtitle(activity.getString(R.string.online_now));
                 } else if (lastSeen != null) {
-                    toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+                    toolbar.setSubtitle(UtilsString.relativeDateFormat(activity, lastSeen));
                 } else {
                     toolbar.setSubtitle(null);
                 }
@@ -326,7 +312,7 @@ public class UiUtils {
         if (online) {
             toolbar.setSubtitle(null);
         } else if (lastSeen != null) {
-            toolbar.setSubtitle(relativeDateFormat(activity, lastSeen));
+            toolbar.setSubtitle(UtilsString.relativeDateFormat(activity, lastSeen));
         }
     }
 
@@ -444,73 +430,6 @@ public class UiUtils {
         });
     }
 
-    // Date formatter for messages
-    @NonNull
-    static String shortDate(Date date) {
-        if (date != null) {
-            Calendar now = Calendar.getInstance();
-            Calendar then = Calendar.getInstance();
-            then.setTime(date);
-
-            if (then.get(Calendar.YEAR) == now.get(Calendar.YEAR)) {
-                if (then.get(Calendar.MONTH) == now.get(Calendar.MONTH) &&
-                        then.get(Calendar.DATE) == now.get(Calendar.DATE)) {
-                    return DateFormat.getTimeInstance(DateFormat.SHORT).format(then.getTime());
-                } else {
-                    return DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(then.getTime());
-                }
-            }
-            return DateFormat.getInstance().format(then.getTime());
-        }
-        return "unknown";
-    }
-
-    // Time formatter for messages.
-    @NonNull
-    static String timeOnly(Context context, Date date) {
-        if (date != null) {
-            return DateFormat.getTimeInstance(DateFormat.SHORT).format(date.getTime());
-        }
-        return context.getString(R.string.unknown);
-    }
-
-    // Date format relative to present.
-    @NonNull
-    private static CharSequence relativeDateFormat(Context context, Date then) {
-        if (then == null) {
-            return context.getString(R.string.never);
-        }
-        long thenMillis = then.getTime();
-        if (thenMillis == 0) {
-            return context.getString(R.string.never);
-        }
-        long nowMillis = System.currentTimeMillis();
-        if (nowMillis - thenMillis < DateUtils.MINUTE_IN_MILLIS) {
-            return context.getString(R.string.just_now);
-        }
-
-        return DateUtils.getRelativeTimeSpanString(thenMillis, nowMillis,
-                DateUtils.MINUTE_IN_MILLIS,
-                DateUtils.FORMAT_ABBREV_ALL);
-    }
-
-    // Convert milliseconds to '00:00' format.
-    @NonNull
-    static String millisToTime(int millis) {
-        StringBuilder sb = new StringBuilder();
-        float duration = millis / 1000f;
-        int min = (int) Math.floor(duration / 60f);
-        if (min < 10) {
-            sb.append("0");
-        }
-        sb.append(min).append(":");
-        int sec = (int) (duration % 60f);
-        if (sec < 10) {
-            sb.append("0");
-        }
-        return sb.append(sec).toString();
-    }
-
     // Returns true if two timestamps are on the same day (ignoring the time part) or both are null.
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     static boolean isSameDate(@Nullable Date one, @Nullable Date two) {
@@ -523,82 +442,6 @@ public class UiUtils {
 
         final long oneDay = 24 * 60 * 60 * 1000;
         return one.getTime() / oneDay == two.getTime() / oneDay;
-    }
-
-    static Intent avatarSelectorIntent(@NonNull final Activity activity,
-                                           @Nullable ActivityResultLauncher<String[]> missingPermissionsLauncher) {
-        if (missingPermissionsLauncher != null) {
-            LinkedList<String> request = getMissingPermissions(activity,
-                    new String[]{Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE});
-            if (!request.isEmpty()) {
-                missingPermissionsLauncher.launch(request.toArray(new String[]{}));
-                return null;
-            }
-        }
-
-        // Option 1: take a photo.
-        List<Intent> cameraIntents = buildIntentList(activity, new Intent(MediaStore.ACTION_IMAGE_CAPTURE));
-
-        // Option 2: pick image from the gallery.
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        galleryIntent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"image/jpeg", "image/png", "image/gif"});
-
-        // Pack two intents into a chooser.
-        Intent chooserIntent = Intent.createChooser(galleryIntent, activity.getString(R.string.select_image));
-        if (!cameraIntents.isEmpty()) {
-            chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, cameraIntents.toArray(new Parcelable[]{}));
-        }
-
-        return chooserIntent;
-    }
-
-    // Given an intent, find all packages which support this intent and build a list with intent
-    // for each of the found packages.
-    private static List<Intent> buildIntentList(Context context, Intent intent) {
-        List<Intent> list = new ArrayList<>();
-        List<ResolveInfo> resInfo = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_ALL);
-        for (ResolveInfo resolveInfo : resInfo) {
-            String packageName = resolveInfo.activityInfo.packageName;
-            Intent targetedIntent = new Intent(intent);
-            targetedIntent.setPackage(packageName);
-            list.add(targetedIntent);
-        }
-        return list;
-    }
-
-    static ActivityResultLauncher<Intent> avatarPickerLauncher(@NonNull Fragment fragment,
-                                                               @NonNull AvatarPreviewer previewer) {
-        return fragment.registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
-            if (result == null || result.getResultCode() != Activity.RESULT_OK) {
-                return;
-            }
-
-            final Intent data = result.getData();
-            if (data == null) {
-                return;
-            }
-
-            final Bundle args = new Bundle();
-            Bitmap thumbnail = data.getParcelableExtra("data");
-            Uri uri = data.getData();
-            if (thumbnail != null) {
-                // Thumbnail from the camera.
-                // TODO: maybe take the full-size picture and scale it down instead of using the thumbnail.
-                args.putParcelable(AttachmentHandler.ARG_SRC_BITMAP, thumbnail);
-            } else if (uri != null){
-                // Image from the gallery.
-                args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, data.getData());
-            }
-
-            // Show avatar preview.
-            if (!args.isEmpty()) {
-                previewer.showAvatarPreview(args);
-            }
-        });
-    }
-
-    interface AvatarPreviewer {
-        void showAvatarPreview(Bundle args);
     }
 
     /**
@@ -919,25 +762,6 @@ public class UiUtils {
         }
     }
 
-    /**
-     * Identifies the start of the search string (needle) in the display name (haystack).
-     * E.g. If display name was "Adam" and search query was "da" this would
-     * return 1.
-     *
-     * @param haystack The contact display name.
-     * @return The starting position of the search string in the display name, 0-based. The
-     * method returns -1 if the string is not found in the display name, or if the search
-     * string is empty or null.
-     */
-    static int indexOfSearchQuery(String haystack, String needle) {
-        if (!TextUtils.isEmpty(needle)) {
-            return haystack.toLowerCase(Locale.getDefault()).indexOf(
-                    needle.toLowerCase(Locale.getDefault()));
-        }
-
-        return -1;
-    }
-
     static AccessModeLabel[] accessModeLabels(final Acs acs, final BaseDb.Status status) {
         ArrayList<AccessModeLabel> result = new ArrayList<>(2);
         if (acs != null) {
@@ -1112,7 +936,7 @@ public class UiUtils {
             if (title.length() > Const.MAX_TITLE_LENGTH) {
                 title = title.substring(0, Const.MAX_TITLE_LENGTH);
             }
-            if (oldPub != null && !stringsEqual(title, oldPub.fn)) {
+            if (oldPub != null && !UtilsString.stringsEqual(title, oldPub.fn)) {
                 pub = new VxCard();
                 pub.fn = title;
             }
@@ -1123,7 +947,7 @@ public class UiUtils {
                 description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
             }
             String oldNote = oldPub != null ? oldPub.note : null;
-            if (!stringsEqual(description, oldNote)) {
+            if (!UtilsString.stringsEqual(description, oldNote)) {
                 if (pub == null) {
                     pub = new VxCard();
                 }
@@ -1138,7 +962,7 @@ public class UiUtils {
             }
             PrivateType oldPriv = topic.getPriv();
             String oldComment = oldPriv != null ? oldPriv.getComment() : null;
-            if (!stringsEqual(subtitle, oldComment)) {
+            if (!UtilsString.stringsEqual(subtitle, oldComment)) {
                 priv = new PrivateType();
                 priv.setComment(subtitle);
             }
@@ -1183,55 +1007,6 @@ public class UiUtils {
         });
 
         return true;
-    }
-
-    // Parse comma separated list of possible quoted string into an array.
-    static String[] parseTags(final String tagList) {
-        if (TextUtils.isEmpty(tagList)) {
-            return null;
-        }
-
-        ArrayList<String> tags = new ArrayList<>();
-        int start = 0;
-        final Tinode tinode = Cache.getTinode();
-        final long maxTagCount = tinode.getServerLimit(Tinode.MAX_TAG_COUNT, DEFAULT_MAX_TAG_COUNT);
-        final long maxTagLength = tinode.getServerLimit(Tinode.MAX_TAG_LENGTH, DEFAULT_MAX_TAG_LENGTH);
-        final long minTagLength = tinode.getServerLimit(Tinode.MIN_TAG_LENGTH, DEFAULT_MIN_TAG_LENGTH);
-
-        final int length = tagList.length();
-        boolean quoted = false;
-        for (int idx = 0; idx < length && tags.size() < maxTagCount; idx++) {
-            if (tagList.charAt(idx) == '\"') {
-                // Toggle 'inside of quotes' state.
-                quoted = !quoted;
-            }
-
-            String tag;
-            if (tagList.charAt(idx) == ',' && !quoted) {
-                tag = tagList.substring(start, idx);
-                start = idx + 1;
-            } else if (idx == length - 1) {
-                // Last char
-                tag = tagList.substring(start);
-            } else {
-                continue;
-            }
-
-            tag = tag.trim();
-            // Remove possible quotes.
-            if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length() - 1) == '\"') {
-                tag = tag.substring(1, tag.length() - 1).trim();
-            }
-            if (tag.length() >= minTagLength && tag.length() <= maxTagLength) {
-                tags.add(tag);
-            }
-        }
-
-        if (tags.isEmpty()) {
-            return null;
-        }
-
-        return tags.toArray(new String[]{});
     }
 
     // Find path to content: DocumentProvider, DownloadsProvider, MediaProvider, MediaStore, File.
@@ -1342,21 +1117,6 @@ public class UiUtils {
         return null;
     }
 
-    public static String bytesToHumanSize(long bytes) {
-        if (bytes <= 0) {
-            // 0x202F - narrow non-breaking space.
-            return "0\u202FBytes";
-        }
-
-        String[] sizes = new String[]{"Bytes", "KB", "MB", "GB", "TB"};
-        int bucket = (63 - Long.numberOfLeadingZeros(bytes)) / 10;
-        double count = bytes / Math.pow(1024, bucket);
-        int roundTo = bucket > 0 ? (count < 3 ? 2 : (count < 30 ? 1 : 0)) : 0;
-        NumberFormat fmt = DecimalFormat.getInstance();
-        fmt.setMaximumFractionDigits(roundTo);
-        return fmt.format(count) + "\u202F" + sizes[bucket];
-    }
-
     @Nullable
     static Fragment getVisibleFragment(@NonNull FragmentManager fm) {
         List<Fragment> fragments = fm.getFragments();
@@ -1408,35 +1168,6 @@ public class UiUtils {
         } catch (NumberFormatException ex) {
             return 0;
         }
-    }
-
-    // The same as TextUtils.equals except null == "".
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    static boolean stringsEqual(CharSequence a, CharSequence b) {
-        if (a == b) {
-            return true;
-        }
-
-        if (a != null && b != null) {
-            int length = a.length();
-            if (length != b.length()) {
-                return false;
-            }
-            if (a instanceof String && b instanceof String) {
-                return a.equals(b);
-            }
-            for (int i = 0; i < length; i++) {
-                if (a.charAt(i) != b.charAt(i)) {
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        if (a == null) {
-            return b.length() == 0;
-        }
-        return a.length() == 0;
     }
 
     static public int getIntVal(String name, Map<String, Object> data) {
