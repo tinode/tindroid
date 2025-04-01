@@ -90,19 +90,16 @@ public class SqlStore implements Storage {
     @Override
     public Topic[] topicGetAll(final Tinode tinode) {
         Cursor c = TopicDb.query(mDbh.getReadableDatabase());
-        if (c != null) {
-            Topic[] list = null;
-            if (c.moveToFirst()) {
-                list = new Topic[c.getCount()];
-                int i = 0;
-                do {
-                    list[i++] = TopicDb.readOne(tinode, c);
-                } while (c.moveToNext());
-            }
-            c.close();
-            return list;
+        Topic[] list = null;
+        if (c.moveToFirst()) {
+            list = new Topic[c.getCount()];
+            int i = 0;
+            do {
+                list[i++] = TopicDb.readOne(tinode, c);
+            } while (c.moveToNext());
         }
-        return null;
+        c.close();
+        return list;
     }
 
     @Override
@@ -223,9 +220,6 @@ public class SqlStore implements Storage {
     @Override
     public Collection<Subscription> getSubscriptions(Topic topic) {
         Cursor c = SubscriberDb.query(mDbh.getReadableDatabase(), StoredTopic.getId(topic));
-        if (c == null) {
-            return null;
-        }
         Collection<Subscription> result = SubscriberDb.readAll(c);
         c.close();
         return result;

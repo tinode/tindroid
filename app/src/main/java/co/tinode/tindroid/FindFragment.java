@@ -27,7 +27,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.widget.ShareActionProvider;
-import androidx.core.view.MenuHost;
 import androidx.core.view.MenuItemCompat;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
@@ -116,7 +115,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
             return;
         }
 
-        ((MenuHost) activity).addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
+        activity.addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
 
         RecyclerView rv = fragment.findViewById(R.id.chat_list);
         rv.setLayoutManager(new LinearLayoutManager(activity));
