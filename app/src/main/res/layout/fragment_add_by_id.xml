@@ -24,7 +24,8 @@
             android:id="@+id/editId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:inputType="textNoSuggestions"/>
+            android:inputType="textNoSuggestions"
+            android:minHeight="@dimen/min_touch_height" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <androidx.appcompat.widget.AppCompatButton
@@ -111,4 +112,5 @@
             app:tint="@color/white"
             app:srcCompat="@drawable/ic_photo_camera" />
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

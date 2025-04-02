@@ -371,7 +371,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 if (msg.content != null) {
                     sb.append(msg.content.format(new CopyFormatter(mActivity)));
                 }
-                sb.append("; ").append(UiUtils.shortDate(msg.ts));
+                sb.append("; ").append(UtilsString.shortDate(msg.ts));
             }
             toggleSelectionAt(pos);
             notifyItemChanged(pos);
@@ -794,7 +794,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 holder.mEdited.setVisibility(isEdited ? View.VISIBLE : View.GONE);
             }
             if (holder.mMeta != null) {
-                holder.mMeta.setText(UiUtils.timeOnly(context, m.ts));
+                holder.mMeta.setText(UtilsString.timeOnly(context, m.ts));
             }
         }
 

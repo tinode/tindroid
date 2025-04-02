@@ -372,7 +372,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             final String displayName = cursor.getString(ContactsLoaderCallback.ContactsQuery.DISPLAY_NAME);
             final String unique = cursor.getString(ContactsLoaderCallback.ContactsQuery.IM_ADDRESS);
 
-            final int startIndex = UiUtils.indexOfSearchQuery(displayName, mSearchTerm);
+            final int startIndex = UtilsString.indexOfSearchQuery(displayName, mSearchTerm);
 
             if (startIndex == -1) {
                 // If the user didn't do a search, or the search string didn't match a display
@@ -448,7 +448,7 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
             if (member.priv != null) {
                 String matched = TextUtils.join(", ", member.priv);
                 final SpannableString highlightedName = new SpannableString(matched);
-                final int startIndex = UiUtils.indexOfSearchQuery(matched, mSearchTerm);
+                final int startIndex = UtilsString.indexOfSearchQuery(matched, mSearchTerm);
                 if (startIndex >= 0) {
                     highlightedName.setSpan(mHighlightTextSpan, startIndex,
                             startIndex + mSearchTerm.length(), 0);

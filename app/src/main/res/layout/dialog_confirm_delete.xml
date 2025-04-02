@@ -16,11 +16,12 @@
 
     <CheckBox
         android:id="@+id/deleteForAll"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/dialog_padding_left"
+        android:minHeight="@dimen/min_touch_height"
         android:paddingTop="@dimen/dialog_padding_vertical"
         android:paddingBottom="@dimen/dialog_padding_vertical"
-        android:layout_marginStart="@dimen/dialog_padding_left"
         android:text="@string/delete_for_peer"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 

@@ -1,7 +1,6 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -23,9 +22,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
@@ -38,6 +37,7 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.ServerResponseException;
@@ -51,27 +51,21 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for managing registration of a new account.
  */
 public class SignUpFragment extends Fragment
-        implements View.OnClickListener, UiUtils.AvatarPreviewer, MenuProvider {
+        implements View.OnClickListener, UtilsMedia.MediaPreviewer, MenuProvider {
 
     private static final String TAG ="SignUpFragment";
     private String[] mCredMethods;
 
-    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
-            UiUtils.avatarPickerLauncher(this, this);
+    private final ActivityResultLauncher<PickVisualMediaRequest> mRequestAvatarLauncher =
+            UtilsMedia.pickMediaLauncher(this, this);
 
-    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
-                }
-                FragmentActivity activity = requireActivity();
-                // Try to open the image selector again.
-                Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                if (launcher != null) {
-                    mAvatarPickerLauncher.launch(launcher);
+    private final ActivityResultLauncher<Void> mThumbTakePhotoLauncher =
+            UtilsMedia.takePreviewPhotoLauncher(this, this);
+
+    private final ActivityResultLauncher<String> mRequestCameraPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    mThumbTakePhotoLauncher.launch(null);
                 }
             });
 
@@ -89,12 +83,12 @@ public class SignUpFragment extends Fragment
         View fragment = inflater.inflate(R.layout.fragment_signup, container, false);
 
         // Get avatar from the gallery or photo camera.
-        fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v -> {
-            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
-            if (launcher != null) {
-                mAvatarPickerLauncher.launch(launcher);
-            }
-        });
+        fragment.findViewById(R.id.uploadAvatar).setOnClickListener(v ->
+                new AttachmentPickerDialog.Builder().
+                    setGalleryLauncher(mRequestAvatarLauncher).
+                    setCameraPreviewLauncher(mThumbTakePhotoLauncher, mRequestCameraPermissionLauncher).
+                    build().
+                    show(getChildFragmentManager()));
         // Handle click on the sign up button.
         fragment.findViewById(R.id.signUp).setOnClickListener(this);
 
@@ -358,7 +352,7 @@ public class SignUpFragment extends Fragment
     }
 
     @Override
-    public void showAvatarPreview(Bundle args) {
+    public void handleMedia(Bundle args) {
         final FragmentActivity activity = requireActivity();
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;

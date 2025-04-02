@@ -570,11 +570,6 @@ public class MessageActivity extends AppCompatActivity
         return false;
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
-
     // Try to send all pending messages.
     public void syncAllMessages(final boolean runLoader) {
         syncMessages(-1, runLoader);

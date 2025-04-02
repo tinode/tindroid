@@ -5,7 +5,6 @@ import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -21,9 +20,8 @@ import android.widget.Toast;
 
 import com.google.android.flexbox.FlexboxLayout;
 
-import java.util.Map;
-
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -34,6 +32,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.MsgSetMeta;
@@ -43,31 +42,23 @@ import co.tinode.tinodesdk.model.ServerMessage;
 /**
  * Topic general info fragment: p2p or a group topic.
  */
-public class TopicGeneralFragment extends Fragment implements MenuProvider, UiUtils.AvatarPreviewer,
+public class TopicGeneralFragment extends Fragment implements MenuProvider, UtilsMedia.MediaPreviewer,
         MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicGeneralFragment";
 
     private ComTopic<VxCard> mTopic;
 
-    private final ActivityResultLauncher<Intent> mAvatarPickerLauncher =
-            UiUtils.avatarPickerLauncher(this, this);
+    private final ActivityResultLauncher<PickVisualMediaRequest> mAvatarGalleryLauncher =
+            UtilsMedia.pickMediaLauncher(this, this);
 
-    private final ActivityResultLauncher<String[]> mRequestAvatarPermissionsLauncher =
-            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
-                for (Map.Entry<String,Boolean> e : result.entrySet()) {
-                    // Check if all required permissions are granted.
-                    if (!e.getValue()) {
-                        return;
-                    }
-                }
-                final FragmentActivity activity = getActivity();
-                if (activity != null) {
-                    // Try to open the image selector again.
-                    Intent launcher = UiUtils.avatarSelectorIntent(activity, null);
-                    if (launcher != null) {
-                        mAvatarPickerLauncher.launch(launcher);
-                    }
+    private final ActivityResultLauncher<Void> mAvatarCameraLauncher =
+            UtilsMedia.takePreviewPhotoLauncher(this, this);
+
+    private final ActivityResultLauncher<String> mRequestAvatarPermissionsLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> {
+                if (granted) {
+                    mAvatarCameraLauncher.launch(null);
                 }
             });
 
@@ -92,10 +83,11 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, UiUt
             if (activity.isFinishing() || activity.isDestroyed()) {
                 return;
             }
-            Intent launcher = UiUtils.avatarSelectorIntent(activity, mRequestAvatarPermissionsLauncher);
-            if (launcher != null) {
-                mAvatarPickerLauncher.launch(launcher);
-            }
+            new AttachmentPickerDialog.Builder()
+                    .setGalleryLauncher(mAvatarGalleryLauncher)
+                    .setCameraPreviewLauncher(mAvatarCameraLauncher, mRequestAvatarPermissionsLauncher)
+                    .build()
+                    .show(getChildFragmentManager());
         });
         view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
@@ -181,7 +173,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, UiUt
         tagsEditor.setSelection(tags.length());
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String[] tags1 = UiUtils.parseTags(tagsEditor.getText().toString());
+                    String[] tags1 = UtilsString.parseTags(tagsEditor.getText().toString());
                     // noinspection unchecked
                     mTopic.setMeta(new MsgSetMeta.Builder().with(tags1).build())
                             .thenApply(new PromisedReply.SuccessListener() {
@@ -278,7 +270,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, UiUt
     }
 
     @Override
-    public void showAvatarPreview(Bundle args) {
+    public void handleMedia(Bundle args) {
         final FragmentActivity activity = getActivity();
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             return;

@@ -569,8 +569,8 @@ public class AttachmentHandler extends Worker {
                         result.putString(ARG_ERROR,
                                 context.getString(
                                         R.string.attachment_too_large,
-                                        UiUtils.bytesToHumanSize(uploadDetails.fileSize),
-                                        UiUtils.bytesToHumanSize(maxFileUploadSize)))
+                                        UtilsString.bytesToHumanSize(uploadDetails.fileSize),
+                                        UtilsString.bytesToHumanSize(maxFileUploadSize)))
                                 .putBoolean(ARG_FATAL, true)
                                 .build());
             } else {
@@ -894,14 +894,14 @@ public class AttachmentHandler extends Worker {
             }
 
             switch (orientation) {
-                default:
-                    // Rotate image to ensure correct orientation.
-                    bmp = UiUtils.rotateBitmap(bmp, orientation);
-                    break;
                 case ExifInterface.ORIENTATION_NORMAL:
                     break;
                 case ExifInterface.ORIENTATION_UNDEFINED:
                     Log.d(TAG, "Unable to obtain image orientation");
+                default:
+                    // Rotate image to ensure correct orientation.
+                    bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    break;
             }
         } catch (IOException ex) {
             Log.w(TAG, "Failed to obtain image orientation", ex);

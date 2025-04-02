@@ -33,7 +33,7 @@ import co.tinode.tinodesdk.model.Subscription;
  * This activity owns 'me' topic.
  */
 public class ChatsActivity extends AppCompatActivity
-        implements UiUtils.ProgressIndicator, UiUtils.AvatarPreviewer,
+        implements UiUtils.ProgressIndicator, UtilsMedia.MediaPreviewer,
         ImageViewFragment.AvatarCompletionHandler {
     static final String TAG_FRAGMENT_NAME = "fragment";
     static final String FRAGMENT_CHATLIST = "contacts";
@@ -136,7 +136,7 @@ public class ChatsActivity extends AppCompatActivity
     }
 
     @Override
-    public void showAvatarPreview(Bundle args) {
+    public void handleMedia(Bundle args) {
         showFragment(FRAGMENT_AVATAR_PREVIEW, args);
     }
 
