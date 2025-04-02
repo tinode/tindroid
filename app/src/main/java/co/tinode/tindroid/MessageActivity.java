@@ -171,6 +171,8 @@ public class MessageActivity extends AppCompatActivity
     private Set<String> mKnownSubs = null;
     // True when new subscriptions were added to the topic.
     private boolean mNewSubsAvailable = false;
+    // Tracker of pinned changes to prevent endless loop.
+    private int mPinHash = -1;
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Override
@@ -943,6 +945,12 @@ public class MessageActivity extends AppCompatActivity
 
         @Override
         public void onAllMessagesReceived(Integer count) {
+            int currentPinHash = mTopic.getPinnedHash();
+            if ((count == null || count == 0) && mPinHash == currentPinHash) {
+                return;
+            }
+            mPinHash = currentPinHash;
+
             // Make sure all pinned messages are cached.
             int[] pinned = mTopic.getPinned();
             if (pinned == null || pinned.length == 0) {
@@ -971,13 +979,13 @@ public class MessageActivity extends AppCompatActivity
                         }
 
                         missing = tmp;
-                        if (missing.size() == 0) {
+                        if (missing.isEmpty()) {
                             break;
                         }
                     }
                 }
             }
-            if (missing != null && missing.size() > 0) {
+            if (missing != null && !missing.isEmpty()) {
                 mTopic.getMeta(mTopic.getMetaGetBuilder()
                         .withData(missing.toArray(new MsgRange[0]), MESSAGES_TO_LOAD).build());
             }

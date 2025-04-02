@@ -21,6 +21,8 @@ import co.tinode.tinodesdk.model.TheCard;
  * Communication topic: a P2P or Group.
  */
 public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,PrivateType> {
+    // Used for tracking mutations of pinned messages.
+    private int pinHash = 0;
 
     public ComTopic(Tinode tinode, Subscription<DP,PrivateType> sub) {
         super(tinode, sub);
@@ -104,7 +106,8 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
 
         if (changed) {
             Map<String, Object> aux = new HashMap<>();
-            aux.put("pins", pinned.size() > 0 ? pinned : Tinode.NULL_VALUE);
+            aux.put("pins", !pinned.isEmpty() ? pinned : Tinode.NULL_VALUE);
+            pinHash ++;
             return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(aux).build());
         }
 
@@ -135,6 +138,10 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
             return pinned.length > 0 ? pinned : null;
         }
         return null;
+    }
+
+    public int getPinnedHash() {
+        return pinHash;
     }
 
     public int pinnedCount() {
