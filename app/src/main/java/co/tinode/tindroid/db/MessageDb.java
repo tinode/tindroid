@@ -233,7 +233,7 @@ public class MessageDb implements BaseColumns {
             }
         } catch (SQLiteConstraintException ex) {
             // This may happen when concurrent {sub} requests are sent.
-            Log.i(TAG, "Duplicate message topic='" + topic.getName() + "' id=" + msg.seq);
+            Log.d(TAG, "Duplicate message topic='" + topic.getName() + "' id=" + msg.seq);
         } catch (Exception ex) {
             Log.w(TAG, "Insert failed", ex);
         } finally {
@@ -502,6 +502,9 @@ public class MessageDb implements BaseColumns {
                 constr.add("(" + COLUMN_NAME_SEQ + "=" + r.low + " AND " + COLUMN_NAME_HIGH + " IS NULL)");
             }
         }
+
+        final int RANGE_LOW = 0;
+        final int RANGE_HIGH = 1;
         final String sql =
                 "SELECT " + COLUMN_NAME_SEQ + "," + COLUMN_NAME_HIGH +
                     " FROM " + TABLE_NAME +
@@ -512,8 +515,8 @@ public class MessageDb implements BaseColumns {
         List<MsgRange> found = new LinkedList<>();
         if (c.moveToFirst()) {
             do {
-                MsgRange range = c.isNull(1) ? new MsgRange(c.getInt(0)) :
-                        new MsgRange(c.getInt(0), c.getInt(0));
+                MsgRange range = c.isNull(RANGE_HIGH) ? new MsgRange(c.getInt(RANGE_LOW)) :
+                        new MsgRange(c.getInt(RANGE_LOW), c.getInt(RANGE_HIGH));
                 found.add(range);
             } while (c.moveToNext());
         }
