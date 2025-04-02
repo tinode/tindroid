@@ -1174,7 +1174,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return topic.getMetaGetBuilder().withData(missing, MESSAGES_TO_LOAD).build();
             }
         }
-
         return topic.getMetaGetBuilder().withEarlierData(MESSAGES_TO_LOAD).build();
     }
 

@@ -174,7 +174,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
                         new PromisedReply.FailureListener<ServerMessage>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
-                                Log.i(TAG, "Login failed", err);
+                                Log.w(TAG, "Login failed", err);
                                 parent.reportError(err, signIn, 0, R.string.error_login_failed);
                                 return null;
                             }

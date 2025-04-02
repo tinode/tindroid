@@ -421,7 +421,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     expires = new Date(Long.parseLong(strExp));
                 }
             } catch (OperationCanceledException e) {
-                Log.i(TAG, "Request to get an existing account was canceled.", e);
+                Log.d(TAG, "Request to get an existing account was canceled.", e);
             } catch (AuthenticatorException e) {
                 Log.e(TAG, "No access to saved account", e);
             } catch (Exception e) {
@@ -477,7 +477,6 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     Log.e(TAG, "Other failure during login", ex);
                 }
             } else {
-                Log.i(TAG, "No token or expired token. Forcing re-login");
                 try {
                     if (!TextUtils.isEmpty(token)) {
                         accountManager.invalidateAuthToken(Utils.ACCOUNT_TYPE, null);
@@ -490,7 +489,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                 UiUtils.doLogout(TindroidApp.this);
             }
         } else {
-            Log.i(TAG, "Account not found or no permission to access accounts");
+            Log.w(TAG, "Account not found or no permission to access accounts");
             // Force new login in case account existed before but was deleted.
             UiUtils.doLogout(TindroidApp.this);
         }

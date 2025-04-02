@@ -32,7 +32,7 @@ public class ContactsObserver extends ContentObserver {
             bundle.putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true);
             ContentResolver.requestSync(mAcc, Utils.SYNC_AUTHORITY, bundle);
         } else {
-            Log.i(TAG, "Failed to start sync: missing account");
+            Log.w(TAG, "Failed to start sync: missing account");
         }
     }
 

@@ -30,7 +30,7 @@ public class CallConnection extends Connection {
 
     @Override
     public void onCallAudioStateChanged(@Nullable CallAudioState state) {
-        Log.i(TAG, "onCallAudioStateChanged " + state);
+        Log.d(TAG, "onCallAudioStateChanged " + state);
     }
 
     @Override
@@ -45,22 +45,22 @@ public class CallConnection extends Connection {
     @Override
     public void onDisconnect() {
         // FIXME: this is never called by Android.
-        Log.i(TAG, "onDisconnect");
+        Log.d(TAG, "onDisconnect");
         destroy();
     }
 
     @Override
     public void onHold() {
-        Log.i(TAG, "onHold");
+        Log.d(TAG, "onHold");
     }
 
     @Override
     public void onUnhold() {
-        Log.i(TAG, "onUnhold");
+        Log.d(TAG, "onUnhold");
     }
 
     @Override
     public void onReject() {
-        Log.i(TAG, "onReject");
+        Log.d(TAG, "onReject");
     }
 }

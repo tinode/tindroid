@@ -1086,14 +1086,14 @@ public class UiUtils {
                             final String[] selectionArgs = new String[]{split[1]};
                             return getResolverData(context, contentUri, selection, selectionArgs);
                         } else {
-                            Log.i(TAG, "Unknown MediaProvider type " + type);
+                            Log.w(TAG, "Unknown MediaProvider type " + type);
                         }
                     }
                     default:
-                        Log.i(TAG, "Unknown content authority " + uri.getAuthority());
+                        Log.w(TAG, "Unknown content authority " + uri.getAuthority());
                 }
             } else {
-                Log.i(TAG, "URI has no content authority " + uri);
+                Log.w(TAG, "URI has no content authority " + uri);
             }
         } else if ("content".equalsIgnoreCase(uri.getScheme())) {
             // MediaStore (and general)

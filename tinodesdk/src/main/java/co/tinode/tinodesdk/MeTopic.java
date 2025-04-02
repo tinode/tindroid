@@ -280,7 +280,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             topic = mTinode.newTopic(sub);
             topic.persist();
         } else {
-            Log.i(TAG, "Request to delete an unknown topic: " + sub.topic);
+            Log.w(TAG, "Request to delete an unknown topic: " + sub.topic);
         }
 
         // Use p2p topic to update user's record.

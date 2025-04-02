@@ -255,7 +255,7 @@ public class SqlStore implements Storage {
         long topicId, userId;
         StoredSubscription ss = sub != null ? (StoredSubscription) sub.getLocal() : null;
         if (ss == null) {
-            Log.i(TAG, "Message from an unknown subscriber " + m.from);
+            Log.d(TAG, "Message from an unknown subscriber " + m.from);
 
             StoredTopic st = (StoredTopic) topic.getLocal();
             topicId = st.id;

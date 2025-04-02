@@ -285,7 +285,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                     is.close();
                 }
             } catch (IOException ex) {
-                Log.i(TAG, "Failed to read image from " + uri, ex);
+                Log.w(TAG, "Failed to read image from " + uri, ex);
             }
         } else {
             // Remote image.

@@ -307,7 +307,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
                             startActivity(intent);
                         } catch (ActivityNotFoundException ignored) {
                             Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
-                            Log.i(TAG, "Unable to find contact manager");
+                            Log.w(TAG, "Unable to find contact manager");
                         }
                     } else {
                         mRequestContactsPermissionsLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,

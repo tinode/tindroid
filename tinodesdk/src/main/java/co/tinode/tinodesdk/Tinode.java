@@ -1894,7 +1894,7 @@ public class Tinode {
             try {
                 future.reject(ex1);
             } catch (Exception ex2) {
-                Log.i(TAG, "Exception while rejecting the promise", ex2);
+                Log.d(TAG, "Exception while rejecting the promise", ex2);
             }
         }
         return future;
@@ -2714,35 +2714,35 @@ public class Tinode {
         @Override
         public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t,
                                             JsonParser p, String failureMsg) {
-            Log.i(TAG, "Unexpected token:" + t.name());
+            Log.w(TAG, "Unexpected token:" + t.name());
             return null;
         }
 
         @Override
         public Object handleWeirdKey(DeserializationContext ctxt, Class<?> rawKeyType,
                                      String keyValue, String failureMsg) {
-            Log.i(TAG, "Weird key: '" + keyValue + "'");
+            Log.w(TAG, "Weird key: '" + keyValue + "'");
             return  null;
         }
 
         @Override
         public Object handleWeirdNativeValue(DeserializationContext ctxt, JavaType targetType,
                                              Object valueToConvert, JsonParser p) {
-            Log.i(TAG, "Weird native value: '" + valueToConvert + "'");
+            Log.w(TAG, "Weird native value: '" + valueToConvert + "'");
             return  null;
         }
 
         @Override
         public Object handleWeirdNumberValue(DeserializationContext ctxt, Class<?> targetType,
                                              Number valueToConvert, String failureMsg) {
-            Log.i(TAG, "Weird number value: '" + valueToConvert + "'");
+            Log.w(TAG, "Weird number value: '" + valueToConvert + "'");
             return  null;
         }
 
         @Override
         public Object handleWeirdStringValue(DeserializationContext ctxt, Class<?> targetType,
                                              String valueToConvert, String failureMsg) {
-            Log.i(TAG, "Weird string value: '" + valueToConvert + "'");
+            Log.w(TAG, "Weird string value: '" + valueToConvert + "'");
             return  null;
         }
     }

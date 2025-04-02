@@ -67,7 +67,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
 
     @JsonIgnore
     public int getUpper() {
-        return hi != null && hi != 0 ? hi : low + 1;
+        return (hi != null && hi != 0) ? hi : low + 1;
     }
 
     protected boolean tryExtending(int h) {

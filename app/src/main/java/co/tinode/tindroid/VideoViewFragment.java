@@ -218,7 +218,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                     try {
                         trusted = tinode.isTrustedURL(new URL(ref.toString()));
                     } catch (MalformedURLException ignored) {
-                        Log.i(TAG, "Invalid video URL: '" + ref + "'");
+                        Log.w(TAG, "Invalid video URL: '" + ref + "'");
                     }
                 } else {
                     URL url = tinode.toAbsoluteURL(ref.toString());
@@ -226,7 +226,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         ref = Uri.parse(url.toString());
                         trusted = true;
                     } else {
-                        Log.i(TAG, "Invalid relative video URL: '" + ref + "'");
+                        Log.w(TAG, "Invalid relative video URL: '" + ref + "'");
                     }
                 }
 
@@ -368,7 +368,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             os.write(bits);
             os.close();
         } catch (IOException ex) {
-            Log.i(TAG, "Unable to create temp file for video " + prefix, ex);
+            Log.w(TAG, "Unable to create temp file for video " + prefix, ex);
         }
         return fileUri;
     }

@@ -124,7 +124,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                         ((TextView) activity.findViewById(R.id.phone)).setText(PhoneEdit.formatIntl(cred.val));
                     } else {
                         // TODO: create generic field for displaying credential as text.
-                        Log.i(TAG, "Unknown credential method " + cred.meth);
+                        Log.w(TAG, "Unknown credential method " + cred.meth);
                     }
                 }
             }

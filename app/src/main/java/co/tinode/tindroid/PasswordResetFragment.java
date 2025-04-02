@@ -174,7 +174,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                 ((EditText) parent.findViewById(R.id.email)).setError(getString(R.string.email_required));
             }
         } else {
-            Log.i(TAG, "Unknown validation method " + method);
+            Log.w(TAG, "Unknown validation method " + method);
         }
         return value;
     }

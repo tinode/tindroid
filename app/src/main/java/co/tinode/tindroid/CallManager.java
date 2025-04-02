@@ -168,7 +168,7 @@ public class CallManager {
                 Log.w(TAG, "Call already accepted: topic = " + caller + ", seq = " + seq);
                 return;
             }
-            Log.i(TAG, "Hanging up (" + caller + ", " + seq + "): another call in progress");
+            // Hanging up: another call in progress
             final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
             if (topic != null) {
                 topic.videoCallHangUp(seq);
@@ -216,7 +216,7 @@ public class CallManager {
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
         } catch (Exception ex) {
-            Log.i(TAG, "Failed to accept incoming call", ex);
+            Log.w(TAG, "Failed to accept incoming call", ex);
         }
     }
 
@@ -367,7 +367,7 @@ public class CallManager {
 
     private static boolean shouldBypassTelecom(Context context, TelecomManager tm, boolean outgoing) {
         if (!UiUtils.isPermissionGranted(context, Manifest.permission.MANAGE_OWN_CALLS)) {
-            Log.i(TAG, "No permission MANAGE_OWN_CALLS");
+            Log.w(TAG, "No permission MANAGE_OWN_CALLS");
             return true;
         }
 
@@ -377,7 +377,7 @@ public class CallManager {
             }
             boolean disabled = !tm.isOutgoingCallPermitted(getShared().mPhoneAccountHandle);
             if (disabled) {
-                Log.i(TAG, "Account cannot place outgoing calls");
+                Log.w(TAG, "Account cannot place outgoing calls");
             }
             return disabled;
         }

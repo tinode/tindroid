@@ -216,7 +216,6 @@ public class CallFragment extends Fragment {
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
         boolean speakerphoneOn = !mAudioOnly;
         speakerphoneOn &= TindroidApp.setSpeakerphoneOn(speakerphoneOn);
-        Log.i(TAG, "Initial speakerphone ON=" + speakerphoneOn);
         mToggleSpeakerphoneBtn.setImageResource(speakerphoneOn ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
 
         if (!mTopic.isAttached()) {
@@ -800,7 +799,7 @@ public class CallFragment extends Fragment {
                 }
                 if (mLocalPeer.getSenders().isEmpty()) {
                     // This is a recvonly connection for now. Wait until it turns sendrecv.
-                    Log.i(TAG, "PeerConnection is recvonly. Waiting for sendrecv.");
+                    Log.d(TAG, "PeerConnection is recvonly. Waiting for sendrecv.");
                     return;
                 }
                 mSdpConstraints = new MediaConstraints();

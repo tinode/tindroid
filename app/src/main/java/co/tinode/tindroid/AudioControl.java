@@ -74,12 +74,7 @@ public class AudioControl {
                 for (AudioDeviceInfo device : devices) {
                     if (device.getType() == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
                         // Set the communication device to the built-in speaker
-                        Log.i(TAG, "speakerphone ON: setCommunicationDevice(" +
-                                device.getProductName() + "/" + device.getAddress() + "/" + device.getType() + ")");
                         done = mAudioManager.setCommunicationDevice(device);
-                        device = mAudioManager.getCommunicationDevice();
-                        Log.i(TAG, "got back device = (" +
-                                (device != null ? device.getProductName() + "/" + device.getAddress() + "/" + device.getType() : "NULL") + ")");
                         break; // Exit the loop once the speaker is set
                     }
                 }
@@ -95,7 +90,7 @@ public class AudioControl {
         }
 
         if (!done) {
-            Log.i(TAG, "Failed to set speakerphone");
+            Log.w(TAG, "Failed to set speakerphone");
         }
 
         return done;

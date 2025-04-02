@@ -185,7 +185,7 @@ public class IncomingCallFragment extends Fragment
         } else if (currentId == R.id.hangUpActivated) {
             declineCall();
         } else {
-            Log.i(TAG, "Unknown transition (normal?)");
+            Log.d(TAG, "Unknown transition (normal?)");
         }
     }
 

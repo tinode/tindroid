@@ -100,52 +100,52 @@ public class CallConnectionService extends ConnectionService {
     public static class TinodeVideoProvider extends Connection.VideoProvider {
         @Override
         public void onSetCamera(String cameraId) {
-            Log.i(TAG, "onSetCamera");
+            Log.d(TAG, "onSetCamera");
         }
 
         @Override
         public void onSetPreviewSurface(Surface surface) {
-            Log.i(TAG, "onSetPreviewSurface");
+            Log.d(TAG, "onSetPreviewSurface");
         }
 
         @Override
         public void onSetDisplaySurface(Surface surface) {
-            Log.i(TAG, "onSetDisplaySurface");
+            Log.d(TAG, "onSetDisplaySurface");
         }
 
         @Override
         public void onSetDeviceOrientation(int rotation) {
-            Log.i(TAG, "onSetDeviceOrientation");
+            Log.d(TAG, "onSetDeviceOrientation");
         }
 
         @Override
         public void onSetZoom(float value) {
-            Log.i(TAG, "onSetZoom");
+            Log.d(TAG, "onSetZoom");
         }
 
         @Override
         public void onSendSessionModifyRequest(VideoProfile fromProfile, VideoProfile toProfile) {
-            Log.i(TAG, "onSendSessionModifyRequest");
+            Log.d(TAG, "onSendSessionModifyRequest");
         }
 
         @Override
         public void onSendSessionModifyResponse(VideoProfile responseProfile) {
-            Log.i(TAG, "onSendSessionModifyResponse");
+            Log.d(TAG, "onSendSessionModifyResponse");
         }
 
         @Override
         public void onRequestCameraCapabilities() {
-            Log.i(TAG, "onRequestCameraCapabilities");
+            Log.d(TAG, "onRequestCameraCapabilities");
         }
 
         @Override
         public void onRequestConnectionDataUsage() {
-            Log.i(TAG, "onRequestConnectionDataUsage");
+            Log.d(TAG, "onRequestConnectionDataUsage");
         }
 
         @Override
         public void onSetPauseImage(Uri uri) {
-            Log.i(TAG, "onSetPauseImage");
+            Log.d(TAG, "onSetPauseImage");
         }
     }
 }

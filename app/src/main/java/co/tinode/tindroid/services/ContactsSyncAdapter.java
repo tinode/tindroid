@@ -160,7 +160,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                     if (!TextUtils.isEmpty(data) && Patterns.EMAIL_ADDRESS.matcher(data).matches()) {
                         holder.putEmail(data);
                     } else {
-                        Log.i(TAG, "'" + data + "' is not an email");
+                        Log.w(TAG, "'" + data + "' is not an email");
                     }
                     break;
                 case ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE:
@@ -177,7 +177,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
                         // Remove all characters other than 0-9 and +, save the result.
                         holder.putPhone(data.replaceAll("[^0-9+]", ""));
                     } else {
-                        Log.i(TAG, "'" + data + "' is not a valid phone number");
+                        Log.w(TAG, "'" + data + "' is not a valid phone number");
                     }
                     break;
             }
@@ -235,7 +235,7 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
         if (ContextCompat.checkSelfPermission(mContext, Manifest.permission.READ_CONTACTS) !=
                 PackageManager.PERMISSION_GRANTED) {
-            Log.i(TAG, "No permission to access contacts. Sync failed.");
+            Log.w(TAG, "No permission to access contacts. Sync failed.");
             syncResult.stats.numAuthExceptions++;
             return;
         }

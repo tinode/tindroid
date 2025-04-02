@@ -2248,7 +2248,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 getMeta(getMetaGetBuilder().withAux().build());
                 break;
             default:
-                Log.i(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");
+                Log.d(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");
         }
 
         if (mListener != null) {

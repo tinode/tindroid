@@ -115,13 +115,13 @@ public class BrandingConfig {
 
         try (Response resp = httpClient.newCall(req).execute()) {
             if (!resp.isSuccessful()) {
-                Log.i(TAG, "Client config request failed " + resp.code());
+                Log.w(TAG, "Client config request failed " + resp.code());
                 return;
             }
 
             ResponseBody body = resp.body();
             if (body == null) {
-                Log.i(TAG, "Received empty client config");
+                Log.w(TAG, "Received empty client config");
                 return;
             }
 
@@ -170,7 +170,7 @@ public class BrandingConfig {
 
             UiUtils.doneAppFirstRun(context);
         } catch (IOException ex) {
-            Log.i(TAG, "Failed to fetch client config", ex);
+            Log.w(TAG, "Failed to fetch client config", ex);
         }
 
         if (listener != null) {
@@ -200,20 +200,20 @@ public class BrandingConfig {
         Request request = new Request.Builder().url(url).build();
         try (Response resp = client.newCall(request).execute()) {
             if (!resp.isSuccessful()) {
-                Log.i(TAG, "Asset request failed " + resp.code());
+                Log.w(TAG, "Asset request failed " + resp.code());
                 return;
             }
 
             ResponseBody body = resp.body();
             if (body == null) {
-                Log.i(TAG, "Empty asset " + url);
+                Log.w(TAG, "Empty asset " + url);
                 return;
             }
             try (FileOutputStream fos = context.openFileOutput(dstFileName, Context.MODE_PRIVATE)) {
                 write(body.byteStream(), fos);
             }
         } catch (IOException ex) {
-            Log.i(TAG, "Failed to download asset " + url, ex);
+            Log.w(TAG, "Failed to download asset " + url, ex);
         }
     }
 
@@ -272,7 +272,7 @@ public class BrandingConfig {
                             String source = ref.getQueryParameter("utm_source");
                             String short_code = ref.getQueryParameter("utm_term");
                             if (!"tinode".equals(source) || TextUtils.isEmpty(short_code)) {
-                                Log.i(TAG, "InstallReferrer code is unavailable");
+                                Log.w(TAG, "InstallReferrer code is unavailable");
                             } else {
                                 fetchConfigFromServer(context, short_code, null);
                             }

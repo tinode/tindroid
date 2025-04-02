@@ -127,7 +127,7 @@ public class Connection extends WebSocketClient {
                     }
                 }
             } catch (Exception ex) {
-                Log.i(TAG, "WS connection failed", ex);
+                Log.w(TAG, "WS connection failed", ex);
                 if (mListener != null) {
                     mListener.onError(Connection.this, ex);
                 }

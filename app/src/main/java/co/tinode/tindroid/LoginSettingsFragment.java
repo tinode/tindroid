@@ -95,7 +95,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
                         sharedPreferences.getString(Utils.PREFS_HOST_NAME, hostName)));
                 break;
             default:
-                Log.i(TAG, "Unknown preference '" + key + "'");
+                Log.d(TAG, "Unknown preference '" + key + "'");
                 // do nothing.
         }
     }

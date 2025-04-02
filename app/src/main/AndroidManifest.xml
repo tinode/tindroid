@@ -77,8 +77,8 @@
         android:supportsRtl="true"
         android:allowBackup="false"
         android:requestLegacyExternalStorage="true"
-        tools:ignore="AllowBackup,DataExtractionRules"
-        tools:targetApi="q">
+        android:enableOnBackInvokedCallback="true"
+        tools:ignore="AllowBackup,DataExtractionRules,UnusedAttribute">
 
         <meta-data
             android:name="asset_statements"

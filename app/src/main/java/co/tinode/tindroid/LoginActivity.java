@@ -124,7 +124,7 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
         }
         final String finalMessage = message +
                 (!TextUtils.isEmpty(errMessage) ? (": " + errMessage) : "");
-        Log.i(TAG, finalMessage, err);
+        Log.w(TAG, finalMessage, err);
 
         runOnUiThread(() -> {
             if (button != null) {

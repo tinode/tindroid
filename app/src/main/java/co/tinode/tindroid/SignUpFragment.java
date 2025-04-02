@@ -170,7 +170,7 @@ public class SignUpFragment extends Fragment
                     field = activity.findViewById(R.id.emailWrapper);
                 } else {
                     // TODO: show generic text prompt for unknown method.
-                    Log.i(TAG, "Show generic validation field for " + method);
+                    Log.w(TAG, "Show generic validation field for " + method);
                 }
 
                 if (field != null) {
