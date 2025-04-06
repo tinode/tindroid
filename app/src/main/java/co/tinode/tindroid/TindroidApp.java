@@ -34,9 +34,12 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.installreferrer.api.InstallReferrerClient;
-import com.google.android.exoplayer2.database.StandaloneDatabaseProvider;
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor;
-import com.google.android.exoplayer2.upstream.cache.SimpleCache;
+
+import androidx.annotation.OptIn;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.database.StandaloneDatabaseProvider;
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
+import androidx.media3.datasource.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +81,7 @@ import okhttp3.Request;
 /**
  * A class for providing global context for database access
  */
+@UnstableApi
 public class TindroidApp extends Application implements DefaultLifecycleObserver {
     private static final String TAG = "TindroidApp";
 
@@ -360,6 +364,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         }
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     public static synchronized SimpleCache getVideoCache() {
         String dirs = sContext.getCacheDir().getAbsolutePath();
         if (sVideoCache == null) {

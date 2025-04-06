@@ -28,17 +28,18 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.exoplayer2.ExoPlayer;
-import com.google.android.exoplayer2.MediaItem;
-import com.google.android.exoplayer2.PlaybackException;
-import com.google.android.exoplayer2.Player;
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.ui.StyledPlayerView;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource;
-import com.google.android.exoplayer2.upstream.cache.CacheDataSource;
-
-import com.google.android.exoplayer2.video.VideoSize;
+import androidx.annotation.OptIn;
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.PlaybackException;
+import androidx.media3.common.Player;
+import androidx.media3.common.VideoSize;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.datasource.DefaultHttpDataSource;
+import androidx.media3.datasource.cache.CacheDataSource;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
+import androidx.media3.exoplayer.source.MediaSource;
+import androidx.media3.ui.PlayerView;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -81,13 +82,14 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     private ImageView mPosterView;
     private ProgressBar mProgressView;
-    private StyledPlayerView mVideoView;
+    private PlayerView mVideoView;
 
     private int mVideoWidth;
     private int mVideoHeight;
 
     private MenuItem mDownloadMenuItem;
 
+    @OptIn(markerClass = UnstableApi.class)
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -178,6 +180,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
+    @OptIn(markerClass = UnstableApi.class)
     @Override
     public void onResume() {
         super.onResume();
@@ -462,6 +465,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     }
 
     // Take screenshot of the VideoView to use as poster.
+    @OptIn(markerClass = UnstableApi.class)
     private void videoFrameCapture(BitmapReady callback) {
         Bitmap bitmap  = Bitmap.createBitmap(mVideoWidth, mVideoHeight, Bitmap.Config.ARGB_8888);
         try {

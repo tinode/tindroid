@@ -14,7 +14,7 @@
         android:background="#000"
         android:orientation="vertical">
 
-        <com.google.android.exoplayer2.ui.StyledPlayerView
+        <androidx.media3.ui.PlayerView
             android:id="@+id/video"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -70,7 +70,8 @@
                 android:importantForAutofill="no"
                 android:inputType="textMultiLine|textCapSentences"
                 android:maxLines="3"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:textColor="?android:attr/textColorPrimary"
+                android:minHeight="@dimen/min_touch_height" />
 
             <androidx.appcompat.widget.AppCompatImageButton
                 android:id="@+id/chatSendButton"
@@ -82,6 +83,8 @@
                 android:contentDescription="@string/send_message_button_hint"
                 android:paddingStart="4sp"
                 android:paddingEnd="8sp"
+                android:minHeight="@dimen/min_touch_height"
+                android:minWidth="@dimen/min_touch_height"
                 app:srcCompat="@drawable/ic_send"
                 app:tint="?attr/colorAccent" />
         </LinearLayout>
