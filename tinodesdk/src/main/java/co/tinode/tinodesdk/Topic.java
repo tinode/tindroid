@@ -16,6 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 import co.tinode.tinodesdk.model.AccessChange;
 import co.tinode.tinodesdk.model.Acs;
@@ -445,6 +447,19 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     protected void update(Map<String,Object> aux) {
         this.mAux = mergeMaps(this.mAux, aux);
+        if (this.mAux != null) {
+            // Sanitize aux.pins array.
+            Object pinsObj = this.mAux.get("pins");
+            if (pinsObj instanceof List) {
+                List<Integer> pinList = ((List<?>) pinsObj).stream()
+                        .mapToInt((ToIntFunction<Object>) value ->
+                                value instanceof Number ? ((Number) value).intValue() : 0)
+                        .filter(value -> value > 0)
+                        .boxed()
+                        .collect(Collectors.toList());
+                this.mAux.put("pins", pinList);
+            }
+        }
         if (mStore != null) {
             mStore.topicUpdate(this);
         }
