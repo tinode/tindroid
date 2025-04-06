@@ -119,14 +119,6 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         return val instanceof List && ((List) val).contains(seq);
     }
 
-    public int pinnedIndex(int seq) {
-        Object val = getAux("pins");
-        if (val instanceof List) {
-            return ((List) val).indexOf(seq);
-        }
-        return -1;
-    }
-
     public int[] getPinned() {
         Object val = getAux("pins");
         if (val instanceof List) {
