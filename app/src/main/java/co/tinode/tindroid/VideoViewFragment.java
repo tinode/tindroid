@@ -28,7 +28,22 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.MenuProvider;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Lifecycle;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
@@ -40,24 +55,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.exoplayer.source.MediaSource;
 import androidx.media3.ui.PlayerView;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.core.content.res.ResourcesCompat;
-import androidx.core.view.MenuProvider;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.Lifecycle;
 import co.tinode.tinodesdk.Tinode;
-
 import coil.Coil;
 import coil.request.ImageRequest;
 
@@ -73,8 +71,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     // Max size of the video and poster bitmap to be sent as byte array.
     // Otherwise write to temp file.
-    private static final int MAX_POSTER_BYTES = 1024*3; // 3K.
-    private static final int MAX_VIDEO_BYTES = 1024*4; // 4K.
+    private static final int MAX_POSTER_BYTES = 1024 * 3; // 3K.
+    private static final int MAX_VIDEO_BYTES = 1024 * 4; // 4K.
 
     private ExoPlayer mExoPlayer;
     // Media source factory for remote videos from Tinode server.
@@ -92,8 +90,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     @OptIn(markerClass = UnstableApi.class)
     @SuppressLint("ClickableViewAccessibility")
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         final Activity activity = requireActivity();
 
         View view = inflater.inflate(R.layout.fragment_view_video, container, false);
@@ -102,8 +99,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 new DefaultHttpDataSource.Factory()
                         .setAllowCrossProtocolRedirects(true)
                         .setDefaultRequestProperties(Cache.getTinode().getRequestHeaders());
-        mTinodeHttpMediaSourceFactory = new DefaultMediaSourceFactory(
-                new CacheDataSource.Factory()
+        mTinodeHttpMediaSourceFactory =
+                new DefaultMediaSourceFactory(new CacheDataSource.Factory()
                         .setCache(TindroidApp.getVideoCache())
                         .setUpstreamDataSourceFactory(httpDataSourceFactory));
         // Construct ExoPlayer instance.
@@ -113,7 +110,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
                 Player.Listener.super.onPlaybackStateChanged(playbackState);
-                switch(playbackState) {
+                switch (playbackState) {
                     case Player.STATE_IDLE:
                     case Player.STATE_BUFFERING:
                         break;
@@ -127,7 +124,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         }
 
                         VideoSize vs = mExoPlayer.getVideoSize();
-                        if (vs.width > 0 && vs.height > 0 ) {
+                        if (vs.width > 0 && vs.height > 0) {
                             mVideoWidth = vs.width;
                             mVideoHeight = vs.height;
                         } else {
@@ -149,8 +146,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                     int width = args.getInt(AttachmentHandler.ARG_IMAGE_WIDTH, DEFAULT_WIDTH);
                     int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
                     mPosterView.setImageDrawable(UiUtils.getPlaceholder(activity,
-                            ResourcesCompat.getDrawable(getResources(), R.drawable.ic_video_broken, null),
-                            null, width, height));
+                            ResourcesCompat.getDrawable(getResources(),
+                                    R.drawable.ic_video_broken, null), null, width, height));
                 }
                 Toast.makeText(activity, R.string.unable_to_play_video, Toast.LENGTH_LONG).show();
             }
@@ -165,11 +162,11 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // Send message on button click.
         view.findViewById(R.id.chatSendButton).setOnClickListener(v -> sendVideo());
         // Send message on Enter.
-        ((EditText) view.findViewById(R.id.editMessage)).setOnEditorActionListener(
-                (v, actionId, event) -> {
-                    sendVideo();
-                    return true;
-                });
+        ((EditText) view.findViewById(R.id.editMessage))
+                .setOnEditorActionListener((v, actionId, event) -> {
+            sendVideo();
+            return true;
+        });
 
         return view;
     }
@@ -234,8 +231,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                 }
 
                 if (trusted) {
-                    MediaSource mediaSource = mTinodeHttpMediaSourceFactory.createMediaSource(
-                            new MediaItem.Builder().setUri(ref).build());
+                    MediaSource mediaSource =
+                            mTinodeHttpMediaSourceFactory.createMediaSource(
+                                    new MediaItem.Builder().setUri(ref).build());
                     mExoPlayer.setMediaSource(mediaSource);
                 } else {
                     MediaItem mediaItem = MediaItem.fromUri(ref);
@@ -253,8 +251,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                                 ".video", activity.getCacheDir());
                         temp.deleteOnExit();
                         // Retarded lint: the new method is available from API 26 only.
-                        @SuppressWarnings("IOStreamConstructor")
-                        OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
+                        @SuppressWarnings("IOStreamConstructor") OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
                         out.write(bits);
                         out.close();
                         mVideoView.setControllerAutoShow(false);
@@ -311,8 +308,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
             Uri ref = args.getParcelable(AttachmentHandler.ARG_REMOTE_URI);
             byte[] bits = args.getByteArray(AttachmentHandler.ARG_SRC_BYTES);
-            AttachmentHandler.enqueueDownloadAttachment(activity,
-                    ref != null ? ref.toString() : null, bits, filename, mime);
+            AttachmentHandler.enqueueDownloadAttachment(activity, ref != null ? ref.toString() : null,
+                    bits, filename, mime);
             return true;
         }
 
@@ -332,19 +329,19 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         int height = args.getInt(AttachmentHandler.ARG_IMAGE_HEIGHT, DEFAULT_HEIGHT);
 
         int placeholder_id = initialized ? R.drawable.ic_video : R.drawable.ic_video_broken;
-        Drawable placeholder = UiUtils.getPlaceholder(activity,
-                ResourcesCompat.getDrawable(getResources(), placeholder_id, null),
-                null, width, height);
+        Drawable placeholder = UiUtils.getPlaceholder(activity, ResourcesCompat.getDrawable(getResources(),
+                placeholder_id, null), null, width, height);
 
         // Poster is included as a reference.
         final Uri ref = args.getParcelable(AttachmentHandler.ARG_PRE_URI);
         if (ref != null) {
             Coil.imageLoader(activity).enqueue(
                     new ImageRequest.Builder(activity)
-                        .data(ref)
-                        .placeholder(placeholder)
-                        .error(placeholder)
-                        .target(mPosterView).build());
+                            .data(ref)
+                            .placeholder(placeholder)
+                            .error(placeholder)
+                            .target(mPosterView)
+                            .build());
             return;
         }
 
@@ -395,8 +392,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
         Bundle outputArgs = new Bundle();
 
-        outputArgs.putString(AttachmentHandler.ARG_TOPIC_NAME,
-                inputArgs.getString(AttachmentHandler.ARG_TOPIC_NAME));
+        outputArgs.putString(AttachmentHandler.ARG_TOPIC_NAME, inputArgs.getString(AttachmentHandler.ARG_TOPIC_NAME));
 
         String mimeType = inputArgs.getString(AttachmentHandler.ARG_MIME_TYPE);
         outputArgs.putString(AttachmentHandler.ARG_MIME_TYPE, mimeType);
@@ -440,7 +436,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         // Capture current video frame for use as a poster (video preview).
         videoFrameCapture(bmp -> {
             if (bmp != null) {
-                if (mVideoWidth > Const.MAX_POSTER_SIZE ||  mVideoHeight > Const.MAX_POSTER_SIZE) {
+                if (mVideoWidth > Const.MAX_POSTER_SIZE || mVideoHeight > Const.MAX_POSTER_SIZE) {
                     bmp = UiUtils.scaleBitmap(bmp, Const.MAX_POSTER_SIZE, Const.MAX_POSTER_SIZE, false);
                 }
                 byte[] bitmapBits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
@@ -450,24 +446,22 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         outputArgs.putParcelable(AttachmentHandler.ARG_PRE_URI, fileUri);
                     }
                 } else {
-                    outputArgs.putByteArray(AttachmentHandler.ARG_PREVIEW, UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                    outputArgs.putByteArray(AttachmentHandler.ARG_PREVIEW,
+                            UiUtils.bitmapToBytes(bmp, "image/jpeg"));
                 }
                 outputArgs.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
             }
 
-            AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_VIDEO, outputArgs);
+            AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity,
+                    AttachmentHandler.ARG_OPERATION_VIDEO, outputArgs);
             activity.getSupportFragmentManager().popBackStack();
         });
-    }
-
-    interface BitmapReady {
-        void done(Bitmap bmp);
     }
 
     // Take screenshot of the VideoView to use as poster.
     @OptIn(markerClass = UnstableApi.class)
     private void videoFrameCapture(BitmapReady callback) {
-        Bitmap bitmap  = Bitmap.createBitmap(mVideoWidth, mVideoHeight, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(mVideoWidth, mVideoHeight, Bitmap.Config.ARGB_8888);
         try {
             HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
             handlerThread.start();
@@ -491,5 +485,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             callback.done(null);
             Log.w(TAG, "Failed to capture frame", ex);
         }
+    }
+
+    interface BitmapReady {
+        void done(Bitmap bmp);
     }
 }
