@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -76,7 +77,9 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         final LoginActivity parent = (LoginActivity) requireActivity();
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
+        @SuppressLint("UnsafeOptInUsageError")
         String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
+        @SuppressLint("UnsafeOptInUsageError")
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();

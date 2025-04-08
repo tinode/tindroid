@@ -334,6 +334,7 @@ public class UiUtils {
     /**
      * Login successful. Show contacts activity
      */
+    @SuppressLint("UnsafeOptInUsageError")
     static void onLoginSuccess(Activity activity, final Button button, final String uid) {
         if (button != null) {
             activity.runOnUiThread(() -> button.setEnabled(true));
@@ -352,6 +353,7 @@ public class UiUtils {
         activity.finish();
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     static void doLogout(Context context) {
         CallManager.unregisterCallingAccount();
         TindroidApp.stopWatchingContacts();
@@ -384,6 +386,7 @@ public class UiUtils {
         return missing;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     static void onContactsPermissionsGranted(Activity activity) {
         // Run in background.
         Executors.newSingleThreadExecutor().execute(() -> {
@@ -1238,6 +1241,7 @@ public class UiUtils {
         return methods;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     static void fillAboutTinode(View view, String serverUrl, BrandingConfig branding) {
         ((TextView) view.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
         ((TextView) view.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",

@@ -928,6 +928,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onPause() {
         super.onPause();
@@ -1083,6 +1084,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     private synchronized void initAudioPlayer(WaveDrawable waveDrawable, View play, View pause) {
         if (mAudioPlayer != null) {
             return;

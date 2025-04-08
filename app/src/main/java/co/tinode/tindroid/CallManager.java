@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -91,6 +92,7 @@ public class CallManager {
         telecomManager.registerPhoneAccount(builder.build());
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     private static CallManager getShared() {
         if (sSharedInstance != null) {
             return sSharedInstance;
@@ -103,12 +105,14 @@ public class CallManager {
     public static void unregisterCallingAccount() {
         try {
             CallManager shared = CallManager.getShared();
+            @SuppressLint("UnsafeOptInUsageError")
             TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
             telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
         } catch (IllegalStateException | UnsupportedOperationException ignored) {
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     public static void placeOutgoingCall(Activity activity, String callee, boolean audioOnly) {
         TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
         if (shouldBypassTelecom(activity, telecomManager, true)) {

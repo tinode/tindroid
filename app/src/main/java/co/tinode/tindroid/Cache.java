@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.os.Build;
 import android.telecom.CallAudioState;
 import android.util.Log;
@@ -43,6 +44,7 @@ public class Cache {
     // Current video call.
     private CallInProgress mCallInProgress = null;
 
+    @SuppressLint("UnsafeOptInUsageError")
     public static synchronized Tinode getTinode() {
         if (sInstance.mTinode == null) {
             sInstance.mTinode = new Tinode("Tindroid/" + TindroidApp.getAppVersion(), API_KEY,

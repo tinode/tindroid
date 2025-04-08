@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -33,6 +34,7 @@ public class MediaControl {
         mContext = context;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     boolean ensurePlayerReady(final int seq, Map<String, Object> data,
                               FullFormatter.AudioControlCallback control) {
         if (mAudioPlayer != null && mPlayingAudioSeq == seq) {
@@ -145,6 +147,7 @@ public class MediaControl {
         return true;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     void releasePlayer(int seq) {
         if ((seq != 0 && mPlayingAudioSeq != seq) || mPlayingAudioSeq == -1) {
             return;

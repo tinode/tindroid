@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
@@ -81,6 +82,7 @@ public class LoginSettingsFragment extends PreferenceFragmentCompat
             case Utils.PREFS_USE_TLS:
                 break;
             case Utils.PREFS_HOST_NAME:
+                @SuppressLint("UnsafeOptInUsageError")
                 String hostName = TindroidApp.getDefaultHostName();
                 if (TextUtils.isEmpty(hostName)) {
                     BrandingConfig config = BrandingConfig.getConfig(requireContext());

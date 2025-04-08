@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -181,6 +182,7 @@ public class CallFragment extends Fragment {
         return v;
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
         final Activity activity = requireActivity();
@@ -255,6 +257,7 @@ public class CallFragment extends Fragment {
         startMediaAndSignal();
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     @Override
     public void onDestroyView() {
         stopMediaAndSignal();
@@ -335,6 +338,7 @@ public class CallFragment extends Fragment {
     }
 
     // Mute/unmute media.
+    @SuppressLint("UnsafeOptInUsageError")
     private void toggleMedia(FloatingActionButton b, boolean video, @DrawableRes int enabledIcon, int disabledIcon) {
         boolean disabled;
         if (video) {
@@ -372,6 +376,7 @@ public class CallFragment extends Fragment {
         }
     }
 
+    @SuppressLint("UnsafeOptInUsageError")
     private void toggleSpeakerphone(FloatingActionButton b) {
         boolean isEnabled = TindroidApp.isSpeakerphoneOn();
         if (TindroidApp.setSpeakerphoneOn(!isEnabled)) {
