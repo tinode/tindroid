@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.SharedPreferences;
@@ -19,6 +20,7 @@ import co.tinode.tindroid.account.Utils;
 public class AboutDialogFragment extends DialogFragment {
     @NonNull
     @Override
+    @SuppressLint("UnsafeOptInUsageError")
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         final Activity activity = requireActivity();
 

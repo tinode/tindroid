@@ -81,7 +81,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
+                android:layout_gravity="top"
                 android:paddingEnd="8dp"
                 android:text="@string/app_server"
                 android:textAppearance="?android:attr/textAppearanceMedium"
@@ -95,7 +95,7 @@
                 android:paddingEnd="8dp"
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 tools:ignore="RtlSymmetry"
-                tools:text="https://api.tinode.co" />
+                tools:text="https://api.tinode.co\n0.23 mysql:v0.23.0" />
 
         </LinearLayout>
 

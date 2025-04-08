@@ -1246,7 +1246,14 @@ public class UiUtils {
         ((TextView) view.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
         ((TextView) view.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
                 TindroidApp.getAppBuild()));
-        ((TextView) view.findViewById(R.id.app_server)).setText(serverUrl);
+        String serverVersion = Cache.getTinode().getServerVersion();
+        String serverBuild = Cache.getTinode().getServerBuild();
+        if (TextUtils.isEmpty(serverVersion) && TextUtils.isEmpty(serverBuild)) {
+            ((TextView) view.findViewById(R.id.app_server)).setText(serverUrl);
+        } else {
+            ((TextView) view.findViewById(R.id.app_server)).setText(
+                    String.format(Locale.US, "%s\n%s %s", serverUrl, serverVersion, serverBuild));
+        }
         if (branding != null) {
             Bitmap logo = BrandingConfig.getLargeIcon(view.getContext());
             if (logo != null) {
