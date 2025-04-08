@@ -310,7 +310,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 name.setText(R.string.placeholder_contact_title);
                 name.setTypeface(null, Typeface.ITALIC);
             }
-            Drafty content = msg != null ? msg.getContent() : null;
+            Drafty content = (msg != null && !msg.isDeleted()) ? msg.getContent() : null;
             if (content != null) {
                 if (msg.isMine()) {
                     messageStatus.setVisibility(View.VISIBLE);
