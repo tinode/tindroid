@@ -324,6 +324,7 @@ public class MessageActivity extends AppCompatActivity
             Cache.setSelectedTopicName(topicName);
             mTopicName = topicName;
 
+            mPinHash = -1;
             changed = true;
 
             if (mTopic == null) {
@@ -946,7 +947,7 @@ public class MessageActivity extends AppCompatActivity
         @Override
         public void onAllMessagesReceived(Integer count) {
             int currentPinHash = mTopic.getPinnedHash();
-            if ((count == null || count == 0) && mPinHash == currentPinHash) {
+            if (mPinHash == currentPinHash) {
                 return;
             }
             mPinHash = currentPinHash;

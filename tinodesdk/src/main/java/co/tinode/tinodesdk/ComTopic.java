@@ -21,9 +21,6 @@ import co.tinode.tinodesdk.model.TheCard;
  * Communication topic: a P2P or Group.
  */
 public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,PrivateType> {
-    // Used for tracking mutations of pinned messages.
-    private int pinHash = 0;
-
     public ComTopic(Tinode tinode, Subscription<DP,PrivateType> sub) {
         super(tinode, sub);
     }
@@ -107,18 +104,26 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         if (changed) {
             Map<String, Object> aux = new HashMap<>();
             aux.put("pins", !pinned.isEmpty() ? pinned : Tinode.NULL_VALUE);
-            pinHash ++;
             return setMeta(new MsgSetMeta.Builder<DP, PrivateType>().with(aux).build());
         }
 
         return new PromisedReply<>((ServerMessage) null);
     }
 
+    /**
+     * Check if the message with a given seqID is pinned.
+     * @param seq seqID of the message to check.
+     * @return true if the message is pinned, false otherwise.
+     */
     public boolean isPinned(int seq) {
         Object val = getAux("pins");
         return val instanceof List && ((List) val).contains(seq);
     }
 
+    /**
+     * Get list of pinned seqIDs.
+     * @return array of pinned seqIDs or null if there are no pinned messages.
+     */
     public int[] getPinned() {
         Object val = getAux("pins");
         if (val instanceof List) {
@@ -132,10 +137,24 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         return null;
     }
 
+    /**
+     * Get hash code of the pinned seqIDs.
+     * Changes every time the pinned seqIDs change.
+     * @return hash code of the pinned seqIDs.
+     */
     public int getPinnedHash() {
-        return pinHash;
+        Object val = getAux("pins");
+        if (val instanceof List) {
+            return val.hashCode();
+        }
+        return 0;
     }
 
+    /**
+     * Get count of pinned messages. The count could be wrong of the list of
+     * pinned messages contains elements other than Number.
+     * @return count of pinned messages.
+     */
     public int pinnedCount() {
         Object val = getAux("pins");
         if (val instanceof List) {
