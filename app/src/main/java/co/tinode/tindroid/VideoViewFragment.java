@@ -30,11 +30,11 @@ import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
@@ -250,8 +250,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                         File temp = File.createTempFile("VID_" + System.currentTimeMillis(),
                                 ".video", activity.getCacheDir());
                         temp.deleteOnExit();
-                        // Retarded lint: the new method is available from API 26 only.
-                        @SuppressWarnings("IOStreamConstructor") OutputStream out = new BufferedOutputStream(new FileOutputStream(temp));
+                        OutputStream out = new BufferedOutputStream(Files.newOutputStream(temp.toPath()));
                         out.write(bits);
                         out.close();
                         mVideoView.setControllerAutoShow(false);
@@ -363,8 +362,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
             File temp = File.createTempFile(prefix, suffix, ctx.getCacheDir());
             temp.deleteOnExit();
             fileUri = Uri.fromFile(temp);
-            // Retarded lint: the new method is available from API 26 only.
-            @SuppressWarnings("IOStreamConstructor") OutputStream os = new FileOutputStream(temp);
+            OutputStream os = Files.newOutputStream(temp.toPath());
             os.write(bits);
             os.close();
         } catch (IOException ex) {
