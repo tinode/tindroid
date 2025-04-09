@@ -237,17 +237,17 @@ public class LargeFileHelper {
         JsonParser parser = mapper.getFactory().createParser(in);
         if (parser.nextToken() != JsonToken.START_OBJECT) {
             throw new JsonParseException(parser, "Packet must start with an object",
-                    parser.getCurrentLocation());
+                    parser.currentLocation());
         }
         if (parser.nextToken() != JsonToken.END_OBJECT) {
-            String name = parser.getCurrentName();
+            String name = parser.currentName();
             parser.nextToken();
             JsonNode node = mapper.readTree(parser);
             if (name.equals("ctrl")) {
                 ctrl = mapper.readValue(node.traverse(), MsgServerCtrl.class);
             } else {
                 throw new JsonParseException(parser, "Unexpected message '" + name + "'",
-                        parser.getCurrentLocation());
+                        parser.currentLocation());
             }
         }
         return new ServerMessage(ctrl);

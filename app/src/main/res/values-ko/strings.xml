@@ -350,4 +350,7 @@
     <string name="self_topic_description">후세를 위해 저장된 메모, 메시지, 링크, 파일</string>
     <string name="message_deleted">메시지 삭제됨</string>
     <string name="message_not_found">찾을 수 없음</string>
+    <string name="take_photo">카메라</string>
+    <string name="select_from_gallery">갤러리</string>
+    <string name="record_video">비디오</string>
 </resources>

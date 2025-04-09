@@ -111,7 +111,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             if (mTopic == null) {
                 return;
             }
-            mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            mTopic.updateMuted(isChecked).thenCatch(new PromisedReply.FailureListener<>() {
                 @Override
                 public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                     activity.runOnUiThread(() -> muted.setChecked(!isChecked));
@@ -128,7 +128,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             if (mTopic == null) {
                 return;
             }
-            mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            mTopic.updateArchived(isChecked).thenCatch(new PromisedReply.FailureListener<>() {
                 @Override
                 public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                     activity.runOnUiThread(() -> archived.setChecked(!isChecked));
@@ -246,18 +246,14 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
         confirmBuilder.setMessage(message);
 
         confirmBuilder.setPositiveButton(android.R.string.yes, (dialog, which) -> {
-            PromisedReply<ServerMessage> response = null;
-            switch (what) {
-                case ACTION_REMOVE:
-                    response = mTopic.eject(uid, false);
-                    break;
-                case ACTION_BAN_MEMBER:
-                    response = mTopic.eject(uid, true);
-                    break;
-            }
+            PromisedReply<ServerMessage> response = switch (what) {
+                case ACTION_REMOVE -> mTopic.eject(uid, false);
+                case ACTION_BAN_MEMBER -> mTopic.eject(uid, true);
+                default -> null;
+            };
 
             if (response != null) {
-                response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                response.thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         Intent intent = new Intent(activity, ChatsActivity.class);
@@ -579,9 +575,9 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             UiUtils.AccessModeLabel[] labels = UiUtils.accessModeLabels(sub.acs, ss.status);
             if (labels != null) {
                 for (UiUtils.AccessModeLabel l : labels) {
-                    holder.status[i].setText(l.nameId);
-                    holder.status[i].setTextColor(l.color);
-                    ((GradientDrawable) holder.status[i].getBackground()).setStroke(2, l.color);
+                    holder.status[i].setText(l.nameId());
+                    holder.status[i].setTextColor(l.color());
+                    ((GradientDrawable) holder.status[i].getBackground()).setStroke(2, l.color());
                     holder.status[i++].setVisibility(View.VISIBLE);
                 }
             }

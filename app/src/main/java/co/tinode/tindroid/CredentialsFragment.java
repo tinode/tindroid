@@ -111,7 +111,7 @@ public class CredentialsFragment extends Fragment implements MenuProvider, View.
         cred[0] = new Credential(mMethod, null, code, null);
 
         tinode.loginToken(token, cred).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         if (parent.isFinishing() || parent.isDestroyed()) {
@@ -128,7 +128,7 @@ public class CredentialsFragment extends Fragment implements MenuProvider, View.
                         return null;
                     }
                 },
-                new PromisedReply.FailureListener<ServerMessage>() {
+                new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         if (parent.isFinishing() || parent.isDestroyed()) {

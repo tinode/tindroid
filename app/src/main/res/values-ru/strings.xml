@@ -331,4 +331,7 @@
     <string name="self_topic_description">Примечания, сообщения, ссылки, файлы, сохраненные для потомков</string>
     <string name="message_deleted">сообщение удалено</string>
     <string name="message_not_found">не найдено</string>
+    <string name="take_photo">Камера</string>
+    <string name="select_from_gallery">Галерея</string>
+    <string name="record_video">Видео</string>
 </resources>

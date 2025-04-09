@@ -80,7 +80,6 @@ public class DraftyTest {
 
         // String 7: Unicode emoji UTF32. 👩🏽‍✈ is a medium-dark-skinned female pilot, 4 code points:
         // 👩🏽‍✈ == 👩 female + 🏽 fitzpatrick skin tone + ‍ ZWJ + ✈ airplane.
-        // This test is expected to fail until compound emoji is supported.
         actual = Drafty.parse("😀 *b1👩🏽‍✈️b2* smile");
         expected = new Drafty("😀 b1👩🏽‍✈️b2 smile");
         expected.fmt = new Drafty.Style[]{

@@ -352,4 +352,7 @@
     <string name="self_topic_description">为后人保存的注释、消息、链接、文件</string>
     <string name="message_deleted">消息已删除</string>
     <string name="message_not_found">未找到</string>
+    <string name="take_photo">相机</string>
+    <string name="select_from_gallery">图库</string>
+    <string name="record_video">视频</string>
 </resources>

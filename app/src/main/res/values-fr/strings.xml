@@ -351,4 +351,7 @@
     <string name="self_topic_description">Notes, messages, liens, fichiers enregistrés pour la postérité</string>
     <string name="message_deleted">Message supprimé</string>
     <string name="message_not_found">Introuvable</string>
+    <string name="take_photo">Appareil</string>
+    <string name="select_from_gallery">Galerie</string>
+    <string name="record_video">Vidéo</string>
 </resources>

@@ -352,4 +352,7 @@
     <string name="self_topic_description">Note, mesaje, linkuri, fișiere salvate pentru posteritate</string>
     <string name="message_deleted">mesaj șters</string>
     <string name="message_not_found">nu a fost găsit</string>
+    <string name="take_photo">Camera</string>
+    <string name="select_from_gallery">Galerie</string>
+    <string name="record_video">Video</string>
 </resources>

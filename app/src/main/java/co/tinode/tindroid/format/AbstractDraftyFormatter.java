@@ -82,75 +82,45 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     @Override
     public T apply(final String tp, final Map<String, Object> data, final List<T> content, Stack<String> context) {
         if (tp != null) {
-            T span;
-            switch (tp) {
-                case "ST":
-                    span = handleStrong(content);
-                    break;
-                case "EM":
-                    span = handleEmphasized(content);
-                    break;
-                case "DL":
-                    span = handleDeleted(content);
-                    break;
-                case "CO":
-                    span = handleCode(content);
-                    break;
-                case "HD":
+            return switch (tp) {
+                case "ST" -> handleStrong(content);
+                case "EM" -> handleEmphasized(content);
+                case "DL" -> handleDeleted(content);
+                case "CO" -> handleCode(content);
+                case "HD" ->
                     // Hidden text
-                    span = handleHidden(content);
-                    break;
-                case "BR":
-                    span = handleLineBreak();
-                    break;
-                case "LN":
-                    span = handleLink(mContext, content, data);
-                    break;
-                case "MN":
-                    span = handleMention(mContext, content, data);
-                    break;
-                case "HT":
-                    span = handleHashtag(mContext, content, data);
-                    break;
-                case "AU":
+                        handleHidden(content);
+                case "BR" -> handleLineBreak();
+                case "LN" -> handleLink(mContext, content, data);
+                case "MN" -> handleMention(mContext, content, data);
+                case "HT" -> handleHashtag(mContext, content, data);
+                case "AU" ->
                     // Audio player.
-                    span = handleAudio(mContext, content, data);
-                    break;
-                case "IM":
-                    span = handleImage(mContext, content, data);
-                    break;
-                case "VD":
-                    span = handleVideo(mContext, content, data);
-                    break;
-                case "EX":
+                        handleAudio(mContext, content, data);
+                case "IM" -> handleImage(mContext, content, data);
+                case "VD" -> handleVideo(mContext, content, data);
+                case "EX" ->
                     // Attachments; attachments cannot have sub-elements.
-                    span = handleAttachment(mContext, data);
-                    break;
-                case "BN":
+                        handleAttachment(mContext, data);
+                case "BN" ->
                     // Button
-                    span = handleButton(mContext, content, data);
-                    break;
-                case "FM":
+                        handleButton(mContext, content, data);
+                case "FM" ->
                     // Form
-                    span = handleForm(mContext, content, data);
-                    break;
-                case "RW":
+                        handleForm(mContext, content, data);
+                case "RW" ->
                     // Form element formatting is dependent on element content.
-                    span = handleFormRow(mContext, content, data);
-                    break;
-                case "QQ":
+                        handleFormRow(mContext, content, data);
+                case "QQ" ->
                     // Quoted block.
-                    span = handleQuote(mContext, content, data);
-                    break;
-                case "VC":
+                        handleQuote(mContext, content, data);
+                case "VC" ->
                     // Video call.
-                    span = handleVideoCall(mContext, content, data);
-                    break;
-                default:
+                        handleVideoCall(mContext, content, data);
+                default ->
                     // Unknown element
-                    span = handleUnknown(mContext, content, data);
-            }
-            return span;
+                        handleUnknown(mContext, content, data);
+            };
         }
         return handlePlain(content);
     }
@@ -200,28 +170,14 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     }
 
     protected static int callStatus(boolean incoming, String event) {
-        int comment;
-        switch (event) {
-            case "busy":
-                comment = R.string.busy_call;
-                break;
-            case "declined":
-                comment = R.string.declined_call;
-                break;
-            case "missed":
-                comment = incoming ? R.string.missed_call : R.string.cancelled_call;
-                break;
-            case "started":
-                comment = R.string.connecting_call;
-                break;
-            case "accepted":
-                comment = R.string.in_progress_call;
-                break;
-            default:
-                comment = R.string.disconnected_call;
-                break;
-        }
-        return comment;
+        return switch (event) {
+            case "busy" -> R.string.busy_call;
+            case "declined" -> R.string.declined_call;
+            case "missed" -> incoming ? R.string.missed_call : R.string.cancelled_call;
+            case "started" -> R.string.connecting_call;
+            case "accepted" -> R.string.in_progress_call;
+            default -> R.string.disconnected_call;
+        };
     }
 
     protected static int getIntVal(String name, Map<String, Object> data) {

@@ -351,4 +351,7 @@
     <string name="self_topic_description">為後代所儲存的註解、訊息、連結、檔案</string>
     <string name="message_deleted">訊息已刪除</string>
     <string name="message_not_found">找不到</string>
+    <string name="take_photo">相機</string>
+    <string name="select_from_gallery">圖庫</string>
+    <string name="record_video">影片</string>
 </resources>

@@ -83,7 +83,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();
-        tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 if (parent.isFinishing() || parent.isDestroyed()) {
@@ -93,7 +93,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                 setupCredentials(parent, methods.toArray(new String[]{}));
                 return null;
             }
-        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        }).thenCatch(new PromisedReply.FailureListener<>() {
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 parent.runOnUiThread(() -> {
@@ -194,7 +194,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
 
         Cache.getTinode().requestResetSecret("basic", method, value)
                 .thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                        new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                                 parent.runOnUiThread(() -> {
@@ -209,7 +209,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                             }
                         })
                 .thenCatch(
-                        new PromisedReply.FailureListener<ServerMessage>() {
+                        new PromisedReply.FailureListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
                                 if (parent.isFinishing() || parent.isDestroyed() || !isVisible()) {
@@ -248,7 +248,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
         wrapper.setError(password.isEmpty() ? getString(R.string.password_required) : null);
 
         Cache.getTinode().updateAccountBasic(AuthScheme.codeInstance(code, method, value), null, password)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (parent.isFinishing() || parent.isDestroyed() || !isVisible()) {
@@ -262,7 +262,7 @@ public class PasswordResetFragment extends Fragment implements MenuProvider {
                         return null;
                     }
                 })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                .thenCatch(new PromisedReply.FailureListener<>() {
                     @Override
                     public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                         if (parent.isFinishing() || parent.isDestroyed() || !isVisible()) {

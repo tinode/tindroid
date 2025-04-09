@@ -464,15 +464,6 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         }
     }
 
-    private static class FoundMember {
-        final String id;
-        final VxCard pub;
-        final String[] priv;
-
-        FoundMember(String id, VxCard pub, String[] priv) {
-            this.id = id;
-            this.pub = pub;
-            this.priv = priv;
-        }
+    private record FoundMember(String id, VxCard pub, String[] priv) {
     }
 }

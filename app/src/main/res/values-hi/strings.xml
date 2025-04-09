@@ -323,4 +323,7 @@
     <string name="self_topic_description">पीढ़ी के लिए सेव किए गए नोट्स, संदेश, लिंक, फ़ाइलें</string>
     <string name="message_deleted">संदेश डिलीट किया गया</string>
     <string name="message_not_found">नहीं मिला</string>
+    <string name="take_photo">कैमरा</string>
+    <string name="select_from_gallery">गैलरी</string>
+    <string name="record_video">वीडियो</string>
 </resources>

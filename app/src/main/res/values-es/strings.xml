@@ -350,5 +350,7 @@
     <string name="self_topic_description">Notas, mensajes, enlaces y archivos guardados</string>
     <string name="message_deleted">Mensaje eliminado</string>
     <string name="message_not_found">No encontrado</string>
-
+    <string name="take_photo">Cámara</string>
+    <string name="select_from_gallery">Galería</string>
+    <string name="record_video">Vídeo</string>
 </resources>

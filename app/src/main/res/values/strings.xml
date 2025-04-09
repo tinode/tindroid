@@ -375,7 +375,6 @@
     <string name="delete_for_everybody">Delete for everybody</string>
     <string name="confirm_delete_message_single">Are you sure you want to delete the message?</string>
     <string name="confirm_delete_message_plural">Are you sure you want to delete these messages?</string>
-    <string name="select_media">Select Media</string>
     <string name="take_photo">Camera</string>
     <string name="select_from_gallery">Gallery</string>
     <string name="record_video">Video</string>

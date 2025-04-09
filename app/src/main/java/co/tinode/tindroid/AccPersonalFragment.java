@@ -353,7 +353,7 @@ public class AccPersonalFragment extends Fragment
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
             UiUtils.updateTopicDesc(me, title, null, description)
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                             if (!activity.isFinishing() && !activity.isDestroyed()) {

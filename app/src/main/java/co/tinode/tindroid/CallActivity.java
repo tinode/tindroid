@@ -182,16 +182,11 @@ public class CallActivity extends AppCompatActivity  {
 
         Fragment fragment = fm.findFragmentByTag(tag);
         if (fragment == null) {
-            switch (tag) {
-                case FRAGMENT_INCOMING:
-                    fragment = new IncomingCallFragment();
-                    break;
-                case FRAGMENT_ACTIVE:
-                    fragment = new CallFragment();
-                    break;
-                default:
-                    throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);
-            }
+            fragment = switch (tag) {
+                case FRAGMENT_INCOMING -> new IncomingCallFragment();
+                case FRAGMENT_ACTIVE -> new CallFragment();
+                default -> throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);
+            };
         } else if (args == null) {
             // Retain old arguments.
             args = fragment.getArguments();
@@ -239,14 +234,14 @@ public class CallActivity extends AppCompatActivity  {
                 .withDel();
 
         mTopic.subscribe(null, builder.build())
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         mTopic.videoCallRinging(mSeq);
                         return null;
                     }
                 })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                .thenCatch(new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         if (err instanceof AlreadySubscribedException) {
