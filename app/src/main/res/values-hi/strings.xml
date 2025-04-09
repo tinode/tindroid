@@ -333,4 +333,7 @@
     <string name="configure_connection">कनेक्शन कॉन्फ़िगर करें</string>
     <string name="calling_not_supported">कॉलिंग समर्थित नहीं है</string>
     <string name="display_code">QR कोड दिखाएँ</string>
+    <string name="take_photo">कैमरा</string>
+    <string name="select_from_gallery">गैलरी</string>
+    <string name="record_video">वीडियो</string>
 </resources>

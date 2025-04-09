@@ -361,4 +361,7 @@
     <string name="configure_connection">Configurer la connexion</string>
     <string name="calling_not_supported">Appel non pris en charge</string>
     <string name="display_code">Afficher le code QR</string>
+    <string name="take_photo">Appareil</string>
+    <string name="select_from_gallery">Galerie</string>
+    <string name="record_video">Vidéo</string>
 </resources>

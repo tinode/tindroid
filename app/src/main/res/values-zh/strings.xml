@@ -362,4 +362,7 @@
     <string name="configure_connection">配置连接</string>
     <string name="calling_not_supported">不支持通话</string>
     <string name="display_code">显示二维码</string>
+    <string name="take_photo">相机</string>
+    <string name="select_from_gallery">图库</string>
+    <string name="record_video">视频</string>
 </resources>

@@ -361,4 +361,7 @@
     <string name="configure_connection">配置連接</string>
     <string name="calling_not_supported">不支援通話</string>
     <string name="display_code">顯示二維碼</string>
+    <string name="take_photo">相機</string>
+    <string name="select_from_gallery">圖庫</string>
+    <string name="record_video">影片</string>
 </resources>

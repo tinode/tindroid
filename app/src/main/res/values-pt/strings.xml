@@ -362,4 +362,7 @@
     <string name="configure_connection">Configurar conexão</string>
     <string name="calling_not_supported">Chamada não suportada</string>
     <string name="display_code">Mostrar código QR</string>
+    <string name="take_photo">Câmera</string>
+    <string name="select_from_gallery">Galeria</string>
+    <string name="record_video">Vídeo</string>
 </resources>
