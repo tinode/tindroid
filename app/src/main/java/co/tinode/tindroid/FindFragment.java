@@ -156,7 +156,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
 
     private void topicAttach() {
         Cache.attachFndTopic(mFndListener)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         final FragmentActivity activity = getActivity();
@@ -171,7 +171,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
                     }
                 })
                 .thenCatch(new UiUtils.ToastFailureListener(getActivity()))
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         final FragmentActivity activity = getActivity();

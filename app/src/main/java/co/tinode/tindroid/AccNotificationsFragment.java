@@ -60,7 +60,7 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         final SwitchCompat incognito = activity.findViewById(R.id.switchIncognitoMode);
         incognito.setOnCheckedChangeListener((buttonView, isChecked) ->
                 me.updateMode(isChecked ? "-P" : "+P")
-                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                        .thenCatch(new PromisedReply.FailureListener<>() {
                             @Override
                             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                                 Log.i(TAG, "Incognito mode: " + isChecked, err);

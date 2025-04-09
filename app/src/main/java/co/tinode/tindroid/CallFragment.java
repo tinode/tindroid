@@ -67,7 +67,6 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerInfo;
-import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
@@ -219,7 +218,7 @@ public class CallFragment extends Fragment {
         mToggleSpeakerphoneBtn.setImageResource(speakerphoneOn ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
 
         if (!mTopic.isAttached()) {
-            mTopic.setListener(new Topic.Listener<VxCard, PrivateType, VxCard, PrivateType>() {
+            mTopic.setListener(new Topic.Listener<>() {
                 @Override
                 public void onSubscribe(int code, String text) {
                     handleCallStart();
@@ -603,7 +602,7 @@ public class CallFragment extends Fragment {
                 // Is audio-only?
                 head.put("aonly", mAudioOnly);
                 mTopic.publish(Drafty.videoCall(), head).thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                        new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                 if (result.ctrl != null && result.ctrl.code < 300) {

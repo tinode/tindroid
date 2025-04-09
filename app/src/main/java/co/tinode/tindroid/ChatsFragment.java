@@ -119,7 +119,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         mSelectionTracker.onRestoreInstanceState(savedInstanceState);
 
         mAdapter.setSelectionTracker(mSelectionTracker);
-        mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver<String>() {
+        mSelectionTracker.addObserver(new SelectionTracker.SelectionObserver<>() {
             @Override
             public void onSelectionChanged() {
                 super.onSelectionChanged();
@@ -286,14 +286,14 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                 final ComTopic<VxCard> topic =
                         (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
                 topic.updateMuted(!topic.isMuted())
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        .thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                 datasetChanged();
                                 return null;
                             }
                         })
-                        .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                        .thenCatch(new PromisedReply.FailureListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(final Exception err) {
                                 activity.runOnUiThread(() -> {
@@ -311,14 +311,14 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
             final ComTopic<VxCard> topic =
                     (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
             topic.updateArchived(!topic.isArchived())
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             mAdapter.resetContent(activity);
                             return null;
                         }
                     })
-                    .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    .thenCatch(new PromisedReply.FailureListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onFailure(final Exception err) {
                             activity.runOnUiThread(() -> {
@@ -334,13 +334,13 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
         } else if (id == R.id.action_unblock) {
             final ComTopic<VxCard> topic =
                     (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-            topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            topic.subscribe().thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     mAdapter.resetContent(activity);
                     return null;
                 }
-            }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            }).thenCatch(new PromisedReply.FailureListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onFailure(final Exception err) {
                     activity.runOnUiThread(() -> {
@@ -376,7 +376,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                         @SuppressWarnings("unchecked")
                         ComTopic<VxCard> t = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
                         try {
-                            reply = t.delete(true).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                            reply = t.delete(true).thenCatch(new PromisedReply.FailureListener<>() {
                                 @Override
                                 public PromisedReply<ServerMessage> onFailure(final Exception err) {
                                     activity.runOnUiThread(() -> {
@@ -395,7 +395,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                     }
                     // Wait for the last reply to resolve then update dataset.
                     if (reply != null) {
-                        reply.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        reply.thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                 datasetChanged();

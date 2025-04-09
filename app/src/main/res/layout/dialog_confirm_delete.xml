@@ -7,7 +7,7 @@
     android:paddingEnd="@dimen/dialog_padding_right"
     android:orientation="vertical">
 
-    <TextView
+    <!--TextView
         android:id="@+id/confirmDelete"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -23,6 +23,6 @@
         android:paddingTop="@dimen/dialog_padding_vertical"
         android:paddingBottom="@dimen/dialog_padding_vertical"
         android:text="@string/delete_for_peer"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:textAppearance="?android:attr/textAppearanceMedium" /-->
 
 </LinearLayout>

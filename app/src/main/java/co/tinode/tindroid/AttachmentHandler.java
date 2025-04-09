@@ -768,7 +768,7 @@ public class AttachmentHandler extends Worker {
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
                 result = uploader.uploadAsync(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
-                                topicName, null).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                topicName, null).thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                                 if (msg != null && msg.ctrl != null && msg.ctrl.code == 200) {

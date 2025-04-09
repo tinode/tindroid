@@ -275,7 +275,7 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             }
 
             if (response != null) {
-                response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                response.thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         Intent intent = new Intent(activity, ChatsActivity.class);

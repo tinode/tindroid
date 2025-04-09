@@ -137,7 +137,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
         // This is called on the websocket thread.
         tinode.connect(hostName, tls, false)
                 .thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                        new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored) {
                                 return tinode.loginBasic(
@@ -146,7 +146,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
                             }
                         })
                 .thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                        new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                 sharedPref.edit().putString(LoginActivity.PREFS_LAST_LOGIN, login).apply();
@@ -171,7 +171,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
                             }
                         })
                 .thenCatch(
-                        new PromisedReply.FailureListener<ServerMessage>() {
+                        new PromisedReply.FailureListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
                                 Log.i(TAG, "Login failed", err);

@@ -94,7 +94,7 @@ public class CreateGroupFragment extends Fragment implements UtilsMedia.MediaPre
             return;
         }
 
-        mFailureListener = new PromisedReply.FailureListener<ServerMessage>() {
+        mFailureListener = new PromisedReply.FailureListener<>() {
             @Override
             public PromisedReply<ServerMessage> onFailure(final Exception err) {
                 activity.runOnUiThread(() -> {
@@ -220,10 +220,10 @@ public class CreateGroupFragment extends Fragment implements UtilsMedia.MediaPre
         topic.setTags(tags);
         topic.setPub(new VxCard(title, description));
         AttachmentHandler.uploadAvatar(topic.getPub(), avatar, null)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
-                        return topic.subscribe().thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        return topic.subscribe().thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
                                 for (String user : members) {

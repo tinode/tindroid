@@ -436,7 +436,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         ThumbnailTransformer tr = new ThumbnailTransformer();
         final Drafty content = msg.content.replyContent(quoteLength, 1).transform(tr);
-        tr.completionPromise().thenApply(new PromisedReply.SuccessListener<Void[]>() {
+        tr.completionPromise().thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<Void[]> onSuccess(Void[] result) {
                 mActivity.runOnUiThread(() -> {
@@ -455,7 +455,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 });
                 return null;
             }
-        }).thenCatch(new PromisedReply.FailureListener<Void[]>() {
+        }).thenCatch(new PromisedReply.FailureListener<>() {
             @Override
             public <E extends Exception> PromisedReply<Void[]> onFailure(E err) {
                 Log.w(TAG, "Unable to create message preview", err);
@@ -1225,32 +1225,27 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 return false;
             }
 
-            switch (type) {
-                case "AU":
+            return switch (type) {
+                case "AU" ->
                     // Pause/resume audio.
-                    return clickAudio(data, params);
-
-                case "LN":
+                        clickAudio(data, params);
+                case "LN" ->
                     // Click on an URL
-                    return clickLink(data);
-
-                case "IM":
+                        clickLink(data);
+                case "IM" ->
                     // Image
-                    return clickImage(data);
-
-                case "EX":
+                        clickImage(data);
+                case "EX" ->
                     // Attachment
-                    return clickAttachment(data);
-
-                case "BN":
+                        clickAttachment(data);
+                case "BN" ->
                     // Button
-                    return clickButton(data);
-
-                case "VD":
+                        clickButton(data);
+                case "VD" ->
                     // Pay video.
-                    return clickVideo(data);
-            }
-            return false;
+                        clickVideo(data);
+                default -> false;
+            };
         }
 
         private boolean clickAttachment(Map<String, Object> data) {

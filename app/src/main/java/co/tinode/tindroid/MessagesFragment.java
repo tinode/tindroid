@@ -348,14 +348,14 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 try {
                     mTopic.getMeta(mTopic.getMetaGetBuilder().withEarlierData(MESSAGES_TO_LOAD).build())
                             .thenApply(
-                                    new PromisedReply.SuccessListener<ServerMessage>() {
+                                    new PromisedReply.SuccessListener<>() {
                                         @Override
                                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                             activity.runOnUiThread(() -> mRefresher.setRefreshing(false));
                                             return null;
                                         }
                                     },
-                                    new PromisedReply.FailureListener<ServerMessage>() {
+                                    new PromisedReply.FailureListener<>() {
                                         @Override
                                         public PromisedReply<ServerMessage> onFailure(Exception err) {
                                             activity.runOnUiThread(() -> mRefresher.setRefreshing(false));
@@ -917,7 +917,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         int id = item.getItemId();
         if (id == R.id.action_clear) {
-            mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            mTopic.delMessages(false).thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     runMessagesLoader(mTopicName);
@@ -1082,7 +1082,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 R.string.confirm_leave_topic);
 
         confirmBuilder.setPositiveButton(android.R.string.ok, (dialog, which) ->
-                mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                mTopic.delete(true).thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         Intent intent = new Intent(activity, ChatsActivity.class);
@@ -1120,7 +1120,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 if (mTopic.isP2PType()) {
                     // For P2P topics change 'given' permission of the peer too.
                     // In p2p topics the other user has the same name as the topic.
-                    response = response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    response = response.thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             return mTopic.setMeta(new MsgSetMeta.Builder<VxCard,PrivateType>()
@@ -1151,7 +1151,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 return;
             }
 
-            response.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            response.thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     final int id = view1.getId();

@@ -121,14 +121,14 @@ public class SignUpFragment extends Fragment
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
         final Tinode tinode = Cache.getTinode();
-        tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        tinode.connect(hostName, tls, false).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 List<String> methods = UiUtils.getRequiredCredMethods(tinode, "auth");
                 setupCredentials(parent, methods.toArray(new String[]{}));
                 return null;
             }
-        }).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        }).thenCatch(new PromisedReply.FailureListener<>() {
             @Override
             public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) {
                 Log.w(TAG, "Failed to connect", err);
@@ -273,13 +273,13 @@ public class SignUpFragment extends Fragment
         }
         // This is called on the websocket thread.
         tinode.connect(hostName, tls, false)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                 return AttachmentHandler.uploadAvatar(theCard, bmp, "newacc");
                             }
                         })
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage ignored_msg) {
                                 // Try to create a new account.
@@ -290,7 +290,7 @@ public class SignUpFragment extends Fragment
                                         credentials.toArray(new Credential[]{}));
                             }
                         })
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(final ServerMessage msg) {
                                 UiUtils.updateAndroidAccount(parent, tinode.getMyId(),
@@ -315,7 +315,7 @@ public class SignUpFragment extends Fragment
                                 return null;
                             }
                         })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                .thenCatch(new PromisedReply.FailureListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(Exception err) {
                                 if (!SignUpFragment.this.isVisible() || parent.isFinishing() || parent.isDestroyed()) {

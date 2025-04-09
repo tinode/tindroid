@@ -463,7 +463,7 @@ public class MessageActivity extends AppCompatActivity
         }
 
         mTopic.subscribe(null, builder.build())
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (result.ctrl != null && result.ctrl.code == 303) {
@@ -484,7 +484,7 @@ public class MessageActivity extends AppCompatActivity
                         return null;
                     }
                 })
-                .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                .thenCatch(new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         if (!(err instanceof NotConnectedException) && !(err instanceof AlreadySubscribedException)) {
@@ -578,7 +578,7 @@ public class MessageActivity extends AppCompatActivity
                 promise = mTopic.syncAll();
             }
             if (runLoader) {
-                promise.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                promise.thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         runMessagesLoader();
@@ -586,7 +586,7 @@ public class MessageActivity extends AppCompatActivity
                     }
                 });
             }
-            promise.thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            promise.thenCatch(new PromisedReply.FailureListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onFailure(Exception err) {
                     Log.w(TAG, "Sync failed", err);
@@ -702,7 +702,7 @@ public class MessageActivity extends AppCompatActivity
             BaseDb.getInstance().getStore().msgPruneFailed(mTopic);
             runMessagesLoader(); // Refreshes the messages: hides removed, shows pending.
             done
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             if (mTopic.isArchived()) {

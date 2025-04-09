@@ -872,13 +872,13 @@ public class UiUtils {
 
             if (reply != null) {
                 reply.thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
+                        new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                                 return null;
                             }
                         },
-                        new PromisedReply.FailureListener<ServerMessage>() {
+                        new PromisedReply.FailureListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onFailure(final Exception err) {
                                 if (activity.isFinishing() || activity.isDestroyed()) {
@@ -916,7 +916,7 @@ public class UiUtils {
         }
 
         return AttachmentHandler.uploadAvatar(pub, bmp, topic.getName())
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 String[] attachments = null;
@@ -984,13 +984,12 @@ public class UiUtils {
         }
 
         // If connection exists attachMeTopic returns resolved promise.
-        Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+        Cache.attachMeTopic(l).thenCatch(new PromisedReply.FailureListener<>() {
             @Override
             public PromisedReply<ServerMessage> onFailure(Exception err) {
                 Log.w(TAG, "Error subscribing to 'me' topic", err);
                 l.onSubscriptionError(err);
-                if (err instanceof ServerResponseException) {
-                    ServerResponseException sre = (ServerResponseException) err;
+                if (err instanceof ServerResponseException sre) {
                     int errCode = sre.getCode();
                     // 401: attempt to subscribe to 'me' happened before login, do not log out.
                     // 403: Does not apply to 'me' subscription.
@@ -1345,14 +1344,7 @@ public class UiUtils {
         }
     }
 
-    static class AccessModeLabel {
-        public final int color;
-        final int nameId;
-
-        AccessModeLabel(int nameId, int color) {
-            this.nameId = nameId;
-            this.color = color;
-        }
+    record AccessModeLabel(int nameId, int color) {
     }
 
     static class ToastFailureListener extends PromisedReply.FailureListener<ServerMessage> {

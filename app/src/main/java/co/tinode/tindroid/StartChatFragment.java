@@ -65,16 +65,12 @@ public class StartChatFragment extends Fragment {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            switch (position) {
-                case TAB_SEARCH:
-                    return new FindFragment();
-                case TAB_NEW_GROUP:
-                    return new CreateGroupFragment();
-                case TAB_BY_ID:
-                    return new AddByIDFragment();
-                default:
-                    throw new IllegalArgumentException("Invalid TAB position " + position);
-            }
+            return switch (position) {
+                case TAB_SEARCH -> new FindFragment();
+                case TAB_NEW_GROUP -> new CreateGroupFragment();
+                case TAB_BY_ID -> new AddByIDFragment();
+                default -> throw new IllegalArgumentException("Invalid TAB position " + position);
+            };
         }
 
         @Override
