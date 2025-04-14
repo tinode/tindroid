@@ -17,7 +17,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Range is either an individual ID (hi=0 || hi==null) or a range of deleted IDs, low end inclusive (closed),
- * high-end exclusive (open): [low .. hi), e.g. 1..5 &rarr; 1, 2, 3, 4
+ * high-end exclusive (open): [low .. hi), e.g. 1..5 → 1, 2, 3, 4
  */
 @JsonInclude(NON_DEFAULT)
 @SuppressWarnings("WeakerAccess")
@@ -52,6 +52,18 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
             r = nullableCompare(other.hi, hi);
         }
         return r;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        MsgRange other = (MsgRange) obj;
+        return low == other.low && nullableCompare(hi, other.hi) == 0;
     }
 
     @SuppressWarnings("NullableProblems")
@@ -124,7 +136,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     /**
      * Convert array of IDs to multiple ranges.
      */
-    public static MsgRange[] toRanges(final int[] list) {
+    public static @Nullable MsgRange[] toRanges(final int[] list) {
         if (list == null || list.length == 0) {
             return null;
         }
@@ -152,13 +164,12 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     /**
      * Collapse multiple possibly overlapping ranges into as few ranges non-overlapping
      * ranges as possible: [1..6],[2..4],[5..7] -> [1..7].
-     *
      * The input array of ranges must be sorted.
      *
      * @param ranges ranges to collapse
      * @return non-overlapping ranges.
      */
-    public static MsgRange[] collapse(@NotNull MsgRange[] ranges) {
+    public static @NotNull MsgRange[] collapse(@NotNull MsgRange[] ranges) {
         if (ranges.length < 2) {
             return ranges;
         }
@@ -202,7 +213,7 @@ public class MsgRange implements Comparable<MsgRange>, Serializable {
     /**
      * Get maximum enclosing range. The input array must be sorted.
      */
-    public static MsgRange enclosing(@Nullable final MsgRange[] ranges) {
+    public static @Nullable MsgRange enclosing(final @NotNull MsgRange[] ranges) {
         if (ranges == null || ranges.length == 0) {
             return null;
         }
