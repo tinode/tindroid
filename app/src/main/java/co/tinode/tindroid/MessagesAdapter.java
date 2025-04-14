@@ -398,52 +398,56 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
-        final Storage store = BaseDb.getInstance().getStore();
-        if (topic != null) {
-            ArrayList<Integer> toDelete = new ArrayList<>();
-            int i = 0;
-            int discarded = 0;
-            while (i < positions.length) {
-                int pos = positions[i++];
-                StoredMessage msg = getMessage(pos);
-                if (msg != null) {
-                    int replSeq = msg.getReplacementSeqId();
-                    if (replSeq > 0) {
-                        // Deleting all version of an edited message.
-                        int[] ids = store.getAllMsgVersions(topic, replSeq, -1);
-                        for (int id : ids) {
-                            if (BaseDb.isUnsentSeq(id)) {
-                                store.msgDiscardSeq(topic, id);
-                                discarded++;
-                            } else {
-                                toDelete.add(id);
-                            }
-                        }
-                    }
+        if (topic == null) {
+            return;
+        }
 
-                    if (msg.status == BaseDb.Status.SYNCED) {
-                        toDelete.add(msg.seq);
-                    } else {
-                        store.msgDiscard(topic, msg.getDbId());
+        final Storage store = BaseDb.getInstance().getStore();
+        ArrayList<Integer> toDelete = new ArrayList<>();
+        int i = 0;
+        int discarded = 0;
+        while (i < positions.length) {
+            int pos = positions[i++];
+            StoredMessage msg = getMessage(pos);
+            if (msg == null) {
+                continue;
+            }
+
+            int replSeq = msg.getReplacementSeqId();
+            if (replSeq > 0) {
+                // Deleting all version of an edited message.
+                int[] ids = store.getAllMsgVersions(topic, replSeq, -1);
+                for (int id : ids) {
+                    if (BaseDb.isUnsentSeq(id)) {
+                        store.msgDiscardSeq(topic, id);
                         discarded++;
+                    } else {
+                        toDelete.add(id);
                     }
                 }
             }
 
-            if (!toDelete.isEmpty()) {
-                topic.delMessages(toDelete, hard)
-                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                runLoader(false);
-                                mActivity.runOnUiThread(() -> updateSelectionMode());
-                                return null;
-                            }
-                        }, new UiUtils.ToastFailureListener(mActivity));
-            } else if (discarded > 0) {
-                runLoader(false);
-                updateSelectionMode();
+            if (msg.status == BaseDb.Status.SYNCED) {
+                toDelete.add(msg.seq);
+            } else {
+                store.msgDiscard(topic, msg.getDbId());
+                discarded++;
             }
+        }
+
+        if (!toDelete.isEmpty()) {
+            topic.delMessages(toDelete, hard)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            runLoader(false);
+                            mActivity.runOnUiThread(() -> updateSelectionMode());
+                            return null;
+                        }
+                    }, new UiUtils.ToastFailureListener(mActivity));
+        } else if (discarded > 0) {
+            runLoader(false);
+            updateSelectionMode();
         }
     }
 
