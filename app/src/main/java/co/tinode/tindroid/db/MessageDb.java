@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.StaleDataException;
 import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.provider.BaseColumns;
@@ -860,7 +861,14 @@ public class MessageDb implements BaseColumns {
      * @return _id of the message at the current position.
      */
     public static long getLocalId(Cursor cursor) {
-        return cursor.isClosed() ? -1 : cursor.getLong(0);
+        try {
+            return cursor.isClosed() ? -1 : cursor.getLong(0);
+        } catch (StaleDataException ex) {
+            // There is a race condition somewhere that the cursor gets closed between
+            // the call to isClosed() and getLong().
+            Log.w(TAG, "Cursor closed", ex);
+            return -1;
+        }
     }
 
     /**
