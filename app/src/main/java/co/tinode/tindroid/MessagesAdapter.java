@@ -891,8 +891,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     @Override
     // Must match position-to-item of getMessage.
     public long getItemId(int position) {
-        if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
-            return MessageDb.getLocalId(mCursor);
+        try {
+            if (mCursor != null && !mCursor.isClosed() && mCursor.moveToPosition(position)) {
+                return MessageDb.getLocalId(mCursor);
+            }
+        } catch (SQLiteBlobTooBigException ex) {
+            Log.w(TAG, "Failed to read message (misconfigured server):", ex);
         }
         return View.NO_ID;
     }
@@ -918,7 +922,12 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @Override
     public int getItemCount() {
-        return mCursor != null && !mCursor.isClosed() ? mCursor.getCount() : 0;
+        try {
+            return mCursor != null && !mCursor.isClosed() ? mCursor.getCount() : 0;
+        } catch (SQLiteBlobTooBigException ex) {
+            Log.w(TAG, "Failed to read message count (misconfigured server):", ex);
+            return 0;
+        }
     }
 
     private void toggleSelectionAt(int pos) {
