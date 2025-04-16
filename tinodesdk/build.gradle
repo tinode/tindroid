@@ -25,10 +25,20 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     sourceSets {
         main {
             jniLibs.srcDirs = ['src/main/libs']
         }
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
     }
 }
 
