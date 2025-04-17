@@ -1011,8 +1011,9 @@ public class Drafty implements Serializable {
      * @return Drafty as markdown-formatted string; elements not representable as markdown are converted to plain text.
      */
     public String toMarkdown(boolean plainLink) {
-        return format(new Formatter<String>() {
+        return format(new Formatter<>() {
             final boolean usePlainLink = plainLink;
+
             @Override
             public String wrapText(CharSequence text) {
                 return text.toString();
@@ -1441,8 +1442,7 @@ public class Drafty implements Serializable {
 
     @Override
     public boolean equals(Object another) {
-        if (another instanceof Drafty) {
-            Drafty that = (Drafty) another;
+        if (another instanceof Drafty that) {
             return equalsNullable(this.txt, that.txt) &&
                     Arrays.equals(this.fmt, that.fmt) &&
                     Arrays.equals(this.ent, that.ent);
@@ -1661,8 +1661,7 @@ public class Drafty implements Serializable {
 
         @Override
         public boolean equals(Object another) {
-            if (another instanceof Style) {
-                Style that = (Style) another;
+            if (another instanceof Style that) {
                 return this.at == that.at && this.len == that.len &&
                         equalsNullable(this.key, that.key) &&
                         equalsNullable(this.tp, that.tp);
@@ -1717,8 +1716,7 @@ public class Drafty implements Serializable {
 
         @Override
         public boolean equals(Object another) {
-            if (another instanceof Entity) {
-                Entity that = (Entity) another;
+            if (another instanceof Entity that) {
                 return equalsNullable(this.tp, that.tp) && equalsNullable(this.data, that.data);
             }
             return false;

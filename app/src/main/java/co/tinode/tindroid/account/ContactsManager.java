@@ -249,7 +249,7 @@ public class ContactsManager {
             return;
         }
 
-        try {
+        try (c) {
             // Iterate over the existing rows of data, and update each one
             // with the information we received from the server.
             while (c.moveToNext()) {
@@ -296,8 +296,6 @@ public class ContactsManager {
 
                 }
             } // while
-        } finally {
-            c.close();
         }
 
         // Add the cell phone, if present and not updated above
@@ -377,13 +375,13 @@ public class ContactsManager {
                 new String[]{contact},
                 null);
 
-        if (c != null) {
-            try {
-                if (c.moveToFirst()) {
-                    rawContactId = c.getLong(UserIdQuery.COLUMN_RAW_CONTACT_ID);
-                }
-            } finally {
-                c.close();
+        if (c == null) {
+            return rawContactId;
+        }
+
+        try (c) {
+            if (c.moveToFirst()) {
+                rawContactId = c.getLong(UserIdQuery.COLUMN_RAW_CONTACT_ID);
             }
         }
 
@@ -476,17 +474,12 @@ public class ContactsManager {
     }
 
     private static int vcardTypeToDbType(VxCard.ContactType tp) {
-        switch (tp) {
-            case MOBILE:
-                return Phone.TYPE_MOBILE;
-            case HOME:
-            case PERSONAL:
-                return Phone.TYPE_HOME;
-            case WORK:
-            case BUSINESS:
-                return Phone.TYPE_WORK;
-        }
-        return Phone.TYPE_OTHER;
+        return switch (tp) {
+            case MOBILE -> Phone.TYPE_MOBILE;
+            case HOME, PERSONAL -> Phone.TYPE_HOME;
+            case WORK, BUSINESS -> Phone.TYPE_WORK;
+            default -> Phone.TYPE_OTHER;
+        };
     }
 
     /**

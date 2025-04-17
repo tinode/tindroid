@@ -11,27 +11,27 @@ import java.util.concurrent.CountDownLatch;
  * listener's onSuccess/onFailure. Depending on results returned or thrown by the handler, it will
  * update the next promise in chain: will either resolve/reject it immediately, or make it
  * resolve/reject together with the promise returned by the handler.
- *
+ * <p>
  * Usage:
- *
+ * <p>
  * Create a PromisedReply P1, assign onSuccess/onFailure listeners by calling thenApply. thenApply returns
  * another P2 promise (mNextPromise), which can then be assigned its own listeners.
- *
+ * <p>
  * Alternatively, one can use a blocking call getResult. It will block until the promise is either
  * resolved or rejected.
- *
+ * <p>
  * The promise can be created in either WAITING or RESOLVED state by using an appropriate constructor.
- *
+ * <p>
  * The onSuccess/onFailure handlers will be called:
- *
+ * <p>
  * a. Called at the time of resolution when P1 is resolved through P1.resolve(T) if at the time of
  * calling thenApply the promise is in WAITING state,
  * b. Called immediately on thenApply if at the time of calling thenApply the promise is already
  * in RESOLVED or REJECTED state,
- *
+ * <p>
  * thenApply creates and returns a promise P2 which will be resolved/rejected in the following
  * manner:
- *
+ * <p>
  * A. If P1 is resolved:
  * 1. If P1.onSuccess returns a resolved promise P3, P2 is resolved immediately on
  * return from onSuccess using the result from P3.
@@ -41,7 +41,7 @@ import java.util.concurrent.CountDownLatch;
  * 3. If P1.onSuccess returns an unresolved promise P3, P2 is resolved together with P3.
  * 4. If P1.onSuccess throws an exception, P2 is rejected immediately on catching the exception.
  * 5. If P1.onSuccess is null, P2 is resolved immediately using result from P1.
- *
+ * <p>
  * B. If P1 is rejected:
  * 1. If P1.onFailure returns a resolved promise P3, P2 is resolved immediately on return from
  * onFailure using the result from P3.
@@ -215,13 +215,13 @@ public class PromisedReply<T> {
      * @param finished called when the promise is completed either way.
      */
     public void thenFinally(final FinalListener finished) {
-        thenApply(new SuccessListener<T>() {
+        thenApply(new SuccessListener<>() {
             @Override
             public PromisedReply<T> onSuccess(T result) {
                 finished.onFinally();
                 return null;
             }
-        }, new FailureListener<T>() {
+        }, new FailureListener<>() {
             @Override
             public <E extends Exception> PromisedReply<T> onFailure(E err) {
                 finished.onFinally();
@@ -319,15 +319,12 @@ public class PromisedReply<T> {
         // Wait for the promise to resolve
         mDoneSignal.await();
 
-        switch (mState) {
-            case RESOLVED:
-                return mResult;
+        return switch (mState) {
+            case RESOLVED -> mResult;
+            case REJECTED -> throw mException;
+            default -> throw new IllegalStateException("Promise cannot be in WAITING state");
+        };
 
-            case REJECTED:
-                throw mException;
-        }
-
-        throw new IllegalStateException("Promise cannot be in WAITING state");
     }
 
     private void callOnSuccess(final T result) throws Exception {

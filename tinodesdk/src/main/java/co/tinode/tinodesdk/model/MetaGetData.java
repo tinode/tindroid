@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
@@ -36,6 +37,7 @@ public class MetaGetData implements Serializable {
     @NotNull
     @Override
     public String toString() {
-        return "since=" + since + ", before=" + before + ", ranges=" + ranges + ", limit=" + limit;
+        return "since=" + since + ", before=" + before +
+                ", ranges=" + Arrays.toString(ranges) + ", limit=" + limit;
     }
 }

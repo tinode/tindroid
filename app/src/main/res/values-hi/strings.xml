@@ -43,7 +43,6 @@
     <string name="action_leave_topic">बातचीत को छोड़ दो…</string>
     <string name="action_video_call">वीडियो कॉल</string>
     <string name="avatar">अवतार चित्र</string>
-    <string name="select_image">छवि चुने</string>
     <string name="image_is_unavailable">छवि अनुपलब्ध है</string>
     <string name="error_login_failed">लॉगिन विफल:</string>
     <string name="login_required">लॉगिन आवश्यक</string>
@@ -279,7 +278,6 @@
     <string name="video_preview">वीडियो</string>
     <string name="broken_video">अमान्य या अज्ञात वीडियो प्रारूप।</string>
     <string name="unable_to_play_video">इस वीडियो को चलाने में असमर्थ.</string>
-    <string name="select_image_or_video">छवि या वीडियो चुनें</string>
     <string name="video_call_channel_name">वीडियो कॉल्स</string>
     <string name="video_call_channel_description">वीडियो और ऑडियो कॉल</string>
     <string name="tinode_video_call">टिनोड वीडियो कॉल</string>
@@ -326,4 +324,10 @@
     <string name="take_photo">कैमरा</string>
     <string name="select_from_gallery">गैलरी</string>
     <string name="record_video">वीडियो</string>
+    <string name="delete_message_title_single">संदेश हटाएं</string>
+    <string name="delete_message_title_plural">संदेश हटाएं</string>
+    <string name="delete_for_peer">%1$s के लिए भी हटाएं</string>
+    <string name="delete_for_everybody">सभी के लिए हटाएं</string>
+    <string name="confirm_delete_message_single">क्या आप वाकई संदेश हटाना चाहते हैं?</string>
+    <string name="confirm_delete_message_plural">क्या आप वाकई इन संदेशों को हटाना चाहते हैं?</string>
 </resources>

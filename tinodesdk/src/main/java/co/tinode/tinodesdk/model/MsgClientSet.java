@@ -10,10 +10,10 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Metadata update packet: description, subscription, tags, credentials.
- *
+ * <p>
  * 	topic metadata, new topic &amp; new subscriptions only
  *  Desc *MsgSetDesc `json:"desc,omitempty"`
- *
+ * <p>
  *  Subscription parameters
  *  Sub *MsgSetSub `json:"sub,omitempty"`
  */

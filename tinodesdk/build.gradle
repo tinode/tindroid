@@ -4,7 +4,7 @@ android {
     namespace 'co.tinode.tinodesdk'
 
     defaultConfig {
-        minSdkVersion 26
+        minSdkVersion 27
         targetSdkVersion 35
         compileSdk 35
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"

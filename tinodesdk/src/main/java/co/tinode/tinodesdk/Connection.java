@@ -138,7 +138,7 @@ public class Connection extends WebSocketClient {
     /**
      * Establish a connection with the server. It opens or reopens a websocket in a separate
      * thread.
-     *
+     * <p>
      * This is a non-blocking call.
      *
      * @param autoReconnect if connection is dropped, reconnect automatically
@@ -171,7 +171,7 @@ public class Connection extends WebSocketClient {
     /**
      * Gracefully close websocket connection. The socket will attempt
      * to send a frame to the server.
-     *
+     * <p>
      * The call is idempotent: if connection is already closed it does nothing.
      */
     @SuppressWarnings("WeakerAccess")

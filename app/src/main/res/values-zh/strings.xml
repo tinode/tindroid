@@ -49,7 +49,6 @@
     <string name="action_leave_topic">离开会话…</string>
 
     <string name="avatar">头像</string>
-    <string name="select_image">选择图片</string>
     <string name="image_is_unavailable">图片不存在</string>
     <string name="error_login_failed">登录失败: </string>
     <string name="login_required">需要登录</string>
@@ -306,7 +305,6 @@
     <string name="video_preview">视频</string>
     <string name="broken_video">无效或未知的视频格式。</string>
     <string name="unable_to_play_video">无法播放此视频。</string>
-    <string name="select_image_or_video">选择图片或视频</string>
     <string name="video_call_channel_name">视频通话</string>
     <string name="video_call_channel_description">视频和音频通话</string>
     <string name="tinode_video_call">Tinode 视频通话</string>
@@ -355,4 +353,10 @@
     <string name="take_photo">相机</string>
     <string name="select_from_gallery">图库</string>
     <string name="record_video">视频</string>
+    <string name="delete_message_title_single">删除消息</string>
+    <string name="delete_message_title_plural">删除消息</string>
+    <string name="delete_for_peer">同时删除 %1$s 的消息</string>
+    <string name="delete_for_everybody">删除所有人的消息</string>
+    <string name="confirm_delete_message_single">您确定要删除此消息吗？</string>
+    <string name="confirm_delete_message_plural">您确定要删除这些消息吗？</string>
 </resources>

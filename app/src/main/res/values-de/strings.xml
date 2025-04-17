@@ -49,7 +49,6 @@
     <string name="action_leave_topic">Thema verlassen…</string>
 
     <string name="avatar">Profilbild</string>
-    <string name="select_image">Bild auswählen</string>
     <string name="image_is_unavailable">Das Bild ist nicht verfügbar</string>
     <string name="error_login_failed">Login-Fehler: </string>
     <string name="login_required">Sie müssen Ihren Benutzernamen eingeben</string>
@@ -306,8 +305,6 @@
     <string name="video_preview">Video</string>
     <string name="broken_video">Ungültiges oder unbekanntes Videoformat.</string>
     <string name="unable_to_play_video">Dieses Video kann nicht abgespielt werden.</string>
-    <string name="select_image_or_video">Bild oder Video auswählen</string>
-
     <string name="video_call_channel_name">Videoanrufe</string>
     <string name="video_call_channel_description">Video- und Audioanrufe</string>
     <string name="tinode_video_call">Tinode-Videoanruf</string>
@@ -356,4 +353,10 @@
     <string name="take_photo">Kamera</string>
     <string name="select_from_gallery">Galerie</string>
     <string name="record_video">Video</string>
+    <string name="delete_message_title_single">Nachricht löschen</string>
+    <string name="delete_message_title_plural">Nachrichten löschen</string>
+    <string name="delete_for_peer">Auch für %1$s löschen</string>
+    <string name="delete_for_everybody">Für alle löschen</string>
+    <string name="confirm_delete_message_single">Möchten Sie die Nachricht wirklich löschen?</string>
+    <string name="confirm_delete_message_plural">Möchten Sie diese Nachrichten wirklich löschen?</string>
 </resources>

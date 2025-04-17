@@ -118,7 +118,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     public PromisedReply<ServerMessage> delCredential(String meth, String val) {
         if (mAttached > 0) {
             final Credential cred = new Credential(meth, val);
-            return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     if (mCreds == null) {

@@ -769,7 +769,7 @@ public class MessageActivity extends AppCompatActivity
 
     void sendPinMessage(int seq, boolean pin) {
         mTopic.pinMessage(seq, pin)
-                .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         pinnedStateChanged(seq);

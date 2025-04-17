@@ -50,7 +50,6 @@
     <string name="action_video_call">Apel video</string>
 
     <string name="avatar">Poză avatar</string>
-    <string name="select_image">Selectează imagine</string>
     <string name="image_is_unavailable">Imaginea nu este disponibilă</string>
     <string name="error_login_failed">Conectare eşuată: </string>
     <string name="login_required">Conectare obligatorie</string>
@@ -309,7 +308,6 @@
     <string name="video_preview">Video</string>
     <string name="broken_video">Format video invalid sau necunoscut.</string>
     <string name="unable_to_play_video">Nu se poate reda acest videoclip.</string>
-    <string name="select_image_or_video">Selectează imagine sau video</string>
     <string name="video_call_channel_name">Apel video de grup</string>
     <string name="video_call_channel_description">Apeluri audio şi video</string>
     <string name="tinode_video_call">Apel video Tinode</string>
@@ -355,4 +353,10 @@
     <string name="take_photo">Camera</string>
     <string name="select_from_gallery">Galerie</string>
     <string name="record_video">Video</string>
+    <string name="delete_message_title_single">Ștergeți mesajul</string>
+    <string name="delete_message_title_plural">Ștergeți mesajele</string>
+    <string name="delete_for_peer">Ștergeți și pentru %1$s</string>
+    <string name="delete_for_everybody">Ștergeți pentru toată lumea</string>
+    <string name="confirm_delete_message_single">Sunteți sigur că doriți să ștergeți mesajul?</string>
+    <string name="confirm_delete_message_plural">Sunteți sigur că doriți să ștergeți aceste mesaje?</string>
 </resources>

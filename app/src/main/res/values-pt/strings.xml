@@ -49,7 +49,6 @@
     <string name="action_leave_topic">Sair da conversa…</string>
 
     <string name="avatar">Foto do perfil</string>
-    <string name="select_image">Selecionar imagem</string>
     <string name="image_is_unavailable">Imagem indisponível</string>
     <string name="error_login_failed">Falha no login: </string>
     <string name="login_required">Login</string>
@@ -306,7 +305,6 @@
     <string name="video_preview">Vídeo</string>
     <string name="broken_video">Formato de vídeo inválido ou desconhecido.</string>
     <string name="unable_to_play_video">Não foi possível reproduzir este vídeo.</string>
-    <string name="select_image_or_video">Escolha imagem ou vídeo</string>
     <string name="video_call_channel_name">Videochamadas</string>
     <string name="video_call_channel_description">Chamadas de vídeo e áudio</string>
     <string name="tinode_video_call">Tinode Videochamada</string>
@@ -355,4 +353,10 @@
     <string name="take_photo">Câmera</string>
     <string name="select_from_gallery">Galeria</string>
     <string name="record_video">Vídeo</string>
+    <string name="delete_message_title_single">Excluir mensagem</string>
+    <string name="delete_message_title_plural">Excluir mensagens</string>
+    <string name="delete_for_peer">Excluir também para %1$s</string>
+    <string name="delete_for_everybody">Excluir para todos</string>
+    <string name="confirm_delete_message_single">Tem certeza de que deseja excluir a mensagem?</string>
+    <string name="confirm_delete_message_plural">Tem certeza de que deseja excluir estas mensagens?</string>
 </resources>

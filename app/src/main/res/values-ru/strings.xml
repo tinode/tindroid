@@ -31,7 +31,6 @@
     <string name="action_leave_topic">Покинуть чат…</string>
     <string name="action_delete_group">Удалить чат…</string>
     <string name="avatar">Аватарка</string>
-    <string name="select_image">Выбрать картинку</string>
     <string name="image_is_unavailable">Изображение недоступно</string>
     <string name="error_login_failed">Ошибка входа:</string>
     <string name="no_chats">Чатов нет\n\n¯\\_(ツ)_/¯</string>
@@ -285,7 +284,6 @@
     <string name="video_preview">Видео</string>
     <string name="broken_video">Неизвестный формат видео</string>
     <string name="unable_to_play_video">Невозможно показать это видео</string>
-    <string name="select_image_or_video">Выбрать фото или видео</string>
     <string name="video_call_channel_name">Видеозвонки</string>
     <string name="video_call_channel_description">Видео- и аудиовызовы</string>
     <string name="tinode_video_call">Видеозвонок Tinode</string>
@@ -334,4 +332,10 @@
     <string name="take_photo">Камера</string>
     <string name="select_from_gallery">Галерея</string>
     <string name="record_video">Видео</string>
+    <string name="delete_message_title_single">Удалить сообщение</string>
+    <string name="delete_message_title_plural">Удалить сообщения</string>
+    <string name="delete_for_peer">Также удалить для %1$s</string>
+    <string name="delete_for_everybody">Удалить для всех</string>
+    <string name="confirm_delete_message_single">Вы уверены, что хотите удалить сообщение?</string>
+    <string name="confirm_delete_message_plural">Вы уверены, что хотите удалить эти сообщения?</string>
 </resources>

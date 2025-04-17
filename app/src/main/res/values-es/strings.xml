@@ -49,7 +49,6 @@
     <string name="action_leave_topic">Dejar conversación…</string>
 
     <string name="avatar">Imagen de avatar</string>
-    <string name="select_image">Selecionar imagen</string>
     <string name="image_is_unavailable">La imagen no está disponible</string>
     <string name="error_login_failed">Error de inicio de sesión: </string>
     <string name="login_required">Debes introducir tu nombre de usuario</string>
@@ -304,7 +303,6 @@
     <string name="video_preview">Vídeo</string>
     <string name="broken_video">Formato de video no válido o desconocido.</string>
     <string name="unable_to_play_video">No se puede reproducir este video.</string>
-    <string name="select_image_or_video">Elegir imagen o video</string>
     <string name="video_call_channel_name">Videollamadas</string>
     <string name="video_call_channel_description">Llamadas de video y audio</string>
     <string name="tinode_video_call">Videollamada de Tinode</string>
@@ -353,4 +351,10 @@
     <string name="take_photo">Cámara</string>
     <string name="select_from_gallery">Galería</string>
     <string name="record_video">Vídeo</string>
+    <string name="delete_message_title_single">Eliminar mensaje</string>
+    <string name="delete_message_title_plural">Eliminar mensajes</string>
+    <string name="delete_for_peer">Eliminar también para %1$s</string>
+    <string name="delete_for_everybody">Eliminar para todos</string>
+    <string name="confirm_delete_message_single">¿Seguro que quieres eliminar el mensaje?</string>
+    <string name="confirm_delete_message_plural">¿Seguro que quieres eliminar estos mensajes?</string>
 </resources>

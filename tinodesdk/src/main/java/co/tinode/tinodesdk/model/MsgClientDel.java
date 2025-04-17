@@ -10,7 +10,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Topic or message deletion packet
- *
+ * <p>
  * 	Id    string `json:"id,omitempty"`
  *  Topic string `json:"topic"`
  *  // what to delete, either "msg" to delete messages, "topic" to delete the topic, "sub" to delete subscription

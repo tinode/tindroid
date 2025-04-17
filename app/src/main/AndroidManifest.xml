@@ -15,9 +15,11 @@
         android:maxSdkVersion="28"/>
     <!-- Needed for picking images and videos from gallery -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"
-        android:maxSdkVersion="33"/>
+        android:maxSdkVersion="33"
+        tools:ignore="SelectedPhotoAccess" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO"
-        android:maxSdkVersion="33"/>
+        android:maxSdkVersion="33"
+        tools:ignore="SelectedPhotoAccess" />
 
     <!-- Needed for contact discovery - finding users on tinode who are in user's address book -->
     <uses-permission android:name="android.permission.READ_CONTACTS"/>

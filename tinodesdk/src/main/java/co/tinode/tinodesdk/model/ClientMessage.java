@@ -8,7 +8,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
 /**
  * Client message:
- *
+ * <p>
  * 	Hi    *MsgClientHi    `json:"hi"`
  * Acc   *MsgClientAcc   `json:"acc"`
  * Login *MsgClientLogin `json:"login"`

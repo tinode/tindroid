@@ -63,7 +63,6 @@
     <string name="action_video_call">Video call</string>
 
     <string name="avatar">Avatar picture</string>
-    <string name="select_image">Select image</string>
     <string name="image_is_unavailable">Image is unavailable</string>
     <string name="error_login_failed">Login failed: </string>
     <string name="login_required">Login required</string>
@@ -326,7 +325,6 @@
     <string name="video_preview">Video</string>
     <string name="broken_video">Invalid or unknown video format.</string>
     <string name="unable_to_play_video">Unable to play this video.</string>
-    <string name="select_image_or_video">Choose image or video</string>
     <string name="video_call_channel_name">Video calls</string>
     <string name="video_call_channel_description">Video and audio calls</string>
     <string name="tinode_video_call">Tinode Video Call</string>

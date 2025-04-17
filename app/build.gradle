@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId "co.tinode.tindroidx"
-        minSdkVersion 26
+        minSdkVersion 27
         targetSdkVersion 35
         compileSdk 35
         vectorDrawables.useSupportLibrary = true
@@ -109,9 +109,9 @@ dependencies {
 
     implementation 'com.android.installreferrer:installreferrer:2.2'
 
-    implementation 'androidx.media3:media3-exoplayer:1.6.0'
-    implementation 'androidx.media3:media3-ui:1.6.0'
-    implementation 'androidx.media3:media3-datasource:1.6.0'
+    implementation 'androidx.media3:media3-exoplayer:1.6.1'
+    implementation 'androidx.media3:media3-ui:1.6.1'
+    implementation 'androidx.media3:media3-datasource:1.6.1'
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.1.0'
     implementation 'com.google.android.material:material:1.12.0'

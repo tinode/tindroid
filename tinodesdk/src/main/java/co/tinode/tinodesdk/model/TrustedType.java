@@ -30,10 +30,9 @@ public class TrustedType extends HashMap<String,Object> implements Mergeable, Se
 
     @Override
     public boolean merge(Mergeable another) {
-        if (!(another instanceof TrustedType)) {
+        if (!(another instanceof TrustedType apt)) {
             return false;
         }
-        TrustedType apt = (TrustedType) another;
         this.putAll(apt);
         return apt.size() > 0;
     }

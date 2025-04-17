@@ -230,15 +230,11 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isReader(Side s) {
-        switch (s) {
-            case MODE:
-                return mode != null && mode.isReader();
-            case WANT:
-                return want != null && want.isReader();
-            case GIVEN:
-                return given != null && given.isReader();
-        }
-        return false;
+        return switch (s) {
+            case MODE -> mode != null && mode.isReader();
+            case WANT -> want != null && want.isReader();
+            case GIVEN -> given != null && given.isReader();
+        };
     }
 
     /**
@@ -318,15 +314,11 @@ public class Acs implements Serializable {
      * @return true if flag is set.
      */
     public boolean isJoiner(Side s) {
-        switch (s) {
-            case MODE:
-                return mode != null && mode.isJoiner();
-            case WANT:
-                return want != null && want.isJoiner();
-            case GIVEN:
-                return given != null && given.isJoiner();
-        }
-        return false;
+        return switch (s) {
+            case MODE -> mode != null && mode.isJoiner();
+            case WANT -> want != null && want.isJoiner();
+            case GIVEN -> given != null && given.isJoiner();
+        };
     }
 
     /**

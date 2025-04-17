@@ -11,19 +11,11 @@ import java.util.StringTokenizer;
 /**
  * Helper of authentication scheme for account creation.
  */
-public class AuthScheme implements Serializable {
+public record AuthScheme(String scheme, String secret) implements Serializable {
     public static final String LOGIN_BASIC = "basic";
     public static final String LOGIN_TOKEN = "token";
     public static final String LOGIN_RESET = "reset";
     public static final String LOGIN_CODE = "code";
-
-    public final String scheme;
-    public final String secret;
-
-    public AuthScheme(String scheme, String secret) {
-        this.scheme = scheme;
-        this.secret = secret;
-    }
 
     @NotNull
     @Override
@@ -79,9 +71,9 @@ public class AuthScheme implements Serializable {
             return null;
         }
 
-        return new String[] {
+        return new String[]{
                 basicToken.substring(0, splitAt),
-                splitAt == basicToken.length() - 1 ? "" : basicToken.substring(splitAt+1, basicToken.length()-1)
+                splitAt == basicToken.length() - 1 ? "" : basicToken.substring(splitAt + 1, basicToken.length() - 1)
         };
     }
 

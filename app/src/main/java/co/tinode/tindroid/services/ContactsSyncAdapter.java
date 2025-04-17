@@ -3,6 +3,7 @@ package co.tinode.tindroid.services;
 import android.Manifest;
 import android.accounts.Account;
 import android.accounts.AccountManager;
+import android.annotation.SuppressLint;
 import android.content.AbstractThreadedSyncAdapter;
 import android.content.ContentProviderClient;
 import android.content.Context;
@@ -279,7 +280,9 @@ class ContactsSyncAdapter extends AbstractThreadedSyncAdapter {
 
             try {
                 final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(mContext);
+                @SuppressLint("UnsafeOptInUsageError")
                 String hostName = sharedPref.getString(Utils.PREFS_HOST_NAME, TindroidApp.getDefaultHostName());
+                @SuppressLint("UnsafeOptInUsageError")
                 boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
                 String token = AccountManager.get(mContext)
                         .blockingGetAuthToken(account, Utils.TOKEN_TYPE, false);

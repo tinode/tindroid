@@ -53,10 +53,10 @@ import co.tinode.tinodesdk.model.TrustedType;
 public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     private static final String TAG = "tinodesdk.Topic";
 
-    protected Tinode mTinode;
+    protected final Tinode mTinode;
     protected String mName;
     // The bulk of topic data
-    protected Description<DP, DR> mDesc;
+    protected final Description<DP, DR> mDesc;
     // Cache of topic subscribers indexed by userID
     protected HashMap<String, Subscription<SP, SR>> mSubs = null;
     // Timestamp of the last update to subscriptions. Default: Oct 25, 2014 05:06:02 UTC, incidentally equal
@@ -574,14 +574,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             if (!isAttached()) {
                 try {
                     subscribe(null, getMetaGetBuilder().withLaterData().build()).thenApply(
-                        new PromisedReply.SuccessListener<ServerMessage>() {
-                            @Override
-                            public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
-                                mDesc.seq = seq;
-                                leave();
-                                return null;
+                            new PromisedReply.SuccessListener<>() {
+                                @Override
+                                public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
+                                    mDesc.seq = seq;
+                                    leave();
+                                    return null;
+                                }
                             }
-                        }
                     );
                 } catch (Exception ex) {
                     Log.w(TAG, "Failed to sync data", ex);
@@ -992,12 +992,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         return mTinode.subscribe(topicName, set, get).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage msg) {
                         if (msg.ctrl == null || msg.ctrl.code >= 300) {
                             // 3XX response: already subscribed.
-                            mAttached ++;
+                            mAttached++;
                             return null;
                         }
 
@@ -1028,16 +1028,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             }
 
                         } else {
-                            mAttached ++;
+                            mAttached++;
                         }
                         return null;
                     }
-                }, new PromisedReply.FailureListener<ServerMessage>() {
+                }, new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                         // Clean up if topic creation failed for any reason.
-                        if (isNew() && err instanceof ServerResponseException) {
-                            ServerResponseException sre = (ServerResponseException) err;
+                        if (isNew() && err instanceof ServerResponseException sre) {
                             if (sre.getCode() >= ServerMessage.STATUS_BAD_REQUEST) {
                                 mTinode.stopTrackingTopic(topicName);
                                 expunge(true);
@@ -1062,7 +1061,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     public PromisedReply<ServerMessage> leave(final boolean unsub) {
         if (mAttached == 1 || (mAttached >= 1 && unsub)) {
             return mTinode.leave(getName(), unsub).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
+                    new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                             topicLeft(unsub, result.ctrl.code, result.ctrl.text);
@@ -1135,14 +1134,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             head.remove("mime");
         }
         return mTinode.publish(getName(), content.isPlain() ? content.toString() : content, head, attachments).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         processDelivery(result.ctrl, msgId);
                         return null;
                     }
                 },
-                new PromisedReply.FailureListener<ServerMessage>() {
+                new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                         if (mStore != null) {
@@ -1209,14 +1208,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return publish(content, head, msgId);
         } else {
             return subscribe()
-                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                    .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                            mAttached ++;
+                            mAttached++;
                             return publish(content, head, msgId);
                         }
                     })
-                    .thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+                    .thenCatch(new PromisedReply.FailureListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onFailure(Exception err) throws Exception {
                             if (mStore != null) {
@@ -1269,7 +1268,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (toSend == null) {
             return last;
         }
-
+        //noinspection TryFinallyCanBeTryWithResources: does not really apply here due to the need for the second try-catch
         try {
             while (toSend.hasNext()) {
                 Storage.Message msg = toSend.next();
@@ -1339,7 +1338,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public PromisedReply<ServerMessage> setMeta(final MsgSetMeta<DP, DR> meta) {
         return mTinode.setMeta(getName(), meta).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         update(result.ctrl, meta);
@@ -1476,7 +1475,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         return setSubscription(new MetaSetSub(uid, mode)).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         if (mStore != null) {
@@ -1522,7 +1521,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return new PromisedReply<>(new NotSynchronizedException());
         }
 
-        return mTinode.delSubscription(getName(), uid).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        return mTinode.delSubscription(getName(), uid).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 if (mStore != null) {
@@ -1548,7 +1547,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mStore.msgMarkToDelete(this, fromId, toId, hard);
         }
         if (mAttached > 0) {
-            return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            return mTinode.delMessage(getName(), fromId, toId, hard).thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
@@ -1581,7 +1580,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         if (mAttached > 0) {
-            return mTinode.delMessage(getName(), ranges, hard).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            return mTinode.delMessage(getName(), ranges, hard).thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                     int delId = result.ctrl.getIntParam("del", 0);
@@ -1637,7 +1636,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         // Delete works even if the topic is not attached.
         return mTinode.delTopic(getName(), hard).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                         topicLeft(true, result.ctrl.code, result.ctrl.text);
@@ -1972,14 +1971,10 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @return true if topic is user-visible, like 'p2p' or 'grp', false otherwise.
      */
     public boolean isUserType() {
-        switch (getTopicType()) {
-            case SLF:
-            case P2P:
-            case GRP:
-                return true;
-            default:
-                return false;
-        }
+        return switch (getTopicType()) {
+            case SLF, P2P, GRP -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -2450,7 +2445,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * Helper class for generating query parameters for {sub get} and {get} packets.
      */
     public static class MetaGetBuilder {
-        protected Topic topic;
+        protected final Topic topic;
         protected MsgGetMeta meta;
 
         MetaGetBuilder(Topic parent) {

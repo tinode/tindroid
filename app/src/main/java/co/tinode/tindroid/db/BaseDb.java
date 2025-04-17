@@ -1,5 +1,6 @@
 package co.tinode.tindroid.db;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -50,6 +51,7 @@ public class BaseDb extends SQLiteOpenHelper {
      *
      * @return BaseDb instance
      */
+    @SuppressLint("UnsafeOptInUsageError")
     @NonNull
     public static BaseDb getInstance() {
         if (sInstance == null) {

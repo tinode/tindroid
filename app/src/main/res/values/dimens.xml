@@ -29,5 +29,4 @@
     <dimen name="min_touch_height">48dp</dimen>
     <dimen name="dialog_padding_vertical">4dp</dimen>
     <dimen name="fab_low_elevation">2dp</dimen>
->>>>>>> devel
 </resources>

@@ -7,7 +7,7 @@ import java.util.Map;
 
 /**
  * Payload for setting meta params, a combination of MetaSetDesc, MetaSetSub, tags, credential.
- *
+ * <p>
  * Must use custom serializer to handle assigned NULL values, which should be converted to Tinode.NULL_VALUE.
  */
 public class MsgSetMeta<Pu,Pr> implements Serializable {

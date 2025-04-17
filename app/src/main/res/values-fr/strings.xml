@@ -49,7 +49,6 @@
     <string name="action_leave_topic">Quitter la conversation…</string>
 
     <string name="avatar">Image d\'avatar</string>
-    <string name="select_image">Sélectionner une image</string>
     <string name="image_is_unavailable">Image indisponible </string>
     <string name="error_login_failed">Echec de la connexion: </string>
     <string name="login_required">Connexion requise</string>
@@ -305,7 +304,6 @@
     <string name="video_preview">Vidéo</string>
     <string name="broken_video">Format vidéo non valide ou inconnu.</string>
     <string name="unable_to_play_video">Impossible de lire cette vidéo.</string>
-    <string name="select_image_or_video">Choisir une image ou une vidéo</string>
     <string name="video_call_channel_name">Appels vidéo</string>
     <string name="video_call_channel_description">Appels vidéo et audio</string>
     <string name="tinode_video_call">Appel vidéo Tinode</string>
@@ -354,4 +352,10 @@
     <string name="take_photo">Appareil</string>
     <string name="select_from_gallery">Galerie</string>
     <string name="record_video">Vidéo</string>
+    <string name="delete_message_title_single">Supprimer le message</string>
+    <string name="delete_message_title_plural">Supprimer les messages</string>
+    <string name="delete_for_peer">Supprimer également pour %1$s</string>
+    <string name="delete_for_everybody">Supprimer pour tout le monde</string>
+    <string name="confirm_delete_message_single">Êtes-vous sûr de vouloir supprimer ce message ?</string>
+    <string name="confirm_delete_message_plural">Êtes-vous sûr de vouloir supprimer ces messages ?</string>
 </resources>

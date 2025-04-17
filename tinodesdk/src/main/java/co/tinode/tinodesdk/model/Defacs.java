@@ -28,11 +28,9 @@ public class Defacs implements Serializable {
             return true;
         }
 
-        if (!(o instanceof Defacs)) {
+        if (!(o instanceof Defacs rhs)) {
             return false;
         }
-
-        Defacs rhs = (Defacs) o;
 
         return (Objects.equals(auth, rhs.auth)) && (Objects.equals(anon, rhs.anon));
     }

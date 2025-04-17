@@ -52,10 +52,9 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
 
     @Override
     public boolean merge(Mergeable another) {
-        if (!(another instanceof PrivateType)) {
+        if (!(another instanceof PrivateType apt)) {
             return false;
         }
-        PrivateType apt = (PrivateType) another;
         this.putAll(apt);
         return apt.size() > 0;
     }

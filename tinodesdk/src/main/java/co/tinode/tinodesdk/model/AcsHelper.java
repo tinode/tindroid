@@ -67,13 +67,11 @@ public class AcsHelper implements Serializable {
             return true;
         }
 
-        if (!(o instanceof AcsHelper)) {
+        if (!(o instanceof AcsHelper ah)) {
             return false;
         }
 
-        AcsHelper ah = (AcsHelper) o;
-
-        return a  == ah.a;
+        return a == ah.a;
     }
 
     public boolean equals(String s) {

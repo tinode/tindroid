@@ -1193,7 +1193,7 @@ public class Tinode {
 
             ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), null, null,
                     token, null, null));
-            return sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<ServerMessage>() {
+            return sendWithPromise(msg, msg.hi.id).thenCatch(new PromisedReply.FailureListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onFailure(Exception err) {
                     // Clear cached value on failure to allow for retries.
@@ -1233,13 +1233,13 @@ public class Tinode {
         ClientMessage msg = new ClientMessage(new MsgClientHi(getNextId(), VERSION, makeUserAgent(),
                 mDeviceToken, mLanguage, background));
         return sendWithPromise(msg, msg.hi.id).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
                         if (pkt.ctrl == null) {
                             throw new InvalidObjectException("Unexpected type of reply packet to hello");
                         }
-                        Map<String,Object> params = pkt.ctrl.params;
+                        Map<String, Object> params = pkt.ctrl.params;
                         if (params != null) {
                             mServerVersion = (String) params.get("ver");
                             mServerBuild = (String) params.get("build");
@@ -1303,7 +1303,7 @@ public class Tinode {
 
         PromisedReply<ServerMessage> future = sendWithPromise(msg, msg.acc.id);
         if (loginNow) {
-            future = future.thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+            future = future.thenApply(new PromisedReply.SuccessListener<>() {
                 @Override
                 public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) {
                     try {
@@ -1366,7 +1366,7 @@ public class Tinode {
      * @return PromisedReply of the reply ctrl message.
      */
     public PromisedReply<ServerMessage> updateAccountBasic(AuthScheme auth, String uname, String password) {
-        return updateAccountSecret(null, auth.scheme, auth.secret, AuthScheme.LOGIN_BASIC,
+        return updateAccountSecret(null, auth.scheme(), auth.secret(), AuthScheme.LOGIN_BASIC,
                 AuthScheme.encodeBasicToken(uname, password));
     }
 
@@ -1420,7 +1420,7 @@ public class Tinode {
     protected PromisedReply<ServerMessage> login(String combined) {
         AuthScheme auth = AuthScheme.parse(combined);
         if (auth != null) {
-            return login(auth.scheme, auth.secret, null);
+            return login(auth.scheme(), auth.secret(), null);
         }
 
         return new PromisedReply<>(new IllegalArgumentException());
@@ -1513,7 +1513,7 @@ public class Tinode {
         }
 
         return sendWithPromise(msg, msg.login.id).thenApply(
-                new PromisedReply.SuccessListener<ServerMessage>() {
+                new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
                         mLoginInProgress = false;
@@ -1521,12 +1521,11 @@ public class Tinode {
                         return null;
                     }
                 },
-                new PromisedReply.FailureListener<ServerMessage>() {
+                new PromisedReply.FailureListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onFailure(Exception err) {
                         mLoginInProgress = false;
-                        if (err instanceof ServerResponseException) {
-                            ServerResponseException sre = (ServerResponseException) err;
+                        if (err instanceof ServerResponseException sre) {
                             final int code = sre.getCode();
                             if (code == ServerMessage.STATUS_UNAUTHORIZED) {
                                 mLoginCredentials = null;
@@ -1766,7 +1765,7 @@ public class Tinode {
     public PromisedReply<ServerMessage> delCurrentUser(boolean hard) {
         ClientMessage msg = new ClientMessage(new MsgClientDel(getNextId()));
         msg.del.hard = hard;
-        return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+        return sendWithPromise(msg, msg.del.id).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
                 maybeDisconnect(false);
@@ -2264,7 +2263,7 @@ public class Tinode {
             }
             parser.close(); // important to close both parser and underlying reader
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.w(TAG, "Failed to parse message", e);
         }
 
         return msg.isValid() ? msg : null;
@@ -2566,25 +2565,11 @@ public class Tinode {
         }
     }
 
-    private static class LoginCredentials {
-        final String scheme;
-        final String secret;
-
-        LoginCredentials(String scheme, String secret) {
-            this.scheme = scheme;
-            this.secret = secret;
-        }
+    private record LoginCredentials(String scheme, String secret) {
     }
 
     // Container for storing unresolved futures.
-    private static class FutureHolder {
-        final PromisedReply<ServerMessage> future;
-        final Date timestamp;
-
-        FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
-            this.future = future;
-            this.timestamp = timestamp;
-        }
+        private record FutureHolder(PromisedReply<ServerMessage> future, Date timestamp) {
     }
 
     // Class which listens for websocket to connect.
@@ -2603,7 +2588,7 @@ public class Tinode {
         public void onConnect(final Connection conn, final boolean background) {
             // Connection established, send handshake, inform listener on success
             hello(background).thenApply(
-                    new PromisedReply.SuccessListener<ServerMessage>() {
+                    new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
                             boolean doLogin = mAutologin && mLoginCredentials != null;
@@ -2634,7 +2619,7 @@ public class Tinode {
                             // Login automatically if it's enabled.
                             if (doLogin) {
                                 return login(mLoginCredentials.scheme, mLoginCredentials.secret, null)
-                                        .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                                        .thenApply(new PromisedReply.SuccessListener<>() {
                                             @Override
                                             public PromisedReply<ServerMessage> onSuccess(ServerMessage pkt) throws Exception {
                                                 resolvePromises(pkt);

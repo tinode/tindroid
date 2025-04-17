@@ -1,5 +1,6 @@
 package co.tinode.tindroid.format;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -66,6 +67,7 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                 components = new LinkedList<>();
             }
             components.add(done);
+            @SuppressLint("UnsafeOptInUsageError")
             Context context = TindroidApp.getAppContext();
             Coil.imageLoader(context).enqueue(
                     new ImageRequest.Builder(context)

@@ -102,14 +102,6 @@ public class TinodeAccountService extends Service {
 
             String authToken = am.peekAuthToken(account, authTokenType);
 
-            if (TextUtils.isEmpty(authToken)) {
-                final String password = am.getPassword(account);
-                if (!TextUtils.isEmpty(password)) {
-                    // TODO(gene): implement sign in
-                    //Tinode tinode = Cache.getTinode();
-                    //authToken = AuthTokenLoader.signIn(mContext, account.name, password);
-                }
-            }
             // Got auth token?
             if (!TextUtils.isEmpty(authToken)) {
                 // Yes, got auth token, either stored or a new one by using stored password

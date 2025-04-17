@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
@@ -118,10 +117,8 @@ public class CallActivity extends AppCompatActivity  {
                         WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
         // Turn screen on and unlock.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true);
-            setTurnScreenOn(true);
-        }
+        setShowWhenLocked(true);
+        setTurnScreenOn(true);
 
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mTurnScreenOffWhenDone = !pm.isInteractive();
@@ -146,7 +143,7 @@ public class CallActivity extends AppCompatActivity  {
                 WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
                 WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
-        if (mTurnScreenOffWhenDone && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
+        if (mTurnScreenOffWhenDone) {
             setShowWhenLocked(false);
             setTurnScreenOn(false);
         }

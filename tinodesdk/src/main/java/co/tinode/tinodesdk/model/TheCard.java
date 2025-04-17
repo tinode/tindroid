@@ -61,20 +61,14 @@ public class TheCard implements Serializable, Mergeable {
             return null;
         }
 
-        switch (tp) {
-            case HOME:
-                return TYPE_HOME;
-            case WORK:
-                return TYPE_WORK;
-            case MOBILE:
-                return TYPE_MOBILE;
-            case PERSONAL:
-                return TYPE_PERSONAL;
-            case BUSINESS:
-                return TYPE_BUSINESS;
-            default:
-                return TYPE_OTHER;
-        }
+        return switch (tp) {
+            case HOME -> TYPE_HOME;
+            case WORK -> TYPE_WORK;
+            case MOBILE -> TYPE_MOBILE;
+            case PERSONAL -> TYPE_PERSONAL;
+            case BUSINESS -> TYPE_BUSINESS;
+            default -> TYPE_OTHER;
+        };
     }
 
     private static ContactType stringToType(String str) {
@@ -82,20 +76,14 @@ public class TheCard implements Serializable, Mergeable {
             return null;
         }
 
-        switch (str) {
-            case TYPE_HOME:
-                return ContactType.HOME;
-            case TYPE_WORK:
-                return ContactType.WORK;
-            case TYPE_MOBILE:
-                return ContactType.MOBILE;
-            case TYPE_PERSONAL:
-                return ContactType.PERSONAL;
-            case TYPE_BUSINESS:
-                return ContactType.BUSINESS;
-            default:
-                return ContactType.OTHER;
-        }
+        return switch (str) {
+            case TYPE_HOME -> ContactType.HOME;
+            case TYPE_WORK -> ContactType.WORK;
+            case TYPE_MOBILE -> ContactType.MOBILE;
+            case TYPE_PERSONAL -> ContactType.PERSONAL;
+            case TYPE_BUSINESS -> ContactType.BUSINESS;
+            default -> ContactType.OTHER;
+        };
     }
 
     private static boolean merge(@NotNull Field[] fields, @NotNull Mergeable dst, Mergeable src) {
@@ -231,11 +219,10 @@ public class TheCard implements Serializable, Mergeable {
 
         @Override
         public boolean merge(Mergeable another) {
-            if (!(another instanceof Name)) {
+            if (!(another instanceof Name that)) {
                 return false;
             }
 
-            Name that = (Name) another;
             surname = that.surname;
             given = that.given;
             additional = that.additional;
@@ -258,10 +245,9 @@ public class TheCard implements Serializable, Mergeable {
 
         @Override
         public boolean merge(Mergeable another) {
-            if (!(another instanceof Organization)) {
+            if (!(another instanceof Organization that)) {
                 return false;
             }
-            Organization that = (Organization) another;
             fn = that.fn;
             title = that.title;
             return true;
@@ -342,11 +328,10 @@ public class TheCard implements Serializable, Mergeable {
 
         @Override
         public boolean merge(Mergeable another) {
-            if (!(another instanceof Contact)) {
+            if (!(another instanceof Contact that)) {
                 return false;
             }
 
-            Contact that = (Contact) another;
             type = that.type;
             name = that.name;
             uri = that.uri;
@@ -411,12 +396,11 @@ public class TheCard implements Serializable, Mergeable {
 
         @Override
         public boolean merge(Mergeable another) {
-            if (!(another instanceof Photo)) {
+            if (!(another instanceof Photo that)) {
                 return false;
             }
 
             // Direct copy. No need to check for nulls.
-            Photo that = (Photo) another;
             data = that.data;
             type = that.type;
             ref  = that.ref;
@@ -447,11 +431,10 @@ public class TheCard implements Serializable, Mergeable {
 
         @Override
         public boolean merge(Mergeable another) {
-            if (!(another instanceof Birthday)) {
+            if (!(another instanceof Birthday that)) {
                 return false;
             }
 
-            Birthday that = (Birthday) another;
             y = that.y;
             m = that.m;
             d = that.d;
