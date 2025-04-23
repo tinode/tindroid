@@ -76,7 +76,26 @@
                 android:ellipsize="end"
                 android:hint="@string/placeholder_private"
                 android:maxLines="1"
+                android:minHeight="@dimen/min_touch_height"
                 tools:text="This is a very good group. I like it" />
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/alias"
+                style="?android:textAppearanceMedium"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:drawableStart="@drawable/ic_at"
+                android:drawableTint="@color/colorAccent"
+                android:drawablePadding="2dp"
+                android:ellipsize="end"
+                android:hint="@string/alias_plain"
+                android:inputType="text"
+                tools:text="veryGoodAlias" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout

@@ -30,6 +30,7 @@ import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -44,7 +45,9 @@ import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import co.tinode.tinodesdk.model.AuthScheme;
 import co.tinode.tinodesdk.model.ClientMessage;
@@ -139,6 +142,13 @@ public class Tinode {
     protected static final int MAX_PINNED_COUNT = 5;
 
     static final int DEFAULT_MESSAGE_PAGE = 24;
+
+    public static final String TAG_ALIAS = "alias:";
+    private static final Pattern ALIAS_REGEX = Pattern.compile("^[a-z0-9_\\-]{4,24}$", Pattern.CASE_INSENSITIVE);
+
+    private static final int DEFAULT_MAX_TAG_COUNT = 16;
+    private static final int DEFAULT_MAX_TAG_LENGTH = 96;
+    private static final int DEFAULT_MIN_TAG_LENGTH = 2;
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -295,10 +305,149 @@ public class Tinode {
         return sJsonMapper;
     }
 
-    // Compares object to a string which signifies "null" to the server.
+    /**
+     * Compares object to a string which signifies "null" to the server.
+     */
     public static boolean isNull(Object obj) {
         // Del control character
         return (obj instanceof String) && obj.equals(NULL_VALUE);
+    }
+
+    /**
+     * Parse comma separated list of possible quoted strings into an array.
+     */
+    public String[] parseTags(final String tagList) {
+        if (tagList == null || tagList.isEmpty()) {
+            return null;
+        }
+
+        ArrayList<String> tags = new ArrayList<>();
+        int start = 0;
+        final long maxTagCount = getServerLimit(Tinode.MAX_TAG_COUNT, DEFAULT_MAX_TAG_COUNT);
+        final long maxTagLength = getServerLimit(Tinode.MAX_TAG_LENGTH, DEFAULT_MAX_TAG_LENGTH);
+        final long minTagLength = getServerLimit(Tinode.MIN_TAG_LENGTH, DEFAULT_MIN_TAG_LENGTH);
+
+        final int length = tagList.length();
+        boolean quoted = false;
+        for (int idx = 0; idx < length && tags.size() < maxTagCount; idx++) {
+            if (tagList.charAt(idx) == '\"') {
+                // Toggle 'inside of quotes' state.
+                quoted = !quoted;
+            }
+
+            String tag;
+            if (tagList.charAt(idx) == ',' && !quoted) {
+                tag = tagList.substring(start, idx);
+                start = idx + 1;
+            } else if (idx == length - 1) {
+                // Last char
+                tag = tagList.substring(start);
+            } else {
+                continue;
+            }
+
+            tag = tag.trim();
+            // Remove possible quotes.
+            if (tag.length() > 1 && tag.charAt(0) == '\"' && tag.charAt(tag.length() - 1) == '\"') {
+                tag = tag.substring(1, tag.length() - 1).trim();
+            }
+            if (tag.length() >= minTagLength && tag.length() <= maxTagLength) {
+                tags.add(tag);
+            }
+        }
+
+        if (tags.isEmpty()) {
+            return null;
+        }
+
+        return tags.toArray(new String[]{});
+    }
+
+    // Split fully-qualified tag into prefix and value.
+    public static Pair<String,String> tagSplit(@Nullable String tag) {
+        if (tag == null) {
+            return null;
+        }
+
+        tag = tag.trim();
+        int splitAt = tag.indexOf(':');
+        if (splitAt <= 0) {
+            // Invalid syntax.
+            return null;
+        }
+
+        String value = tag.substring(splitAt + 1);
+        if (value.isEmpty()) {
+            return null;
+        }
+        return new Pair<>(tag.substring(0, splitAt), value);
+    }
+
+    /**
+     * Set a unique namespace tag.
+     * If the tag with this namespace is already present then it's replaced with the new tag.
+     * @param uniqueTag tag to add, must be fully-qualified; if null or empty, no action is taken.
+     */
+    public static String[] setUniqueTag(String[] tags, @NotNull String uniqueTag) {
+        Pair<String, String> parts = Tinode.tagSplit(uniqueTag);
+        if (parts == null) {
+            // Invalid tag.
+            return null;
+        }
+        if (tags == null || tags.length == 0) {
+            // No tags, just add the new one.
+            return new String[]{uniqueTag};
+        }
+
+        // Remove the old tag with the same prefix.
+        Stream<String> tt = Arrays.stream(tags)
+                .filter(tag -> (tag != null && !tag.startsWith(parts.first)));
+        // Add the new tag and convert to array.
+        return Stream.concat(tt, Stream.of(uniqueTag)).toArray(String[]::new);
+    }
+
+    /**
+     * Remove a unique tag with the given prefix.
+     * @param prefix prefix to remove
+     */
+    public static String[] clearTagPrefix(String[] tags, @NotNull String prefix) {
+        if (tags == null || tags.length == 0) {
+            return null;
+        }
+        return Arrays.stream(tags).filter(tag -> (tag != null && !tag.startsWith(prefix))).toArray(String[]::new);
+    }
+
+    /**
+     * Check if the given tag value is syntactically valid.
+     * @param tag tag value to check.
+     * @return true if the tag value is valid, false otherwise.
+     */
+    public static boolean isValidTagValueFormat(String tag) {
+        if (tag == null || tag.isEmpty()) {
+            return true;
+        }
+
+        Matcher matcher = ALIAS_REGEX.matcher(tag);
+        return matcher.matches();
+    }
+
+    /**
+     * Find the first tag with the given prefix.
+     * @param prefix prefix to search for.
+     * @return tag if found or null.
+     */
+    @Nullable
+    public static String tagByPrefix(String[] tags, @NotNull String prefix) {
+        if (tags == null) {
+            return null;
+        }
+
+        for (String tag : tags) {
+            if (tag != null && tag.startsWith(prefix)) {
+                return tag;
+            }
+        }
+        return null;
     }
 
     /**

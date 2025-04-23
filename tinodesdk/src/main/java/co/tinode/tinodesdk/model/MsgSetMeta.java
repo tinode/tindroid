@@ -11,14 +11,14 @@ import java.util.Map;
  * Must use custom serializer to handle assigned NULL values, which should be converted to Tinode.NULL_VALUE.
  */
 public class MsgSetMeta<Pu,Pr> implements Serializable {
-    static final int NULL_DESC = 0;
-    static final int NULL_SUB = 1;
-    static final int NULL_TAGS = 2;
-    static final int NULL_CRED = 3;
-    static final int NULL_AUX = 4;
+    static final int NULL_DESC = 0x1;
+    static final int NULL_SUB = 0x2;
+    static final int NULL_TAGS = 0x4;
+    static final int NULL_CRED = 0x8;
+    static final int NULL_AUX = 0x10;
     // Keep track of NULL assignments to fields.
     @JsonIgnore
-    final boolean[] nulls = new boolean[NULL_AUX + 1];
+    int nulls = 0;
 
     public MetaSetDesc<Pu,Pr> desc = null;
     public MetaSetSub sub = null;
@@ -29,23 +29,31 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
     public MsgSetMeta() {}
 
     public boolean isDescSet() {
-        return desc != null || nulls[NULL_DESC];
+        return desc != null || (nulls & NULL_DESC) != 0;
     }
 
     public boolean isSubSet() {
-        return sub != null || nulls[NULL_SUB];
+        return sub != null || (nulls & NULL_SUB) != 0;
     }
 
     public boolean isTagsSet() {
-        return tags != null || nulls[NULL_TAGS];
+        return tags != null || (nulls & NULL_TAGS) != 0;
 
     }
     public boolean isAuxSet() {
-        return aux != null || nulls[NULL_AUX];
-
+        return aux != null || (nulls & NULL_AUX) != 0;
     }
     public boolean isCredSet() {
-        return cred != null || nulls[NULL_CRED];
+        return cred != null || (nulls & NULL_CRED) != 0;
+    }
+
+    public boolean isEmpty() {
+        return desc == null &&
+            sub == null &&
+            tags == null &&
+            cred == null &&
+            aux == null &&
+            (nulls & (NULL_DESC | NULL_SUB | NULL_TAGS | NULL_CRED | NULL_AUX)) == 0;
     }
 
     public static class Builder<Pu,Pr> {
@@ -57,36 +65,50 @@ public class MsgSetMeta<Pu,Pr> implements Serializable {
 
         public Builder<Pu,Pr> with(MetaSetDesc<Pu,Pr> desc) {
             msm.desc = desc;
-            msm.nulls[NULL_DESC] = desc == null;
+            if (desc == null) {
+                msm.nulls |= NULL_DESC;
+            }
             return this;
         }
 
         public Builder<Pu,Pr> with(MetaSetSub sub) {
             msm.sub = sub;
-            msm.nulls[NULL_SUB] = sub == null;
+            if (sub == null) {
+                msm.nulls |= NULL_SUB;
+            }
             return this;
         }
 
         public Builder<Pu,Pr> with(String[] tags) {
             msm.tags = tags;
-            msm.nulls[NULL_TAGS] = tags == null || tags.length == 0;
+            if (tags == null || tags.length == 0) {
+                msm.nulls |= NULL_TAGS;
+            }
             return this;
         }
 
         public Builder<Pu,Pr> with(Credential cred) {
             msm.cred = cred;
-            msm.nulls[NULL_CRED] = cred == null;
+            if (cred == null) {
+                msm.nulls |= NULL_CRED;
+            }
             return this;
         }
 
         public Builder<Pu,Pr> with(Map<String,Object> aux) {
             msm.aux = aux;
-            msm.nulls[NULL_AUX] = aux == null;
+            if (aux == null || aux.isEmpty()) {
+                msm.nulls |= NULL_AUX;
+            }
             return this;
         }
 
         public MsgSetMeta<Pu,Pr> build() {
             return msm;
+        }
+
+        public boolean isEmpty() {
+            return msm.isEmpty();
         }
     }
 }

@@ -277,7 +277,6 @@ public class PromisedReply<T> {
      * @throws Exception if anything goes wrong during rejection.
      */
     public void reject(final Exception err) throws Exception {
-        Log.d(TAG, "REJECTING promise " + this, err);
         synchronized (this) {
             if (mState == State.WAITING) {
                 mState = State.REJECTED;

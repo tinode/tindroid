@@ -2,7 +2,9 @@ package co.tinode.tindroid;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -32,6 +34,7 @@ import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.PhoneEdit;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.Credential;
 import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -40,7 +43,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Fragment for editing current user details.
  */
 public class AccPersonalFragment extends Fragment
-        implements ChatsActivity.FormUpdatable, UtilsMedia.MediaPreviewer, MenuProvider {
+        implements ChatsActivity.FormUpdatable, UiUtils.AliasChecker, UtilsMedia.MediaPreviewer, MenuProvider {
 
     private final ActivityResultLauncher<PickVisualMediaRequest> mRequestAvatarLauncher =
             UtilsMedia.pickMediaLauncher(this, this);
@@ -55,10 +58,15 @@ public class AccPersonalFragment extends Fragment
                 }
             });
 
+    private UiUtils.ValidatorHandler mAliasChecker;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         final AppCompatActivity activity = (AppCompatActivity) requireActivity();
+
+        mAliasChecker = new UiUtils.ValidatorHandler(this);
+
         // Inflate the fragment layout
         View fragment = inflater.inflate(R.layout.fragment_acc_personal, container, false);
         final ActionBar bar = activity.getSupportActionBar();
@@ -98,6 +106,22 @@ public class AccPersonalFragment extends Fragment
                         .build()
                         .show(getChildFragmentManager()));
 
+        final TextView alias = activity.findViewById(R.id.alias);
+        alias.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                alias.setError(UiUtils.validateAlias(activity, mAliasChecker, s.toString()));
+            }
+        });
+
         activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
 
         // Assign initial form values.
@@ -110,6 +134,10 @@ public class AccPersonalFragment extends Fragment
     public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
         String fn = null;
         String description = null;
+        View fragmentView = getView();
+        if (fragmentView == null) {
+            return;
+        }
         if (me != null) {
             Credential[] creds = me.getCreds();
             if (creds != null) {
@@ -138,23 +166,23 @@ public class AccPersonalFragment extends Fragment
 
                 // Old (current) email.
                 if (email == null) {
-                    activity.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
+                    fragmentView.findViewById(R.id.emailWrapper).setVisibility(View.GONE);
                 } else {
-                    activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
-                    TextView emailField = activity.findViewById(R.id.email);
+                    fragmentView.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                    TextView emailField = fragmentView.findViewById(R.id.email);
                     emailField.setText(email.val);
                     if (email2 != null && email2.isDone()) {
                         // Two confirmed credentials of the same method.
                         // Make the credential unclickable: can't modify email if two emails are already given.
                         emailField.setBackground(null);
                         // Allow deletion of any one, including the first.
-                        AppCompatImageButton delete = activity.findViewById(R.id.emailDelete);
+                        AppCompatImageButton delete = fragmentView.findViewById(R.id.emailDelete);
                         delete.setVisibility(View.VISIBLE);
                         delete.setTag(email);
                         delete.setOnClickListener(this::showDeleteCredential);
                     } else {
                         // Second email is either not present or unconfirmed.
-                        activity.findViewById(R.id.emailDelete).setVisibility(View.INVISIBLE);
+                        fragmentView.findViewById(R.id.emailDelete).setVisibility(View.INVISIBLE);
                         argsEmail.putString("oldValue", email.val);
                         if (email2 == null) {
                             emailField.setOnClickListener(this::showEditCredential);
@@ -168,26 +196,26 @@ public class AccPersonalFragment extends Fragment
 
                 // New (unconfirmed) email, or a second confirmed email if something failed.
                 if (email2 == null) {
-                    activity.findViewById(R.id.emailNewWrapper).setVisibility(View.GONE);
+                    fragmentView.findViewById(R.id.emailNewWrapper).setVisibility(View.GONE);
                 } else {
-                    activity.findViewById(R.id.emailNewWrapper).setVisibility(View.VISIBLE);
-                    TextView emailField2 = activity.findViewById(R.id.emailNew);
+                    fragmentView.findViewById(R.id.emailNewWrapper).setVisibility(View.VISIBLE);
+                    TextView emailField2 = fragmentView.findViewById(R.id.emailNew);
                     emailField2.setText(email2.val);
                     // Unconfirmed? Allow confirming.
                     if (!email2.isDone()) {
                         argsEmail.putString("newValue", email2.val);
-                        activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.VISIBLE);
+                        fragmentView.findViewById(R.id.unconfirmedEmail).setVisibility(View.VISIBLE);
                         emailField2.setOnClickListener(this::showEditCredential);
                         emailField2.setBackgroundResource(R.drawable.dotted_line);
                     } else {
                         // Confirmed: make it unclickable.
-                        activity.findViewById(R.id.unconfirmedEmail).setVisibility(View.INVISIBLE);
+                        fragmentView.findViewById(R.id.unconfirmedEmail).setVisibility(View.INVISIBLE);
                         emailField2.setBackground(null);
                     }
                     emailField2.setTag(argsEmail);
 
                     // Second credential can always be deleted.
-                    AppCompatImageButton delete = activity.findViewById(R.id.emailNewDelete);
+                    AppCompatImageButton delete = fragmentView.findViewById(R.id.emailNewDelete);
                     delete.setVisibility(View.VISIBLE);
                     delete.setTag(email2);
                     delete.setOnClickListener(this::showDeleteCredential);
@@ -195,23 +223,23 @@ public class AccPersonalFragment extends Fragment
 
                 // Old (current) phone.
                 if (phone == null) {
-                    activity.findViewById(R.id.phoneWrapper).setVisibility(View.GONE);
+                    fragmentView.findViewById(R.id.phoneWrapper).setVisibility(View.GONE);
                 } else {
                     activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
-                    TextView phoneField = activity.findViewById(R.id.phone);
+                    TextView phoneField = fragmentView.findViewById(R.id.phone);
                     phoneField.setText(PhoneEdit.formatIntl(phone.val));
                     if (phone2 != null && phone2.isDone()) {
                         // Two confirmed credentials of the same method.
                         // Make the credential unclickable: can't modify phone if two phones are already given.
                         phoneField.setBackground(null);
                         // Allow deletion of any one, including the first.
-                        AppCompatImageButton delete = activity.findViewById(R.id.phoneDelete);
+                        AppCompatImageButton delete = fragmentView.findViewById(R.id.phoneDelete);
                         delete.setVisibility(View.VISIBLE);
                         delete.setTag(phone);
                         delete.setOnClickListener(this::showDeleteCredential);
                     } else {
                         // Second phone is either not present or unconfirmed.
-                        activity.findViewById(R.id.phoneDelete).setVisibility(View.INVISIBLE);
+                        fragmentView.findViewById(R.id.phoneDelete).setVisibility(View.INVISIBLE);
                         argsPhone.putString("oldValue", phone.val);
                         if (phone2 == null) {
                             phoneField.setOnClickListener(this::showEditCredential);
@@ -225,26 +253,26 @@ public class AccPersonalFragment extends Fragment
 
                 // New (unconfirmed) phone, or a second confirmed phone if something failed.
                 if (phone2 == null) {
-                    activity.findViewById(R.id.phoneNewWrapper).setVisibility(View.GONE);
+                    fragmentView.findViewById(R.id.phoneNewWrapper).setVisibility(View.GONE);
                 } else {
-                    activity.findViewById(R.id.phoneNewWrapper).setVisibility(View.VISIBLE);
-                    TextView phoneField2 = activity.findViewById(R.id.phoneNew);
+                    fragmentView.findViewById(R.id.phoneNewWrapper).setVisibility(View.VISIBLE);
+                    TextView phoneField2 = fragmentView.findViewById(R.id.phoneNew);
                     phoneField2.setText(PhoneEdit.formatIntl(phone2.val));
                     // Unconfirmed? Allow confirming.
                     if (!phone2.isDone()) {
                         argsPhone.putString("newValue", phone2.val);
-                        activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.VISIBLE);
+                        fragmentView.findViewById(R.id.unconfirmedPhone).setVisibility(View.VISIBLE);
                         phoneField2.setOnClickListener(this::showEditCredential);
                         phoneField2.setBackgroundResource(R.drawable.dotted_line);
                     } else {
                         // Confirmed: make it unclickable.
-                        activity.findViewById(R.id.unconfirmedPhone).setVisibility(View.INVISIBLE);
+                        fragmentView.findViewById(R.id.unconfirmedPhone).setVisibility(View.INVISIBLE);
                         phoneField2.setBackground(null);
                     }
                     phoneField2.setTag(argsPhone);
 
                     // Second credential can always be deleted.
-                    AppCompatImageButton delete = activity.findViewById(R.id.phoneNewDelete);
+                    AppCompatImageButton delete = fragmentView.findViewById(R.id.phoneNewDelete);
                     delete.setVisibility(View.VISIBLE);
                     delete.setTag(phone2);
                     delete.setOnClickListener(this::showDeleteCredential);
@@ -252,16 +280,16 @@ public class AccPersonalFragment extends Fragment
             }
 
             VxCard pub = me.getPub();
-            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId(), false);
+            UiUtils.setAvatar(fragmentView.findViewById(R.id.imageAvatar), pub, Cache.getTinode().getMyId(), false);
             if (pub != null) {
                 fn = pub.fn;
                 description = pub.note;
             }
 
-            FlexboxLayout tagsView = activity.findViewById(R.id.tagList);
+            FlexboxLayout tagsView = fragmentView.findViewById(R.id.tagList);
             tagsView.removeAllViews();
 
-            String[] tags = me.getTags();
+            String[] tags = Tinode.clearTagPrefix(me.getTags(), Tinode.TAG_ALIAS);
             if (tags != null) {
                 LayoutInflater inflater = activity.getLayoutInflater();
                 for (String tag : tags) {
@@ -272,10 +300,12 @@ public class AccPersonalFragment extends Fragment
                 }
             }
             tagsView.requestLayout();
+
+            ((TextView) activity.findViewById(R.id.alias)).setText(me.tagValueByPrefix(Tinode.TAG_ALIAS));
         }
 
-        ((TextView) activity.findViewById(R.id.topicTitle)).setText(fn);
-        ((TextView) activity.findViewById(R.id.topicDescription)).setText(description);
+        ((TextView) fragmentView.findViewById(R.id.topicTitle)).setText(fn);
+        ((TextView) fragmentView.findViewById(R.id.topicDescription)).setText(description);
     }
 
     // Dialog for editing tags.
@@ -283,7 +313,7 @@ public class AccPersonalFragment extends Fragment
         final Activity activity = requireActivity();
 
         final MeTopic me = Cache.getTinode().getMeTopic();
-        String[] tagArray = me.getTags();
+        String[] tagArray = Tinode.clearTagPrefix(me.getTags(), Tinode.TAG_ALIAS);
         String tags = tagArray != null ? TextUtils.join(", ", tagArray) : "";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
@@ -294,10 +324,14 @@ public class AccPersonalFragment extends Fragment
         tagsEditor.setText(tags);
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String[] tags1 = UtilsString.parseTags(tagsEditor.getText().toString());
+                    // Alias was removed from the tag manager. Add it back before sending the update.
+                    String alias = Tinode.tagByPrefix(me.getTags(), Tinode.TAG_ALIAS);
+                    String tagList = tagsEditor.getText().toString().trim();
+                    if (!TextUtils.isEmpty(alias)) {
+                        tagList = alias + "," + tagList;
+                    }
                     // noinspection unchecked
-                    me.setMeta(new MsgSetMeta.Builder().with(tags1).build())
-                            .thenCatch(new UiUtils.ToastFailureListener(activity));
+                    me.updateTags(tagList).thenCatch(new UiUtils.ToastFailureListener(activity));
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
@@ -352,7 +386,9 @@ public class AccPersonalFragment extends Fragment
             final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
             String title = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
             String description = ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim();
-            UiUtils.updateTopicDesc(me, title, null, description)
+            String alias = ((TextView) activity.findViewById(R.id.alias)).getText().toString().trim();
+
+            UiUtils.updateTopicDesc(me, title, null, description, alias)
                     .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
@@ -366,5 +402,43 @@ public class AccPersonalFragment extends Fragment
             return true;
         }
         return false;
+    }
+
+    private void setValidationError(final String error) {
+        View fv = getView();
+        if (fv != null && isVisible()) {
+            Activity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            activity.runOnUiThread(() -> ((TextView) fv.findViewById(R.id.alias)).setError(error));
+        }
+    }
+
+    public void checkUniqueness(String alias) {
+        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
+
+        if (me == null || !isVisible()) {
+            return;
+        }
+
+        // Check if the alias is already taken.
+        me.checkTagUniqueness(alias, me.getName()).thenApply(new PromisedReply.SuccessListener<>() {
+            @Override
+            public PromisedReply<Boolean> onSuccess(Boolean result) {
+                if (result) {
+                    setValidationError(null);
+                } else {
+                    setValidationError(getString(R.string.alias_already_taken));
+                }
+                return null;
+            }
+        }).thenCatch(new PromisedReply.FailureListener<>() {
+            @Override
+            public <E extends Exception> PromisedReply<Boolean> onFailure(E err) {
+                setValidationError(err.toString());
+                return null;
+            }
+        });
     }
 }

@@ -97,7 +97,12 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
     @Override
     public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
         String myID = Cache.getTinode().getMyId();
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(myID);
+        View fragmentView = getView();
+        if (fragmentView == null) {
+            return;
+        }
+
+        ((TextView) fragmentView.findViewById(R.id.topicAddress)).setText(myID);
 
         String fn = null;
         String note = null;
@@ -107,30 +112,33 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                 fn = pub.fn;
                 note = pub.note;
             }
-            UiUtils.setAvatar(activity.findViewById(R.id.imageAvatar), pub, myID, false);
+            UiUtils.setAvatar(fragmentView.findViewById(R.id.imageAvatar), pub, myID, false);
 
-            activity.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
-            activity.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);
-            activity.findViewById(R.id.danger).setVisibility(me.isTrustedDanger() ? View.VISIBLE : View.GONE);
+            fragmentView.findViewById(R.id.verified).setVisibility(me.isTrustedVerified() ? View.VISIBLE : View.GONE);
+            fragmentView.findViewById(R.id.staff).setVisibility(me.isTrustedStaff() ? View.VISIBLE : View.GONE);
+            fragmentView.findViewById(R.id.danger).setVisibility(me.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
             Credential[] creds = me.getCreds();
             if (creds != null) {
                 for (Credential cred : creds) {
                     if ("email".equals(cred.meth)) {
-                        activity.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
-                        ((TextView) activity.findViewById(R.id.email)).setText(cred.val);
+                        fragmentView.findViewById(R.id.emailWrapper).setVisibility(View.VISIBLE);
+                        ((TextView) fragmentView.findViewById(R.id.email)).setText(cred.val);
                     } else if ("tel".equals(cred.meth)) {
-                        activity.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
-                        ((TextView) activity.findViewById(R.id.phone)).setText(PhoneEdit.formatIntl(cred.val));
+                        fragmentView.findViewById(R.id.phoneWrapper).setVisibility(View.VISIBLE);
+                        ((TextView) fragmentView.findViewById(R.id.phone)).setText(PhoneEdit.formatIntl(cred.val));
                     } else {
                         // TODO: create generic field for displaying credential as text.
                         Log.w(TAG, "Unknown credential method " + cred.meth);
                     }
                 }
             }
+
+            String alias = me.tagValueByPrefix(Tinode.TAG_ALIAS);
+            ((TextView) activity.findViewById(R.id.alias)).setText(alias != null ? ("@" + alias) : "");
         }
 
-        final TextView title = activity.findViewById(R.id.topicTitle);
+        final TextView title = fragmentView.findViewById(R.id.topicTitle);
         if (!TextUtils.isEmpty(fn)) {
             title.setText(fn);
             title.setTypeface(null, Typeface.NORMAL);
@@ -140,10 +148,10 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         }
 
         if (!TextUtils.isEmpty(note)) {
-            ((TextView) activity.findViewById(R.id.topicDescription)).setText(note);
-            activity.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.VISIBLE);
+            ((TextView) fragmentView.findViewById(R.id.topicDescription)).setText(note);
+            fragmentView.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.VISIBLE);
         } else {
-            activity.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.GONE);
+            fragmentView.findViewById(R.id.topicDescriptionWrapper).setVisibility(View.GONE);
         }
     }
 

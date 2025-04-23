@@ -28,33 +28,33 @@ public class MsgClientSetSerializer extends StdSerializer<MsgClientSet<?,?>> {
 
         if (value.desc != null) {
             gen.writeObjectField("desc", value.desc);
-        } else if (value.nulls[MsgSetMeta.NULL_DESC]) {
+        } else if ((value.nulls & MsgSetMeta.NULL_DESC) != 0) {
             gen.writeStringField("desc", Tinode.NULL_VALUE);
         }
 
         if (value.sub != null) {
             gen.writeObjectField("sub", value.sub);
-        } else if (value.nulls[MsgSetMeta.NULL_SUB]) {
+        } else if ((value.nulls & MsgSetMeta.NULL_SUB) != 0) {
             gen.writeStringField("sub", Tinode.NULL_VALUE);
         }
 
         if (value.tags != null && value.tags.length != 0) {
             gen.writeFieldName("tags");
             gen.writeArray(value.tags, 0, value.tags.length);
-        } else if (value.nulls[MsgSetMeta.NULL_TAGS]) {
+        } else if ((value.nulls & MsgSetMeta.NULL_TAGS) != 0) {
             gen.writeFieldName("tags");
             gen.writeArray(new String[]{Tinode.NULL_VALUE}, 0, 1);
         }
 
         if (value.cred != null) {
             gen.writeObjectField("cred", value.cred);
-        } else if (value.nulls[MsgSetMeta.NULL_CRED]) {
+        } else if ((value.nulls & MsgSetMeta.NULL_CRED) != 0) {
             gen.writeStringField("cred", Tinode.NULL_VALUE);
         }
 
         if (value.aux != null) {
             gen.writeObjectField("aux", value.aux);
-        } else if (value.nulls[MsgSetMeta.NULL_AUX]) {
+        } else if ((value.nulls & MsgSetMeta.NULL_AUX) != 0) {
             gen.writeStringField("aux", Tinode.NULL_VALUE);
         }
         gen.writeEndObject();

@@ -162,6 +162,7 @@ public class MessageActivity extends AppCompatActivity
     private MessageEventListener mTinodeListener;
     // Handler for sending {note what="read"} notifications after a READ_DELAY.
     private Handler mNoteReadHandler = null;
+    private static final int NOTE_READ_ID = 1;
     // Notification settings.
     private boolean mSendTypingNotifications = false;
     private boolean mSendReadReceipts = false;
@@ -427,7 +428,7 @@ public class MessageActivity extends AppCompatActivity
         topicDetach();
 
         // Stop handling read messages
-        mNoteReadHandler.removeMessages(0);
+        mNoteReadHandler.removeMessages(NOTE_READ_ID);
     }
 
     private Fragment maybeShowMessagesFragmentOnAttach() {
@@ -815,7 +816,7 @@ public class MessageActivity extends AppCompatActivity
     // Schedule a delayed {note what="read"} notification.
     void sendNoteRead(int seq) {
         if (mSendReadReceipts) {
-            Message msg = mNoteReadHandler.obtainMessage(0, seq, 0, mTopicName);
+            Message msg = mNoteReadHandler.obtainMessage(NOTE_READ_ID, seq, 0, mTopicName);
             mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
         }
     }
@@ -863,7 +864,7 @@ public class MessageActivity extends AppCompatActivity
             // every {data} message in a large batch.
             // It may pose a problem if a later message is acked first (msg[1].seq > msg[2].seq), but that
             // should not happen.
-            if (hasMessages(0)) {
+            if (hasMessages(NOTE_READ_ID)) {
                 return;
             }
 

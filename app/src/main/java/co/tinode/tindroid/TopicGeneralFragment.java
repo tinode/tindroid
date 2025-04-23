@@ -6,7 +6,9 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -35,7 +37,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
-import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -43,7 +45,7 @@ import co.tinode.tinodesdk.model.ServerMessage;
  * Topic general info fragment: p2p or a group topic.
  */
 public class TopicGeneralFragment extends Fragment implements MenuProvider, UtilsMedia.MediaPreviewer,
-        MessageActivity.DataSetChangeListener {
+        UiUtils.AliasChecker, MessageActivity.DataSetChangeListener {
 
     private static final String TAG = "TopicGeneralFragment";
 
@@ -62,6 +64,8 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
                 }
             });
 
+    private UiUtils.ValidatorHandler mAliasChecker;
+
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -71,6 +75,8 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
         final FragmentActivity activity = requireActivity();
+
+        mAliasChecker = new UiUtils.ValidatorHandler(this);
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
         toolbar.setTitle(R.string.topic_settings);
@@ -89,6 +95,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
                     .build()
                     .show(getChildFragmentManager());
         });
+
         view.findViewById(R.id.buttonCopyID).setOnClickListener(v -> {
             ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
             if (clipboard != null && mTopic != null) {
@@ -123,8 +130,19 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
         super.onResume();
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mAliasChecker.removeMessages();
+    }
+
     private void refreshTags(Activity activity, String[] tags) {
-        final View tagManager = activity.findViewById(R.id.tagsManagerWrapper);
+        View fragmentView = getView();
+        if (fragmentView == null) {
+            return;
+        }
+
+        final View tagManager = fragmentView.findViewById(R.id.tagsManagerWrapper);
         if (mTopic.isGrpType() && mTopic.isOwner()) {
             // Group topic
             tagManager.setVisibility(View.VISIBLE);
@@ -137,15 +155,19 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
 
             if (tags != null) {
                 tagsView.setVisibility(View.VISIBLE);
-                activity.findViewById(R.id.noTagsFound).setVisibility(View.GONE);
+                fragmentView.findViewById(R.id.noTagsFound).setVisibility(View.GONE);
                 for (String tag : tags) {
+                    if (tag.startsWith(Tinode.TAG_ALIAS)) {
+                        // Skip alias tag. It's shown elsewhere.
+                        continue;
+                    }
                     TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
                     label.setText(tag);
                     tagsView.addView(label);
                 }
             } else {
                 tagsView.setVisibility(View.GONE);
-                activity.findViewById(R.id.noTagsFound).setVisibility(View.VISIBLE);
+                fragmentView.findViewById(R.id.noTagsFound).setVisibility(View.VISIBLE);
             }
         } else {
             // P2P topic
@@ -155,12 +177,13 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
 
     // Dialog for editing tags.
     private void showEditTags() {
-        final Activity activity = getActivity();
-        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+        final Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
-        String[] tagArray = mTopic.getTags();
+        // Get tags and remove the 'alias:abc123' - it's edited elsewhere.
+        String[] tagArray = Tinode.clearTagPrefix(mTopic.getTags(), Tinode.TAG_ALIAS);
         String tags = tagArray != null ? TextUtils.join(", ", mTopic.getTags()) : "";
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
@@ -173,9 +196,14 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
         tagsEditor.setSelection(tags.length());
         builder
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    String[] tags1 = UtilsString.parseTags(tagsEditor.getText().toString());
+                    String tagList = tagsEditor.getText().toString();
+                    // Add back the alias tag.
+                    String alias = mTopic.tagByPrefix(Tinode.TAG_ALIAS);
+                    if (!TextUtils.isEmpty(alias)) {
+                        tagList = alias + "," + tagList;
+                    }
                     // noinspection unchecked
-                    mTopic.setMeta(new MsgSetMeta.Builder().with(tags1).build())
+                    mTopic.updateTags(tagList)
                             .thenApply(new PromisedReply.SuccessListener() {
                                 @Override
                                 public PromisedReply onSuccess(Object result) {
@@ -196,13 +224,18 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
             return;
         }
 
-        final AppCompatImageView avatar = activity.findViewById(R.id.imageAvatar);
-        final View uploadAvatar = activity.findViewById(R.id.uploadAvatar);
-        final TextView title = activity.findViewById(R.id.topicTitle);
-        final TextView comment = activity.findViewById(R.id.topicComment);
-        final TextView description = activity.findViewById(R.id.topicDescription);
-        final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
-        ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
+        View fragmentView = getView();
+        if (fragmentView == null) {
+            return;
+        }
+        final AppCompatImageView avatar = fragmentView.findViewById(R.id.imageAvatar);
+        final View uploadAvatar = fragmentView.findViewById(R.id.uploadAvatar);
+        final TextView title = fragmentView.findViewById(R.id.topicTitle);
+        final TextView alias = fragmentView.findViewById(R.id.alias);
+        final TextView comment = fragmentView.findViewById(R.id.topicComment);
+        final TextView description = fragmentView.findViewById(R.id.topicDescription);
+        final View descriptionWrapper = fragmentView.findViewById(R.id.topicDescriptionWrapper);
+        ((TextView) fragmentView.findViewById(R.id.topicAddress)).setText(mTopic.getName());
 
         boolean editable = mTopic.isGrpType() && mTopic.isOwner();
         title.setEnabled(editable);
@@ -230,6 +263,26 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
             comment.setText(priv.getComment());
         }
 
+        String aliasTag = mTopic.tagValueByPrefix(Tinode.TAG_ALIAS);
+        if (!TextUtils.isEmpty(aliasTag)) {
+            alias.setText(aliasTag);
+        }
+
+        alias.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                alias.setError(UiUtils.validateAlias(activity, mAliasChecker, s.toString()));
+            }
+        });
+
         refreshTags(activity, mTopic.getTags());
     }
 
@@ -242,17 +295,23 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
     public boolean onMenuItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_save && mTopic != null) {
-            final FragmentActivity activity = getActivity();
-            if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
+            final FragmentActivity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
                 return false;
             }
 
-            final String newTitle = ((TextView) activity.findViewById(R.id.topicTitle)).getText().toString().trim();
-            final String newComment = ((TextView) activity.findViewById(R.id.topicComment)).getText().toString().trim();
-            final String newDescription = mTopic.isGrpType() && mTopic.isOwner() ?
-                    ((TextView) activity.findViewById(R.id.topicDescription)).getText().toString().trim() : null;
+            View fragmentView = getView();
+            if (fragmentView == null) {
+                return false;
+            }
 
-            UiUtils.updateTopicDesc(mTopic, newTitle, newComment, newDescription)
+            final String newTitle = ((TextView) fragmentView.findViewById(R.id.topicTitle)).getText().toString().trim();
+            final String newComment = ((TextView) fragmentView.findViewById(R.id.topicComment)).getText().toString().trim();
+            final String newDescription = mTopic.isGrpType() && mTopic.isOwner() ?
+                    ((TextView) fragmentView.findViewById(R.id.topicDescription)).getText().toString().trim() : null;
+            final String newAlias = ((TextView) fragmentView.findViewById(R.id.alias)).getText().toString().trim();
+
+            UiUtils.updateTopicDesc(mTopic, newTitle, newComment, newDescription, newAlias)
                     .thenApply(new PromisedReply.SuccessListener<>() {
                         @Override
                         public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
@@ -276,5 +335,41 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
             return;
         }
         ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_AVATAR_PREVIEW, args, true);
+    }
+
+    private void setValidationError(final String error) {
+        View fv = getView();
+        if (fv != null && isVisible()) {
+            Activity activity = requireActivity();
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                return;
+            }
+            activity.runOnUiThread(() -> ((TextView) fv.findViewById(R.id.alias)).setError(error));
+        }
+    }
+
+    public void checkUniqueness(String alias) {
+        if (mTopic == null || !isVisible()) {
+            return;
+        }
+
+        // Check if the alias is already taken.
+        mTopic.checkTagUniqueness(alias, mTopic.getName()).thenApply(new PromisedReply.SuccessListener<>() {
+            @Override
+            public PromisedReply<Boolean> onSuccess(Boolean result) {
+                if (result) {
+                    setValidationError(null);
+                } else {
+                    setValidationError(getString(R.string.alias_already_taken));
+                }
+                return null;
+            }
+        }).thenCatch(new PromisedReply.FailureListener<>() {
+            @Override
+            public <E extends Exception> PromisedReply<Boolean> onFailure(E err) {
+                setValidationError(err.toString());
+                return null;
+            }
+        });
     }
 }

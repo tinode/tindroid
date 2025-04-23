@@ -29,6 +29,9 @@ import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -54,8 +57,10 @@ import androidx.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
@@ -92,6 +97,8 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Acs;
 import co.tinode.tinodesdk.model.Credential;
+import co.tinode.tinodesdk.model.MetaSetDesc;
+import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 
@@ -126,6 +133,9 @@ public class UiUtils {
     private static final int QRCODE_SCALE = 10;
     private static final int QRCODE_FG_COLOR = Color.BLACK;
     private static final int QRCODE_BG_COLOR = Color.WHITE;
+
+    private static final long ALIAS_AVAILABILITY_CHECK_DELAY = 1000;
+    private static final int ALIAS_VALIDATOR_ID = 1;
 
     public enum MsgAction {
         NONE, REPLY, FORWARD, EDIT
@@ -941,7 +951,8 @@ public class UiUtils {
     }
 
     static <T extends Topic<VxCard, PrivateType, ?, ?>>
-    PromisedReply<ServerMessage> updateTopicDesc(T topic, String title, String subtitle, String description) {
+    PromisedReply<ServerMessage> updateTopicDesc(T topic, String title, String subtitle,
+                                                 String description, String alias) {
         VxCard oldPub = topic.getPub();
         VxCard pub = null;
         if (!TextUtils.isEmpty(title)) {
@@ -980,8 +991,20 @@ public class UiUtils {
             }
         }
 
+        String[] oldTags = topic.getTags();
+        String[] newTags = alias != null ?
+                Tinode.setUniqueTag(oldTags, Tinode.TAG_ALIAS + alias) :
+                Tinode.clearTagPrefix(oldTags, Tinode.TAG_ALIAS);
+
+        MsgSetMeta.Builder<VxCard, PrivateType> msm = new MsgSetMeta.Builder<>();
         if (pub != null || priv != null) {
-            return topic.setDescription(pub, priv, null);
+            msm.with(new MetaSetDesc<>(pub, priv));
+        }
+        if (!Arrays.equals(oldTags, newTags)) {
+            msm.with(newTags);
+        }
+        if (!msm.isEmpty()) {
+            return topic.setMeta(msm.build());
         }
         return new PromisedReply<>((ServerMessage) null);
     }
@@ -1315,6 +1338,54 @@ public class UiUtils {
         }
 
         view.setImageBitmap(result);
+    }
+
+    static String validateAlias(final Activity activity,
+                                final Handler aliasChecker,
+                                final String alias) {
+        if (alias == null || alias.isEmpty()) {
+            return null;
+        }
+
+        if (!Tinode.isValidTagValueFormat(alias)) {
+            return activity.getString(R.string.error_invalid_alias);
+        }
+
+        // Setup a delayed check for alias availability.
+        Message msg = aliasChecker.obtainMessage(ALIAS_VALIDATOR_ID, alias);
+        aliasChecker.sendMessageDelayed(msg, ALIAS_AVAILABILITY_CHECK_DELAY);
+        return null;
+    }
+
+    interface AliasChecker {
+        void checkUniqueness(String alias);
+    }
+
+    // Handler sends a request for alias validation.
+    static class ValidatorHandler extends Handler {
+        private final WeakReference<AliasChecker> ref;
+
+        ValidatorHandler(AliasChecker fragment) {
+            super(Looper.getMainLooper());
+            ref = new WeakReference<>(fragment);
+        }
+
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            // Don't check if more messages are pending: check only the last one, when typing stopped.
+            if (msg.what != ALIAS_VALIDATOR_ID || hasMessages(ALIAS_VALIDATOR_ID)) {
+                return;
+            }
+
+            UiUtils.AliasChecker fragment = ref.get();
+            if (fragment != null) {
+                fragment.checkUniqueness((String) msg.obj);
+            }
+        }
+
+        public void removeMessages() {
+            removeMessages(ALIAS_VALIDATOR_ID);
+        }
     }
 
     interface ProgressIndicator {

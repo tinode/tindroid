@@ -102,6 +102,10 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 return;
             }
             ComTopic<VxCard> topic = mTopics.get(position);
+            if (topic == null) {
+                // This should not happen.
+                return;
+            }
             Storage.Message msg = Cache.getTinode().getLastMessage(topic.getName());
             holder.bind(position, topic, msg, mSelectionTracker != null &&
                     mSelectionTracker.isSelected(topic.getName()));
@@ -297,7 +301,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             final String topicName = topic.getName();
 
             details.pos = position;
-            details.id = topic.getName();
+            details.id = topicName;
 
             VxCard pub = topic.getPub();
             if (pub != null && pub.fn != null) {

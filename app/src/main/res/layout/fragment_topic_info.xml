@@ -106,8 +106,50 @@
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/action_copy"
                 android:drawablePadding="4dp"
+                android:layout_gravity="end"
                 app:srcCompat="@drawable/ic_copy"
                 app:drawableTint="?android:textColorPrimary" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/aliasIdWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/alias" />
+
+            <TextView
+                android:id="@+id/alias"
+                style="@style/textPrimary"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:clickable="false"
+                android:ellipsize="end"
+                android:focusable="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="\@veryGoodAlias" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/buttonCopyAlias"
+                style="?attr/buttonBarButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/action_copy"
+                android:drawablePadding="4sp"
+                android:layout_gravity="end"
+                app:srcCompat="@drawable/ic_copy"
+                app:drawableTint="?android:textColorPrimary" />
+
         </LinearLayout>
 
         <TextView
@@ -207,7 +249,9 @@
                 android:id="@+id/switchMuted"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp" />
+                android:layout_margin="4dp"
+                android:minHeight="@dimen/min_touch_height"
+                android:minWidth="@dimen/min_touch_height" />
 
         </LinearLayout>
 
@@ -229,7 +273,9 @@
                 android:id="@+id/switchArchived"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="4dp" />
+                android:layout_margin="4dp"
+                android:minHeight="@dimen/min_touch_height"
+                android:minWidth="@dimen/min_touch_height" />
 
         </LinearLayout>
 

@@ -376,4 +376,8 @@
     <string name="take_photo">Camera</string>
     <string name="select_from_gallery">Gallery</string>
     <string name="record_video">Video</string>
+    <string name="alias">Alias:</string>
+    <string name="alias_plain">Alias</string>
+    <string name="error_invalid_alias">invalid format</string>
+    <string name="alias_already_taken">already taken</string>
 </resources>

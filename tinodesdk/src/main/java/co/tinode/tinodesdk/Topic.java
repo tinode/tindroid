@@ -10,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.MsgServerMeta;
 import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.MsgSetMeta;
+import co.tinode.tinodesdk.model.Pair;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
 import co.tinode.tinodesdk.model.TrustedType;
@@ -51,7 +53,7 @@ import co.tinode.tinodesdk.model.TrustedType;
  */
 @SuppressWarnings("WeakerAccess, unused")
 public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
-    private static final String TAG = "tinodesdk.Topic";
+    private static final String TAG = "Topic";
 
     protected final Tinode mTinode;
     protected String mName;
@@ -67,7 +69,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     // Tags: user and topic discovery
     protected String[] mTags;
     // Auxiliary data.
-    protected Map<String,Object> mAux;
+    protected HashMap<String,Object> mAux;
     // The topic is subscribed/online.
     protected int mAttached = 0;
     protected Listener<DP, DR, SP, SR> mListener = null;
@@ -441,13 +443,34 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Find the first tag with the given prefix.
+     * @param prefix prefix to search for.
+     * @return tag if found or null.
+     */
+    @Nullable
+    public String tagByPrefix(@NotNull String prefix) {
+        return Tinode.tagByPrefix(mTags, prefix);
+    }
+
+    /**
+     * Find the first tag with the given prefix and return tag value, i.e. in 'prefix:value' return the 'value'.
+     * @param prefix prefix to search for.
+     * @return tag value if found or null.
+     */
+    @Nullable
+    public String tagValueByPrefix(@NotNull String prefix) {
+        Pair<String, String> tag = Tinode.tagSplit(Tinode.tagByPrefix(mTags, prefix));
+        return tag != null ? tag.second : null;
+    }
+
+    /**
      * Update topic parameters from a tags array.
      *
      * @param aux updated auxiliary topic data.
      */
     protected void update(Map<String,Object> aux) {
-        this.mAux = mergeMaps(this.mAux, aux);
-        if (this.mAux != null) {
+        mAux = (HashMap<String, Object>) mergeMaps(mAux, aux);
+        if (mAux != null) {
             // Sanitize aux.pins array.
             Object pinsObj = this.mAux.get("pins");
             if (pinsObj instanceof List) {
@@ -467,12 +490,12 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
     private static @Nullable Map<String, Object> mergeMaps(@Nullable Map<String, Object> dst,
                                                           @Nullable Map<String, Object> src) {
-        if (dst == null) {
-            return src;
-        }
-
         if (src == null) {
             return dst;
+        }
+
+        if (dst == null) {
+            return new HashMap<>(src);
         }
 
         for (Map.Entry<String, Object> e : src.entrySet()) {
@@ -631,28 +654,72 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     public String[] getTags() {
-        return mTags;
+        return mTags == null ? null : Arrays.copyOf(mTags, mTags.length);
     }
 
     public void setTags(String[] tags) {
         mTags = tags;
     }
 
-    public Map<String, Object> getAux() {
-        return mAux;
+    /**
+     * Check if the given tag is unique by asking the server.
+     * @param tag tag to check.
+     * @return promise to be resolved with true if the tag is unique, false otherwise.
+     */
+    public PromisedReply<Boolean> checkTagUniqueness(final String tag, final String caller) {
+        PromisedReply<Boolean> result = new PromisedReply<>();
+        FndTopic<?> fnd = mTinode.getOrCreateFndTopic();
+        fnd.subscribe(null, null)
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                        return fnd.setDescription(tag, null, null);
+                    }
+                })
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                         return fnd.getMeta(getMetaGetBuilder().withTags().build());
+                    }
+                })
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage response) throws Exception {
+                        if (response.meta == null || response.meta.tags == null) {
+                            result.resolve(true);
+                            return null;
+                        }
+                        String[] tags = response.meta.tags;
+                        for (String t : tags) {
+                            if (t != null && !t.equals(caller)) {
+                                result.resolve(false);
+                                return null;
+                            }
+                        }
+                        result.resolve(true);
+                        return null;
+                    }
+                })
+                .thenCatch(new PromisedReply.FailureListener<>() {
+                    @Override
+                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) throws Exception {
+                        result.reject(err);
+                        return null;
+                    }
+                });
+        return result;
     }
+
+    public Map<String, Object> getAux() {
+        return mAux != null ? new HashMap<>(mAux) : null;
+    }
+
     public Object getAux(String key) {
         return mAux != null ? mAux.get(key) : null;
     }
-    public void setAux(Map<String, Object> aux) {
-        mAux = aux;
-    }
 
-    public void setAux(String key, Object value) {
-        if (mAux == null) {
-            mAux = new HashMap<>();
-        }
-        mAux.put(key, value);
+    public void setAux(Map<String, Object> aux) {
+        mAux = aux != null ? new HashMap<>(aux) : null;
     }
 
     public DP getPub() {
@@ -1433,6 +1500,22 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
         // The state is unchanged, return resolved promise.
         return new PromisedReply<>((ServerMessage) null);
+    }
+
+    /**
+     * Update tags.
+     * @param tags new tags to send to the server.
+     */
+    public PromisedReply<ServerMessage> updateTags(String[] tags) {
+        return setMeta(new MsgSetMeta.Builder<DP, DR>().with(tags).build());
+    }
+
+    /**
+     * Update tags.
+     * @param tagList comma separated list of new tags to send to the server.
+     */
+    public PromisedReply<ServerMessage> updateTags(String tagList) {
+        return updateTags(mTinode.parseTags(tagList));
     }
 
     /**

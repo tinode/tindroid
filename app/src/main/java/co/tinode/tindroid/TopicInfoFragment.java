@@ -55,6 +55,7 @@ import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
@@ -162,6 +163,17 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
                     .show();
         });
 
+        view.findViewById(R.id.buttonCopyAlias).setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
+            if (clipboard != null && mTopic != null) {
+                String alias = mTopic.tagByPrefix(Tinode.TAG_ALIAS);
+                if (!TextUtils.isEmpty(alias)) {
+                    clipboard.setPrimaryClip(ClipData.newPlainText("alias", alias));
+                    Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
+
         view.findViewById(R.id.permissions).setOnClickListener(v ->
                 ((MessageActivity) activity).showFragment(MessageActivity.FRAGMENT_PERMISSIONS, null,
                         true));
@@ -193,6 +205,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
 
         if (mTopic.isSlfType()) {
             activity.findViewById(R.id.topicIdWrapper).setVisibility(View.GONE);
+            activity.findViewById(R.id.aliasIdWrapper).setVisibility(View.GONE);
         } else {
             ((TextView) activity.findViewById(R.id.topicAddress)).setText(mTopic.getName());
             activity.findViewById(R.id.topicIdWrapper).setVisibility(View.VISIBLE);
@@ -375,11 +388,15 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             return;
         }
 
-        final ImageView avatar = activity.findViewById(R.id.imageAvatar);
-        final TextView title = activity.findViewById(R.id.topicTitle);
-        final TextView subtitle = activity.findViewById(R.id.topicComment);
-        final View descriptionWrapper = activity.findViewById(R.id.topicDescriptionWrapper);
-        final TextView description = activity.findViewById(R.id.topicDescription);
+        View fragmentView = getView();
+        if (fragmentView == null) {
+            return;
+        }
+        final ImageView avatar = fragmentView.findViewById(R.id.imageAvatar);
+        final TextView title = fragmentView.findViewById(R.id.topicTitle);
+        final TextView subtitle = fragmentView.findViewById(R.id.topicComment);
+        final View descriptionWrapper = fragmentView.findViewById(R.id.topicDescriptionWrapper);
+        final TextView description = fragmentView.findViewById(R.id.topicDescription);
 
         VxCard pub = mTopic.getPub();
         if (pub != null && !TextUtils.isEmpty(pub.fn)) {
@@ -423,9 +440,9 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
         }
 
         // Trusted flags.
-        activity.findViewById(R.id.verified).setVisibility(mTopic.isTrustedVerified() ? View.VISIBLE : View.GONE);
-        activity.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
-        activity.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
+        fragmentView.findViewById(R.id.verified).setVisibility(mTopic.isTrustedVerified() ? View.VISIBLE : View.GONE);
+        fragmentView.findViewById(R.id.staff).setVisibility(mTopic.isTrustedStaff() ? View.VISIBLE : View.GONE);
+        fragmentView.findViewById(R.id.danger).setVisibility(mTopic.isTrustedDanger() ? View.VISIBLE : View.GONE);
 
         UiUtils.setAvatar(avatar, pub, mTopic.getName(), mTopic.isDeleted());
 
@@ -439,12 +456,21 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
         }
 
         if (mTopic.isSlfType()) {
-            activity.findViewById(R.id.switchMutedWrapper).setVisibility(View.GONE);
+            fragmentView.findViewById(R.id.switchMutedWrapper).setVisibility(View.GONE);
+            activity.findViewById(R.id.aliasIdWrapper).setVisibility(View.GONE);
         } else {
-            ((SwitchCompat) activity.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
-            activity.findViewById(R.id.switchMutedWrapper).setVisibility(View.VISIBLE);
+            ((SwitchCompat) fragmentView.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
+            fragmentView.findViewById(R.id.switchMutedWrapper).setVisibility(View.VISIBLE);
+
+            String alias = mTopic.tagValueByPrefix(Tinode.TAG_ALIAS);
+            if (!TextUtils.isEmpty(alias)) {
+                ((TextView) activity.findViewById(R.id.alias)).setText("@" + alias);
+                activity.findViewById(R.id.aliasIdWrapper).setVisibility(View.VISIBLE);
+            } else {
+                activity.findViewById(R.id.aliasIdWrapper).setVisibility(View.GONE);
+            }
         }
-        ((SwitchCompat) activity.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
+        ((SwitchCompat) fragmentView.findViewById(R.id.switchArchived)).setChecked(mTopic.isArchived());
     }
 
     @Override

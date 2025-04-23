@@ -200,7 +200,7 @@ public class CreateGroupFragment extends Fragment implements UtilsMedia.MediaPre
             }
 
             createTopic(activity, topicTitle, bmp, description, pcomment, isChannel,
-                    UtilsString.parseTags(tags), members);
+                    Cache.getTinode().parseTags(tags), members);
         });
     }
 
