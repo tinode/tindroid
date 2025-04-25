@@ -134,6 +134,7 @@ public class UiUtils {
     private static final int QRCODE_FG_COLOR = Color.BLACK;
     private static final int QRCODE_BG_COLOR = Color.WHITE;
 
+    // 1s delay between the end of typing and a request to the server.
     private static final long ALIAS_AVAILABILITY_CHECK_DELAY = 1000;
     private static final int ALIAS_VALIDATOR_ID = 1;
 

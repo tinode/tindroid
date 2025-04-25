@@ -32,6 +32,7 @@
             android:focusable="false"
             android:maxLines="2"
             android:textIsSelectable="false"
+            android:minHeight="36dp"
             tools:text="User name" />
 
         <LinearLayout
@@ -67,7 +68,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/action_copy"
-                android:drawablePadding="4sp"
                 app:drawableStartCompat="@drawable/ic_copy"
                 app:drawableTint="?android:textColorPrimary" />
         </LinearLayout>
@@ -106,7 +106,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:contentDescription="@string/action_copy"
-                android:drawablePadding="4sp"
                 app:drawableStartCompat="@drawable/ic_copy"
                 app:drawableTint="?android:textColorPrimary" />
         </LinearLayout>
@@ -118,7 +117,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:gravity="center_vertical"
-            android:minHeight="32dp"
+            android:minHeight="36dp"
             android:text="@string/badge_verified"
             android:visibility="gone"
             android:drawablePadding="6dp"
@@ -131,7 +130,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:gravity="center_vertical"
-            android:minHeight="32dp"
+            android:minHeight="36dp"
             android:text="@string/badge_staff"
             android:visibility="gone"
             android:drawablePadding="6dp"
@@ -144,7 +143,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:gravity="center_vertical"
-            android:minHeight="32dp"
+            android:minHeight="36dp"
             android:text="@string/badge_danger"
             android:visibility="gone"
             android:drawablePadding="6dp"
@@ -155,7 +154,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
 
             <TextView
                 style="@style/sectionTitleStyle"
@@ -185,7 +185,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:visibility="gone"
-            android:gravity="center_vertical">
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
 
             <TextView
                 style="@style/sectionTitleStyle"
