@@ -134,7 +134,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
                 }
             }
 
-            String alias = me.tagValueByPrefix(Tinode.TAG_ALIAS);
+            String alias = me.alias();
             ((TextView) activity.findViewById(R.id.alias)).setText(alias != null ? ("@" + alias) : "");
         }
 

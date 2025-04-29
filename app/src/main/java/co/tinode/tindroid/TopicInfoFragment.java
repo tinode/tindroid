@@ -462,7 +462,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             ((SwitchCompat) fragmentView.findViewById(R.id.switchMuted)).setChecked(mTopic.isMuted());
             fragmentView.findViewById(R.id.switchMutedWrapper).setVisibility(View.VISIBLE);
 
-            String alias = mTopic.tagValueByPrefix(Tinode.TAG_ALIAS);
+            String alias = mTopic.alias();
             if (!TextUtils.isEmpty(alias)) {
                 ((TextView) activity.findViewById(R.id.alias)).setText("@" + alias);
                 activity.findViewById(R.id.aliasIdWrapper).setVisibility(View.VISIBLE);

@@ -464,6 +464,15 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Get the first tag with the 'alias:' prefix and return its value, i.e. in 'alias:abc' return the 'abc'.
+     * @return alias value, if present, or null.
+     */
+    @Nullable
+    public String alias() {
+        return tagValueByPrefix(Tinode.TAG_ALIAS);
+    }
+
+    /**
      * Update topic parameters from a tags array.
      *
      * @param aux updated auxiliary topic data.

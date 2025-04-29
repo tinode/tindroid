@@ -263,7 +263,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
             comment.setText(priv.getComment());
         }
 
-        String aliasTag = mTopic.tagValueByPrefix(Tinode.TAG_ALIAS);
+        String aliasTag = mTopic.alias();
         if (!TextUtils.isEmpty(aliasTag)) {
             alias.setText(aliasTag);
         }

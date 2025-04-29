@@ -301,7 +301,7 @@ public class AccPersonalFragment extends Fragment
             }
             tagsView.requestLayout();
 
-            ((TextView) activity.findViewById(R.id.alias)).setText(me.tagValueByPrefix(Tinode.TAG_ALIAS));
+            ((TextView) activity.findViewById(R.id.alias)).setText(me.alias());
         }
 
         ((TextView) fragmentView.findViewById(R.id.topicTitle)).setText(fn);
