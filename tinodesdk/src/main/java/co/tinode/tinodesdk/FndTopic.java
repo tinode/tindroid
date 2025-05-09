@@ -95,6 +95,54 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
         /* Do nothing: all fnd data is transient. */
     }
 
+    /**
+     * Check if the given tag is unique by asking the server.
+     * @param tag tag to check.
+     * @return promise to be resolved with true if the tag is unique, false otherwise.
+     */
+    public PromisedReply<Boolean> checkTagUniqueness(final String tag, final String caller) {
+        PromisedReply<Boolean> result = new PromisedReply<>();
+        subscribe(null, null)
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                        return setDescription(tag, null, null);
+                    }
+                })
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
+                        return getMeta(getMetaGetBuilder().withTags().build());
+                    }
+                })
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<ServerMessage> onSuccess(ServerMessage response) throws Exception {
+                        if (response.meta == null || response.meta.tags == null) {
+                            result.resolve(true);
+                            return null;
+                        }
+                        String[] tags = response.meta.tags;
+                        for (String t : tags) {
+                            if (t != null && !t.equals(caller)) {
+                                result.resolve(false);
+                                return null;
+                            }
+                        }
+                        result.resolve(true);
+                        return null;
+                    }
+                })
+                .thenCatch(new PromisedReply.FailureListener<>() {
+                    @Override
+                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) throws Exception {
+                        result.reject(err);
+                        return null;
+                    }
+                });
+        return result;
+    }
+
     public static class FndListener<SP> implements Listener<String, String, SP, String[]> {
         /** {meta} message received */
         public void onMeta(MsgServerMeta<String, String, SP, String[]> meta) {}

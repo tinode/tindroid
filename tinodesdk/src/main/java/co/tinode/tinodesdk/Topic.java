@@ -670,55 +670,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         mTags = tags;
     }
 
-    /**
-     * Check if the given tag is unique by asking the server.
-     * @param tag tag to check.
-     * @return promise to be resolved with true if the tag is unique, false otherwise.
-     */
-    public PromisedReply<Boolean> checkTagUniqueness(final String tag, final String caller) {
-        PromisedReply<Boolean> result = new PromisedReply<>();
-        FndTopic<?> fnd = mTinode.getOrCreateFndTopic();
-        fnd.subscribe(null, null)
-                .thenApply(new PromisedReply.SuccessListener<>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
-                        return fnd.setDescription(tag, null, null);
-                    }
-                })
-                .thenApply(new PromisedReply.SuccessListener<>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage unused) {
-                         return fnd.getMeta(getMetaGetBuilder().withTags().build());
-                    }
-                })
-                .thenApply(new PromisedReply.SuccessListener<>() {
-                    @Override
-                    public PromisedReply<ServerMessage> onSuccess(ServerMessage response) throws Exception {
-                        if (response.meta == null || response.meta.tags == null) {
-                            result.resolve(true);
-                            return null;
-                        }
-                        String[] tags = response.meta.tags;
-                        for (String t : tags) {
-                            if (t != null && !t.equals(caller)) {
-                                result.resolve(false);
-                                return null;
-                            }
-                        }
-                        result.resolve(true);
-                        return null;
-                    }
-                })
-                .thenCatch(new PromisedReply.FailureListener<>() {
-                    @Override
-                    public <E extends Exception> PromisedReply<ServerMessage> onFailure(E err) throws Exception {
-                        result.reject(err);
-                        return null;
-                    }
-                });
-        return result;
-    }
-
     public Map<String, Object> getAux() {
         return mAux != null ? new HashMap<>(mAux) : null;
     }

@@ -7,20 +7,14 @@ import android.text.format.DateUtils;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 import androidx.annotation.NonNull;
-import co.tinode.tinodesdk.Tinode;
 
 public class UtilsString {
-    // Default tag parameters
-    private static final int DEFAULT_MIN_TAG_LENGTH = 4;
-    private static final int DEFAULT_MAX_TAG_LENGTH = 96;
-    private static final int DEFAULT_MAX_TAG_COUNT = 16;
-
     // Date formatter for messages
     @NonNull
     static String shortDate(Date date) {
@@ -149,5 +143,33 @@ public class UtilsString {
         }
 
         return -1;
+    }
+
+    private static final Pattern sTelRegex = Pattern.compile(
+            "^(?:\\+?(\\d{1,3}))?[- (.]*(\\d{3})[- ).]*(\\d{3})[- .]*(\\d{2})[- .]*(\\d{2})?$",
+            Pattern.CASE_INSENSITIVE);
+    /**
+     * Checks (loosely) if the given string is a phone. If so, returns the phone number in a format
+     *  as close to E.164 as possible.
+     */
+    static String asPhone(String val) {
+        val = val.trim();
+        if (sTelRegex.matcher(val).matches()) {
+            return val.replaceAll("[- ().]*", "");
+        }
+        return null;
+    }
+    private static final Pattern sEmailRegex = Pattern.compile(
+            "^[a-z0-9_.+-]+@[a-z0-9-]+(\\.[a-z0-9-]+)+$",
+            Pattern.CASE_INSENSITIVE);
+    /**
+     * Checks (loosely) if the given string is an email. If so returns the email.
+     */
+    static String asEmail(String val) {
+        val = val.trim();
+        if (sEmailRegex.matcher(val).matches()) {
+            return val;
+        }
+        return null;
     }
 }

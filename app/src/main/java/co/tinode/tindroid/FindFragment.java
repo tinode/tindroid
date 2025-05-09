@@ -21,6 +21,7 @@ import android.widget.SearchView;
 import android.widget.Toast;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -345,6 +346,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
         mAdapter.resetFound(getActivity(), mSearchTerm);
     }
 
+    private static final Pattern sSingleTagTest = Pattern.compile("[\\s,:]");
     private String doSearch(String query) {
         query = query.trim();
         query = !TextUtils.isEmpty(query) ? query : null;
@@ -366,9 +368,28 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
             return query;
         }
 
-        mFndTopic.setMeta(new MsgSetMeta.Builder<String,String>().with(
-                new MetaSetDesc<>(query == null ? Tinode.NULL_VALUE : query, null)).build());
-        if (query != null) {
+        if (TextUtils.isEmpty(query)) {
+            query = Tinode.NULL_VALUE;
+        } else if (!sSingleTagTest.matcher(query).matches()) {
+            // No colons, spaces or commas. Try as email, phone, or alias.
+            String email = UtilsString.asEmail(query);
+            if (email != null) {
+                query = String.format("%s%s", Tinode.TAG_EMAIL, email);
+            } else {
+                String tel = UtilsString.asPhone(query);
+                if (tel != null) {
+                    query = String.format("%s%s", Tinode.TAG_PHONE, tel);
+                } else {
+                    if (query.charAt(0) == '@') {
+                        query = query.substring(1);
+                    }
+                    query = String.format("%s%s", Tinode.TAG_ALIAS, query);
+                }
+            }
+        }
+
+        mFndTopic.setMeta(new MsgSetMeta.Builder<String,String>().with(new MetaSetDesc<>(query, null)).build());
+        if (!Tinode.NULL_VALUE.equals(query)) {
             toggleProgressIndicator(true);
             mFndTopic.getMeta(MsgGetMeta.sub()).thenFinally(new PromisedReply.FinalListener() {
                 @Override

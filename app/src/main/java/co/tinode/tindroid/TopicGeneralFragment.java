@@ -36,6 +36,7 @@ import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.PrivateType;
@@ -354,7 +355,8 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
         }
 
         // Check if the alias is already taken.
-        mTopic.checkTagUniqueness(alias, mTopic.getName()).thenApply(new PromisedReply.SuccessListener<>() {
+        FndTopic<?> fnd = Cache.getTinode().getFndTopic();
+        fnd.checkTagUniqueness(alias, mTopic.getName()).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<Boolean> onSuccess(Boolean result) {
                 if (result) {

@@ -143,6 +143,8 @@ public class Tinode {
 
     static final int DEFAULT_MESSAGE_PAGE = 24;
 
+    public static final String TAG_EMAIL = "email:";
+    public static final String TAG_PHONE = "tel:";
     public static final String TAG_ALIAS = "alias:";
     private static final Pattern ALIAS_REGEX = Pattern.compile("^[a-z0-9_\\-]{4,24}$", Pattern.CASE_INSENSITIVE);
 
@@ -389,14 +391,15 @@ public class Tinode {
      * @param uniqueTag tag to add, must be fully-qualified; if null or empty, no action is taken.
      */
     public static String[] setUniqueTag(String[] tags, @NotNull String uniqueTag) {
+        if (tags == null || tags.length == 0) {
+            // No tags, just add the new one.
+            return new String[]{uniqueTag};
+        }
+
         Pair<String, String> parts = Tinode.tagSplit(uniqueTag);
         if (parts == null) {
             // Invalid tag.
             return null;
-        }
-        if (tags == null || tags.length == 0) {
-            // No tags, just add the new one.
-            return new String[]{uniqueTag};
         }
 
         // Remove the old tag with the same prefix.

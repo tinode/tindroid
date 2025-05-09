@@ -32,6 +32,7 @@ import androidx.lifecycle.Lifecycle;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.AttachmentPickerDialog;
 import co.tinode.tindroid.widgets.PhoneEdit;
+import co.tinode.tinodesdk.FndTopic;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
@@ -423,22 +424,24 @@ public class AccPersonalFragment extends Fragment
         }
 
         // Check if the alias is already taken.
-        me.checkTagUniqueness(alias, me.getName()).thenApply(new PromisedReply.SuccessListener<>() {
-            @Override
-            public PromisedReply<Boolean> onSuccess(Boolean result) {
-                if (result) {
-                    setValidationError(null);
-                } else {
-                    setValidationError(getString(R.string.alias_already_taken));
-                }
-                return null;
-            }
-        }).thenCatch(new PromisedReply.FailureListener<>() {
-            @Override
-            public <E extends Exception> PromisedReply<Boolean> onFailure(E err) {
-                setValidationError(err.toString());
-                return null;
-            }
-        });
+        final FndTopic<?> fnd = Cache.getTinode().getOrCreateFndTopic();
+        fnd.checkTagUniqueness(alias, Cache.getTinode().getMyId())
+                .thenApply(new PromisedReply.SuccessListener<>() {
+                    @Override
+                    public PromisedReply<Boolean> onSuccess(Boolean result) {
+                        if (result) {
+                            setValidationError(null);
+                        } else {
+                            setValidationError(getString(R.string.alias_already_taken));
+                        }
+                        return null;
+                    }
+                }).thenCatch(new PromisedReply.FailureListener<>() {
+                    @Override
+                    public <E extends Exception> PromisedReply<Boolean> onFailure(E err) {
+                        setValidationError(err.toString());
+                        return null;
+                    }
+                });
     }
 }
