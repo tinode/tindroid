@@ -75,9 +75,4 @@ public class StoredTopic implements LocalData.Payload {
         StoredTopic st = (StoredTopic) topic.getLocal();
         return st != null ? st.id : -1;
     }
-
-    public static boolean isAllDataLoaded(Topic topic) {
-        StoredTopic st = (StoredTopic) topic.getLocal();
-        return topic.getSeq() == 0 || (st != null && st.minLocalSeq == 1);
-    }
 }
