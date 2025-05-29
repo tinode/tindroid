@@ -123,8 +123,6 @@ public class AccPersonalFragment extends Fragment
             }
         });
 
-        activity.findViewById(R.id.buttonManageTags).setOnClickListener(view -> showEditTags());
-
         // Assign initial form values.
         updateFormValues(activity, me);
 
@@ -287,55 +285,11 @@ public class AccPersonalFragment extends Fragment
                 description = pub.note;
             }
 
-            FlexboxLayout tagsView = fragmentView.findViewById(R.id.tagList);
-            tagsView.removeAllViews();
-
-            String[] tags = Tinode.clearTagPrefix(me.getTags(), Tinode.TAG_ALIAS);
-            if (tags != null) {
-                LayoutInflater inflater = activity.getLayoutInflater();
-                for (String tag : tags) {
-                    TextView label = (TextView) inflater.inflate(R.layout.tag, tagsView, false);
-                    label.setText(tag);
-                    tagsView.addView(label);
-                    label.requestLayout();
-                }
-            }
-            tagsView.requestLayout();
-
             ((TextView) activity.findViewById(R.id.alias)).setText(me.alias());
         }
 
         ((TextView) fragmentView.findViewById(R.id.topicTitle)).setText(fn);
         ((TextView) fragmentView.findViewById(R.id.topicDescription)).setText(description);
-    }
-
-    // Dialog for editing tags.
-    private void showEditTags() {
-        final Activity activity = requireActivity();
-
-        final MeTopic me = Cache.getTinode().getMeTopic();
-        String[] tagArray = Tinode.clearTagPrefix(me.getTags(), Tinode.TAG_ALIAS);
-        String tags = tagArray != null ? TextUtils.join(", ", tagArray) : "";
-
-        final AlertDialog.Builder builder = new AlertDialog.Builder(activity);
-        final View editor = LayoutInflater.from(builder.getContext()).inflate(R.layout.dialog_edit_tags, null);
-        builder.setView(editor).setTitle(R.string.tags_management);
-
-        final EditText tagsEditor = editor.findViewById(R.id.editTags);
-        tagsEditor.setText(tags);
-        builder
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    // Alias was removed from the tag manager. Add it back before sending the update.
-                    String alias = Tinode.tagByPrefix(me.getTags(), Tinode.TAG_ALIAS);
-                    String tagList = tagsEditor.getText().toString().trim();
-                    if (!TextUtils.isEmpty(alias)) {
-                        tagList = alias + "," + tagList;
-                    }
-                    // noinspection unchecked
-                    me.updateTags(tagList).thenCatch(new UiUtils.ToastFailureListener(activity));
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     private void showEditCredential(View view) {

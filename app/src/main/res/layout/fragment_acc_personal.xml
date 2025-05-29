@@ -294,55 +294,6 @@
                     android:visibility="invisible"
                     app:srcCompat="@drawable/ic_delete_outline" />
             </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.5dp"
-                android:layout_marginTop="@dimen/activity_padding"
-                android:layout_marginBottom="@dimen/activity_padding"
-                android:background="@color/grey" />
-
-            <androidx.legacy.widget.Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
-
-            <TextView
-                style="@style/sectionTitleStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tags_management" />
-
-            <TextView
-                style="?android:textAppearanceSmall"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/user_tags_description" />
-
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/buttonManageTags"
-                style="?attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:contentDescription="@string/manage"
-                android:drawablePadding="4sp"
-                android:text="@string/manage"
-                android:textColor="?android:textColorPrimary"
-                app:drawableStartCompat="@drawable/ic_edit"
-                app:drawableTint="?android:textColorPrimary" />
-
-            <androidx.legacy.widget.Space
-                android:layout_width="match_parent"
-                android:layout_height="6dp" />
-
-            <com.google.android.flexbox.FlexboxLayout
-                android:id="@+id/tagList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:alignContent="flex_start"
-                app:alignItems="flex_start"
-                app:flexWrap="wrap" />
-
         </LinearLayout>
-
     </RelativeLayout>
 </androidx.core.widget.NestedScrollView>
