@@ -5,6 +5,7 @@ import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.accounts.AuthenticatorException;
 import android.accounts.OperationCanceledException;
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -17,6 +18,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.ContentObserver;
+import android.database.CursorWindow;
 import android.graphics.Color;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
@@ -46,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Date;
@@ -190,6 +193,21 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             }
         } catch (PackageManager.NameNotFoundException e) {
             Log.w(TAG, "Failed to retrieve app version", e);
+        }
+
+        // Hack to increase the size of CursorWindow to 8MB.
+        try {
+            @SuppressLint("DiscouragedPrivateApi")
+            Field field = CursorWindow.class.getDeclaredField("sCursorWindowSize");
+            field.setAccessible(true);
+            Object val = field.get(null);
+            final int size = 8 * 1024 * 1024;
+            if (val instanceof Number && ((Number) val).intValue() < size) {
+                // Increase cursor window size from 2MB to 8MB.
+                field.set(null, size);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to set CursorWindow size", e);
         }
 
         // Disable Crashlytics for debug builds.
