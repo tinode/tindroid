@@ -359,6 +359,10 @@
     <string name="delete_for_everybody">Für alle löschen</string>
     <string name="confirm_delete_message_single">Möchten Sie die Nachricht wirklich löschen?</string>
     <string name="confirm_delete_message_plural">Möchten Sie diese Nachrichten wirklich löschen?</string>
+    <string name="alias">Alias:</string>
+    <string name="alias_plain">Alias</string>
+    <string name="error_invalid_alias">ungültiges Format</string>
+    <string name="alias_already_taken">bereits vergeben</string>
     <string name="camera_not_accessible">Kamera nicht erreichbar</string>
     <string name="unable_to_open_gallery">Galerie konnte nicht geöffnet werden</string>
 </resources>

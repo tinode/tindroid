@@ -338,6 +338,10 @@
     <string name="delete_for_everybody">Видалити для всіх</string>
     <string name="confirm_delete_message_single">Ви впевнені, що хочете видалити повідомлення?</string>
     <string name="confirm_delete_message_plural">Ви впевнені, що хочете видалити ці повідомлення?</string>
+    <string name="alias">Псевдонім:</string>
+    <string name="alias_plain">Псевдонім</string>
+    <string name="error_invalid_alias">невірний формат</string>
+    <string name="alias_already_taken">вже зайнято</string>
     <string name="camera_not_accessible">Камера недоступна</string>
     <string name="unable_to_open_gallery">Не вдалося відкрити галерею</string>
 </resources>

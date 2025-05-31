@@ -358,6 +358,10 @@
     <string name="delete_for_everybody">為所有人刪除</string>
     <string name="confirm_delete_message_single">您確定要刪除該訊息嗎？</string>
     <string name="confirm_delete_message_plural">您確定要刪除這些訊息嗎？</string>
+    <string name="alias">別名：</string>
+    <string name="alias_plain">別名</string>
+    <string name="error_invalid_alias">格式無效</string>
+    <string name="alias_already_taken">已被使用</string>
     <string name="camera_not_accessible">相機無法存取</string>
     <string name="unable_to_open_gallery">無法開啟相簿</string>
 </resources>
