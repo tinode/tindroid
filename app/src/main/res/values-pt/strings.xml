@@ -359,4 +359,6 @@
     <string name="delete_for_everybody">Excluir para todos</string>
     <string name="confirm_delete_message_single">Tem certeza de que deseja excluir a mensagem?</string>
     <string name="confirm_delete_message_plural">Tem certeza de que deseja excluir estas mensagens?</string>
+    <string name="camera_not_accessible">Câmera não acessível</string>
+    <string name="unable_to_open_gallery">Não foi possível abrir a galeria</string>
 </resources>

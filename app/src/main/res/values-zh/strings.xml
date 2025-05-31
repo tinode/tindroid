@@ -359,4 +359,6 @@
     <string name="delete_for_everybody">删除所有人的消息</string>
     <string name="confirm_delete_message_single">您确定要删除此消息吗？</string>
     <string name="confirm_delete_message_plural">您确定要删除这些消息吗？</string>
+    <string name="camera_not_accessible">相机无法访问</string>
+    <string name="unable_to_open_gallery">无法打开相册</string>
 </resources>

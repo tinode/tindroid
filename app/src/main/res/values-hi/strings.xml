@@ -330,4 +330,6 @@
     <string name="delete_for_everybody">सभी के लिए हटाएं</string>
     <string name="confirm_delete_message_single">क्या आप वाकई संदेश हटाना चाहते हैं?</string>
     <string name="confirm_delete_message_plural">क्या आप वाकई इन संदेशों को हटाना चाहते हैं?</string>
+    <string name="camera_not_accessible">कैमरा उपलब्ध नहीं है</string>
+    <string name="unable_to_open_gallery">गैलरी खोलने में असमर्थ</string>
 </resources>

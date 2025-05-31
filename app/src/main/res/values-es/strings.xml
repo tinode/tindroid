@@ -357,4 +357,6 @@
     <string name="delete_for_everybody">Eliminar para todos</string>
     <string name="confirm_delete_message_single">¿Seguro que quieres eliminar el mensaje?</string>
     <string name="confirm_delete_message_plural">¿Seguro que quieres eliminar estos mensajes?</string>
+    <string name="camera_not_accessible">Cámara no accesible</string>
+    <string name="unable_to_open_gallery">No se pudo abrir la galería</string>
 </resources>

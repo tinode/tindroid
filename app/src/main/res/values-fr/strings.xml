@@ -358,4 +358,6 @@
     <string name="delete_for_everybody">Supprimer pour tout le monde</string>
     <string name="confirm_delete_message_single">Êtes-vous sûr de vouloir supprimer ce message ?</string>
     <string name="confirm_delete_message_plural">Êtes-vous sûr de vouloir supprimer ces messages ?</string>
+    <string name="camera_not_accessible">Caméra non accessible</string>
+    <string name="unable_to_open_gallery">Impossible d\'ouvrir la galerie</string>
 </resources>

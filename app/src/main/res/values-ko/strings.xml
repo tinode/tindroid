@@ -357,4 +357,6 @@
     <string name="delete_for_everybody">모든 사용자 삭제</string>
     <string name="confirm_delete_message_single">메시지를 삭제하시겠습니까?</string>
     <string name="confirm_delete_message_plural">이 메시지를 삭제하시겠습니까?</string>
+    <string name="camera_not_accessible">카메라에 액세스할 수 없습니다</string>
+    <string name="unable_to_open_gallery">갤러리를 열 수 없습니다</string>
 </resources>

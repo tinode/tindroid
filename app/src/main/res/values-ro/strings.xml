@@ -359,4 +359,6 @@
     <string name="delete_for_everybody">Ștergeți pentru toată lumea</string>
     <string name="confirm_delete_message_single">Sunteți sigur că doriți să ștergeți mesajul?</string>
     <string name="confirm_delete_message_plural">Sunteți sigur că doriți să ștergeți aceste mesaje?</string>
+    <string name="camera_not_accessible">Camera nu este accesibilă</string>
+    <string name="unable_to_open_gallery">Imposibil de deschis galeria</string>
 </resources>

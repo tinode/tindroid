@@ -338,4 +338,6 @@
     <string name="delete_for_everybody">Удалить для всех</string>
     <string name="confirm_delete_message_single">Вы уверены, что хотите удалить сообщение?</string>
     <string name="confirm_delete_message_plural">Вы уверены, что хотите удалить эти сообщения?</string>
+    <string name="camera_not_accessible">Камера недоступна</string>
+    <string name="unable_to_open_gallery">Не удалось открыть галерею</string>
 </resources>

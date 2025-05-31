@@ -380,4 +380,6 @@
     <string name="alias_plain">Alias</string>
     <string name="error_invalid_alias">invalid format</string>
     <string name="alias_already_taken">already taken</string>
+    <string name="camera_not_accessible">Camera not accessible</string>
+    <string name="unable_to_open_gallery">Unable to open gallery</string>
 </resources>
