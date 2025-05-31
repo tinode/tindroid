@@ -12,6 +12,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
+import java.util.NoSuchElementException;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
@@ -223,29 +225,33 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
     @Override
     public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-        boolean single = mSelectionTracker.getSelection().size() == 1;
+        final Selection<String> selection = mSelectionTracker.getSelection();
 
         if (mIsBanned) {
             menu.setGroupVisible(R.id.single_selection, false);
-            menu.findItem(R.id.action_unblock).setVisible(single);
+            menu.findItem(R.id.action_unblock).setVisible(selection.size() == 1);
             return true;
         }
 
         boolean deleted = false;
-        if (single) {
-            final Selection<String> selection = mSelectionTracker.getSelection();
-            //noinspection unchecked
-            ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
-            deleted = topic != null && topic.isDeleted();
+        if (selection.size() == 1) {
+            try {
+                //noinspection unchecked
+                ComTopic<VxCard> topic = (ComTopic<VxCard>) Cache.getTinode().getTopic(selection.iterator().next());
+                deleted = topic != null && topic.isDeleted();
+            } catch (NoSuchElementException ignored) {
+                // Selection cleared.
+                return false;
+            }
         }
 
         if (deleted) {
             menu.setGroupVisible(R.id.single_selection, false);
             menu.findItem(R.id.action_unblock).setVisible(false);
         } else {
-            menu.setGroupVisible(R.id.single_selection, single);
+            menu.setGroupVisible(R.id.single_selection, selection.size() == 1);
 
-            if (single) {
+            if (selection.size() == 1) {
                 menu.findItem(R.id.action_mute).setVisible(!mSelectionMuted);
                 menu.findItem(R.id.action_unmute).setVisible(mSelectionMuted);
 

@@ -363,4 +363,6 @@
     <string name="take_photo">Cámara</string>
     <string name="select_from_gallery">Galería</string>
     <string name="record_video">Vídeo</string>
+    <string name="camera_not_accessible">Cámara no accesible</string>
+    <string name="unable_to_open_gallery">No se pudo abrir la galería</string>
 </resources>

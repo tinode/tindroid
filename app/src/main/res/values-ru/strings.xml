@@ -344,4 +344,6 @@
     <string name="take_photo">Камера</string>
     <string name="select_from_gallery">Галерея</string>
     <string name="record_video">Видео</string>
+    <string name="camera_not_accessible">Камера недоступна</string>
+    <string name="unable_to_open_gallery">Не удалось открыть галерею</string>
 </resources>

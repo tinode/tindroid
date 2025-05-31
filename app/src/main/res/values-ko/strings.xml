@@ -363,4 +363,6 @@
     <string name="take_photo">카메라</string>
     <string name="select_from_gallery">갤러리</string>
     <string name="record_video">비디오</string>
+    <string name="camera_not_accessible">카메라에 액세스할 수 없습니다</string>
+    <string name="unable_to_open_gallery">갤러리를 열 수 없습니다</string>
 </resources>

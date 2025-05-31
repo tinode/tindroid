@@ -336,4 +336,6 @@
     <string name="take_photo">कैमरा</string>
     <string name="select_from_gallery">गैलरी</string>
     <string name="record_video">वीडियो</string>
+    <string name="camera_not_accessible">कैमरा उपलब्ध नहीं है</string>
+    <string name="unable_to_open_gallery">गैलरी खोलने में असमर्थ</string>
 </resources>

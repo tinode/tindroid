@@ -364,4 +364,6 @@
     <string name="take_photo">相機</string>
     <string name="select_from_gallery">圖庫</string>
     <string name="record_video">影片</string>
+    <string name="camera_not_accessible">相機無法存取</string>
+    <string name="unable_to_open_gallery">無法開啟相簿</string>
 </resources>

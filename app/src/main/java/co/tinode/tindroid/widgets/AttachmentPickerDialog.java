@@ -1,6 +1,7 @@
 package co.tinode.tindroid.widgets;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
@@ -74,27 +75,36 @@ public class AttachmentPickerDialog extends BottomSheetDialogFragment {
         boolean hasCamera = requireActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY);
         if (mCameraFullLauncher != null && mDestPhotoUri != null && hasCamera) {
             cameraButton.setOnClickListener(v -> {
-                if (ContextCompat.checkSelfPermission(requireActivity(),
-                        Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    // noinspection ConstantConditions
-                    mCameraFullLauncher.launch(mDestPhotoUri);
-                } else if (mCameraPermissionLauncher != null) {
-                    mCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
-                } else {
-                    Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                try {
+                    if (ContextCompat.checkSelfPermission(requireActivity(),
+                            Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            // noinspection ConstantConditions
+                            mCameraFullLauncher.launch(mDestPhotoUri);
+                    } else if (mCameraPermissionLauncher != null) {
+                        mCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+                    } else {
+                        Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                    }
+                } catch (ActivityNotFoundException ex) {
+                    Toast.makeText(requireActivity(), R.string.camera_not_accessible, Toast.LENGTH_LONG).show();
                 }
                 dismiss();
             });
         } else if (mCameraPreviewLauncher != null && hasCamera) {
             cameraButton.setOnClickListener(v -> {
-                if (ContextCompat.checkSelfPermission(requireActivity(),
-                        Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    // noinspection ConstantConditions
-                    mCameraPreviewLauncher.launch(null);
-                } else if (mCameraPermissionLauncher != null) {
-                    mCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
-                } else {
-                    Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                try {
+                    if (ContextCompat.checkSelfPermission(requireActivity(),
+                            Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        // noinspection ConstantConditions
+                        mCameraPreviewLauncher.launch(null);
+                    } else if (mCameraPermissionLauncher != null) {
+                        mCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+                    } else {
+                        Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                    }
+                } catch (ActivityNotFoundException ex) {
+                    // This was an actual crash.
+                    Toast.makeText(requireActivity(), R.string.camera_not_accessible, Toast.LENGTH_LONG).show();
                 }
                 dismiss();
             });
@@ -107,14 +117,19 @@ public class AttachmentPickerDialog extends BottomSheetDialogFragment {
         View videoButton = view.findViewById(R.id.videoButton);
         if (mVideoLauncher != null && mDestVideoUri != null && hasCamera) {
             videoButton.setOnClickListener(v -> {
-                if (ContextCompat.checkSelfPermission(requireActivity(),
-                        Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                    // noinspection ConstantConditions
-                    mVideoLauncher.launch(mDestVideoUri);
-                } else if (mVideoPermissionLauncher != null) {
-                    mVideoPermissionLauncher.launch(Manifest.permission.CAMERA);
-                } else {
-                    Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                try {
+                    if (ContextCompat.checkSelfPermission(requireActivity(),
+                            Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        // noinspection ConstantConditions
+                        mVideoLauncher.launch(mDestVideoUri);
+                    } else if (mVideoPermissionLauncher != null) {
+                        mVideoPermissionLauncher.launch(Manifest.permission.CAMERA);
+                    } else {
+                        Toast.makeText(requireActivity(), R.string.permission_missing, Toast.LENGTH_LONG).show();
+                    }
+                } catch (ActivityNotFoundException ex) {
+                    // This was an actual crash.
+                    Toast.makeText(requireActivity(), R.string.camera_not_accessible, Toast.LENGTH_LONG).show();
                 }
                 dismiss();
             });
@@ -127,10 +142,14 @@ public class AttachmentPickerDialog extends BottomSheetDialogFragment {
             galleryButton.setOnClickListener(v -> {
                 final Fragment parent = getParentFragment();
                 if (parent != null) {
-                    //noinspection ConstantConditions
-                    mGalleryLauncher.launch(new PickVisualMediaRequest.Builder()
-                            .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
-                            .build());
+                    try {
+                        // noinspection ConstantConditions
+                        mGalleryLauncher.launch(new PickVisualMediaRequest.Builder()
+                                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageAndVideo.INSTANCE)
+                                .build());
+                    } catch (ActivityNotFoundException ex) {
+                        Toast.makeText(requireActivity(), R.string.unable_to_open_gallery, Toast.LENGTH_LONG).show();
+                    }
                 }
                 dismiss();
             });
