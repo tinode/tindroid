@@ -383,7 +383,8 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
                     if (query.charAt(0) == '@') {
                         query = query.substring(1);
                     }
-                    query = String.format("%s%s", Tinode.TAG_ALIAS, query);
+                    // Convert to "alice" -> "alias:alice,alice"
+                    query = String.format("%s%s,%s", Tinode.TAG_ALIAS, query, query);
                 }
             }
         }
