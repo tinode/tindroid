@@ -56,8 +56,8 @@ public class CallManager {
     private CallManager(Context context) {
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
 
-        Tinode tinode = Cache.getTinode();
-        String myID = tinode.getMyId();
+        final Tinode tinode = Cache.getTinode();
+        final String myID = tinode.getMyId();
         if (TextUtils.isEmpty(myID)) {
             throw new IllegalStateException("Tinode ID is not set");
         }
@@ -180,16 +180,16 @@ public class CallManager {
             return;
         }
 
-        Bundle extras = new Bundle();
-        extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
-        extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
-        extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
-
         final ComTopic topic = (ComTopic) Cache.getTinode().getTopic(caller);
         if (topic == null) {
             Log.w(TAG, "Call from un unknown topic " + caller);
             return;
         }
+
+        Bundle extras = new Bundle();
+        extras.putString(Const.INTENT_EXTRA_TOPIC, caller);
+        extras.putInt(Const.INTENT_EXTRA_SEQ, seq);
+        extras.putBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY, audioOnly);
 
         CallManager shared = CallManager.getShared();
         TelecomManager telecomManager = (TelecomManager) context.getSystemService(TELECOM_SERVICE);
