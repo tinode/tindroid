@@ -16,8 +16,6 @@ import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
-import android.icu.lang.UCharacter;
-import android.icu.lang.UProperty;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -65,7 +63,6 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.app.ActivityCompat;
-import androidx.emoji2.text.EmojiCompat;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -690,7 +687,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 }
             } else if (m.content.isPlain()) {
                 // Check if text contains 1-5 emojis and nothing but emojis.
-                int count = countEmoji(text, EMOJI_SCALING.length + 1);
+                int count = UtilsString.countEmoji(text, EMOJI_SCALING.length + 1);
                 if (count > 0 && count <= EMOJI_SCALING.length) {
                     CharacterStyle style = new RelativeSizeSpan(EMOJI_SCALING[EMOJI_SCALING.length - count]);
                     text = new SpannableStringBuilder(text);
@@ -874,65 +871,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 mRecyclerView.smoothScrollToPosition(pos);
             }
         }
-    }
-
-    // If string contains emoji only, count the number of emojis up to 5.
-    private static int countEmoji(CharSequence text, int maxCount) {
-        if (TextUtils.isEmpty(text)) {
-            return 0;
-        }
-
-        int count = 0;
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) {
-            EmojiCompat instance = EmojiCompat.get();
-            int loadedState = instance.getLoadState();
-            if (loadedState != EmojiCompat.LOAD_STATE_SUCCEEDED) {
-                Log.e(TAG, "EmojiCompat not ready: " + loadedState);
-                return -1;
-            }
-
-            for (int offset = 0; offset < text.length() && count < maxCount; count++) {
-                // If the character at offset i is an emoji returns the end index of emoji, -1 otherwise;
-                offset = instance.getEmojiEnd(text, offset);
-                if (offset < 0) {
-                    return -1;
-                }
-            }
-            return count;
-        }
-
-        // The following code does the same as above but requires API 28.
-        // It's less prone to errors. EmojiCompat.init sometimes fails.
-        for (int i = 0; i < text.length(); ) {
-            int cp = Character.codePointAt(text, i);
-            int len = Character.charCount(cp);
-            i += len;
-            if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI_MODIFIER)) {
-                // Do nothing (do not count modifiers).
-                // Checking for them first because UProperty.EMOJI is true for them as well.
-                continue;
-            } else if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI) && (len > 1 || cp > 0x238C)) {
-                count++;
-            } else if (cp == 0x200D) {
-                // ZERO WIDTH JOINER: it's not a stand alone codepoint and the next code point should not
-                // be counted, thus count --.
-                if (count > 0 ) {
-                    count--;
-                } else {
-                    return -1;
-                }
-            } else if (UCharacter.hasBinaryProperty(cp, UProperty.VARIATION_SELECTOR)) {
-                // Do nothing (do not count variation selectors).
-                continue;
-            } else {
-                return -1;
-            }
-
-            if (count >= maxCount) {
-                break;
-            }
-        }
-        return count;
     }
 
     @Override

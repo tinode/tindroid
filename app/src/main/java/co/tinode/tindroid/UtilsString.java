@@ -4,6 +4,13 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 
+import com.ibm.icu.lang.UCharacter;
+import com.ibm.icu.lang.UProperty;
+import com.ibm.icu.text.BreakIterator;
+import com.ibm.icu.text.UCharacterIterator;
+
+import org.jetbrains.annotations.NotNull;
+
 import java.text.DateFormat;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -152,7 +159,7 @@ public class UtilsString {
      * Checks (loosely) if the given string is a phone. If so, returns the phone number in a format
      *  as close to E.164 as possible.
      */
-    static String asPhone(String val) {
+    static String asPhone(@NotNull String val) {
         val = val.trim();
         if (sTelRegex.matcher(val).matches()) {
             return val.replaceAll("[- ().]*", "");
@@ -165,11 +172,63 @@ public class UtilsString {
     /**
      * Checks (loosely) if the given string is an email. If so returns the email.
      */
-    static String asEmail(String val) {
+    static String asEmail(@NonNull String val) {
         val = val.trim();
         if (sEmailRegex.matcher(val).matches()) {
             return val;
         }
         return null;
+    }
+
+    // If string contains emoji only, count the number of emojis up to 5.
+    static int countEmoji(CharSequence text, int maxCount) {
+        // Not using TextUtils.isEmpty() because it's not mocked causing unit tests to fail.
+        if (text == null || text.length() == 0 || maxCount == 0) {
+            return 0;
+        }
+
+        int count = 0;
+        BreakIterator iter = BreakIterator.getCharacterInstance();
+        iter.setText(text);
+        int i = iter.first();
+        for (int next = iter.next(); next != BreakIterator.DONE; i = next, next = iter.next()) {
+            int cp = Character.codePointAt(text, i);
+            int len = next - i;
+
+            if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI_MODIFIER)) {
+                if (count == 0) {
+                    // Modifier cannot be the first character. Invalid.
+                    return -1;
+                }
+                // Do nothing (do not count modifiers).
+                // Checking for them first because UProperty.EMOJI is true for them as well.
+                continue;
+            } else if (UCharacter.hasBinaryProperty(cp, UProperty.EMOJI) && (len > 1 || cp > 0x238C)) {
+                count++;
+            } else if (cp == 0x200D) {
+                // ZERO WIDTH JOINER: it's not a stand alone codepoint and the next code point should not
+                // be counted, thus count --.
+                if (count > 0) {
+                    count--;
+                } else {
+                    // If the first codepoint is a ZWJ, then it's invalid
+                    return -1;
+                }
+            } else if (UCharacter.hasBinaryProperty(cp, UProperty.VARIATION_SELECTOR)) {
+                // Variant selector as the first character: invalid.
+                if (count == 0) {
+                    return -1;
+                }
+                // Do nothing (do not count variation selectors).
+                continue;
+            } else {
+                return -1;
+            }
+
+            if (count >= maxCount) {
+                break;
+            }
+        }
+        return count;
     }
 }
