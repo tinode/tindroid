@@ -85,7 +85,7 @@ public class Tinode {
     private static final String TAG = "Tinode";
 
     private static final String PROTOVERSION = "0";
-    private static final String VERSION = "0.23";
+    private static final String VERSION = "0.24";
     private static final String LIBRARY = "tindroid/" + BuildConfig.VERSION_NAME;
 
     public static final String USER_NEW = "new";
@@ -125,6 +125,9 @@ public class Tinode {
     protected static final String NOTE_REC_VIDEO = "kpv";
     protected static final String NOTE_READ = "read";
     protected static final String NOTE_RECV = "recv";
+
+    // Audio call is audio-only.
+    public static final String CALL_AUDIO_ONLY = "aonly";
 
     // Delay in milliseconds between sending two key press notifications on the
     // same topic.
