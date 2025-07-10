@@ -38,6 +38,9 @@ import android.util.Log;
 import com.android.installreferrer.api.InstallReferrerClient;
 
 import androidx.annotation.OptIn;
+import androidx.core.provider.FontRequest;
+import androidx.emoji2.text.EmojiCompat;
+import androidx.emoji2.text.FontRequestEmojiCompatConfig;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.database.StandaloneDatabaseProvider;
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
@@ -209,6 +212,14 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         } catch (Exception e) {
             Log.w(TAG, "Failed to set CursorWindow size", e);
         }
+
+        // Load emoji font and initialize EmojiCompat library.
+        FontRequest fontRequest = new FontRequest(
+                "com.google.android.gms.fonts",
+                "com.google.android.gms",
+                "Noto Color Emoji Compat",
+                R.array.com_google_android_gms_fonts_certs);
+        EmojiCompat.init(new FontRequestEmojiCompatConfig(this, fontRequest));
 
         // Disable Crashlytics for debug builds.
         FirebaseCrashlytics.getInstance().setCrashlyticsCollectionEnabled(!BuildConfig.DEBUG);
