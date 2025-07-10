@@ -105,7 +105,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview-selection:1.2.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.2.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
-    implementation 'androidx.work:work-runtime:2.10.1'
+    implementation 'androidx.work:work-runtime:2.10.2'
 
     implementation 'com.android.installreferrer:installreferrer:2.2'
 
@@ -114,27 +114,31 @@ dependencies {
     implementation "androidx.media3:media3-ui:${media3_version}"
     implementation "androidx.media3:media3-datasource:${media3_version}"
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
-    implementation 'com.google.android.gms:play-services-oss-licenses:17.1.0'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.2.0'
     implementation 'com.google.android.material:material:1.12.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
     implementation 'com.google.firebase:firebase-crashlytics:19.4.4'
-    implementation 'com.google.firebase:firebase-messaging:24.1.1'
+    implementation 'com.google.firebase:firebase-messaging:24.1.2'
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.7'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.9'
 
     // WebRTC.
     implementation 'com.dafruits:webrtc:123.0.0'
+
+    // Unicode support ICU4J (replacement for android.icu.*).
+    implementation 'com.ibm.icu:icu4j:77.1'
+
     // Image loading and caching.
     implementation 'io.coil-kt:coil:2.7.0'
     // QR Code generator.
     implementation 'io.nayuki:qrcodegen:1.8.0'
 
-    implementation 'com.squareup.okhttp3:okhttp-tls:4.12.0'
-
     annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.9.1'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+
+    testImplementation 'junit:junit:4.13.2'
 }
 
 configurations {
