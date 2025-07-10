@@ -605,7 +605,7 @@ public class CallFragment extends Fragment {
                 Map<String, Object> head = new HashMap<>();
                 head.put("webrtc", "started");
                 // Is audio-only?
-                head.put("aonly", mAudioOnly);
+                head.put(Tinode.CALL_AUDIO_ONLY, mAudioOnly);
                 mTopic.publish(Drafty.videoCall(), head).thenApply(
                         new PromisedReply.SuccessListener<>() {
                             @Override

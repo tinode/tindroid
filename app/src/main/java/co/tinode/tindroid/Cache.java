@@ -91,7 +91,7 @@ public class Cache {
                     switch (callState) {
                         case STARTED:
                             CallManager.acceptIncomingCall(TindroidApp.getAppContext(),
-                                    data.topic, data.seq, data.getBooleanHeader("aonly"));
+                                    data.topic, data.seq, data.getBooleanHeader(Tinode.CALL_AUDIO_ONLY));
                             break;
                         case ACCEPTED:
                         case DECLINED:
