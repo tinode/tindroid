@@ -63,6 +63,7 @@ public class IncomingCallFragment extends Fragment
 
     private String mTopicName;
     private int mSeq;
+    private boolean mAudioOnly;
     private InfoListener mListener;
 
     @Override
@@ -104,6 +105,7 @@ public class IncomingCallFragment extends Fragment
 
         mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
         mSeq = args.getInt(Const.INTENT_EXTRA_SEQ);
+        mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
 
         // Technically the call is from args.getString(Const.INTENT_EXTRA_SENDER_NAME)
         // but it's the same as "topic" for p2p topics;
@@ -122,6 +124,10 @@ public class IncomingCallFragment extends Fragment
         LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
                 new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
         if (!missing.isEmpty()) {
+            if (mAudioOnly && missing.contains(Manifest.permission.RECORD_AUDIO)) {
+                // If audio only, we don't need camera permission.
+                missing.remove(Manifest.permission.CAMERA);
+            }
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
         }
     }
@@ -143,7 +149,9 @@ public class IncomingCallFragment extends Fragment
             Log.e(TAG, "Failed to create MediaPlayer");
         }
 
-        startCamera(activity);
+        if (!mAudioOnly) {
+            startCamera(activity);
+        }
     }
 
     @Override
