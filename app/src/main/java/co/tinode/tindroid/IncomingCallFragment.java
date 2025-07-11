@@ -121,13 +121,11 @@ public class IncomingCallFragment extends Fragment
         ((TextView) view.findViewById(R.id.peerName)).setText(peerName);
 
         // Check permissions.
-        LinkedList<String> missing = UiUtils.getMissingPermissions(activity,
-                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO});
+        final String[] permissions = mAudioOnly ?
+                new String[]{Manifest.permission.RECORD_AUDIO} :
+                new String[]{Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO};
+        LinkedList<String> missing = UiUtils.getMissingPermissions(activity, permissions);
         if (!missing.isEmpty()) {
-            if (mAudioOnly && missing.contains(Manifest.permission.RECORD_AUDIO)) {
-                // If audio only, we don't need camera permission.
-                missing.remove(Manifest.permission.CAMERA);
-            }
             mMediaPermissionLauncher.launch(missing.toArray(new String[]{}));
         }
     }
