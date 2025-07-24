@@ -1,5 +1,6 @@
 package co.tinode.tindroid;
 
+import android.annotation.SuppressLint;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
@@ -94,6 +95,7 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
         super.onResume();
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     public void updateFormValues(@NonNull final FragmentActivity activity, final MeTopic<VxCard> me) {
         String myID = Cache.getTinode().getMyId();
@@ -135,7 +137,12 @@ public class AccountInfoFragment extends Fragment implements ChatsActivity.FormU
             }
 
             String alias = me.alias();
-            ((TextView) activity.findViewById(R.id.alias)).setText(alias != null ? ("@" + alias) : "");
+            if (TextUtils.isEmpty(alias)) {
+                fragmentView.findViewById(R.id.aliasWrapper).setVisibility(View.GONE);
+            } else {
+                fragmentView.findViewById(R.id.aliasWrapper).setVisibility(View.VISIBLE);
+                ((TextView) fragmentView.findViewById(R.id.alias)).setText("@" + alias);
+            }
         }
 
         final TextView title = fragmentView.findViewById(R.id.topicTitle);
