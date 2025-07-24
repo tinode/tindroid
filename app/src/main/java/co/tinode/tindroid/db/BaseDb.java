@@ -325,11 +325,11 @@ public class BaseDb extends SQLiteOpenHelper {
     }
 
     /**
-     * Get an instance of {@link SqlStore} to use by  Tinode core for persistence.
+     * Get an instance of {@link SqlStore} to use by Tinode core for persistence.
      *
      * @return instance of {@link SqlStore}
      */
-    public SqlStore getStore() {
+    @NonNull public SqlStore getStore() {
         return mStore;
     }
 
