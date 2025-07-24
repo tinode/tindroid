@@ -108,7 +108,7 @@ public class CallManager {
             @SuppressLint("UnsafeOptInUsageError")
             TelecomManager telecomManager = (TelecomManager) TindroidApp.getAppContext().getSystemService(TELECOM_SERVICE);
             telecomManager.unregisterPhoneAccount(shared.mPhoneAccountHandle);
-        } catch (IllegalStateException | UnsupportedOperationException ignored) {
+        } catch (IllegalStateException | SecurityException | UnsupportedOperationException ignored) {
         }
     }
 
