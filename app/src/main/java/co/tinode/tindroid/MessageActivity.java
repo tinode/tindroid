@@ -45,12 +45,15 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
@@ -153,6 +156,18 @@ public class MessageActivity extends AppCompatActivity
             c.close();
         }
     };
+
+    private final ActivityResultLauncher<String[]> mRequestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                for (Map.Entry<String,Boolean> e : result.entrySet()) {
+                    // Check if all required permissions are granted.
+                    if (!e.getValue()) {
+                        return;
+                    }
+                }
+                // Permissions are granted.
+                UiUtils.onContactsPermissionsGranted(this);
+            });
 
     private Timer mTypingAnimationTimer;
     private String mMessageText = null;
@@ -402,8 +417,15 @@ public class MessageActivity extends AppCompatActivity
         // mTopicName is empty, so this is an external intent
         Uri contactUri = intent.getData();
         if (contactUri != null) {
-            Cursor cursor = getContentResolver().query(contactUri,
-                    new String[]{Utils.DATA_PID}, null, null, null);
+            Cursor cursor = null;
+            if (UiUtils.isPermissionGranted(this, Manifest.permission.READ_CONTACTS)) {
+                cursor = getContentResolver().query(contactUri,
+                        new String[]{Utils.DATA_PID}, null, null, null);
+            } else {
+                mRequestPermissionLauncher.launch(new String[]{Manifest.permission.READ_CONTACTS,
+                        Manifest.permission.WRITE_CONTACTS});
+            }
+
             if (cursor != null) {
                 if (cursor.moveToFirst()) {
                     int idx = cursor.getColumnIndex(Utils.DATA_PID);
