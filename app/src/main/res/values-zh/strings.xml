@@ -365,4 +365,5 @@
     <string name="alias_already_taken">已被使用</string>
     <string name="camera_not_accessible">相机无法访问</string>
     <string name="unable_to_open_gallery">无法打开相册</string>
+    <string name="incognito_mode_explainer">隐藏在线状态</string>
 </resources>

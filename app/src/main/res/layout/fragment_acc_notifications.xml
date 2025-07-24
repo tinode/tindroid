@@ -1,71 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/activity_default_margin"
     android:orientation="vertical">
 
-    <LinearLayout
+    <!-- Incognito Mode -->
+    <TextView
+        android:id="@+id/incognito_mode_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:layout_toStartOf="@+id/switchIncognitoMode"
+        android:text="@string/incognito_mode_enabled"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:textAppearance="?android:textAppearanceLarge" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/incognito_mode_enabled"
-            android:textAppearance="?android:textAppearanceLarge" />
-
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchIncognitoMode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="@dimen/min_touch_height"
-            android:minWidth="@dimen/min_touch_height"
-            android:layout_margin="4dp" />
-    </LinearLayout>
-
-    <LinearLayout
+    <TextView
+        android:id="@+id/incognito_mode_helper"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:layout_toStartOf="@+id/switchIncognitoMode"
+        android:layout_below="@id/incognito_mode_label"
+        android:text="@string/incognito_mode_explainer"
+        android:paddingBottom="4dp"
+        android:textAppearance="?android:textAppearanceMedium" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/read_receipts_enabled"
-            android:textAppearance="?android:textAppearanceLarge" />
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchIncognitoMode"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/incognito_mode_label"
+        android:layout_alignBottom="@id/incognito_mode_label"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="8dp"
+        android:minWidth="@dimen/min_touch_height"
+        android:minHeight="@dimen/min_touch_height" />
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchReadReceipts"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="@dimen/min_touch_height"
-            android:minWidth="@dimen/min_touch_height"
-            android:layout_margin="4dp" />
-    </LinearLayout>
-
-    <LinearLayout
+    <!-- Read Receipts -->
+    <TextView
+        android:id="@+id/read_receipts_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:layout_below="@id/incognito_mode_helper"
+        android:layout_marginTop="8dp"
+        android:layout_toStartOf="@+id/switchReadReceipts"
+        android:text="@string/read_receipts_enabled"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textAppearance="?android:textAppearanceLarge" />
 
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/typing_notifications_enabled"
-            android:textAppearance="?android:textAppearanceLarge" />
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchReadReceipts"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/read_receipts_label"
+        android:layout_alignBottom="@id/read_receipts_label"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="8dp"
+        android:minWidth="@dimen/min_touch_height"
+        android:minHeight="@dimen/min_touch_height" />
 
-        <androidx.appcompat.widget.SwitchCompat
-            android:id="@+id/switchTypingNotifications"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:minHeight="@dimen/min_touch_height"
-            android:minWidth="@dimen/min_touch_height"
-            android:layout_margin="4dp" />
-    </LinearLayout>
+    <!-- Typing Notifications -->
+    <TextView
+        android:id="@+id/typing_notifications_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/read_receipts_label"
+        android:layout_marginTop="16dp"
+        android:layout_toStartOf="@+id/switchTypingNotifications"
+        android:text="@string/typing_notifications_enabled"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textAppearance="?android:textAppearanceLarge" />
 
-</LinearLayout>
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchTypingNotifications"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/typing_notifications_label"
+        android:layout_alignBottom="@id/typing_notifications_label"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="8dp"
+        android:minWidth="@dimen/min_touch_height"
+        android:minHeight="@dimen/min_touch_height" />
+
+</RelativeLayout>

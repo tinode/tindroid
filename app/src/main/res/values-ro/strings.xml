@@ -365,4 +365,5 @@
     <string name="alias_already_taken">deja folosit</string>
     <string name="camera_not_accessible">Camera nu este accesibilă</string>
     <string name="unable_to_open_gallery">Imposibil de deschis galeria</string>
+    <string name="incognito_mode_explainer">Ascunde starea online</string>
 </resources>

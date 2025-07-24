@@ -336,4 +336,5 @@
     <string name="alias_already_taken">पहले से लिया गया</string>
     <string name="camera_not_accessible">कैमरा उपलब्ध नहीं है</string>
     <string name="unable_to_open_gallery">गैलरी खोलने में असमर्थ</string>
+    <string name="incognito_mode_explainer">अपनी ऑनलाइन स्थिति छिपाएं</string>
 </resources>

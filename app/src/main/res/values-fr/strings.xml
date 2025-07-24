@@ -364,4 +364,5 @@
     <string name="alias_already_taken">déjà pris</string>
     <string name="camera_not_accessible">Caméra non accessible</string>
     <string name="unable_to_open_gallery">Impossible d\'ouvrir la galerie</string>
+    <string name="incognito_mode_explainer">Masquer votre statut en ligne</string>
 </resources>

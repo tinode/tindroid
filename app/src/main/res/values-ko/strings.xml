@@ -363,4 +363,5 @@
     <string name="alias_already_taken">이미 사용됨</string>
     <string name="camera_not_accessible">카메라에 액세스할 수 없습니다</string>
     <string name="unable_to_open_gallery">갤러리를 열 수 없습니다</string>
+    <string name="incognito_mode_explainer">온라인 상태 숨기기</string>
 </resources>

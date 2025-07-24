@@ -365,4 +365,5 @@
     <string name="alias_already_taken">bereits vergeben</string>
     <string name="camera_not_accessible">Kamera nicht erreichbar</string>
     <string name="unable_to_open_gallery">Galerie konnte nicht geöffnet werden</string>
+    <string name="incognito_mode_explainer">Deinen Online-Status verbergen</string>
 </resources>
