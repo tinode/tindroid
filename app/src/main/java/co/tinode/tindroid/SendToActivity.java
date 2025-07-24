@@ -37,6 +37,8 @@ public class SendToActivity extends AppCompatActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        UiUtils.setupSystemToolbar(this);
+
         // Get intent, action and MIME type
         final Intent intent = getIntent();
         final String action = intent.getAction();

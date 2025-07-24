@@ -11,6 +11,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -41,6 +42,7 @@ import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
+import android.view.Window;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.CheckedTextView;
@@ -72,9 +74,11 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
+import androidx.core.view.WindowCompat;
 import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -332,6 +336,14 @@ public class UiUtils {
         } else if (lastSeen != null) {
             toolbar.setSubtitle(UtilsString.relativeDateFormat(activity, lastSeen));
         }
+    }
+
+    public static void setupSystemToolbar(Activity activity) {
+        Window window = activity.getWindow();
+        boolean darkMode = (activity.getResources().getConfiguration().uiMode &
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        window.setStatusBarColor(Color.TRANSPARENT);
+        WindowCompat.getInsetsController(window, window.getDecorView()).setAppearanceLightStatusBars(!darkMode);
     }
 
     public static String getVisibleTopic() {

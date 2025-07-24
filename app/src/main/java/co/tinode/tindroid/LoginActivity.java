@@ -69,6 +69,8 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        UiUtils.setupSystemToolbar(this);
+
         setContentView(R.layout.activity_login);
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);

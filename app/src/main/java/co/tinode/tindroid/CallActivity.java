@@ -52,6 +52,8 @@ public class CallActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        UiUtils.setupSystemToolbar(this);
+
         NotificationManager nm = getSystemService(NotificationManager.class);
         nm.cancel(CallManager.NOTIFICATION_TAG_INCOMING_CALL, 0);
 
