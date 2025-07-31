@@ -105,6 +105,7 @@ The app is currently available in the following languages:
 * French
 * German
 * Hindi
+* Italian
 * Korean
 * Portuguese
 * Romanian
