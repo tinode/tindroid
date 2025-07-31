@@ -71,7 +71,12 @@ public class CallManager {
                 accLabel = !TextUtils.isEmpty(card.fn) ? card.fn : accLabel;
                 Bitmap avatar = card.getBitmap();
                 if (avatar != null) {
-                    icon = Icon.createWithBitmap(avatar);
+                    int size = avatar.getByteCount();
+                    if (size > 32_768) {
+                        // If the avatar is too large, scale it down, otherwise PhoneAccount.builder throws.
+                        avatar = UiUtils.scaleSquareBitmap(avatar, 128);
+                    }
+                    icon = Icon.createWithAdaptiveBitmap(avatar);
                 }
             }
         }
