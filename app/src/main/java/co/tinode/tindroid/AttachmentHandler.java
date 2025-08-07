@@ -135,7 +135,15 @@ public class AttachmentHandler extends Worker {
         if (mimeType == null) {
             mimeType = UiUtils.getMimeType(uri);
         }
+
+        if ("application/json".equals(mimeType)) {
+            // Replace JSON mime type with 'application/octet-stream' to avoid collision with Drafty form responses.
+            // Remove this code in 2026.
+            mimeType = "application/octet-stream";
+        }
+
         result.mimeType = mimeType;
+
         String[] projection;
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             projection = new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE, MediaStore.MediaColumns.ORIENTATION};

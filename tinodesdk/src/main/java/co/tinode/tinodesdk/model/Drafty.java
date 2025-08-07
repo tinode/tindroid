@@ -80,7 +80,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
 
-    private static final String JSON_MIME_TYPE = "application/json";
+    private static final String JSON_MIME_TYPE_LEGACY = "application/json";
+    private static final String JSON_MIME_TYPE = "application/json+drafty";
 
     private static final int MAX_PREVIEW_DATA_SIZE = 64;
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
@@ -1375,7 +1376,8 @@ public class Drafty implements Serializable {
                         continue;
                     }
 
-                    if (JSON_MIME_TYPE.equals(c.getData("mime"))) {
+                    if (JSON_MIME_TYPE.equals(c.getData("mime")) ||
+                            JSON_MIME_TYPE_LEGACY.equals(c.getData("mime"))) {
                         // JSON attachments are not shown in preview.
                         continue;
                     }

@@ -627,12 +627,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             return null;
         }
 
-        try {
-            if ("application/json".equals(data.get("mime"))) {
-                // Skip JSON attachments. They are not meant to be user-visible.
-                return null;
-            }
-        } catch (ClassCastException ignored) {
+        if (isSkippableJson(data.get("mime"))) {
+            // Skip JSON attachments. They are not meant to be user-visible.
+            return null;
         }
 
         SpannableStringBuilder result = new SpannableStringBuilder();

@@ -16,6 +16,9 @@ import co.tinode.tinodesdk.model.Drafty;
 
 public abstract class AbstractDraftyFormatter<T extends Spanned> implements Drafty.Formatter<T> {
 
+    private static final String JSON_MIME_TYPE_LEGACY = "application/json"; // Remove in 2026.
+    private static final String JSON_MIME_TYPE = "application/json+drafty";
+
     protected final Context mContext;
 
     protected AbstractDraftyFormatter(final Context context) {
@@ -201,6 +204,17 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
         Object tmp;
         if ((tmp = data.get(name)) instanceof Boolean) {
             return (boolean) tmp;
+        }
+        return false;
+    }
+
+    protected static boolean isSkippableJson(Object mime) {
+        try {
+            if (JSON_MIME_TYPE.equals(mime) || JSON_MIME_TYPE_LEGACY.equals(mime)) {
+                // Skip JSON attachments. They are not meant to be user-visible.
+                return true;
+            }
+        } catch (ClassCastException ignored) {
         }
         return false;
     }
