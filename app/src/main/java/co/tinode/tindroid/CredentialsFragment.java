@@ -57,8 +57,9 @@ public class CredentialsFragment extends Fragment implements MenuProvider, View.
     public void onResume() {
         super.onResume();
 
-        LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
+        LoginActivity parent = (LoginActivity) requireActivity();
+        View fragment = getView();
+        if (fragment == null) {
             return;
         }
 
@@ -69,7 +70,7 @@ public class CredentialsFragment extends Fragment implements MenuProvider, View.
         if (TextUtils.isEmpty(mMethod)) {
             parent.showFragment(LoginActivity.FRAGMENT_LOGIN, null);
         } else {
-            TextView callToAction = parent.findViewById(R.id.call_to_validate);
+            TextView callToAction = fragment.findViewById(R.id.call_to_validate);
             callToAction.setText(getString(R.string.enter_confirmation_code));
         }
     }
@@ -86,10 +87,7 @@ public class CredentialsFragment extends Fragment implements MenuProvider, View.
 
     @Override
     public void onClick(View view) {
-        final LoginActivity parent = (LoginActivity) getActivity();
-        if (parent == null) {
-            return;
-        }
+        final LoginActivity parent = (LoginActivity) requireActivity();
 
         final Tinode tinode = Cache.getTinode();
         String token = tinode.getAuthToken();

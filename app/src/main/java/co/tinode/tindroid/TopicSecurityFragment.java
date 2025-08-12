@@ -122,11 +122,18 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
     @Override
     @SuppressWarnings("unchecked")
-    // onResume sets up the form with values and views which do not change + sets up listeners.
+    // onStart sets up the form with values and views which do not change + sets up listeners.
     public void onStart() {
-        final Activity activity = requireActivity();
         final Bundle args = getArguments();
         if (args == null) {
+            return;
+        }
+
+        final Activity activity = requireActivity();
+
+        final View fragment = getView();
+        if (fragment == null) {
+            activity.finish();
             return;
         }
 
@@ -138,20 +145,20 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             return;
         }
 
-        final View defaultPermissions = activity.findViewById(R.id.defaultPermissionsWrapper);
+        final View defaultPermissions = fragment.findViewById(R.id.defaultPermissionsWrapper);
 
-        final View deleteGroup = activity.findViewById(R.id.buttonDeleteGroup);
-        final View blockContact = activity.findViewById(R.id.buttonBlock);
-        final View reportGroup = activity.findViewById(R.id.buttonReportGroup);
-        final View reportChannel = activity.findViewById(R.id.buttonReportChannel);
-        final View reportContact = activity.findViewById(R.id.buttonReportContact);
+        final View deleteGroup = fragment.findViewById(R.id.buttonDeleteGroup);
+        final View blockContact = fragment.findViewById(R.id.buttonBlock);
+        final View reportGroup = fragment.findViewById(R.id.buttonReportGroup);
+        final View reportChannel = fragment.findViewById(R.id.buttonReportChannel);
+        final View reportContact = fragment.findViewById(R.id.buttonReportContact);
 
         if (mTopic.isGrpType()) {
             // Group topic
-            final View buttonLeave = activity.findViewById(R.id.buttonLeave);
+            final View buttonLeave = fragment.findViewById(R.id.buttonLeave);
 
-            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
+            fragment.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.VISIBLE);
+            fragment.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
             blockContact.setVisibility(View.GONE);
             reportContact.setVisibility(View.GONE);
 
@@ -175,11 +182,11 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
 
         } else if (mTopic.isP2PType()) {
             // P2P topic
-            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
-            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.VISIBLE);
+            fragment.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
+            fragment.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.VISIBLE);
 
             VxCard two = mTopic.getPub();
-            ((TextView) activity.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
+            ((TextView) fragment.findViewById(R.id.userTwoLabel)).setText(two != null && two.fn != null ?
                     two.fn : mTopic.getName());
 
             defaultPermissions.setVisibility(View.GONE);
@@ -191,8 +198,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
             blockContact.setVisibility(View.VISIBLE);
         } else {
             // Slf topic
-            activity.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
-            activity.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
+            fragment.findViewById(R.id.singleUserPermissionsWrapper).setVisibility(View.GONE);
+            fragment.findViewById(R.id.p2pPermissionsWrapper).setVisibility(View.GONE);
             defaultPermissions.setVisibility(View.GONE);
             deleteGroup.setVisibility(View.GONE);
             reportGroup.setVisibility(View.GONE);
