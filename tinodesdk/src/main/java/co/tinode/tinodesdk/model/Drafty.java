@@ -80,8 +80,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 public class Drafty implements Serializable {
     public static final String MIME_TYPE = "text/x-drafty";
 
-    private static final String JSON_MIME_TYPE_LEGACY = "application/json";
-    private static final String JSON_MIME_TYPE = "application/json+drafty";
+    private static final String DRAFTY_FR_TYPE_LEGACY = "application/json";
+    private static final String DRAFTY_FR_TYPE = "text/x-drafty-fr";
 
     private static final int MAX_PREVIEW_DATA_SIZE = 64;
     private static final int MAX_PREVIEW_ATTACHMENTS = 3;
@@ -684,7 +684,7 @@ public class Drafty implements Serializable {
         prepareForEntity(-1, 1);
 
         Map<String, Object> data = new HashMap<>();
-        data.put("mime", JSON_MIME_TYPE);
+        data.put("mime", DRAFTY_FR_TYPE);
         data.put("val", json);
 
         ent[ent.length - 1] = new Entity("EX", data);
@@ -980,6 +980,15 @@ public class Drafty implements Serializable {
                 .appendLineBreak()
                 .append(body)
                 .wrapInto("QQ");
+    }
+
+    /**
+     * Check if given content-type is a mime type of a drafty form response.
+     * @param mimeType content type to check.
+     * @return true if content-type is a mime type of a drafty form response, false otherwise.
+     */
+    public static boolean isFormResponseType(Object mimeType) {
+        return DRAFTY_FR_TYPE.equals(mimeType) || DRAFTY_FR_TYPE_LEGACY.equals(mimeType);
     }
 
     /**
@@ -1376,8 +1385,7 @@ public class Drafty implements Serializable {
                         continue;
                     }
 
-                    if (JSON_MIME_TYPE.equals(c.getData("mime")) ||
-                            JSON_MIME_TYPE_LEGACY.equals(c.getData("mime"))) {
+                    if (isFormResponseType(c.getData("mime"))) {
                         // JSON attachments are not shown in preview.
                         continue;
                     }
