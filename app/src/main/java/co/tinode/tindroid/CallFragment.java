@@ -996,6 +996,7 @@ public class CallFragment extends Fragment {
     }
 
     // Auxiliary class to facilitate serialization of SDP data.
+    // Don't convert to record is it's not serialized properly.
     static class SDPAux implements Serializable {
         public final String type;
         public final String sdp;
@@ -1007,6 +1008,7 @@ public class CallFragment extends Fragment {
     }
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
+    // Don't convert to record is it's not serialized properly.
     static class IceCandidateAux implements Serializable {
         public final String type;
         public final int sdpMLineIndex;
