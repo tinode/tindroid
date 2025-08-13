@@ -996,11 +996,29 @@ public class CallFragment extends Fragment {
     }
 
     // Auxiliary class to facilitate serialization of SDP data.
-        record SDPAux(String type, String sdp) implements Serializable {
+    static class SDPAux implements Serializable {
+        public final String type;
+        public final String sdp;
+
+        SDPAux(String type, String sdp) {
+            this.type = type;
+            this.sdp = sdp;
+        }
     }
 
     // Auxiliary class to facilitate serialization of the ICE candidate data.
-        record IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) implements Serializable {
+    static class IceCandidateAux implements Serializable {
+        public final String type;
+        public final int sdpMLineIndex;
+        public final String sdpMid;
+        public final String candidate;
+
+        IceCandidateAux(String type, int sdpMLineIndex, String sdpMid, String candidate) {
+            this.type = type;
+            this.sdpMLineIndex = sdpMLineIndex;
+            this.sdpMid = sdpMid;
+            this.candidate = candidate;
+        }
     }
 
     // Listens for incoming call-related info messages.
