@@ -1705,12 +1705,18 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         @Override
         public long getItemId(int position) {
             int[] pinned = mTopic.getPinned();
+            if (pinned == null || position >= pinned.length) {
+                return RecyclerView.NO_ID;
+            }
             return pinned[pinned.length - position - 1];
         }
 
         @Override
         public boolean containsItem(long itemId) {
             int[] pinned = mTopic.getPinned();
+            if (pinned == null || pinned.length == 0) {
+                return false;
+            }
             return Arrays.stream(pinned).anyMatch(seq -> seq == itemId);
         }
 
