@@ -343,9 +343,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             @Override
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 int pos = mMessageViewLayoutManager.findFirstVisibleItemPosition();
-                if (dy > 5 && pos > 2) {
+                if (pos > 2) {
                     mGoToLatest.show();
-                } else if (dy < -5 || pos == 0) {
+                } else if (pos == 0) {
                     mGoToLatest.hide();
                 }
             }
