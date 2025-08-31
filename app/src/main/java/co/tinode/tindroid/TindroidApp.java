@@ -38,6 +38,7 @@ import android.util.Log;
 import com.android.installreferrer.api.InstallReferrerClient;
 
 import androidx.annotation.OptIn;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.provider.FontRequest;
 import androidx.emoji2.text.EmojiCompat;
 import androidx.emoji2.text.FontRequestEmojiCompatConfig;
@@ -250,6 +251,10 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             editor.putBoolean(Utils.PREFS_USE_TLS, getDefaultTLS());
             editor.apply();
         }
+
+        // Set default UI mode.
+        String mode = pref.getString(Utils.PREFS_UI_MODE, Utils.PREFS_KEY_AUTO_THEME);
+        onThemeChanged(mode);
 
         // Clear completed/failed upload tasks.
         WorkManager.getInstance(this).pruneWork();
@@ -526,6 +531,20 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             Log.w(TAG, "Account not found or no permission to access accounts");
             // Force new login in case account existed before but was deleted.
             UiUtils.doLogout(TindroidApp.this);
+        }
+    }
+
+    public static void onThemeChanged(@NonNull String themeKey) {
+        switch (themeKey) {
+            case Utils.PREFS_KEY_LIGHT_THEME:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case Utils.PREFS_KEY_DARK_THEME:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            default:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
         }
     }
 }

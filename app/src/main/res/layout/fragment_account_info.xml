@@ -246,6 +246,32 @@
             tools:ignore="SmallSp" />
 
         <LinearLayout
+            android:id="@+id/acc_general"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="?attr/listPreferredItemHeight"
+            tools:ignore="UseCompoundDrawables">
+
+            <ImageView
+                android:layout_width="@dimen/settings_icon_size"
+                android:layout_height="@dimen/settings_icon_size"
+                android:src="@drawable/ic_tune"
+                app:tint="@color/colorAccent"
+                tools:ignore="ContentDescription" />
+
+            <TextView
+                style="?android:textAppearanceLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:text="@string/general" />
+
+        </LinearLayout>
+
+        <LinearLayout
             android:id="@+id/notifications"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

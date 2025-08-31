@@ -41,6 +41,7 @@ public class ChatsActivity extends AppCompatActivity
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_ACC_CREDENTIALS = "acc_credentials";
     static final String FRAGMENT_ACC_HELP = "acc_help";
+    static final String FRAGMENT_ACC_GENERAL = "acc_general";
     static final String FRAGMENT_ACC_NOTIFICATIONS = "acc_notifications";
     static final String FRAGMENT_ACC_PERSONAL = "acc_personal";
     static final String FRAGMENT_ACC_SECURITY = "acc_security";
@@ -159,6 +160,9 @@ public class ChatsActivity extends AppCompatActivity
                     break;
                 case FRAGMENT_ACC_HELP:
                     fragment = new AccHelpFragment();
+                    break;
+                case FRAGMENT_ACC_GENERAL:
+                    fragment = new AccGeneralFragment();
                     break;
                 case FRAGMENT_ACC_NOTIFICATIONS:
                     fragment = new AccNotificationsFragment();

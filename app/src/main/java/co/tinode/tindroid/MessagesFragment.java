@@ -8,6 +8,7 @@ import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.graphics.Typeface;
 import android.media.AudioAttributes;
@@ -69,6 +70,7 @@ import androidx.core.view.OnReceiveContentListener;
 import androidx.core.view.ViewCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Lifecycle;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -79,6 +81,7 @@ import androidx.work.Operation;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.db.SqlStore;
 import co.tinode.tindroid.format.SendForwardedFormatter;
@@ -144,6 +147,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     private String mTopicName = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
+
+    private boolean mSendOnEnter = false;
 
     private UiUtils.MsgAction mTextAction = UiUtils.MsgAction.NONE;
     private int mQuotedSeqID = -1;
@@ -304,6 +309,9 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         activity.addMenuProvider(this, getViewLifecycleOwner(),
                 Lifecycle.State.RESUMED);
 
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+        mSendOnEnter = pref.getBoolean(Utils.PREFS_SEND_ON_ENTER, false);
+
         mGoToLatest = activity.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
 
@@ -439,6 +447,14 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 if (count > 0 || before > 0) {
+                    if (mSendOnEnter) {
+                        // Send message on Enter key.
+                        if (charSequence.length() > 0 && charSequence.charAt(charSequence.length() - 1) == '\n') {
+                            sendText(activity);
+                            return;
+                        }
+                    }
+
                     activity.sendKeyPress();
                 }
 

@@ -29,6 +29,11 @@ public class Utils {
     // Constants for accessing shared preferences
     public static final String PREFS_HOST_NAME = "pref_hostName";
     public static final String PREFS_USE_TLS = "pref_useTLS";
+    public static final String PREFS_UI_MODE = "pref_uiMode";
+    public static final String PREFS_KEY_LIGHT_THEME = "light_theme";
+    public static final String PREFS_KEY_DARK_THEME = "dark_theme";
+    public static final String PREFS_KEY_AUTO_THEME = "auto_theme";
+    public static final String PREFS_SEND_ON_ENTER = "pref_sendOnEnter";
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */

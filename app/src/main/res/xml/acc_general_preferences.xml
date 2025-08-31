@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Theme Settings">
+
+        <CheckBoxPreference
+            android:key="auto_theme"
+            android:title="Auto Theme"
+            android:summary="Follow system theme"
+            android:defaultValue="true" />
+
+        <CheckBoxPreference
+            android:key="light_theme"
+            android:title="Light Theme"
+            android:summary="Always use light theme"
+            android:defaultValue="false" />
+
+        <CheckBoxPreference
+            android:key="dark_theme"
+            android:title="Dark Theme"
+            android:summary="Always use dark theme"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Keyboard">
+
+        <SwitchPreferenceCompat
+            android:key="send_on_enter"
+            android:title="Send on Enter"
+            android:summary="Enter sends the message instead of adding a new line"
+            android:defaultValue="false" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
