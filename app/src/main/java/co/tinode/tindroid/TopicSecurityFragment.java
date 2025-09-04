@@ -215,37 +215,35 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     }
 
     public void notifyDataSetChanged() {
-        final Activity activity = requireActivity();
-        if (activity.isFinishing() || activity.isDestroyed()) {
+        if (mTopic.isGrpType()) {
             return;
         }
-
-        if (!mTopic.isGrpType()) {
-            Acs acs = mTopic.getAccessMode();
-            if (acs != null) {
-                ((TextView) activity.findViewById(R.id.userOne)).setText(acs.getWant());
-            }
-            Subscription sub = mTopic.getSubscription(mTopic.getName());
-            if (sub != null && sub.acs != null) {
-                ((TextView) activity.findViewById(R.id.userTwo))
-                        .setText(sub.acs.getGiven());
-            }
+        View fragment = getView();
+        if (fragment == null) {
+            return;
+        }
+        Acs acs = mTopic.getAccessMode();
+        if (acs != null) {
+            ((TextView) fragment.findViewById(R.id.userOne)).setText(acs.getWant());
+        }
+        Subscription sub = mTopic.getSubscription(mTopic.getName());
+        if (sub != null && sub.acs != null) {
+            ((TextView) fragment.findViewById(R.id.userTwo)).setText(sub.acs.getGiven());
         }
     }
 
     // Called when topic description is changed.
     private void notifyContentChanged() {
-
-        final Activity activity = requireActivity();
-        if (activity.isFinishing() || activity.isDestroyed()) {
+        View fragment = getView();
+        if (fragment == null) {
             return;
         }
 
         Acs acs = mTopic.getAccessMode();
-        ((TextView) activity.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
+        ((TextView) fragment.findViewById(R.id.permissionsSingle)).setText(acs == null ? "" : acs.getMode());
 
-        ((TextView) activity.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
-        ((TextView) activity.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
+        ((TextView) fragment.findViewById(R.id.authPermissions)).setText(mTopic.getAuthAcsStr());
+        ((TextView) fragment.findViewById(R.id.anonPermissions)).setText(mTopic.getAnonAcsStr());
     }
 
     // Confirmation dialog "Do you really want to do X?"
@@ -255,8 +253,8 @@ public class TopicSecurityFragment extends Fragment implements MessageActivity.D
     private void showConfirmationDialog(final String arg1,
                                         int title_id, int message_id,
                                         final int what) {
-        final FragmentActivity activity = getActivity();
-        if (activity == null) {
+        final FragmentActivity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
 
