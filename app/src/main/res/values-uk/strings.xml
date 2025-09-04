@@ -345,4 +345,5 @@
     <string name="camera_not_accessible">Камера недоступна</string>
     <string name="unable_to_open_gallery">Не вдалося відкрити галерею</string>
     <string name="incognito_mode_explainer">Приховувати статус онлайн</string>
+    <string name="theme">Тема</string>
 </resources>

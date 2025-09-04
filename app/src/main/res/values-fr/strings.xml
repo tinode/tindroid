@@ -365,4 +365,5 @@
     <string name="camera_not_accessible">Caméra non accessible</string>
     <string name="unable_to_open_gallery">Impossible d\'ouvrir la galerie</string>
     <string name="incognito_mode_explainer">Masquer votre statut en ligne</string>
+    <string name="theme">Thème</string>
 </resources>

@@ -364,4 +364,5 @@
     <string name="camera_not_accessible">Cámara no accesible</string>
     <string name="unable_to_open_gallery">No se pudo abrir la galería</string>
     <string name="incognito_mode_explainer">Ocultar tu estado en línea</string>
+    <string name="theme">Tema</string>
 </resources>

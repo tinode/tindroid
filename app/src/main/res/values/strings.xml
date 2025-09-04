@@ -245,7 +245,6 @@
     <string name="help">Help</string>
     <string name="security">Security</string>
     <string name="notifications">Notifications</string>
-    <string name="user_tags_description">Others can find you by these tags</string>
     <string name="help_explained">Support, legal, about</string>
     <string name="account_security_explained">Password, permissions, deleting account</string>
     <string name="topic_tags_description">Others can find group by these tags</string>
@@ -383,5 +382,4 @@
     <string name="camera_not_accessible">Camera not accessible</string>
     <string name="unable_to_open_gallery">Unable to open gallery</string>
     <string name="incognito_mode_explainer">Hide your online status</string>
-    <string name="theme">Theme</string>
 </resources>
