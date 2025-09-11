@@ -42,7 +42,6 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.provider.FontRequest;
 import androidx.emoji2.text.EmojiCompat;
 import androidx.emoji2.text.FontRequestEmojiCompatConfig;
-import androidx.media3.common.util.UnstableApi;
 import androidx.media3.database.StandaloneDatabaseProvider;
 import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
@@ -88,7 +87,6 @@ import okhttp3.Request;
 /**
  * A class for providing global context for database access
  */
-@UnstableApi
 public class TindroidApp extends Application implements DefaultLifecycleObserver {
     private static final String TAG = "TindroidApp";
 
@@ -104,6 +102,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private static Cache sCache;
 
+    @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
     private static SimpleCache sVideoCache;
 
     private static String sAppVersion = null;
@@ -252,9 +251,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             editor.apply();
         }
 
-        // Set default UI mode.
-        String mode = pref.getString(Utils.PREFS_UI_MODE, Utils.PREFS_KEY_AUTO_THEME);
-        onThemeChanged(mode);
+        // Set UI mode.
+        onThemeChanged(pref.getString(Utils.PREFS_UI_MODE, Utils.PREFS_KEY_AUTO_THEME));
 
         // Clear completed/failed upload tasks.
         WorkManager.getInstance(this).pruneWork();
@@ -398,7 +396,8 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         }
     }
 
-    @OptIn(markerClass = UnstableApi.class)
+//This declaration is opt-in and its usage should be marked with `@androidx.media3.common.util.UnstableApi` or `@OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)`
+    @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
     public static synchronized SimpleCache getVideoCache() {
         String dirs = sContext.getCacheDir().getAbsolutePath();
         if (sVideoCache == null) {

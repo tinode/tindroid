@@ -34,29 +34,35 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
         final AppCompatActivity activity = (AppCompatActivity) requireActivity();
 
         // Inflate the fragment layout
-        View fragment = inflater.inflate(R.layout.fragment_acc_notifications, container, false);
+        final View fragment = inflater.inflate(R.layout.fragment_acc_notifications, container, false);
         final ActionBar bar = activity.getSupportActionBar();
         if (bar != null) {
             bar.setDisplayHomeAsUpEnabled(true);
         }
 
         Toolbar toolbar = activity.findViewById(R.id.toolbar);
-        toolbar.setTitle(R.string.account_settings);
+        toolbar.setTitle(R.string.notifications);
         toolbar.setNavigationOnClickListener(v -> activity.getSupportFragmentManager().popBackStack());
 
-        return fragment;
-    }
+        // Initial form values.
+        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
 
-    @Override
-    public void onResume() {
-        final FragmentActivity activity = requireActivity();
-        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
-        if (me == null) {
-            return;
-        }
+        // Read receipts
+        SwitchCompat ctrl = fragment.findViewById(R.id.switchReadReceipts);
+        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
+                pref.edit().putBoolean(Const.PREF_READ_RCPT, isChecked).apply());
+        ctrl.setChecked(pref.getBoolean(Const.PREF_READ_RCPT, true));
+
+        // Typing notifications.
+        ctrl = fragment.findViewById(R.id.switchTypingNotifications);
+        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
+                pref.edit().putBoolean(Const.PREF_TYPING_NOTIF, isChecked).apply());
+        ctrl.setChecked(pref.getBoolean(Const.PREF_TYPING_NOTIF, true));
 
         // Incognito mode
-        final SwitchCompat incognito = activity.findViewById(R.id.switchIncognitoMode);
+        final SwitchCompat incognito = fragment.findViewById(R.id.switchIncognitoMode);
+        final MeTopic<VxCard> me = Cache.getTinode().getMeTopic();
+        incognito.setChecked(me.isMuted());
         incognito.setOnCheckedChangeListener((buttonView, isChecked) ->
                 me.updateMode(isChecked ? "-P" : "+P")
                         .thenCatch(new PromisedReply.FailureListener<>() {
@@ -68,27 +74,19 @@ public class AccNotificationsFragment extends Fragment implements ChatsActivity.
                                 return null;
                             }
                         }).thenFinally(new PromisedReply.FinalListener() {
-                    @Override
-                    public void onFinally() {
-                        activity.runOnUiThread(() -> incognito.setChecked(me.isMuted()));
-                    }
-                }));
+                            @Override
+                            public void onFinally() {
+                                activity.runOnUiThread(() -> incognito.setChecked(me.isMuted()));
+                            }
+                        }));
 
-        final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
+        return fragment;
+    }
 
-        // Read receipts
-        SwitchCompat ctrl = activity.findViewById(R.id.switchReadReceipts);
-        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
-                pref.edit().putBoolean(Const.PREF_READ_RCPT, isChecked).apply());
-        ctrl.setChecked(pref.getBoolean(Const.PREF_READ_RCPT, true));
-
-        // Typing notifications.
-        ctrl = activity.findViewById(R.id.switchTypingNotifications);
-        ctrl.setOnCheckedChangeListener((buttonView, isChecked) ->
-                pref.edit().putBoolean(Const.PREF_TYPING_NOTIF, isChecked).apply());
-        ctrl.setChecked(pref.getBoolean(Const.PREF_TYPING_NOTIF, true));
-
-        updateFormValues(activity, me);
+    @Override
+    public void onResume() {
+        // Update incognito mode in case it was changed from another device.
+        updateFormValues(requireActivity(), Cache.getTinode().getMeTopic());
 
         super.onResume();
     }

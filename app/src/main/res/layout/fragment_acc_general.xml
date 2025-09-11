@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/activity_default_margin"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/section_title_theme"
+        style="@style/sectionTitleStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="@string/select_theme" />
+
+    <RadioGroup
+        android:id="@+id/radio_group_theme"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_title_theme"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radio_default"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/follow_system"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:minHeight="@dimen/min_touch_height"
+            android:drawablePadding="8dp"
+            android:drawableEnd="@drawable/ic_routine"/>
+
+        <RadioButton
+            android:id="@+id/radio_light"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/light_theme"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:minHeight="@dimen/min_touch_height"
+            android:drawablePadding="8dp"
+            android:drawableEnd="@drawable/ic_light_mode"/>
+
+        <RadioButton
+            android:id="@+id/radio_dark"
+            android:textAppearance="?android:textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/dark_theme"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:minHeight="@dimen/min_touch_height"
+            android:drawablePadding="8dp"
+            android:drawableEnd="@drawable/ic_dark_mode"/>
+
+    </RadioGroup>
+
+    <TextView
+        style="@style/sectionTitleStyle"
+        android:id="@+id/section_title_keyboard"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:layout_below="@id/radio_group_theme"
+        android:text="@string/keyboard" />
+
+    <TextView
+        android:id="@+id/send_on_enter_label"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/section_title_keyboard"
+        android:gravity="center_vertical"
+        android:text="@string/send_on_enter"
+        android:minHeight="@dimen/min_touch_height"
+        android:textAppearance="?android:textAppearanceMedium" />
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/send_on_enter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_alignTop="@id/send_on_enter_label"
+        android:layout_alignBottom="@id/send_on_enter_label"
+        android:layout_alignParentEnd="true"
+        android:minWidth="@dimen/min_touch_height"
+        android:minHeight="@dimen/min_touch_height" />
+
+</RelativeLayout>

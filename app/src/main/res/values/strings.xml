@@ -382,4 +382,10 @@
     <string name="camera_not_accessible">Camera not accessible</string>
     <string name="unable_to_open_gallery">Unable to open gallery</string>
     <string name="incognito_mode_explainer">Hide your online status</string>
+    <string name="keyboard">Keyboard</string>
+    <string name="select_theme">Select Theme</string>
+    <string name="send_on_enter">Send on Enter</string>
+    <string name="follow_system">Follow System</string>
+    <string name="light_theme">Light Theme</string>
+    <string name="dark_theme">Dark Theme</string>
 </resources>
