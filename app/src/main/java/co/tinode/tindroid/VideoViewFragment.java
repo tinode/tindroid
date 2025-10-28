@@ -48,7 +48,6 @@ import androidx.media3.common.MediaItem;
 import androidx.media3.common.PlaybackException;
 import androidx.media3.common.Player;
 import androidx.media3.common.VideoSize;
-import androidx.media3.common.util.UnstableApi;
 import androidx.media3.datasource.DefaultHttpDataSource;
 import androidx.media3.datasource.cache.CacheDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
@@ -87,7 +86,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     private MenuItem mDownloadMenuItem;
 
-    @OptIn(markerClass = UnstableApi.class)
+    @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
     @SuppressLint("ClickableViewAccessibility")
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -177,8 +176,8 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         requireActivity().addMenuProvider(this, getViewLifecycleOwner(), Lifecycle.State.RESUMED);
     }
 
-    @OptIn(markerClass = UnstableApi.class)
     @Override
+    @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
     public void onResume() {
         super.onResume();
 
@@ -457,12 +456,18 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
     }
 
     // Take screenshot of the VideoView to use as poster.
-    @OptIn(markerClass = UnstableApi.class)
     private void videoFrameCapture(BitmapReady callback) {
-        Bitmap bitmap = Bitmap.createBitmap(mVideoWidth, mVideoHeight, Bitmap.Config.ARGB_8888);
+        int width = mVideoWidth;
+        int height = mVideoHeight;
+        if (width < 16 || height < 16) {
+            width = DEFAULT_WIDTH;
+            height = DEFAULT_HEIGHT;
+        }
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         try {
             HandlerThread handlerThread = new HandlerThread("videoFrameCapture");
             handlerThread.start();
+            @OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
             View surfaceView = mVideoView.getVideoSurfaceView();
             if (surfaceView instanceof SurfaceView) {
                 PixelCopy.request((SurfaceView) surfaceView, bitmap, result -> {

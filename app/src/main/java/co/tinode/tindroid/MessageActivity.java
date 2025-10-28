@@ -592,7 +592,12 @@ public class MessageActivity extends AppCompatActivity
                 mTopic.updateArchived(false);
                 return true;
             } else if (id == R.id.action_audio_call || id == R.id.action_video_call) {
-                CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+                try {
+                    CallManager.placeOutgoingCall(this, mTopicName, id == R.id.action_audio_call);
+                } catch (IllegalStateException | SecurityException | UnsupportedOperationException ex) {
+                    Log.w(TAG, "Unable to place outgoing call", ex);
+                    Toast.makeText(this, R.string.calling_not_supported, Toast.LENGTH_SHORT).show();
+                }
                 return true;
             }
         } else {

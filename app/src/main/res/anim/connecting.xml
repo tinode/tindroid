@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:fillAfter="false">
+    <!-- Move from left to 3/4 of parent width -->
+    <translate
+        android:fromXDelta="0%p"
+        android:toXDelta="75%p"
+        android:duration="3000"
+        android:interpolator="@android:anim/decelerate_interpolator" />
+
+    <!-- Fade out at the end -->
+    <alpha
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0"
+        android:startOffset="2250"
+        android:duration="750"
+        android:interpolator="@android:anim/linear_interpolator" />
+</set>
