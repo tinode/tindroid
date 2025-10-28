@@ -207,6 +207,17 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     /**
+     * Check if the topic is a user type.
+     * @param name name of the topic to check.
+     * @return true if the topic is a user type, false otherwise.
+     */
+    public static boolean isUserType(String name) {
+        return switch (getTopicTypeByName(name)) {
+            case SLF, P2P, GRP -> true;
+            default -> false;
+        };
+    }
+    /**
      * Checks if given topic name is a new (unsynchronized) topic.
      * @param name name to check
      * @return true if the name is a name of a new topic, false otherwise.
@@ -629,6 +640,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     public void setClear(int clear) {
         if (clear > mDesc.clear) {
             mDesc.clear = clear;
+        }
+    }
+
+    public int getSubCnt() {
+        return mDesc.subcnt;
+    }
+
+    public void setSubCnt(int subcnt) {
+        if (subcnt > 0) {
+            mDesc.subcnt = subcnt;
         }
     }
 
@@ -1296,9 +1317,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             return last;
         }
         //noinspection TryFinallyCanBeTryWithResources: does not really apply here due to the need for the second try-catch
-        try {
-            while (toSend.hasNext()) {
-                Storage.Message msg = toSend.next();
+        try (ML messages = toSend) {
+            while (messages.hasNext()) {
+                Storage.Message msg = messages.next();
                 final long msgId = msg.getDbId();
                 if (msg.getStringHeader("webrtc") != null) {
                     // Drop unsent video call messages.
@@ -1308,11 +1329,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 mStore.msgSyncing(this, msgId, true);
                 last = publish(msg.getContent(), msg.getHead(), msgId);
             }
-        } finally {
-            try {
-                toSend.close();
-            } catch (IOException ignored) {
-            }
+        } catch (IOException ex) {
+            Log.e(TAG, "Failed to close message iterator", ex);
         }
         return last;
     }
@@ -1979,6 +1997,31 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     public TopicType getTopicType() {
         return getTopicTypeByName(mName);
+    }
+
+    /**
+     * Pin topic to the top of the contact list.
+     *
+     * @param topicName - Name of the topic to pin.
+     * @param pin - If true, pin the topic, otherwise unpin.
+     *
+     * @return Promise to be resolved/rejected when the server responds to request.
+     */
+    public PromisedReply<ServerMessage> pinTopic(String topicName, boolean pin) {
+        // Unsupported operation for non-me topics.
+        return new PromisedReply<>(new UnsupportedOperationException("Pinning is not supported for non-me topics"));
+    }
+
+    /**
+     * Get the rank of the pinned topic.
+     * @param topicName - Name of the topic to check.
+     *
+     * @return numeric rank of the pinned topic in the range 1..N (N being the top,
+     *      N - the number of pinned topics) or 0 if not pinned.
+     */
+    public int pinnedTopicRank(String topicName) {
+        // Unsupported for non-me topics.
+        return 0;
     }
 
     /**

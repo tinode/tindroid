@@ -551,6 +551,8 @@ public class SqlStore implements Storage {
             Cursor c = MessageDb.queryUnsent(mDbh.getReadableDatabase(), st.id);
             if (c.moveToFirst()) {
                 list = new MessageList(c, -1);
+            } else {
+                c.close();
             }
         }
         return (R) list;
@@ -564,6 +566,8 @@ public class SqlStore implements Storage {
         try {
             if (c.moveToFirst()) {
                 list = new MessageList(c, MessageDb.MESSAGE_PREVIEW_LENGTH);
+            } else {
+                c.close();
             }
         } catch (SQLiteBlobTooBigException ex) {
             Log.w(TAG, "Failed to read message (misconfigured server):", ex);
