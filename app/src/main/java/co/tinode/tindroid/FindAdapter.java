@@ -116,6 +116,14 @@ public class FindAdapter extends RecyclerView.Adapter<FindAdapter.ViewHolder>
         holder.bind(position, getItemAt(position));
     }
 
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        if (mCursor != null) {
+            mCursor.close();
+            mCursor = null;
+        }
+    }
+
     // Clear the avatar: there is some bug(?) in RecyclerView(?) which causes avatars to be
     // displayed in the wrong places.
     @Override

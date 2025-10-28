@@ -1036,10 +1036,6 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
     @SuppressLint("NotifyDataSetChanged")
     private void swapCursor(final Cursor cursor, final int refresh) {
-        if (mCursor != null && mCursor == cursor) {
-            return;
-        }
-
         // Clear selection
         if (mSelectionMode != null) {
             mSelectionMode.finish();
@@ -1048,7 +1044,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         Cursor oldCursor = mCursor;
         mCursor = cursor;
-        if (oldCursor != null) {
+
+        // Close previous cursor if it existed and is different from the new one.
+        if (oldCursor != null && oldCursor != cursor) {
             oldCursor.close();
         }
 
@@ -1067,10 +1065,8 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 } else {
                     notifyDataSetChanged();
                 }
-                if (cursor != null) {
-                    if (position == 0) {
-                        mRecyclerView.scrollToPosition(0);
-                    }
+                if (cursor != null && position == 0) {
+                    mRecyclerView.scrollToPosition(0);
                 }
             });
         }
@@ -1131,7 +1127,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
     private void cancelUpload(long msgId) {
         Storage store = BaseDb.getInstance().getStore();
         final Topic topic = Cache.getTinode().getTopic(mTopicName);
-        if (store != null && topic != null) {
+        if (topic != null) {
             store.msgFailed(topic, msgId);
             // Invalidate cached data.
             runLoader(false);
@@ -1257,13 +1253,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor cursor) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
                 swapCursor(cursor, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
+                mHardReset = false;
             }
         }
 
         @Override
         public void onLoaderReset(@NonNull Loader<Cursor> loader) {
             if (loader.getId() == MESSAGES_QUERY_ID) {
-                swapCursor(null, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
+                // swapCursor(null, mHardReset ? REFRESH_HARD : REFRESH_SOFT);
+                swapCursor(null, REFRESH_NONE);
+                mHardReset = false;
             }
         }
     }

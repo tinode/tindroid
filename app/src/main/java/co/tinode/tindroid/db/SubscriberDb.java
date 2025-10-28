@@ -336,6 +336,7 @@ public class SubscriberDb implements BaseColumns {
 
     static Collection<Subscription> readAll(Cursor c) {
         if (!c.moveToFirst()) {
+            c.close();
             return null;
         }
 

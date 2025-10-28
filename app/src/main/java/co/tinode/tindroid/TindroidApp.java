@@ -31,6 +31,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.StrictMode;
 import android.provider.ContactsContract;
 import android.text.TextUtils;
 import android.util.Log;
@@ -211,6 +212,16 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             }
         } catch (Exception e) {
             Log.w(TAG, "Failed to set CursorWindow size", e);
+        }
+
+        if (BuildConfig.DEBUG) {
+            // Enable StrictMode to catch accidental disk or network access on the main thread.
+            StrictMode.setVmPolicy(
+                    new StrictMode.VmPolicy.Builder(StrictMode.getVmPolicy())
+                            .detectLeakedClosableObjects()
+                            .penaltyLog() // or penaltyDeath()
+                            .build()
+            );
         }
 
         // Load emoji font and initialize EmojiCompat library.

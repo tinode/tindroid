@@ -87,6 +87,14 @@ class ContactsAdapter extends RecyclerView.Adapter<ContactsAdapter.ViewHolder>
         }
     }
 
+    @Override
+    public void onDetachedFromRecyclerView(@NonNull RecyclerView recyclerView) {
+        if (mCursor != null) {
+            mCursor.close();
+            mCursor = null;
+        }
+    }
+
     void setContactsPermissionGranted() {
         mPermissionGranted = true;
     }
