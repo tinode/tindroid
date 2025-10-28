@@ -14,11 +14,12 @@
         app:popupTheme="@style/AppTheme.PopupOverlay"
         app:subtitleTextAppearance="@style/ToolbarSubtitleAppearance" />
 
-    <View
+    <co.tinode.tindroid.widgets.ConnectionAnimView
+        android:id="@+id/offline_indicator"
         android:layout_width="match_parent"
-        android:layout_height="2dp"
+        android:layout_height="@dimen/connecting_dot"
         android:background="@color/colorOffline"
-        android:visibility="invisible"
-        android:id="@+id/offline_indicator" />
+        android:layout_gravity="center_vertical"
+        android:visibility="invisible" />
 
 </com.google.android.material.appbar.AppBarLayout>

@@ -74,7 +74,6 @@ import java.util.TimerTask;
 import java.util.concurrent.Executors;
 
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
@@ -88,6 +87,7 @@ import co.tinode.tindroid.account.ContactsManager;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tindroid.media.VxCard;
+import co.tinode.tindroid.widgets.ConnectionAnimView;
 import co.tinode.tindroid.widgets.LetterTileDrawable;
 import co.tinode.tindroid.widgets.OnlineDrawable;
 import co.tinode.tindroid.widgets.RoundImageDrawable;
@@ -440,9 +440,9 @@ public class UiUtils {
 
     private static void setConnectedStatus(final Activity activity, final boolean online) {
         // Connected status is disabled for production builds.
-        if (!BuildConfig.DEBUG) {
-            return;
-        }
+        //if (!BuildConfig.DEBUG) {
+        //    return;
+        //}
 
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
@@ -455,9 +455,13 @@ public class UiUtils {
                 if (menu != null) {
                     menu.setGroupVisible(R.id.offline, !online);
                 }
-                View line = activity.findViewById(R.id.offline_indicator);
+                ConnectionAnimView line = activity.findViewById(R.id.offline_indicator);
                 if (line != null) {
-                    line.setVisibility(online ? View.INVISIBLE : View.VISIBLE);
+                    if (online) {
+                        line.stop();
+                    } else {
+                        line.start();
+                    }
                 }
             }
         });
