@@ -94,6 +94,8 @@ public class CallManager {
                 .setCapabilities(capabilities)
                 .setShortDescription(accLabel)
                 .setIcon(icon);
+        // This call can throw, but don't catch the exception here.
+        // Let the caller (MessageActivity) catch it.
         telecomManager.registerPhoneAccount(builder.build());
     }
 
