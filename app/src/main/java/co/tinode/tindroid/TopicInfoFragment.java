@@ -211,6 +211,13 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             activity.findViewById(R.id.topicIdWrapper).setVisibility(View.VISIBLE);
         }
 
+        if (mTopic.getSubCnt() > 0) {
+            activity.findViewById(R.id.subcntWrapper).setVisibility(View.VISIBLE);
+            ((TextView) activity.findViewById(R.id.subcnt)).setText(String.valueOf(mTopic.getSubCnt()));
+        } else {
+            activity.findViewById(R.id.subcntWrapper).setVisibility(View.GONE);
+        }
+
         final View groupMembers = activity.findViewById(R.id.groupMembersWrapper);
 
         if (mTopic.isGrpType() && !mTopic.isChannel()) {

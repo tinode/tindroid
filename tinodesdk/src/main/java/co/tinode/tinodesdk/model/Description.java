@@ -24,6 +24,8 @@ public class Description<DP, DR> implements Serializable {
     public int read;
     public int recv;
     public int clear;
+    // Merged from Subscription.
+    public int subcnt;
 
     public boolean chan;
 
@@ -129,7 +131,10 @@ public class Description<DP, DR> implements Serializable {
             clear = desc.clear;
             changed = true;
         }
-
+        if (desc.subcnt > 0) {
+            changed = subcnt != desc.subcnt || changed;
+            subcnt = desc.subcnt;
+        }
         if (desc.pub != null) {
             changed = mergePub(desc.pub) || changed;
         }
@@ -206,6 +211,11 @@ public class Description<DP, DR> implements Serializable {
         if (sub.clear > clear) {
             clear = sub.clear;
             changed = true;
+        }
+
+        if (sub.subcnt > 0) {
+            changed = subcnt != sub.subcnt || changed;
+            subcnt = sub.subcnt;
         }
 
         if (sub.pub != null) {

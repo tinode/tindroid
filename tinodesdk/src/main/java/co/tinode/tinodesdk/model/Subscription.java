@@ -27,9 +27,12 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
     public String topic;
     public int seq;
     public int clear;
+    public int subcnt;
+
     @JsonProperty("public")
     public SP pub;
     public TrustedType trusted;
+
     public LastSeen seen;
 
     // Local values
@@ -119,7 +122,10 @@ public class Subscription<SP,SR> implements LocalData, Serializable {
             clear = sub.clear;
             changed = true;
         }
-
+        if (sub.subcnt > 0) {
+            subcnt = sub.subcnt;
+            changed = true;
+        }
         if (sub.priv != null) {
             priv = sub.priv;
         }

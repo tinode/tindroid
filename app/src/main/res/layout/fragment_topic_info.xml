@@ -127,7 +127,7 @@
 
             <TextView
                 android:id="@+id/alias"
-                style="@style/textPrimary"
+                style="@style/textSecondary"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -196,6 +196,33 @@
             android:textIsSelectable="false"
             android:visibility="gone"
             app:drawableStartCompat="@drawable/ic_danger" />
+
+        <LinearLayout
+            android:id="@+id/subcntWrapper"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:minHeight="36dp">
+
+            <TextView
+                style="@style/sectionTitleStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/activity_horizontal_margin"
+                android:text="@string/subscribers_label" />
+
+            <TextView
+                android:id="@+id/subcnt"
+                style="@style/textSecondary"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="false"
+                android:focusable="false"
+                android:fontFamily="monospace"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                tools:text="1024" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/topicDescriptionWrapper"

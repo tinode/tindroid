@@ -147,7 +147,8 @@ public class UiUtils {
     }
 
     static void setupToolbar(final Activity activity, final VxCard pub,
-                             final String topicName, final boolean online, final Date lastSeen, boolean deleted) {
+                             final String topicName, final boolean online, final Date lastSeen,
+                             boolean deleted, int subcnt) {
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -167,7 +168,11 @@ public class UiUtils {
                     toolbar.setSubtitle(null);
                 } else if (ComTopic.isChannel(topicName)) {
                     showOnline = null;
-                    toolbar.setSubtitle(R.string.channel);
+                    if (subcnt > 0) {
+                        toolbar.setSubtitle(activity.getResources().getString(R.string.subscribers, subcnt));
+                    } else {
+                        toolbar.setSubtitle(R.string.channel);
+                    }
                 } else if (deleted) {
                     showOnline = null;
                     toolbar.setSubtitle(R.string.deleted);
