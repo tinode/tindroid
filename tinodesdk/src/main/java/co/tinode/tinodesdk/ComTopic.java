@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.ToIntFunction;
+import java.util.stream.Collectors;
 
 import co.tinode.tinodesdk.model.Description;
 import co.tinode.tinodesdk.model.Drafty;
@@ -18,7 +20,7 @@ import co.tinode.tinodesdk.model.Subscription;
 import co.tinode.tinodesdk.model.TheCard;
 
 /**
- * Communication topic: a P2P or Group.
+ * Communication topic: a Slf, P2P or Group.
  */
 public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,PrivateType> {
     public ComTopic(Tinode tinode, Subscription<DP,PrivateType> sub) {
@@ -83,7 +85,10 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         List<Integer> pinned;
         if (val instanceof List) {
             // Creating a copy, otherwise changes here will affect values saved in topic.
-            pinned = new ArrayList<>((List) val);
+            pinned = ((List<?>) val).stream()
+                    .map(obj -> obj instanceof Number ? ((Number) obj).intValue() : null)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
         } else {
             pinned = new ArrayList<>();
         }

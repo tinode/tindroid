@@ -4,6 +4,8 @@ import android.util.Log;
 
 import com.fasterxml.jackson.databind.JavaType;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -116,38 +118,37 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
      * @param val   value of the credential being deleted, i.e. "alice@example.com".
      */
     public PromisedReply<ServerMessage> delCredential(String meth, String val) {
-        if (mAttached > 0) {
-            final Credential cred = new Credential(meth, val);
-            return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<>() {
-                @Override
-                public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                    if (mCreds == null) {
-                        return null;
-                    }
+        if (mAttached <= 0) {
+            if (mTinode.isConnected()) {
+                return new PromisedReply<>(new NotSubscribedException());
+            }
+            return new PromisedReply<>(new NotConnectedException());
+        }
 
-                    int idx = findCredIndex(cred, false);
-                    if (idx >= 0) {
-                        mCreds.remove(idx);
-
-                        if (mStore != null) {
-                            mStore.topicUpdate(MeTopic.this);
-                        }
-
-                        // Notify listeners
-                        if (mListener != null && mListener instanceof MeListener) {
-                            ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
-                        }
-                    }
+        final Credential cred = new Credential(meth, val);
+        return mTinode.delCredential(cred).thenApply(new PromisedReply.SuccessListener<>() {
+            @Override
+            public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                if (mCreds == null) {
                     return null;
                 }
-            });
-        }
 
-        if (mTinode.isConnected()) {
-            return new PromisedReply<>(new NotSubscribedException());
-        }
+                int idx = findCredIndex(cred, false);
+                if (idx >= 0) {
+                    mCreds.remove(idx);
 
-        return new PromisedReply<>(new NotConnectedException());
+                    if (mStore != null) {
+                        mStore.topicUpdate(MeTopic.this);
+                    }
+
+                    // Notify listeners
+                    if (mListener != null && mListener instanceof MeListener) {
+                        ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
+                    }
+                }
+                return null;
+            }
+        });
     }
 
     public PromisedReply<ServerMessage> confirmCred(final String meth, final String resp) {
@@ -214,6 +215,69 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         if (meta.cred != null) {
             routeMetaCred(meta.cred);
         }
+    }
+
+    /**
+     * Pin topic to the top of the contact list.
+     *
+     * @param topicName - Name of the topic to pin.
+     * @param pin - If true, pin the topic, otherwise unpin.
+     *
+     * @return Promise to be resolved/rejected when the server responds to request.
+     */
+    @Override
+    public PromisedReply<ServerMessage> pinTopic(final @NotNull String topicName, boolean pin) {
+        if (mAttached <= 0) {
+            if (mTinode.isConnected()) {
+                return new PromisedReply<>(new NotSubscribedException());
+            }
+            return new PromisedReply<>(new NotConnectedException());
+        }
+
+        if (!isUserType(topicName)) {
+            return new PromisedReply<>(new IllegalArgumentException("Invalid topic type to pin"));
+        }
+
+        PrivateType priv = getPriv();
+        ArrayList<String> tpin = priv != null ?
+                // Creating a copy to leave original list unchanged.
+                new ArrayList<>(priv.getPinnedTopics()) :
+                // New empty list.
+                new ArrayList<>();
+
+        boolean found = tpin.contains(topicName);
+        if ((pin && found) || (!pin && !found)) {
+            // Nothing to do, return resolved promise.
+            return new PromisedReply<>(null);
+        }
+
+        if (pin) {
+            // Add topic to the top of the pinned list.
+            tpin.add(0, topicName);
+        } else {
+            // Remove topic from the pinned list.
+            tpin.remove(topicName);
+        }
+
+        priv = new PrivateType();
+        priv.setPinnedTopics(tpin);
+        return setDescription(null, priv, null);
+    }
+
+    /**
+     * Get the rank of the pinned topic.
+     * @param topicName - Name of the topic to check.
+     *
+     * @return numeric rank of the pinned topic in the range 1..N (N being the top,
+     *      N - the number of pinned topics) or 0 if not pinned.
+     */
+    @Override
+    public int pinnedTopicRank(final @NotNull String topicName) {
+        PrivateType priv = getPriv();
+        if (priv == null) {
+            return 0;
+        }
+        return priv.getPinnedRank(topicName);
     }
 
     @Override
