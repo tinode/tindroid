@@ -350,7 +350,8 @@ public class MessageActivity extends AppCompatActivity
             changed = true;
 
             if (mTopic == null) {
-                UiUtils.setupToolbar(this, null, mTopicName, false, null, false);
+                UiUtils.setupToolbar(this, null,
+                        mTopicName, false, null, false, 0);
                 try {
                     //noinspection unchecked
                     mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
@@ -363,7 +364,7 @@ public class MessageActivity extends AppCompatActivity
                 // Check if another fragment is already visible. If so, don't change it.
             } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
-                        mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                        mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
                 // Reset requested or no fragment is visible. Show default and clear back stack.
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
@@ -496,7 +497,8 @@ public class MessageActivity extends AppCompatActivity
 
         if (mTopic.isDeleted()) {
             setRefreshing(false);
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName, false, null, true);
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
+                    false, null, true, 0);
             maybeShowMessagesFragmentOnAttach();
             return;
         }
@@ -514,7 +516,8 @@ public class MessageActivity extends AppCompatActivity
                             Fragment fragment = maybeShowMessagesFragmentOnAttach();
                             if (fragment instanceof MessagesFragment) {
                                 UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(),
-                                        mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                                        mTopicName, mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(),
+                                        mTopic.getSubCnt());
                             }
                         });
                         // Submit pending messages for processing: publish queued,
@@ -1112,7 +1115,7 @@ public class MessageActivity extends AppCompatActivity
                         ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
                         UiUtils.setupToolbar(MessageActivity.this, mTopic.getPub(), mTopic.getName(),
-                                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
                         ((MessagesFragment) fragment).notifyDataSetChanged(true);
                     }

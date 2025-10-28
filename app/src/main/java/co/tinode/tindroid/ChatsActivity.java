@@ -92,7 +92,8 @@ public class ChatsActivity extends AppCompatActivity
 
         Cache.setSelectedTopicName(null);
 
-        UiUtils.setupToolbar(this, null, null, false, null, false);
+        UiUtils.setupToolbar(this, null, null, false,
+                null, false, 0);
 
         if (!mMeTopic.isAttached()) {
             toggleProgressIndicator(true);

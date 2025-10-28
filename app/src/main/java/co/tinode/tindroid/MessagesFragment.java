@@ -874,12 +874,12 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
             activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
             setSendPanelVisible(activity, R.id.sendMessageDisabled);
-            UiUtils.setupToolbar(activity, null, mTopicName, false, null, false);
+            UiUtils.setupToolbar(activity, null, mTopicName, false, null, false, 0);
             return;
         }
 
         UiUtils.setupToolbar(activity, mTopic.getPub(), mTopicName,
-                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted());
+                mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
         Acs acs = mTopic.getAccessMode();
         if (acs == null || !acs.isModeDefined()) {
