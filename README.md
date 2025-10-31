@@ -9,6 +9,25 @@ Debug APKs are available in [releases](https://github.com/tinode/tindroid/releas
 
 This is NOT a standalone app, this is just a frontend, a client. It requires a [backend](https://github.com/tinode/chat/). See [installation instructions](https://github.com/tinode/chat/blob/master/INSTALL.md).
 
+### Building from source
+
+* Install [Android Studio](https://developer.android.com/studio).
+* Clone this repository: `git clone && cd tindroid`
+* Open the project in Android Studio.
+* Build and run the app on an emulator or a physical device.
+
+If you are not cloning but building from a downloaded archive, open the `build.gradle` file in the root of the extracted archive, 
+find the definitions for `gitVersionCode()` and `gitVersionName()` functions and replace them with static values, for example:
+```gradle
+static def gitVersionCode() {
+   return 1234
+}
+
+static def gitVersionName() {
+   return '1.23.4'
+}
+```
+
 ## Getting support
 
 * Read [client-side](http://tinode.github.io/java-api/) and [server-side](https://github.com/tinode/chat/blob/master/docs/API.md) API documentation.
@@ -62,16 +81,25 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 
 * [Jackson](https://github.com/FasterXML/jackson) for JSON serialization.
 * [Java-WebSocket](https://github.com/TooTallNate/Java-WebSocket/) for websocket support.
+* [ICU4J](https://github.com/unicode-org/icu) for Unicode support.
 
 SDK contains no Android-specific dependencies.
 
 ### Application
 
+#### Closed source
 * [Google-Services](https://firebase.google.com/docs/cloud-messaging/android/client) for push notifications. See below.
 * [Crashlytics](https://firebase.google.com/docs/android/setup) for crash reporting.
-* [Picasso](https://square.github.io/picasso/) for image downloading and caching.
-* [Android Image Picker](https://github.com/esafirm/android-image-picker) for picking images or videos.
+* [Google MLKIT](https://developers.google.com/ml-kit) for QR code scanning.
+
+#### Open source
+* [Google Flexbox](https://github.com/google/flexbox-layout), [Google Material](https://github.com/material-components/material-components-android) UI components.
+* [Coil](https://github.com/coil-kt/coil) for image downloading and caching.
 * [OSS Licenses Plugin](https://github.com/google/play-services-plugins/tree/master/oss-licenses-plugin) for legal compliance with OSS licenses.
+* [LibPhoneNumber](https://github.com/google/libphonenumber) for phone number parsing and formatting.
+* [WebRTC build](https://github.com/rno/WebRTC) for audio and video calling.
+* [ICU4J](https://github.com/unicode-org/icu) for Unicode support.
+* [QR Code Generator](https://github.com/nayuki/QR-Code-generator) for generating QR codes.
 * Standard Android dependencies.
 
 ## Other
