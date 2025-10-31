@@ -23,8 +23,9 @@ android {
     defaultConfig {
         applicationId "co.tinode.tindroidx"
         minSdkVersion 27
-        targetSdkVersion 35
-        compileSdk 35
+        targetSdkVersion 36
+        compileSdkVersion 36
+
         vectorDrawables.useSupportLibrary = true
 
         // If you are getting errors due to git not being setup comment out lines gitVersion*()
@@ -45,7 +46,7 @@ android {
             resValue "string", "default_host_name", '"api.tinode.co"'
             minifyEnabled true
             shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
     }
@@ -80,13 +81,13 @@ dependencies {
     implementation project(path: ':tinodesdk')
 
     // Camera libraries must use the the same version.
-    def camerax_version = '1.4.2'
+    def camerax_version = '1.5.1'
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
 
-    implementation 'androidx.activity:activity:1.10.1'
+    implementation 'androidx.activity:activity:1.11.0'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
@@ -105,7 +106,7 @@ dependencies {
     implementation 'androidx.recyclerview:recyclerview-selection:1.2.0'
     implementation 'androidx.vectordrawable:vectordrawable:1.2.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
-    implementation 'androidx.work:work-runtime:2.10.3'
+    implementation 'androidx.work:work-runtime:2.11.0'
 
     implementation 'com.android.installreferrer:installreferrer:2.2'
 
@@ -114,14 +115,14 @@ dependencies {
     implementation "androidx.media3:media3-ui:${media3_version}"
     implementation "androidx.media3:media3-datasource:${media3_version}"
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
-    implementation 'com.google.android.gms:play-services-oss-licenses:17.2.2'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.3.0'
     implementation 'com.google.android.material:material:1.13.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-crashlytics:19.4.4'
-    implementation 'com.google.firebase:firebase-messaging:24.1.2'
+    implementation 'com.google.firebase:firebase-crashlytics:20.0.3'
+    implementation 'com.google.firebase:firebase-messaging:25.0.1'
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.9'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.17'
 
     // WebRTC.
     implementation 'com.dafruits:webrtc:123.0.0'
@@ -134,7 +135,7 @@ dependencies {
     // QR Code generator.
     implementation 'io.nayuki:qrcodegen:1.8.0'
 
-    annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.9.3'
+    annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.9.4'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 

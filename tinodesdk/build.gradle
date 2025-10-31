@@ -5,8 +5,8 @@ android {
 
     defaultConfig {
         minSdkVersion 27
-        targetSdkVersion 35
-        compileSdk 35
+        targetSdkVersion 36
+        compileSdkVersion 36
         buildConfigField 'int', 'VERSION_CODE', "${rootProject.ext.version_code}"
         buildConfigField 'String', 'VERSION_NAME', "\"${rootProject.ext.version_name}\""
 
@@ -44,12 +44,12 @@ java {
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
-    api 'com.fasterxml.jackson.core:jackson-databind:2.19.2'
-    api 'com.fasterxml.jackson.core:jackson-core:2.19.2'
-    api 'com.fasterxml.jackson.core:jackson-annotations:2.19.2'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.20.1'
+    api 'com.fasterxml.jackson.core:jackson-core:2.20.1'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.20'
 
     api 'org.java-websocket:Java-WebSocket:1.5.3'
     implementation 'com.ibm.icu:icu4j:77.1'
-    implementation 'org.jetbrains:annotations:26.0.2'
+    implementation 'org.jetbrains:annotations:26.0.2-1'
     testImplementation 'junit:junit:4.13.2'
 }
