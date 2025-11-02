@@ -14,7 +14,6 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,7 +23,6 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.Window;
 import android.widget.Toast;
 
 import com.google.firebase.messaging.RemoteMessage;
@@ -54,10 +52,7 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
-import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
@@ -1083,8 +1078,10 @@ public class MessageActivity extends AppCompatActivity
             if (UiUtils.isPermissionGranted(context, Manifest.permission.WRITE_CONTACTS)) {
                 Account acc = Utils.getSavedAccount(AccountManager.get(context), Cache.getTinode().getMyId());
                 if (acc != null) {
-                    ContactsManager.updateContacts(context, acc, Cache.getTinode(), mTopic.getSubscriptions(),
-                            null, false);
+                    Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+                    if (subs != null) {
+                        ContactsManager.updateContacts(context, acc, Cache.getTinode(), subs, null, false);
+                    }
                 }
             }
 
