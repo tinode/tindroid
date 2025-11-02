@@ -48,8 +48,6 @@ import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor;
 import androidx.media3.datasource.cache.SimpleCache;
 import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
-import org.jetbrains.annotations.Nullable;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -58,6 +56,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import androidx.annotation.NonNull;
@@ -76,12 +75,9 @@ import co.tinode.tinodesdk.Tinode;
 import coil.Coil;
 import coil.ComponentRegistry;
 import coil.ImageLoader;
-import coil.intercept.Interceptor;
 import coil.key.Keyer;
 import coil.request.ImageRequest;
-import coil.request.ImageResult;
 import coil.util.DebugLogger;
-import kotlin.coroutines.Continuation;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 
@@ -299,21 +295,17 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
             uri.buildUpon().clearQuery().query(query.toString());
             return uri.toString();
         }, Uri.class);
-        crb.add(new Interceptor() {
-            @Nullable
-            @Override
-            public Object intercept(@NonNull Chain chain, @NonNull Continuation<? super ImageResult> continuation) {
-                // Rewrite relative URIs to absolute.
-                ImageRequest request = chain.getRequest();
-                String data = request.getData().toString();
-                if (Tinode.isUrlRelative(data)) {
-                    URL url = Cache.getTinode().toAbsoluteURL(data);
-                    if (url != null) {
-                        return chain.proceed(request.newBuilder().data(url.toString()).build(), continuation);
-                    }
+        crb.add((chain, continuation) -> {
+            // Rewrite relative URIs to absolute.
+            ImageRequest request = chain.getRequest();
+            String data = request.getData().toString();
+            if (Tinode.isUrlRelative(data)) {
+                URL url = Cache.getTinode().toAbsoluteURL(data);
+                if (url != null) {
+                    return chain.proceed(request.newBuilder().data(url.toString()).build(), continuation);
                 }
-                return chain.proceed(request, continuation);
             }
+            return chain.proceed(request, continuation);
         });
         ImageLoader loader = new ImageLoader.Builder(this)
                 .okHttpClient(client)
@@ -357,16 +349,19 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
         // Check if the app was installed from an URL with attributed installation source.
         // If yes, get the config from hosts.tinode.co.
         if (UiUtils.isAppFirstRun(sContext)) {
-            Executors.newSingleThreadExecutor().execute(() ->
-                    BrandingConfig.getInstallReferrerFromClient(sContext,
-                            InstallReferrerClient.newBuilder(this).build()));
+            try (ExecutorService exec = Executors.newSingleThreadExecutor()) {
+                exec.execute(() -> BrandingConfig.getInstallReferrerFromClient(sContext,
+                        InstallReferrerClient.newBuilder(this).build()));
+            }
         }
 
         // Check if the app has an account already. If so, initialize the shared connection with the server.
         // Initialization may fail if device is not connected to the network.
         String uid = BaseDb.getInstance().getUid();
         if (!TextUtils.isEmpty(uid)) {
-            Executors.newSingleThreadExecutor().execute(() -> loginInBackground(uid));
+            try (ExecutorService exec = Executors.newSingleThreadExecutor()) {
+                exec.execute(() -> loginInBackground(uid));
+            }
         }
     }
 

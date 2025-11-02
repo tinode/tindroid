@@ -71,6 +71,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import androidx.appcompat.app.AlertDialog;
@@ -362,7 +363,6 @@ public class UiUtils {
     /**
      * Login successful. Show contacts activity
      */
-    @SuppressLint("UnsafeOptInUsageError")
     static void onLoginSuccess(Activity activity, final Button button, final String uid) {
         if (button != null) {
             activity.runOnUiThread(() -> button.setEnabled(true));
@@ -381,7 +381,6 @@ public class UiUtils {
         activity.finish();
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     static void doLogout(Context context) {
         CallManager.unregisterCallingAccount();
         TindroidApp.stopWatchingContacts();
@@ -414,19 +413,20 @@ public class UiUtils {
         return missing;
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     static void onContactsPermissionsGranted(Activity activity) {
-        // Run in background.
-        Executors.newSingleThreadExecutor().execute(() -> {
-            Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
-            if (acc == null) {
-                return;
-            }
-            Tinode tinode = Cache.getTinode();
-            Collection<ComTopic<VxCard>> topics = tinode.getFilteredTopics(Topic::isP2PType);
-            ContactsManager.updateContacts(activity, acc, tinode, topics);
-            TindroidApp.startWatchingContacts(activity, acc);
-        });
+        try (ExecutorService exec = Executors.newSingleThreadExecutor()) {
+            // Run in background.
+            exec.execute(() -> {
+                Account acc = Utils.getSavedAccount(AccountManager.get(activity), Cache.getTinode().getMyId());
+                if (acc == null) {
+                    return;
+                }
+                Tinode tinode = Cache.getTinode();
+                Collection<ComTopic<VxCard>> topics = tinode.getFilteredTopics(Topic::isP2PType);
+                ContactsManager.updateContacts(activity, acc, tinode, topics);
+                TindroidApp.startWatchingContacts(activity, acc);
+            });
+        }
     }
 
     // Creates or updates the Android account associated with the given UID.
@@ -444,11 +444,6 @@ public class UiUtils {
     }
 
     private static void setConnectedStatus(final Activity activity, final boolean online) {
-        // Connected status is disabled for production builds.
-        //if (!BuildConfig.DEBUG) {
-        //    return;
-        //}
-
         if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
             return;
         }
@@ -1285,7 +1280,6 @@ public class UiUtils {
         return methods;
     }
 
-    @SuppressLint("UnsafeOptInUsageError")
     static void fillAboutTinode(View view, String serverUrl, BrandingConfig branding) {
         ((TextView) view.findViewById(R.id.app_version)).setText(TindroidApp.getAppVersion());
         ((TextView) view.findViewById(R.id.app_build)).setText(String.format(Locale.US, "%d",
