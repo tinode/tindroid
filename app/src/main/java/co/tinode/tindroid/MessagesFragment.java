@@ -1749,11 +1749,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 }
             }
         }
-
-        public void reloadItemAt(int position) {
-            PinnedMessageFragment frag =  mFragments.valueAt(position);
-            frag.reloadMessage();
-        }
     }
 
     public static class PinnedMessageFragment extends Fragment {
