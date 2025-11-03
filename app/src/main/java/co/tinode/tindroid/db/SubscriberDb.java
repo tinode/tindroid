@@ -113,7 +113,7 @@ public class SubscriberDb implements BaseColumns {
     private static final int COLUMN_IDX_STATUS = 3;
     private static final int COLUMN_IDX_MODE = 4;
     private static final int COLUMN_IDX_UPDATED = 5;
-    private static final int COLUMN_IDX_DELETED = 6;
+    // private static final int COLUMN_IDX_DELETED = 6;
     private static final int COLUMN_IDX_READ = 7;
     private static final int COLUMN_IDX_RECV = 8;
     private static final int COLUMN_IDX_CLEAR = 9;

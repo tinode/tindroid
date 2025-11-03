@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import co.tinode.tinodesdk.model.Acs;
@@ -79,16 +80,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         throw new UnsupportedOperationException();
     }
 
-    public PrivateType getPriv() {
-        return null;
-    }
-    public void setPriv(PrivateType priv) { /* do nothing */ }
-
     @Override
     public Date getSubsUpdated() {
         return mTinode.getTopicsUpdated();
     }
-
 
     /**
      * Get current user's credentials, such as emails and phone numbers.
@@ -210,11 +205,52 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
      */
     @Override
     protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP,PrivateType> meta) {
+        if (meta.desc != null) {
+            updatePinnedTopics(meta.desc.priv);
+        }
+
         super.update(ctrl, meta);
 
         if (meta.cred != null) {
             routeMetaCred(meta.cred);
         }
+    }
+
+    @Override
+    protected void routeMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
+        Log.i(TAG, "MeTopic.routeMeta: " + meta);
+        if (meta.cred != null) {
+            routeMetaCred(meta.cred);
+        }
+
+        if (meta.desc != null) {
+            // Create or update 'me' user in storage.
+            User userMe = mTinode.getUser(mTinode.getMyId());
+            boolean changed;
+            if (userMe == null) {
+                userMe = mTinode.addUser(mTinode.getMyId(), meta.desc);
+                changed = true;
+            } else {
+                //noinspection unchecked
+                changed = userMe.merge(meta.desc);
+            }
+            if (changed && mStore != null) {
+                mStore.userUpdate(userMe);
+            }
+            updatePinnedTopics(meta.desc.priv);
+        }
+
+        super.routeMeta(meta);
+    }
+
+    @Override
+    public int getPinnedRank() {
+        return 0;
+    }
+
+    @Override
+    public void setPinnedRank(int pinned) {
+        /* do nothing */
     }
 
     /**
@@ -238,15 +274,16 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             return new PromisedReply<>(new IllegalArgumentException("Invalid topic type to pin"));
         }
 
-        PrivateType priv = getPriv();
-        ArrayList<String> tpin = priv != null ?
+        List<String> pinned = getPriv() != null ? getPriv().getPinnedTopics() : null;
+        ArrayList<String> tpin = pinned != null ?
                 // Creating a copy to leave original list unchanged.
-                new ArrayList<>(priv.getPinnedTopics()) :
+                new ArrayList<>(pinned) :
                 // New empty list.
                 new ArrayList<>();
 
         boolean found = tpin.contains(topicName);
         if ((pin && found) || (!pin && !found)) {
+            Log.i(TAG, "Pin state unchanged for topic " + topicName);
             // Nothing to do, return resolved promise.
             return new PromisedReply<>(null);
         }
@@ -258,8 +295,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             // Remove topic from the pinned list.
             tpin.remove(topicName);
         }
-
-        priv = new PrivateType();
+        final PrivateType priv = new PrivateType();
         priv.setPinnedTopics(tpin);
         return setDescription(null, priv, null);
     }
@@ -280,29 +316,59 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         return priv.getPinnedRank(topicName);
     }
 
-    @Override
-    protected void routeMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
-        if (meta.cred != null) {
-            routeMetaCred(meta.cred);
+    /**
+     * Get the rank of the pinned topic.
+     * @param topicName - Name of the topic to check.
+     *
+     * @return numeric rank of the pinned topic in the range 1..N (N being the top,
+     *      N - the number of pinned topics) or 0 if not pinned.
+     */
+    public boolean isPinned(final @NotNull String topicName) {
+        PrivateType priv = getPriv();
+        if (priv == null) {
+            return false;
         }
+        return priv.getPinnedRank(topicName) > 0;
+    }
 
-        if (meta.desc != null) {
-            // Create or update 'me' user in storage.
-            User me = mTinode.getUser(mTinode.getMyId());
-            boolean changed;
-            if (me == null) {
-                me = mTinode.addUser(mTinode.getMyId(), meta.desc);
-                changed = true;
-            } else {
-                //noinspection unchecked
-                changed = me.merge(meta.desc);
+    private void updatePinnedTopics(final PrivateType priv) {
+        List<String> newPins = priv != null ? priv.getPinnedTopics() : null;
+        if (newPins == null) {
+            Log.i(TAG, "Updating pinned topics with NULL " + priv);
+            return;
+        }
+        Log.i(TAG, "Updating pinned topics " + newPins);
+        // Update pinned rank for all pinned topics.
+        int rank = newPins.size();
+        for (String topicName : newPins) {
+            Topic topic = mTinode.getTopic(topicName);
+            if (topic != null) {
+                topic.setPinnedRank(rank);
+                if (mStore != null) {
+                    Log.i(TAG, "Saved pinned rank " + topicName + " -> " + rank);
+                    mStore.topicUpdate(topic);
+                }
             }
-            if (changed) {
-                mStore.userUpdate(me);
+            rank --;
+        }
+        List<String> thesePins = getPriv() != null ? getPriv().getPinnedTopics() : null;
+        if (thesePins == null || thesePins.isEmpty()) {
+            Log.i(TAG, "Updating pinned topics, old is NULL or empty");
+            return;
+        }
+        // Unpin topics that were removed from the pinned list.
+        for (String topicName : thesePins) {
+            if (!newPins.contains(topicName)) {
+                Topic topic = mTinode.getTopic(topicName);
+                if (topic != null) {
+                    topic.setPinnedRank(0);
+                    if (mStore != null) {
+                        Log.i(TAG, "Removed pinned rank " + topicName + " -> " + 0);
+                        mStore.topicUpdate(topic);
+                    }
+                }
             }
         }
-
-        super.routeMeta(meta);
     }
 
     @Override
@@ -347,22 +413,28 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             Log.w(TAG, "Request to delete an unknown topic: " + sub.topic);
         }
 
-        // Use p2p topic to update user's record.
-        if (topic != null && topic.getTopicType() == TopicType.P2P && mStore != null) {
-            // Use P2P description to generate and update user
-            User user = mTinode.getUser(topic.getName());
-            boolean changed;
-            if (user == null) {
-                user = mTinode.addUser(topic.getName(), topic.mDesc);
-                changed = true;
-            } else {
-                changed = user.merge(topic.mDesc);
+        if (mStore != null && topic != null) {
+            int pinnedRank = pinnedTopicRank(sub.topic);
+            if (topic.getPinnedRank() != pinnedRank) {
+                topic.setPinnedRank(pinnedRank);
+                mStore.topicUpdate(topic);
             }
-            if (changed) {
-                mStore.userUpdate(user);
+            // Use p2p topic to update user's record.
+            if (topic.getTopicType() == TopicType.P2P) {
+                // Use P2P description to generate and update user
+                User user = mTinode.getUser(topic.getName());
+                boolean changed;
+                if (user == null) {
+                    user = mTinode.addUser(topic.getName(), topic.mDesc);
+                    changed = true;
+                } else {
+                    changed = user.merge(topic.mDesc);
+                }
+                if (changed) {
+                    mStore.userUpdate(user);
+                }
             }
         }
-
         if (mListener != null) {
             mListener.onMetaSub(sub);
         }

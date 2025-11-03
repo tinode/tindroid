@@ -8,8 +8,10 @@
     <color name="colorNeutralAction">#FF909090</color>
 
     <color name="colorAccentLight">#E0F2F1</color>
+    <color name="colorAccentLight2">#EDF9FD</color>
     <color name="colorAccent">#00897B</color>
     <color name="colorAccentDark">#004D40</color>
+    <color name="colorAccentDark2">#00272C</color>
     <color name="colorButtonNormal">#D6D7D7</color>
 
     <color name="colorSwipeChervon">#FFF</color>

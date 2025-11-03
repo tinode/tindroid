@@ -70,23 +70,42 @@ public class PrivateType extends HashMap<String,Object> implements Mergeable, Se
         return 0;
     }
 
+    /**
+     * Get the list of pinned topics.
+     *
+     * @return List of pinned topic names including empty list,
+     *  or null if pinned topics are not defined.
+     */
     @JsonIgnore
     public List<String> getPinnedTopics() {
+        Object value = get("tpin");
+        if (value == null) {
+            // Not set, return null.
+            return null;
+        }
+        if (Tinode.isNull(value)) {
+            // Explicitly set to empty, return empty list.
+            return List.of();
+        }
+
         List<String> tpins = null;
         try {
-            List<?> raw = (List) getValue("tpin");
-            if (raw != null) {
-                tpins = raw.stream()
-                        .map(obj -> obj instanceof String ? (String) obj : null)
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-            }
-        } catch (ClassCastException ignored) {}
+            tpins = ((List<?>) value).stream()
+                    .map(obj -> obj instanceof String ? (String) obj : null)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (ClassCastException ignored) {
+            // The list is malformed, return null.
+        }
         return tpins;
     }
 
     @JsonIgnore
-    public void setPinnedTopics(List<String> tpins) {
+    public void setPinnedTopics(@NotNull List<String> tpins) {
+        if (tpins.isEmpty()) {
+            put("tpin", Tinode.NULL_VALUE);
+            return;
+        }
         put("tpin", tpins);
     }
 

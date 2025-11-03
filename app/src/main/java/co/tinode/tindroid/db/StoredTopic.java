@@ -68,6 +68,9 @@ public class StoredTopic implements LocalData.Payload {
         topic.setAccessMode(BaseDb.deserializeMode(c.getString(TopicDb.COLUMN_IDX_ACCESSMODE)));
         topic.setDefacs(BaseDb.deserializeDefacs(c.getString(TopicDb.COLUMN_IDX_DEFACS)));
 
+        topic.setSubCnt(c.getInt(TopicDb.COLUMN_IDX_SUBCNT));
+        topic.setPinnedRank(c.getInt(TopicDb.COLUMN_IDX_PINNED));
+
         topic.setLocal(st);
     }
 

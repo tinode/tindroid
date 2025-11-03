@@ -33,6 +33,7 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.CircleProgressView;
 import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.ComTopic;
+import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -43,6 +44,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     private Boolean mIsArchive;
     private Boolean mIsBanned;
     private boolean mSelectionMuted;
+    private boolean mSelectionPinned;
 
     // "Loading..." indicator.
     private CircleProgressView mProgressView;
@@ -145,6 +147,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                     if (topic != null) {
                         mSelectionMuted = topic.isMuted();
                     }
+                    mSelectionPinned = Cache.getTinode().getMeTopic().isPinned(topicName);
                 }
                 if (mActionMode != null) {
                     if ((before > 1) != (after > 1)) {
@@ -257,6 +260,9 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
 
                 menu.findItem(R.id.action_archive).setVisible(!mIsArchive);
                 menu.findItem(R.id.action_unarchive).setVisible(mIsArchive);
+
+                menu.findItem(R.id.action_pin).setVisible(!mSelectionPinned);
+                menu.findItem(R.id.action_unpin).setVisible(mSelectionPinned);
             }
         }
 
@@ -295,7 +301,7 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                         .thenApply(new PromisedReply.SuccessListener<>() {
                             @Override
                             public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                                datasetChanged();
+                                notifyItemChanged(topic.getName());
                                 return null;
                             }
                         })
@@ -335,6 +341,31 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
                         }
                     });
 
+            mode.finish();
+            return true;
+        } else if (id == R.id.action_pin || id == R.id.action_unpin) {
+            final String topicName = selection.iterator().next();
+            final MeTopic me = Cache.getTinode().getMeTopic();
+            me.pinTopic(topicName, id == R.id.action_pin)
+                    .thenApply(new PromisedReply.SuccessListener<ServerMessage>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            // Must use datasetChanged instead of notifyItemChanged
+                            // because pinning changes order of items.
+                            datasetChanged();
+                            return null;
+                        }
+                    })
+                    .thenCatch(new PromisedReply.FailureListener<>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onFailure(final Exception err) {
+                            activity.runOnUiThread(() -> {
+                                Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                                Log.w(TAG, "Pinning failed", err);
+                            });
+                            return null;
+                        }
+                    });
             mode.finish();
             return true;
         } else if (id == R.id.action_unblock) {
@@ -416,6 +447,13 @@ public class ChatsFragment extends Fragment implements ActionMode.Callback, UiUt
     void datasetChanged() {
         toggleProgressIndicator(false);
         mAdapter.resetContent(getActivity());
+    }
+
+    void notifyItemChanged(String topicName) {
+        int position = mAdapter.getItemPosition(topicName);
+        if (position >= 0) {
+            mAdapter.notifyItemChanged(position);
+        }
     }
 
     @Override

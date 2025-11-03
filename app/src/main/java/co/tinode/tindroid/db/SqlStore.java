@@ -459,6 +459,9 @@ public class SqlStore implements Storage {
         }
         ranges = MsgRange.collapse(ranges);
         MsgRange span = MsgRange.enclosing(ranges);
+        if (span == null) {
+            return false;
+        }
         boolean result = false;
         try {
             db.beginTransaction();

@@ -16,6 +16,8 @@ import android.provider.ContactsContract.RawContacts;
 import android.provider.ContactsContract.Settings;
 import android.text.TextUtils;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.Date;
 
@@ -48,7 +50,7 @@ public class ContactsManager {
      */
     public static synchronized <K> Date updateContacts(Context context, Account account,
                                                    Tinode tinode,
-                                                   Collection<Subscription<VxCard, K>> subscriptions,
+                                                   @NotNull Collection<Subscription<VxCard, K>> subscriptions,
                                                    Date lastSyncMarker,
                                                    // It's a false positive.
                                                    @SuppressWarnings("SameParameterValue") boolean isSyncContext) {

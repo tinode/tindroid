@@ -7,7 +7,6 @@ import android.text.format.DateUtils;
 import com.ibm.icu.lang.UCharacter;
 import com.ibm.icu.lang.UProperty;
 import com.ibm.icu.text.BreakIterator;
-import com.ibm.icu.text.UCharacterIterator;
 
 import org.jetbrains.annotations.NotNull;
 

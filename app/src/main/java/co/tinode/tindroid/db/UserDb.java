@@ -48,10 +48,10 @@ public class UserDb implements BaseColumns {
     // Pseudo-UID for messages with null From.
     static final String UID_NULL = "none";
     static final int COLUMN_IDX_ID = 0;
-    static final int COLUMN_IDX_ACCOUNT_ID = 1;
+    // static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_UID = 2;
     static final int COLUMN_IDX_UPDATED = 3;
-    static final int COLUMN_IDX_DELETED = 4;
+    //static final int COLUMN_IDX_DELETED = 4;
     static final int COLUMN_IDX_PUBLIC = 5;
     /**
      * SQL statement to create Messages table
@@ -201,7 +201,6 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
                         " AND " +
                         COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
-        // Log.d(TAG, sql);
         Cursor c = db.rawQuery(sql, null);
         if (c.getCount() > 0) {
             if (c.moveToFirst()) {
@@ -224,14 +223,11 @@ public class UserDb implements BaseColumns {
                         COLUMN_NAME_UID + "='" + (uid != null ? uid : UID_NULL) + "'";
 
         Cursor c = db.rawQuery(sql, null);
-        if (c.getCount() > 0) {
+        if (c.moveToFirst()) {
             user = new User<>(uid);
-            if (c.moveToFirst()) {
-                user = new User<>(uid);
-                StoredUser.deserialize(user, c);
-            }
-            c.close();
+            StoredUser.deserialize(user, c);
         }
+        c.close();
         return user;
     }
 }

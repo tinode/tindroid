@@ -70,6 +70,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected String[] mTags;
     // Auxiliary data.
     protected HashMap<String,Object> mAux;
+    // The topic is pinned.
+    protected int mPinned = 0;
     // The topic is subscribed/online.
     protected int mAttached = 0;
     protected Listener<DP, DR, SP, SR> mListener = null;
@@ -565,8 +567,19 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         mDesc.touched = maxDate(mDesc.touched, touched);
     }
 
+    /**
+     * Compare two topics for ordering.
+     * Pinned topics come first, then topics are ordered by last touched date (most recently touched first).
+     *
+     * @param t topic to compare to
+     * @return comparison result
+     */
     @Override
     public int compareTo(@NotNull Topic t) {
+        int pinDiff = Integer.compare(t.mPinned, mPinned);
+        if (pinDiff != 0) {
+            return pinDiff;
+        }
         if (t.mDesc.touched == null) {
             if (mDesc.touched == null) {
                 return 0;
@@ -923,6 +936,14 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 mListener.onOnline(mDesc.online);
             }
         }
+    }
+
+    public int getPinnedRank() {
+        return mPinned;
+    }
+
+    public void setPinnedRank(int pinned) {
+        mPinned = pinned;
     }
 
     /**
@@ -1316,7 +1337,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (toSend == null) {
             return last;
         }
-        //noinspection TryFinallyCanBeTryWithResources: does not really apply here due to the need for the second try-catch
+
         try (ML messages = toSend) {
             while (messages.hasNext()) {
                 Storage.Message msg = messages.next();

@@ -51,8 +51,8 @@
             android:layout_weight="0"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/send_image_button_hint"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             app:srcCompat="@drawable/ic_photo"
             app:tint="?attr/colorAccent" />
 
@@ -63,8 +63,8 @@
             android:layout_weight="0"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/send_file_button_hint"
-            android:paddingLeft="4dp"
-            android:paddingRight="4dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             app:srcCompat="@drawable/ic_attach"
             app:tint="?attr/colorAccent" />
 
@@ -78,6 +78,7 @@
             android:importantForAutofill="no"
             android:inputType="textMultiLine|textCapSentences"
             android:maxLines="3"
+            android:minHeight="?attr/listPreferredItemHeightSmall"
             android:textColor="?android:textColorPrimary" />
 
         <FrameLayout
@@ -92,8 +93,8 @@
                 android:layout_gravity="center_vertical"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/record_audio_button_hint"
-                android:paddingStart="4dp"
-                android:paddingEnd="6dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="10dp"
                 android:visibility="visible"
                 app:srcCompat="@drawable/ic_mic"
                 app:tint="?attr/colorAccent" />

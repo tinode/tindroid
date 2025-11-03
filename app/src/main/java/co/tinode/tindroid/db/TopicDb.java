@@ -127,7 +127,16 @@ public class TopicDb implements BaseColumns {
      * Private topic description, serialized as TEXT
      */
     public static final String COLUMN_NAME_PRIVATE = "priv";
+    /**
+     * Subscriber count, integer
+     */
+    public static final String COLUMN_NAME_SUBCNT = "subcnt";
+    /**
+     * Pinned rank.
+     */
+    public static final String COLUMN_NAME_PINNED = "pinned";
 
+    // Column indexes
     static final int COLUMN_IDX_ID = 0;
     // static final int COLUMN_IDX_ACCOUNT_ID = 1;
     static final int COLUMN_IDX_STATUS = 2;
@@ -154,6 +163,9 @@ public class TopicDb implements BaseColumns {
     static final int COLUMN_IDX_PUBLIC = 23;
     static final int COLUMN_IDX_TRUSTED = 24;
     static final int COLUMN_IDX_PRIVATE = 25;
+    static final int COLUMN_IDX_SUBCNT = 26;
+    static final int COLUMN_IDX_PINNED = 27;
+
     /**
      * SQL statement to create Messages table
      */
@@ -185,7 +197,9 @@ public class TopicDb implements BaseColumns {
                     COLUMN_NAME_CREDS + " TEXT," +
                     COLUMN_NAME_PUBLIC + " TEXT," +
                     COLUMN_NAME_TRUSTED + " TEXT," +
-                    COLUMN_NAME_PRIVATE + " TEXT)";
+                    COLUMN_NAME_PRIVATE + " TEXT," +
+                    COLUMN_NAME_SUBCNT+ " INT," +
+                    COLUMN_NAME_PINNED + " INT)";
     /**
      * Add index on account_id-topic name, in descending order
      */
@@ -256,6 +270,9 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_MAX_LOCAL_SEQ, 0);
         values.put(COLUMN_NAME_NEXT_UNSENT_SEQ, BaseDb.UNSENT_ID_START);
 
+        values.put(COLUMN_NAME_SUBCNT, topic.getSubCnt());
+        values.put(COLUMN_NAME_PINNED, topic.getPinnedRank());
+
         long id = db.insert(TABLE_NAME, null, values);
         if (id > 0) {
             StoredTopic st = new StoredTopic();
@@ -315,6 +332,9 @@ public class TopicDb implements BaseColumns {
         values.put(COLUMN_NAME_PUBLIC, BaseDb.serialize(topic.getPub()));
         values.put(COLUMN_NAME_TRUSTED, BaseDb.serialize(topic.getTrusted()));
         values.put(COLUMN_NAME_PRIVATE, BaseDb.serialize(topic.getPriv()));
+
+        values.put(COLUMN_NAME_SUBCNT, topic.getSubCnt());
+        values.put(COLUMN_NAME_PINNED, topic.getPinnedRank());
 
         Date lastUsed = topic.getTouched();
         if (lastUsed != null) {
@@ -454,8 +474,10 @@ public class TopicDb implements BaseColumns {
     public static Cursor query(SQLiteDatabase db) {
         String sql = "SELECT * FROM " + TABLE_NAME +
                 " WHERE " +
-                COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
-                " ORDER BY " + COLUMN_NAME_LASTUSED + " DESC";
+                    COLUMN_NAME_ACCOUNT_ID + "=" + BaseDb.getInstance().getAccountId() +
+                " ORDER BY " +
+                    COLUMN_NAME_PINNED + " DESC, " +
+                    COLUMN_NAME_LASTUSED + " DESC";
 
         return db.rawQuery(sql, null);
     }

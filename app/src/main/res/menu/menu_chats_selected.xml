@@ -53,6 +53,20 @@
             android:icon="@drawable/ic_unarchive"
             android:visible="false"
             app:showAsAction="ifRoom" />
+
+        <item
+            android:id="@+id/action_pin"
+            android:orderInCategory="204"
+            android:title="@string/action_pin"
+            android:icon="@drawable/ic_pin"
+            app:showAsAction="ifRoom" />
+        <item
+            android:id="@+id/action_unpin"
+            android:orderInCategory="205"
+            android:title="@string/action_unpin"
+            android:icon="@drawable/ic_pin_off"
+            android:visible="false"
+            app:showAsAction="ifRoom" />
     </group>
 
     <item

@@ -124,7 +124,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         return mTopics.get(position).getName();
     }
 
-    private int getItemPosition(String key) {
+    public int getItemPosition(String key) {
         if (mTopicIndex == null) {
             return -1;
         }
@@ -260,6 +260,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
         ImageView muted;
         ImageView blocked;
         ImageView archived;
+        View pinned;
 
         final ContactDetails details;
         ClickListener clickListener;
@@ -284,6 +285,7 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
                 muted = item.findViewById(R.id.icon_muted);
                 blocked = item.findViewById(R.id.icon_blocked);
                 archived = item.findViewById(R.id.icon_archived);
+                pinned = item.findViewById(R.id.pinnedChatIndicator);
 
                 details = new ContactDetails();
                 clickListener = cl;
@@ -381,18 +383,21 @@ public class ChatsAdapter extends RecyclerView.Adapter<ChatsAdapter.ViewHolder> 
             archived.setVisibility(topic.isArchived() ? View.VISIBLE : View.GONE);
             blocked.setVisibility(!topic.isJoiner() ? View.VISIBLE : View.GONE);
 
+            pinned.setVisibility(topic.getPinnedRank() > 0 ? View.VISIBLE : View.GONE);
+
             if (selected) {
                 itemView.setBackgroundResource(R.drawable.contact_background);
                 itemView.setOnClickListener(null);
 
                 itemView.setActivated(true);
             } else {
-
-                TypedArray typedArray = context.obtainStyledAttributes(
-                        new int[]{android.R.attr.selectableItemBackground});
-                itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
-                typedArray.recycle();
-
+                if (topic.getPinnedRank() > 0) {
+                    itemView.setBackgroundResource(R.drawable.contact_background_pinned);
+                } else {
+                    TypedArray typedArray = context.obtainStyledAttributes(new int[]{android.R.attr.selectableItemBackgroundBorderless});
+                    itemView.setBackgroundResource(typedArray.getResourceId(0, 0));
+                    typedArray.recycle();
+                }
                 itemView.setOnClickListener(view -> clickListener.onClick(topicName));
 
                 itemView.setActivated(false);
