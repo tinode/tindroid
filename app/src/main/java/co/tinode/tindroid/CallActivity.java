@@ -5,11 +5,14 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.PowerManager;
 import android.util.Log;
 import android.view.WindowManager;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
@@ -112,6 +115,24 @@ public class CallActivity extends AppCompatActivity  {
         }
         setContentView(R.layout.activity_call);
 
+        // Add back press handler
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                FragmentManager fm = getSupportFragmentManager();
+                Fragment fragment = fm.findFragmentByTag(FRAGMENT_ACTIVE);
+
+                if (fragment instanceof CallFragment callFragment) {
+                    // Active call - enter PiP mode instead of closing
+                    callFragment.enterPictureInPictureMode();
+                } else {
+                    // For incoming call fragment, use default behavior
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
+
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
                         WindowManager.LayoutParams.FLAG_ALLOW_LOCK_WHILE_SCREEN_ON |
                         WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON |
@@ -170,6 +191,28 @@ public class CallActivity extends AppCompatActivity  {
 
     void finishCall() {
         finish();
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+                                              @NonNull Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+
+        FragmentManager fm = getSupportFragmentManager();
+        CallFragment fragment = (CallFragment) fm.findFragmentByTag(FRAGMENT_ACTIVE);
+        if (fragment != null) {
+            fragment.onPictureInPictureModeChanged(isInPictureInPictureMode);
+        }
+    }
+
+    @Override
+    public void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        FragmentManager fm = getSupportFragmentManager();
+        Fragment fragment = fm.findFragmentByTag(FRAGMENT_ACTIVE);
+        if (fragment instanceof CallFragment callFragment) {
+            callFragment.enterPictureInPictureMode();
+        }
     }
 
     void showFragment(String tag, Bundle args) {

@@ -9,6 +9,30 @@
     android:background="@drawable/message_view_bkg"
     android:orientation="vertical">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guidelineOneThird"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.33" />
+
+    <com.google.android.material.imageview.ShapeableImageView
+        android:id="@+id/imageAvatar"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@string/avatar"
+        android:focusable="false"
+        android:elevation="@dimen/fab_elevation"
+        app:strokeColor="@android:color/transparent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/guidelineOneThird"
+        app:layout_constraintBottom_toTopOf="@id/guidelineOneThird"
+        app:layout_constraintWidth_percent="0.33"
+        app:layout_constraintDimensionRatio="1:1"
+        app:shapeAppearanceOverlay="@style/roundImageView"
+        app:srcCompat="@drawable/disk" />
+
     <TextView
         android:id="@+id/peerName"
         style="@style/TextAppearance.AppCompat.Headline"
@@ -20,29 +44,14 @@
         android:paddingTop="6dp"
         android:paddingBottom="6dp"
         android:gravity="center_vertical"
-        android:layout_marginBottom="@dimen/activity_vertical_margin"
+        android:layout_marginTop="@dimen/activity_vertical_margin"
         android:background="@drawable/bubble"
         android:backgroundTint="@color/colorChipBackground"
         android:backgroundTintMode="multiply"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/imageAvatar"
+        app:layout_constraintTop_toBottomOf="@id/imageAvatar"
         tools:text="John Doe" />
-
-    <com.google.android.material.imageview.ShapeableImageView
-        android:id="@+id/imageAvatar"
-        android:layout_width="@dimen/avatar_size_huge"
-        android:layout_height="@dimen/avatar_size_huge"
-        android:layout_marginTop="@dimen/avatar_size_huge"
-        android:contentDescription="@string/avatar"
-        android:focusable="false"
-        android:elevation="@dimen/fab_elevation"
-        app:strokeColor="@android:color/transparent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:shapeAppearanceOverlay="@style/roundImageView"
-        app:srcCompat="@drawable/disk" />
 
     <org.webrtc.SurfaceViewRenderer
         android:id="@+id/remoteView"
@@ -84,6 +93,7 @@
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
             android:enabled="false"
+            android:tint="@color/white"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
@@ -95,6 +105,7 @@
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_camera_button"
             android:enabled="false"
+            android:tint="@color/white"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
@@ -106,6 +117,7 @@
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/toggle_microphone_button"
             android:enabled="false"
+            android:tint="@color/white"
             app:backgroundTint="@color/colorNeutralAction"
             app:borderWidth="0dp" />
 
@@ -116,7 +128,22 @@
             android:src="@drawable/ic_call_end"
             android:layout_margin="@dimen/fab_margin"
             android:contentDescription="@string/finish_call_button"
+            android:tint="@color/white"
             app:backgroundTint="@color/colorNegativeAction"
             app:borderWidth="0dp" />
     </LinearLayout>
+
+    <ImageButton
+        android:id="@+id/buttonExitFullscreen"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_margin="32dp"
+        android:padding="8dp"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/fullscreen_button"
+        android:src="@drawable/ic_fullscreen_exit"
+        android:visibility="visible"
+        android:scaleType="fitXY"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

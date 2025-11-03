@@ -28,7 +28,7 @@
         android:title="@string/action_call"
         android:icon="@drawable/ic_call"
         app:iconTint="?android:textColorPrimary"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_video_call"
@@ -36,7 +36,7 @@
         android:title="@string/action_video_call"
         android:icon="@drawable/ic_videocam"
         app:iconTint="?android:textColorPrimary"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_mute"

@@ -390,4 +390,5 @@
     <string name="dark_theme">Dark Theme</string>
     <string name="subscribers">Subscribers: %1$d</string>
     <string name="subscribers_label">Subscribers:</string>
+    <string name="fullscreen_button">Exit full screen mode</string>
 </resources>

@@ -173,6 +173,8 @@
             android:showOnLockScreen="true"
             android:screenOrientation="locked"
             android:exported="false"
+            android:supportsPictureInPicture="true"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="tindroidx.intent.action.call.INCOMING" />

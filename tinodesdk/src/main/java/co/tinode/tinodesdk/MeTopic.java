@@ -218,7 +218,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @Override
     protected void routeMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
-        Log.i(TAG, "MeTopic.routeMeta: " + meta);
         if (meta.cred != null) {
             routeMetaCred(meta.cred);
         }
@@ -283,7 +282,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
         boolean found = tpin.contains(topicName);
         if ((pin && found) || (!pin && !found)) {
-            Log.i(TAG, "Pin state unchanged for topic " + topicName);
             // Nothing to do, return resolved promise.
             return new PromisedReply<>(null);
         }
@@ -334,10 +332,8 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private void updatePinnedTopics(final PrivateType priv) {
         List<String> newPins = priv != null ? priv.getPinnedTopics() : null;
         if (newPins == null) {
-            Log.i(TAG, "Updating pinned topics with NULL " + priv);
             return;
         }
-        Log.i(TAG, "Updating pinned topics " + newPins);
         // Update pinned rank for all pinned topics.
         int rank = newPins.size();
         for (String topicName : newPins) {
@@ -345,7 +341,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             if (topic != null) {
                 topic.setPinnedRank(rank);
                 if (mStore != null) {
-                    Log.i(TAG, "Saved pinned rank " + topicName + " -> " + rank);
                     mStore.topicUpdate(topic);
                 }
             }
@@ -353,7 +348,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
         }
         List<String> thesePins = getPriv() != null ? getPriv().getPinnedTopics() : null;
         if (thesePins == null || thesePins.isEmpty()) {
-            Log.i(TAG, "Updating pinned topics, old is NULL or empty");
             return;
         }
         // Unpin topics that were removed from the pinned list.
@@ -363,7 +357,6 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 if (topic != null) {
                     topic.setPinnedRank(0);
                     if (mStore != null) {
-                        Log.i(TAG, "Removed pinned rank " + topicName + " -> " + 0);
                         mStore.topicUpdate(topic);
                     }
                 }

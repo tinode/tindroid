@@ -3,14 +3,19 @@ package co.tinode.tindroid;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.PictureInPictureParams;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.Rational;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -127,6 +132,9 @@ public class CallFragment extends Fragment {
     private FloatingActionButton mToggleSpeakerphoneBtn;
     private FloatingActionButton mToggleCameraBtn;
     private FloatingActionButton mToggleMicBtn;
+    private FloatingActionButton mHangupBtn;
+
+    private ImageButton mExitFullscreenBtn;
 
     private ConstraintLayout mLayout;
     private TextView mPeerName;
@@ -137,19 +145,21 @@ public class CallFragment extends Fragment {
     private InfoListener mTinodeListener;
     private boolean mCallStarted = false;
     private boolean mAudioOnly = false;
+    private boolean mArrangementVideoOn = false;
 
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
+                Activity activity = getActivity();
                 for (Map.Entry<String, Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
                         Log.d(TAG, "The user has disallowed " + e);
-                        handleCallClose();
+                        handleCallClose(activity);
                         return;
                     }
                 }
                 // All permissions granted.
-                startMediaAndSignal();
+                startMediaAndSignal(activity);
             });
 
     public CallFragment() {
@@ -165,19 +175,24 @@ public class CallFragment extends Fragment {
         mToggleSpeakerphoneBtn = v.findViewById(R.id.toggleSpeakerphoneBtn);
         mToggleCameraBtn = v.findViewById(R.id.toggleCameraBtn);
         mToggleMicBtn = v.findViewById(R.id.toggleMicBtn);
+        mHangupBtn = v.findViewById(R.id.hangupBtn);
+
+        mExitFullscreenBtn = v.findViewById(R.id.buttonExitFullscreen);
 
         mLayout = v.findViewById(R.id.callMainLayout);
 
         // Button click handlers: speakerphone on/off, mute/unmute, video/audio-only, hang up.
         mToggleSpeakerphoneBtn.setOnClickListener(v0 ->
                 toggleSpeakerphone((FloatingActionButton) v0));
-        v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose());
+        v.findViewById(R.id.hangupBtn).setOnClickListener(v1 -> handleCallClose(getActivity()));
         mToggleCameraBtn.setOnClickListener(v2 ->
                 toggleMedia((FloatingActionButton) v2, true,
                         R.drawable.ic_videocam, R.drawable.ic_videocam_off));
         mToggleMicBtn.setOnClickListener(v3 ->
                 toggleMedia((FloatingActionButton) v3, false,
                         R.drawable.ic_mic, R.drawable.ic_mic_off));
+
+        mExitFullscreenBtn.setOnClickListener(v4 -> enterPictureInPictureMode());
         return v;
     }
 
@@ -189,7 +204,7 @@ public class CallFragment extends Fragment {
         if (args == null) {
             Log.w(TAG, "Call fragment created with no arguments");
             // Reject the call.
-            handleCallClose();
+            handleCallClose(activity);
             return;
         }
 
@@ -253,7 +268,7 @@ public class CallFragment extends Fragment {
         }
 
         // Got all necessary permissions.
-        startMediaAndSignal();
+        startMediaAndSignal(activity);
     }
 
     @SuppressLint("UnsafeOptInUsageError")
@@ -272,13 +287,26 @@ public class CallFragment extends Fragment {
     }
 
     @Override
+    public void onStop() {
+        Log.i(TAG, "onStop: stopping call fragment");
+        super.onStop();
+
+        Activity activity = requireActivity();
+        if (activity.isInPictureInPictureMode()) {
+            handleCallClose(activity);
+        }
+    }
+
+    @Override
     public void onDestroy() {
+        Log.i(TAG, "onDestroy: destroying call fragment");
         stopSoundEffect();
         super.onDestroy();
     }
 
     @Override
     public void onPause() {
+        Log.i(TAG, "onPause: pausing call fragment");
         stopSoundEffect();
         super.onPause();
     }
@@ -289,6 +317,59 @@ public class CallFragment extends Fragment {
             mToggleCameraBtn.setEnabled(true);
             mToggleMicBtn.setEnabled(true);
         });
+    }
+
+    public void enterPictureInPictureMode() {
+        Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        View view = getView();
+        int width = view != null ? view.getWidth() : 1;
+        int height = view != null ? view.getHeight() : 1;
+        PictureInPictureParams params = new PictureInPictureParams.Builder()
+                .setAspectRatio(new Rational(width, height))
+                .build();
+        if (!activity.enterPictureInPictureMode(params)) {
+            Log.w(TAG, "Failed to enter PiP mode");
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
+        Activity activity = requireActivity();
+        if (activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        activity.runOnUiThread(() -> {
+            if (isInPictureInPictureMode) {
+                // Hide controls and UI elements in PiP mode
+                mToggleSpeakerphoneBtn.setVisibility(View.GONE);
+                mToggleCameraBtn.setVisibility(View.GONE);
+                mToggleMicBtn.setVisibility(View.GONE);
+                mHangupBtn.setVisibility(View.GONE);
+                mPeerName.setVisibility(View.GONE);
+                mLocalVideoView.setVisibility(View.GONE);
+                mExitFullscreenBtn.setVisibility(View.GONE);
+            } else {
+                // Show controls when exiting PiP mode
+                mToggleSpeakerphoneBtn.setVisibility(View.VISIBLE);
+                mToggleCameraBtn.setVisibility(View.VISIBLE);
+                mToggleMicBtn.setVisibility(View.VISIBLE);
+                mHangupBtn.setVisibility(View.VISIBLE);
+                mPeerName.setVisibility(View.VISIBLE);
+                if (mRemoteVideoView.getVisibility() != View.VISIBLE) {
+                    mPeerAvatar.setVisibility(View.VISIBLE);
+                }
+                if (!mVideoOff) {
+                    mLocalVideoView.setVisibility(View.VISIBLE);
+                }
+                mExitFullscreenBtn.setVisibility(View.VISIBLE);
+            }
+        });
+        rearrangePeerViews(activity, mArrangementVideoOn);
     }
 
     private static VideoCapturer createCameraCapturer(CameraEnumerator enumerator) {
@@ -385,16 +466,15 @@ public class CallFragment extends Fragment {
 
     // Initializes media (camera and audio) and notifies the peer (sends "invite" for outgoing,
     // and "accept" for incoming call).
-    private void startMediaAndSignal() {
-        final Activity activity = requireActivity();
-        if (activity.isFinishing() || activity.isDestroyed()) {
+    private void startMediaAndSignal(Activity activity) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             // We are done. Just quit.
             return;
         }
 
         if (!initIceServers()) {
             Toast.makeText(activity, R.string.video_calls_unavailable, Toast.LENGTH_LONG).show();
-            handleCallClose();
+            handleCallClose(activity);
         }
 
         initVideos();
@@ -496,7 +576,7 @@ public class CallFragment extends Fragment {
             mRootEglBase = null;
         }
 
-        handleCallClose();
+        handleCallClose(getActivity());
     }
 
     private void initVideos() {
@@ -575,7 +655,7 @@ public class CallFragment extends Fragment {
     }
 
     // Sends a hang-up notification to the peer and closes the fragment.
-    private void handleCallClose() {
+    private void handleCallClose(Activity activity) {
         stopSoundEffect();
 
         // Close fragment.
@@ -584,9 +664,8 @@ public class CallFragment extends Fragment {
         }
 
         mCallSeqID = -1;
-        final CallActivity activity = (CallActivity) getActivity();
         if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
-            activity.finishCall();
+            ((CallActivity) activity).finishCall();
         }
         Cache.endCallInProgress();
     }
@@ -597,7 +676,7 @@ public class CallFragment extends Fragment {
             // Already started or not attached. wait to attach.
             return;
         }
-        Activity activity = requireActivity();
+        final Activity activity = requireActivity();
         mCallStarted = true;
         switch (mCallDirection) {
             case OUTGOING:
@@ -619,10 +698,10 @@ public class CallFragment extends Fragment {
                                         return null;
                                     }
                                 }
-                                handleCallClose();
+                                handleCallClose(activity);
                                 return null;
                             }
-                        }, new FailureHandler(getActivity()));
+                        }, new FailureHandler(activity));
                 rearrangePeerViews(activity, false);
                 break;
             case INCOMING:
@@ -737,7 +816,7 @@ public class CallFragment extends Fragment {
                             mRemoteVideoView.setVisibility(View.VISIBLE);
                             videoTrack.addSink(mRemoteVideoView);
                         } catch (Exception e) {
-                            handleCallClose();
+                            handleCallClose(activity);
                         }
                     });
                 }
@@ -747,7 +826,7 @@ public class CallFragment extends Fragment {
             public void onSignalingChange(PeerConnection.SignalingState signalingState) {
                 Log.d(TAG, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
                 if (signalingState == PeerConnection.SignalingState.CLOSED) {
-                    handleCallClose();
+                    handleCallClose(getActivity());
                 }
             }
 
@@ -757,7 +836,7 @@ public class CallFragment extends Fragment {
                 switch (iceConnectionState) {
                     case CLOSED:
                     case FAILED:
-                        handleCallClose();
+                        handleCallClose(getActivity());
                         break;
                 }
             }
@@ -863,7 +942,7 @@ public class CallFragment extends Fragment {
         // Incoming call.
         if (info.payload == null) {
             Log.e(TAG, "Received RTC offer with an empty payload. Quitting");
-            handleCallClose();
+            handleCallClose(getActivity());
             return;
         }
 
@@ -895,7 +974,7 @@ public class CallFragment extends Fragment {
     private void handleVideoAnswerMsg(@NonNull MsgServerInfo info) {
         if (info.payload == null) {
             Log.e(TAG, "Received RTC answer with an empty payload. Quitting. ");
-            handleCallClose();
+            handleCallClose(getActivity());
             return;
         }
         //noinspection unchecked
@@ -944,7 +1023,7 @@ public class CallFragment extends Fragment {
 
     // Cleans up call after receiving a remote hang-up notification.
     private void handleRemoteHangup(MsgServerInfo info) {
-        handleCallClose();
+        handleCallClose(getActivity());
     }
 
     private void playSoundEffect(@RawRes int effectId) {
@@ -968,25 +1047,45 @@ public class CallFragment extends Fragment {
             if (activity.isFinishing() || activity.isDestroyed()) {
                 return;
             }
+            mArrangementVideoOn = remoteVideoLive;
+
+            ConstraintSet cs = new ConstraintSet();
+            cs.clone(mLayout);
             if (remoteVideoLive) {
-                ConstraintSet cs = new ConstraintSet();
-                cs.clone(mLayout);
+                // Video feed from peer is active.
                 cs.removeFromVerticalChain(R.id.peerName);
                 cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.callControlsPanel, ConstraintSet.TOP, 0);
                 cs.setHorizontalBias(R.id.peerName, 0.05f);
-
                 cs.applyTo(mLayout);
-                mPeerName.setElevation(8);
 
+                mPeerName.setElevation(8);
                 mPeerAvatar.setVisibility(View.INVISIBLE);
                 mRemoteVideoView.setVisibility(View.VISIBLE);
+                mLayout.setBackgroundTintMode(PorterDuff.Mode.CLEAR);
             } else {
-                ConstraintSet cs = new ConstraintSet();
-                cs.clone(mLayout);
-                cs.removeFromVerticalChain(R.id.peerName);
-                cs.connect(R.id.peerName, ConstraintSet.BOTTOM, R.id.imageAvatar, ConstraintSet.TOP, 0);
-                cs.setHorizontalBias(R.id.peerName, 0.5f);
+                // Peer video is not available. Show avatar instead.
+                int avatarSize = (int) (Math.min(mLayout.getWidth(), mLayout.getHeight()) * 0.33f);
+                ConstraintLayout.LayoutParams lp =
+                        (ConstraintLayout.LayoutParams) mPeerAvatar.getLayoutParams();
+                lp.width = avatarSize;
+                lp.height = avatarSize;
+                mPeerAvatar.setLayoutParams(lp);
+
+                if (activity.isInPictureInPictureMode()) {
+                    mLayout.setBackgroundColor(Color.DKGRAY);
+                    // Move guideline to the middle.
+                    cs.setGuidelinePercent(R.id.guidelineOneThird, 0.5f);
+                } else {
+                    mLayout.setBackgroundResource(R.drawable.message_view_bkg);
+                    cs.setGuidelinePercent(R.id.guidelineOneThird, 0.33f);
+                    cs.removeFromVerticalChain(R.id.peerName);
+                    cs.connect(R.id.peerName, ConstraintSet.TOP, R.id.imageAvatar, ConstraintSet.BOTTOM, 6);
+                    cs.setHorizontalBias(R.id.peerName, 0.5f);
+                    cs.applyTo(mLayout);
+                }
                 cs.applyTo(mLayout);
+
+                mPeerName.setElevation(0);
                 mPeerAvatar.setVisibility(View.VISIBLE);
                 if (mRemoteVideoView != null) {
                     mRemoteVideoView.setVisibility(View.INVISIBLE);
@@ -1093,7 +1192,7 @@ public class CallFragment extends Fragment {
 
         @Override
         public PromisedReply<ServerMessage> onFailure(final Exception err) {
-            handleCallClose();
+            handleCallClose(getActivity());
             return super.onFailure(err);
         }
     }
