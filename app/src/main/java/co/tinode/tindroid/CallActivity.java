@@ -47,7 +47,7 @@ public class CallActivity extends AppCompatActivity  {
     private final BroadcastReceiver mFinishCallBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            CallActivity.this.finishCall();
+            finishCall();
         }
     };
 

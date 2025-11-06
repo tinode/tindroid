@@ -6,7 +6,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="6dp"
+    android:paddingStart="6dp"
+    android:paddingTop="6dp"
+    android:paddingEnd="6dp"
+    android:paddingBottom="0dp"
     android:visibility="visible"
     tools:ignore="RtlSymmetry">
 
@@ -21,11 +24,11 @@
             android:id="@+id/cancelPreview"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:paddingStart="2dp"
             android:paddingEnd="2dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
             app:srcCompat="@drawable/ic_close"
-            app:tint="?android:textColorPrimary"/>
+            app:tint="?android:textColorPrimary" />
 
         <TextView
             android:id="@+id/contentPreview"
@@ -40,6 +43,7 @@
             tools:ignore="RtlSymmetry"
             tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
     </LinearLayout>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
