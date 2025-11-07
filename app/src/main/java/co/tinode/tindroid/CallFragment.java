@@ -9,6 +9,8 @@ import android.graphics.PorterDuff;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.Rational;
@@ -40,6 +42,7 @@ import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RendererCommon;
 import org.webrtc.RtpReceiver;
 import org.webrtc.RtpSender;
+import org.webrtc.RtpTransceiver;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceTextureHelper;
@@ -290,7 +293,7 @@ public class CallFragment extends Fragment {
     public void onStop() {
         Log.i(TAG, "onStop: stopping call fragment");
         super.onStop();
-
+        stopSoundEffect();
         Activity activity = requireActivity();
         if (activity.isInPictureInPictureMode()) {
             handleCallClose(activity);
@@ -307,7 +310,6 @@ public class CallFragment extends Fragment {
     @Override
     public void onPause() {
         Log.i(TAG, "onPause: pausing call fragment");
-        stopSoundEffect();
         super.onPause();
     }
 
@@ -791,8 +793,7 @@ public class CallFragment extends Fragment {
         // Use ECDSA encryption.
         rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 
-        // DO NOT change to UNIFIED_PLAN. It crashes.
-        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
+        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
         mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
@@ -823,6 +824,25 @@ public class CallFragment extends Fragment {
             }
 
             @Override
+            public void onTrack(RtpTransceiver transceiver) {
+                MediaStreamTrack track = transceiver.getReceiver().track();
+                if (track instanceof VideoTrack) {
+                    Activity activity = requireActivity();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        return;
+                    }
+                    activity.runOnUiThread(() -> {
+                        try {
+                            mRemoteVideoView.setVisibility(View.VISIBLE);
+                            ((VideoTrack) track).addSink(mRemoteVideoView);
+                        } catch (Exception e) {
+                            handleCallClose(activity);
+                        }
+                    });
+                }
+            }
+
+            @Override
             public void onSignalingChange(PeerConnection.SignalingState signalingState) {
                 Log.d(TAG, "onSignalingChange() called with: signalingState = [" + signalingState + "]");
                 if (signalingState == PeerConnection.SignalingState.CLOSED) {
@@ -836,7 +856,10 @@ public class CallFragment extends Fragment {
                 switch (iceConnectionState) {
                     case CLOSED:
                     case FAILED:
-                        handleCallClose(getActivity());
+                        playSoundEffect(R.raw.call_ended);
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            handleCallClose(getActivity());
+                        }, 700);
                         break;
                 }
             }
@@ -916,10 +939,8 @@ public class CallFragment extends Fragment {
             mDataChannel.registerObserver(new DCObserver(mDataChannel));
         }
         // Create a local media stream and attach it to the peer connection.
-        MediaStream stream = mPeerConnectionFactory.createLocalMediaStream("102");
-        stream.addTrack(mLocalAudioTrack);
-        stream.addTrack(mLocalVideoTrack);
-        mLocalPeer.addStream(stream);
+        mLocalPeer.addTrack(mLocalAudioTrack);
+        mLocalPeer.addTrack(mLocalVideoTrack);
     }
 
     private void handleVideoCallAccepted() {
