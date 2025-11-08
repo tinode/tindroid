@@ -791,8 +791,9 @@ public class CallFragment extends Fragment {
         // Use ECDSA encryption.
         rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
 
-        // DO NOT change to UNIFIED_PLAN. It crashes.
-        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.PLAN_B;
+        // Use UNIFIED_PLAN (replaces deprecated PLAN_B).
+        rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
+
         mLocalPeer = mPeerConnectionFactory.createPeerConnection(rtcConfig, new PeerConnection.Observer() {
             @Override
             public void onIceCandidate(IceCandidate iceCandidate) {
@@ -802,23 +803,62 @@ public class CallFragment extends Fragment {
 
             @Override
             public void onAddStream(MediaStream mediaStream) {
-                // Received remote stream.
+                // Backward-compatibility for Plan B peers.
+                if (mediaStream == null) {
+                    return;
+                }
+                if (!mediaStream.videoTracks.isEmpty()) {
+                    final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
+                    Activity activity = requireActivity();
+                    if (activity.isFinishing() || activity.isDestroyed()) {
+                        return;
+                    }
+                    activity.runOnUiThread(() -> {
+                        try {
+                            mRemoteVideoView.setVisibility(View.VISIBLE);
+                            mPeerAvatar.setVisibility(View.GONE);
+                            videoTrack.addSink(mRemoteVideoView);
+                            rearrangePeerViews(activity, true);
+                        } catch (Exception e) {
+                            handleCallClose(activity);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
+                // Unified Plan: remote tracks arrive here.
+                if (rtpReceiver == null) {
+                    return;
+                }
+                MediaStreamTrack track = rtpReceiver.track();
+                if (track == null) {
+                    return;
+                }
+
                 Activity activity = requireActivity();
                 if (activity.isFinishing() || activity.isDestroyed()) {
                     return;
                 }
 
-                // Add remote media stream to the renderer.
-                if (!mediaStream.videoTracks.isEmpty()) {
-                    final VideoTrack videoTrack = mediaStream.videoTracks.get(0);
+                if (track instanceof VideoTrack) {
+                    final VideoTrack videoTrack = (VideoTrack) track;
                     activity.runOnUiThread(() -> {
                         try {
                             mRemoteVideoView.setVisibility(View.VISIBLE);
+                            mPeerAvatar.setVisibility(View.GONE);
                             videoTrack.addSink(mRemoteVideoView);
+                            rearrangePeerViews(activity, true);
                         } catch (Exception e) {
                             handleCallClose(activity);
                         }
                     });
+                } else if (track instanceof AudioTrack) {
+                    final AudioTrack audioTrack = (AudioTrack) track;
+                    // Audio usually plays automatically; ensure it's enabled.
+                    audioTrack.setEnabled(true);
+                    // No UI sink necessary. Optionally log or manage audio routing here.
                 }
             }
 
@@ -901,12 +941,6 @@ public class CallFragment extends Fragment {
                     }
                 }, mSdpConstraints);
             }
-
-            @Override
-            public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
-                Log.d(TAG, "onAddTrack() called with: rtpReceiver = [" + rtpReceiver +
-                        "], mediaStreams = [" + Arrays.toString(mediaStreams) + "]");
-            }
         });
 
         if (withDataChannel) {
@@ -915,11 +949,36 @@ public class CallFragment extends Fragment {
             mDataChannel = mLocalPeer.createDataChannel("events", i);
             mDataChannel.registerObserver(new DCObserver(mDataChannel));
         }
-        // Create a local media stream and attach it to the peer connection.
-        MediaStream stream = mPeerConnectionFactory.createLocalMediaStream("102");
-        stream.addTrack(mLocalAudioTrack);
-        stream.addTrack(mLocalVideoTrack);
-        mLocalPeer.addStream(stream);
+
+        // In Unified Plan attach local tracks via addTrack(...) instead of addStream(...)
+        java.util.List<String> streamIds = java.util.Collections.singletonList("102");
+        if (mLocalAudioTrack != null) {
+            mLocalPeer.addTrack(mLocalAudioTrack, streamIds);
+        }
+        if (mLocalVideoTrack != null) {
+            mLocalPeer.addTrack(mLocalVideoTrack, streamIds);
+        }
+
+        // Explicitly create and send an offer for the caller (OUTGOING).
+        // Relying on onRenegotiationNeeded is unreliable across platforms/devices.
+        if (mCallDirection == CallDirection.OUTGOING) {
+            mSdpConstraints = new MediaConstraints();
+            mSdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+            if (!mAudioOnly) {
+                mSdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
+            }
+            mLocalPeer.createOffer(new CustomSdpObserver("localCreateOffer") {
+                @Override
+                public void onCreateSuccess(SessionDescription sessionDescription) {
+                    super.onCreateSuccess(sessionDescription);
+                    // Set local description and send offer to the peer.
+                    mLocalPeer.setLocalDescription(new CustomSdpObserver("localSetLocalDesc"),
+                            sessionDescription);
+                    handleSendOffer(sessionDescription);
+                    // Do NOT call initialSetupComplete() here; wait for remote answer to arrive.
+                }
+            }, mSdpConstraints);
+        }
     }
 
     private void handleVideoCallAccepted() {
