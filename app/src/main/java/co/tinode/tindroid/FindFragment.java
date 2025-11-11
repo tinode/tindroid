@@ -191,7 +191,7 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
         super.onPause();
 
         if (mFndTopic != null) {
-            mFndTopic.setListener(null);
+            mFndTopic.remListener(mFndListener);
         }
 
         Cache.getTinode().removeListener(mLoginListener);

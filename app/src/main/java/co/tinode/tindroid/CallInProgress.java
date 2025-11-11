@@ -89,6 +89,10 @@ public class CallInProgress {
         return mConnected;
     }
 
+    public boolean isTopicInCall(@NonNull String topic) {
+        return mTopic.equals(topic);
+    }
+
     @Override
     @NonNull
     public String toString() {

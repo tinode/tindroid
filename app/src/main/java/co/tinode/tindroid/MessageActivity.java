@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -173,7 +174,8 @@ public class MessageActivity extends AppCompatActivity
     private PausableSingleThreadExecutor mMessageSender = null;
     private String mTopicName = null;
     private ComTopic<VxCard> mTopic = null;
-    private MessageEventListener mTinodeListener;
+    private TListener mTopicEventListener;
+    private LoginEventListener mTinodeListener;
     // Handler for sending {note what="read"} notifications after a READ_DELAY.
     private Handler mNoteReadHandler = null;
     private static final int NOTE_READ_ID = 1;
@@ -235,6 +237,10 @@ public class MessageActivity extends AppCompatActivity
         mMessageSender = new PausableSingleThreadExecutor();
         mMessageSender.pause();
 
+        final Tinode tinode = Cache.getTinode();
+        mTinodeListener = new LoginEventListener(tinode.isConnected());
+        tinode.addListener(mTinodeListener);
+
         mNoteReadHandler = new NoteHandler(this);
     }
 
@@ -255,10 +261,6 @@ public class MessageActivity extends AppCompatActivity
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         mMessageText = TextUtils.isEmpty(text) ? null : text.toString();
         intent.putExtra(Intent.EXTRA_TEXT, (String) null);
-
-        final Tinode tinode = Cache.getTinode();
-        mTinodeListener = new MessageEventListener(tinode.isConnected());
-        tinode.addListener(mTinodeListener);
 
         // If topic name is not saved, get it from intent, internal or external.
         String topicName = mTopicName;
@@ -325,39 +327,51 @@ public class MessageActivity extends AppCompatActivity
             nm.cancel(topicName, 0);
         }
 
+        boolean changed = !topicName.equals(mTopicName);
+        if (!changed) {
+            if (forceReset) {
+                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
+                if (fragmsg != null) {
+                    fragmsg.topicChanged(topicName, true);
+                }
+            }
+            return false;
+        }
+
+        // Detach old topic.
+        topicDetach(mTopic);
+        // Update to new topic.
+        mTopicName = topicName;
+        Cache.setSelectedTopicName(mTopicName);
+
         final Tinode tinode = Cache.getTinode();
-        ComTopic<VxCard> topic;
         try {
             //noinspection unchecked
-            topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+            mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
         } catch (ClassCastException ex) {
             Log.w(TAG, "Failed to switch topics: non-comm topic");
             return false;
         }
 
-        mTopic = topic;
-        boolean changed = false;
-        if (mTopicName == null || !mTopicName.equals(topicName)) {
-            Cache.setSelectedTopicName(topicName);
-            mTopicName = topicName;
+        mPinHash = -1;
+        mKnownSubs = new HashSet<>();
+        mNewSubsAvailable = false;
 
-            mPinHash = -1;
-            changed = true;
+        if (mTopic == null) {
+            UiUtils.setupToolbar(this, null,
+                    mTopicName, false, null, false, 0);
+            try {
+                //noinspection unchecked
+                mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+            } catch (ClassCastException ex) {
+                Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
+                return false;
+            }
+            showFragment(FRAGMENT_INVALID, null, false);
 
-            if (mTopic == null) {
-                UiUtils.setupToolbar(this, null,
-                        mTopicName, false, null, false, 0);
-                try {
-                    //noinspection unchecked
-                    mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-                } catch (ClassCastException ex) {
-                    Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
-                    return false;
-                }
-                showFragment(FRAGMENT_INVALID, null, false);
-
-                // Check if another fragment is already visible. If so, don't change it.
-            } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+            // Check if another fragment is already visible. If so, don't change it.
+        } else {
+            if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
                         mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
@@ -365,35 +379,30 @@ public class MessageActivity extends AppCompatActivity
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             }
-        }
 
-        mNewSubsAvailable = false;
-        mKnownSubs = new HashSet<>();
-        if (mTopic != null && mTopic.isGrpType()) {
-            Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
-            if (subs != null) {
-                for (Subscription<VxCard, PrivateType> sub : subs) {
-                    if (sub.user != null) {
-                        mKnownSubs.add(sub.user);
+            if (mTopic.isGrpType()) {
+                Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+                if (subs != null) {
+                    for (Subscription<VxCard, PrivateType> sub : subs) {
+                        if (sub.user != null) {
+                            mKnownSubs.add(sub.user);
+                        }
                     }
                 }
             }
-        }
 
-        if (mTopic == null) {
-            return true;
-        }
+            if (mTopicEventListener == null) {
+                mTopicEventListener = new TListener();
+            }
+            mTopic.addListener(mTopicEventListener);
 
-        mTopic.setListener(new TListener());
-
-        if (!mTopic.isAttached()) {
-            // Try immediate reconnect.
-            topicAttach(true);
+            // Try immediate reconnect (increment attachment counter).
+            topicAttach();
         }
 
         MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
         if (fragmsg != null) {
-            fragmsg.topicChanged(topicName, forceReset || changed);
+            fragmsg.topicChanged(topicName, true);
         }
 
         return true;
@@ -445,12 +454,7 @@ public class MessageActivity extends AppCompatActivity
     @Override
     public void onPause() {
         super.onPause();
-
         mMessageSender.pause();
-
-        Cache.getTinode().removeListener(mTinodeListener);
-        topicDetach();
-
         // Stop handling read messages
         mNoteReadHandler.removeMessages(NOTE_READ_ID);
     }
@@ -471,7 +475,14 @@ public class MessageActivity extends AppCompatActivity
         return visible;
     }
 
-    private void topicAttach(boolean interactive) {
+    private void topicAttach() {
+        if (mTopic.isDeleted()) {
+            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
+                    false, null, true, 0);
+            maybeShowMessagesFragmentOnAttach();
+            return;
+        }
+
         if (!Cache.getTinode().isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;
@@ -488,14 +499,6 @@ public class MessageActivity extends AppCompatActivity
 
         if (mTopic.isOwner()) {
             builder = builder.withTags();
-        }
-
-        if (mTopic.isDeleted()) {
-            setRefreshing(false);
-            UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
-                    false, null, true, 0);
-            maybeShowMessagesFragmentOnAttach();
-            return;
         }
 
         mTopic.subscribe(null, builder.build())
@@ -545,21 +548,28 @@ public class MessageActivity extends AppCompatActivity
     }
 
     // Clean up everything related to the topic being replaced of removed.
-    private void topicDetach() {
+    private void topicDetach(@Nullable ComTopic<VxCard> topic) {
         if (mTypingAnimationTimer != null) {
             mTypingAnimationTimer.cancel();
             mTypingAnimationTimer = null;
         }
 
-        if (mTopic != null) {
-            mTopic.setListener(null);
+        if (topic != null) {
+            topic.remListener(mTopicEventListener);
+            topic.leave();
         }
-        UiUtils.setVisibleTopic(null);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        Cache.getTinode().removeListener(mTinodeListener);
+        topicDetach(mTopic);
+        mTopic = null;
+        mTopicName = null;
+
+        UiUtils.setVisibleTopic(null);
 
         mMessageSender.shutdownNow();
         unregisterReceiver(onDownloadComplete);
@@ -1156,8 +1166,8 @@ public class MessageActivity extends AppCompatActivity
         }
     }
 
-    private class MessageEventListener extends UiUtils.EventListener {
-        MessageEventListener(boolean online) {
+    private class LoginEventListener extends UiUtils.EventListener {
+        LoginEventListener(boolean online) {
             super(MessageActivity.this, online);
         }
 
@@ -1166,7 +1176,7 @@ public class MessageActivity extends AppCompatActivity
             super.onLogin(code, txt);
 
             UiUtils.attachMeTopic(MessageActivity.this, null);
-            topicAttach(false);
+            topicAttach();
         }
     }
 }

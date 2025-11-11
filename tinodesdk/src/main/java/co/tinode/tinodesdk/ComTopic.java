@@ -250,4 +250,8 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         }
         super.routeData(data);
     }
+
+    // Just for convenience.
+    public static class CTListener<DP extends TheCard> implements Listener<DP,PrivateType,DP,PrivateType> {
+    }
 }

@@ -33,9 +33,7 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
             mSubs = null;
             mSubsUpdated = null;
 
-            if (mListener != null) {
-                mListener.onSubsUpdated();
-            }
+            mNotifier.notifySubsUpdated();
         }
         return super.setMeta(meta);
     }
@@ -70,14 +68,10 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
                 addSubToCache(sub);
             }
 
-            if (mListener != null) {
-                mListener.onMetaSub(sub);
-            }
+            mNotifier.notifyMetaSub(sub);
         }
 
-        if (mListener != null) {
-            mListener.onSubsUpdated();
-        }
+        mNotifier.notifySubsUpdated();
     }
 
     @Override
@@ -143,8 +137,7 @@ public class FndTopic<SP> extends Topic<String, String, SP, String[]> {
         return result;
     }
 
+    // Just for convenience.
     public static class FndListener<SP> implements Listener<String, String, SP, String[]> {
-        /** {meta} message received */
-        public void onMeta(MsgServerMeta<String, String, SP, String[]> meta) {}
     }
 }

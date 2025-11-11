@@ -7,6 +7,8 @@ import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Locale;
 
 import androidx.annotation.NonNull;
@@ -214,25 +216,16 @@ public class Cache {
         return sInstance.mTopicSelected;
     }
 
-    // Save the new topic name. If the old topic is not null, unsubscribe.
+    // Save the new topic name.
     public static void setSelectedTopicName(String topicName) {
-        String oldTopic = sInstance.mTopicSelected;
         sInstance.mTopicSelected = topicName;
-        if (sInstance.mTinode != null && oldTopic != null && !oldTopic.equals(topicName)) {
-            ComTopic topic = (ComTopic) sInstance.mTinode.getTopic(oldTopic);
-            if (topic != null) {
-                topic.leave();
-            }
-        }
     }
 
     // Connect to 'me' topic.
     @SuppressWarnings("unchecked")
-    public static PromisedReply<ServerMessage> attachMeTopic(MeTopic.MeListener l) {
+    public static PromisedReply<ServerMessage> attachMeTopic(@NonNull MeTopic.MeListener l) {
         final MeTopic<VxCard> me = getTinode().getOrCreateMeTopic();
-        if (l != null) {
-            me.setListener(l);
-        }
+        me.addListener(l);
 
         if (!me.isAttached()) {
             return me.subscribe(null, me
@@ -247,11 +240,9 @@ public class Cache {
         }
     }
 
-    static PromisedReply<ServerMessage> attachFndTopic(FndTopic.FndListener<VxCard> l) {
+    static PromisedReply<ServerMessage> attachFndTopic(@NotNull FndTopic.FndListener<VxCard> l) {
         final FndTopic<VxCard> fnd = getTinode().getOrCreateFndTopic();
-        if (l != null) {
-            fnd.setListener(l);
-        }
+        fnd.addListener(l);
 
         if (!fnd.isAttached()) {
             // Don't request anything here.

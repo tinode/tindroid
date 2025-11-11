@@ -34,6 +34,8 @@ import co.tinode.tinodesdk.model.Subscription;
 public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     private static final String TAG = "MeTopic";
 
+    protected MeNotifier<DP> mMeNotifier = new MeNotifier<>(mListeners);
+
     @SuppressWarnings("WeakerAccess")
     protected ArrayList<Credential> mCreds;
 
@@ -137,9 +139,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                     }
 
                     // Notify listeners
-                    if (mListener != null && mListener instanceof MeListener) {
-                        ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
-                    }
+                    mMeNotifier.notifyCredUpdated(mCreds.toArray(new Credential[]{}));
                 }
                 return null;
             }
@@ -366,14 +366,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
 
     @Override
     protected void routeMetaSub(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {
-
         for (Subscription<DP,PrivateType> sub : meta.sub) {
             processOneSub(sub);
         }
-
-        if (mListener != null) {
-            mListener.onSubsUpdated();
-        }
+        mMeNotifier.notifySubsUpdated();
     }
 
     @SuppressWarnings("unchecked")
@@ -393,9 +389,9 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 topic = null;
             } else {
                 // Update its record in memory and in the database.
-                if (topic.update(sub) && topic.mListener != null) {
+                if (topic.update(sub)) {
                     // Notify topic to update self.
-                    topic.mListener.onMetaDesc(topic.mDesc);
+                    topic.mNotifier.notifyMetaDesc(topic.mDesc);
                 }
             }
         } else if (sub.deleted == null) {
@@ -428,9 +424,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 }
             }
         }
-        if (mListener != null) {
-            mListener.onMetaSub(sub);
-        }
+        mMeNotifier.notifyMetaSub(sub);
     }
 
     private int findCredIndex(Credential other, boolean anyUnconfirmed) {
@@ -502,9 +496,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     protected void routeMetaCred(Credential cred) {
         processOneCred(cred);
 
-        if (mListener != null && mListener instanceof MeListener) {
-            ((MeListener) mListener).onCredUpdated(mCreds.toArray(new Credential[]{}));
-        }
+        mMeNotifier.notifyCredUpdated(mCreds.toArray(new Credential[]{}));
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -521,9 +513,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             mStore.topicUpdate(this);
         }
 
-        if (mListener != null && mListener instanceof MeListener) {
-            ((MeListener) mListener).onCredUpdated(creds);
-        }
+        mMeNotifier.notifyCredUpdated(creds);
     }
 
     @Override
@@ -619,12 +609,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             }
         }
 
-        if (mListener != null) {
-            if (what == MsgServerPres.What.GONE) {
-                mListener.onSubsUpdated();
-            }
-            mListener.onPres(pres);
+        if (what == MsgServerPres.What.GONE) {
+            mMeNotifier.notifySubsUpdated();
         }
+        mMeNotifier.notifyPres(pres);
     }
 
     @Override
@@ -657,9 +645,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 // Unknown notification ignored.
         }
 
-        if (mListener != null) {
-            mListener.onInfo(info);
-        }
+        mMeNotifier.notifyInfo(info);
     }
 
     private void assignRead(Topic topic, int seq) {
@@ -699,9 +685,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             }
         }
 
-        if (mListener != null) {
-            mListener.onContUpdated(topicName);
-        }
+        mMeNotifier.notifyContUpdated(topicName);
     }
 
     @Override
@@ -717,10 +701,23 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     public static class MeListener<DP> implements Listener<DP,PrivateType,DP,PrivateType> {
-        /** {meta} message received */
-        public void onMeta(MsgServerMeta<DP,PrivateType,DP,PrivateType> meta) {}
         /** Called by MeTopic when credentials are updated */
         public void onCredUpdated(Credential[] cred) {}
+    }
+
+    public static class MeNotifier<DP>
+            extends Topic.ListenerNotifier<Listener<DP,PrivateType,DP,PrivateType>, DP,PrivateType,DP,PrivateType> {
+        MeNotifier(List<Listener<DP, PrivateType,DP,PrivateType>> initialListeners) {
+            super(initialListeners);
+        }
+
+        public void notifyCredUpdated(Credential[] cred) {
+            for (Listener<DP, PrivateType,DP,PrivateType> l : snapshot()) {
+                if (l instanceof MeListener) {
+                    ((MeListener<DP>)l).onCredUpdated(cred);
+                }
+            }
+        }
     }
 
     @Override

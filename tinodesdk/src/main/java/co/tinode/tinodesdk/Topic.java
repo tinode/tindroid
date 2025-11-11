@@ -10,8 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -74,7 +76,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected int mPinned = 0;
     // The topic is subscribed/online.
     protected int mAttached = 0;
-    protected Listener<DP, DR, SP, SR> mListener = null;
+    protected List<Listener<DP, DR, SP, SR>> mListeners = Collections.synchronizedList(new ArrayList<>());
+    protected ListenerNotifier<Listener<DP, DR, SP, SR>, DP, DR, SP, SR> mNotifier = new ListenerNotifier<>(mListeners);
     // Timestamp of the last key press that the server was notified of, milliseconds
     protected long mLastKeyPress = 0;
 
@@ -125,7 +128,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     protected Topic(Tinode tinode, String name, Listener<DP, DR, SP, SR> l) {
         this(tinode, name);
-        setListener(l);
+        addListener(l);
     }
 
     /**
@@ -142,7 +145,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      */
     protected Topic(Tinode tinode, Listener<DP, DR, SP, SR> l, boolean isChannel) {
         this(tinode, isChannel);
-        setListener(l);
+        addListener(l);
     }
 
     // Returns greater of two dates.
@@ -413,33 +416,25 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected void update(MsgServerCtrl ctrl, MsgSetMeta<DP, DR> meta) {
         if (meta.isDescSet()) {
             update(meta.desc);
-            if (mListener != null) {
-                mListener.onMetaDesc(mDesc);
-            }
+            mNotifier.notifyMetaDesc(mDesc);
         }
 
         if (meta.isSubSet()) {
             update(ctrl.params, meta.sub);
-            if (mListener != null) {
-                if (meta.sub.user == null) {
-                    mListener.onMetaDesc(mDesc);
-                }
-                mListener.onSubsUpdated();
+            if (meta.sub.user == null) {
+                mNotifier.notifyMetaDesc(mDesc);
             }
+            mNotifier.notifySubsUpdated();
         }
 
         if (meta.isTagsSet()) {
             update(meta.tags);
-            if (mListener != null) {
-                mListener.onMetaTags(mTags);
-            }
+            mNotifier.notifyMetaTags(mTags);
         }
 
         if (meta.isAuxSet()) {
             update(meta.aux);
-            if (mListener != null) {
-                mListener.onMetaAux(mAux);
-            }
+            mNotifier.notifyMetaAux(mAux);
         }
     }
 
@@ -793,8 +788,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
 
         boolean updated = mDesc.acs.update(ac);
-        if (updated && mListener != null) {
-            mListener.onMetaDesc(mDesc);
+        if (updated) {
+            mNotifier.notifyMetaDesc(mDesc);
         }
 
         return updated;
@@ -932,9 +927,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     protected void setOnline(boolean online) {
         if (mDesc.online == null || online != mDesc.online) {
             mDesc.online = online;
-            if (mListener != null) {
-                mListener.onOnline(mDesc.online);
-            }
+            mNotifier.notifyOnline(mDesc.online);
         }
     }
 
@@ -1047,6 +1040,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     @SuppressWarnings("unchecked")
     public PromisedReply<ServerMessage> subscribe(MsgSetMeta<DP, DR> set, MsgGetMeta get) {
         if (mAttached > 0) {
+            mAttached ++;
             if (set == null && get == null) {
                 // If the topic is already attached and the user does not attempt to set or
                 // get any data, just return resolved promise.
@@ -1092,10 +1086,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                                 }
                             }
 
-                            if (mListener != null) {
-                                mListener.onSubscribe(msg.ctrl.code, msg.ctrl.text);
-                            }
-
+                            mNotifier.notifySubscribe(msg.ctrl.code, msg.ctrl.text);
                         } else {
                             mAttached++;
                         }
@@ -1128,7 +1119,9 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) {
-        if (mAttached == 1 || (mAttached >= 1 && unsub)) {
+        Log.i(TAG, "Leaving topic " + getName() + "; Attached=" + mAttached + "; unsub=" + unsub,
+                new Exception("Stack trace"));
+        if (mAttached == 1 || unsub) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<>() {
                         @Override
@@ -1141,18 +1134,16 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                             return null;
                         }
                     });
-        } else if (mAttached >= 1) {
+        } else if (mAttached > 1) {
             // Attached more than once, just decrement count.
-            mAttached --;
-            return new PromisedReply<>((ServerMessage) null);
-        } else if (!unsub) {
-            // Detaching (not unsubscribing) while not attached.
+            mAttached--;
             return new PromisedReply<>((ServerMessage) null);
         } else if (mTinode.isConnected()) {
             return new PromisedReply<>(new NotSubscribedException());
+        } else {
+            // Detaching (not unsubscribing) while not attached.
+            return new PromisedReply<>((ServerMessage) null);
         }
-
-        return new PromisedReply<>(new NotConnectedException());
     }
 
     /**
@@ -1546,10 +1537,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             addSubToCache(sub);
         }
 
-        if (mListener != null) {
-            mListener.onMetaSub(sub);
-            mListener.onSubsUpdated();
-        }
+        mNotifier.notifyMetaSub(sub);
+        mNotifier.notifySubsUpdated();
 
         // Check if topic is already synchronized. If not, don't send the request, it will fail anyway.
         if (isNew()) {
@@ -1563,10 +1552,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                         if (mStore != null) {
                             mStore.subUpdate(Topic.this, sub);
                         }
-                        if (mListener != null) {
-                            mListener.onMetaSub(sub);
-                            mListener.onSubsUpdated();
-                        }
+                        mNotifier.notifyMetaSub(sub);
+                        mNotifier.notifySubsUpdated();
                         return null;
                     }
                 });
@@ -1596,9 +1583,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 mStore.subDelete(this, sub);
             }
 
-            if (mListener != null) {
-                mListener.onSubsUpdated();
-            }
+            mNotifier.notifySubsUpdated();
 
             return new PromisedReply<>(new NotSynchronizedException());
         }
@@ -1611,9 +1596,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 }
 
                 removeSubFromCache(sub);
-                if (mListener != null) {
-                    mListener.onSubsUpdated();
-                }
+                mNotifier.notifySubsUpdated();
+
                 return null;
             }
         });
@@ -2123,10 +2107,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mAttached = 0;
 
             // Don't change topic online status here. Change it in the 'me' topic
-
-            if (mListener != null) {
-                mListener.onLeave(unsub, code, reason);
-            }
+            mNotifier.notifyLeave(unsub, code, reason);
+            mNotifier.clearListeners();
         }
     }
 
@@ -2149,9 +2131,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         if (meta.aux != null) {
             routeMetaAux(meta.aux);
         }
-        if (mListener != null) {
-            mListener.onMeta(meta);
-        }
+        mNotifier.notifyMeta(meta);
     }
 
     protected void routeMetaDesc(MsgServerMeta<DP, DR, SP, SR> meta) {
@@ -2161,9 +2141,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mTinode.updateUser(getName(), meta.desc);
         }
 
-        if (mListener != null) {
-            mListener.onMetaDesc(meta.desc);
-        }
+        mNotifier.notifyMetaDesc(meta.desc);
     }
 
     protected void processSub(Subscription<SP, SR> newsub) {
@@ -2204,15 +2182,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 }
 
                 // Notify listener that topic has updated.
-                if (mListener != null) {
-                    mListener.onContUpdated(sub.user);
-                }
+                mNotifier.notifyContUpdated(sub.user);
             }
         }
 
-        if (mListener != null) {
-            mListener.onMetaSub(sub);
-        }
+        mNotifier.notifyMetaSub(sub);
     }
 
     protected void routeMetaSub(MsgServerMeta<DP, DR, SP, SR> meta) {
@@ -2220,9 +2194,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             processSub(newsub);
         }
 
-        if (mListener != null) {
-            mListener.onSubsUpdated();
-        }
+        mNotifier.notifySubsUpdated();
     }
 
     protected void routeMetaDel(int clear, MsgRange[] delseq) {
@@ -2230,26 +2202,17 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             mStore.msgDelete(this, clear, delseq);
         }
         setMaxDel(clear);
-
-        if (mListener != null) {
-            mListener.onData(null);
-        }
+        mNotifier.notifyData(null);
     }
 
     protected void routeMetaTags(String[] tags) {
         update(tags);
-
-        if (mListener != null) {
-            mListener.onMetaTags(tags);
-        }
+        mNotifier.notifyMetaTags(tags);
     }
 
     protected void routeMetaAux(Map<String, Object> aux) {
         update(aux);
-
-        if (mListener != null) {
-            mListener.onMetaAux(aux);
-        }
+        mNotifier.notifyMetaAux(aux);
     }
 
     protected void routeData(MsgServerData data) {
@@ -2275,9 +2238,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             routeInfo(info);
         }
 
-        if (mListener != null) {
-            mListener.onData(data);
-        }
+        mNotifier.notifyData(data);
 
         // Call notification listener on 'me' to refresh chat list, if appropriate.
         MeTopic me = mTinode.getMeTopic();
@@ -2287,15 +2248,11 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
     }
 
     protected void allMessagesReceived(Integer count) {
-        if (mListener != null) {
-            mListener.onAllMessagesReceived(count);
-        }
+        mNotifier.notifyAllMessagesReceived(count);
     }
 
     protected void allSubsReceived() {
-        if (mListener != null) {
-            mListener.onSubsUpdated();
-        }
+        mNotifier.notifySubsUpdated();
     }
     protected void routePres(MsgServerPres pres) {
         MsgServerPres.What what = MsgServerPres.parseWhat(pres.what);
@@ -2368,9 +2325,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 Log.d(TAG, "Unhandled presence update '" + pres.what + "' in '" + getName() + "'");
         }
 
-        if (mListener != null) {
-            mListener.onPres(pres);
-        }
+        mNotifier.notifyPres(pres);
     }
 
     protected void setReadRecvByRemote(final String userId, final String what, final int seq) {
@@ -2426,9 +2381,7 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                 // Unknown value
         }
 
-        if (mListener != null) {
-            mListener.onInfo(info);
-        }
+        mNotifier.notifyInfo(info);
     }
 
     @Override
@@ -2441,8 +2394,17 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         mLocal = value;
     }
 
-    public synchronized void setListener(Listener<DP, DR, SP, SR> l) {
-        mListener = l;
+    public synchronized void addListener(@Nullable Listener<DP, DR, SP, SR> l) {
+        if (l != null) {
+            mNotifier.addListener(l);
+        }
+    }
+
+    public synchronized void remListener(@NotNull Listener<DP, DR, SP, SR> l) {
+        if (l == null) {
+            throw new IllegalArgumentException("Listener cannot be null");
+        }
+        mNotifier.remListener(l);
     }
 
     public enum TopicType {
@@ -2545,6 +2507,123 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
 
         /** Called when subscription is updated. */
         default void onContUpdated(String contact) {
+        }
+    }
+
+    protected static class ListenerNotifier<L extends Listener<DP, DR, SP, SR>, DP, DR, SP, SR> {
+        private final List<L> listeners;
+
+        ListenerNotifier(List<L> initialListeners) {
+            listeners = initialListeners;
+        }
+
+        void addListener(L l) {
+            if (!isListening(l)) {
+                listeners.add(l);
+            }
+        }
+
+        boolean remListener(L l) {
+            return listeners.remove(l);
+        }
+
+        boolean isListening(L l) {
+            return listeners.contains(l);
+        }
+
+        void clearListeners() {
+            listeners.clear();
+        }
+
+        // Allow subclasses to obtain a safe snapshot to iterate over.
+        protected List<L> snapshot() {
+            synchronized (listeners) {
+                return new ArrayList<>(listeners);
+            }
+        }
+
+        void notifySubscribe(int code, String text) {
+            for (L l : snapshot()) {
+                l.onSubscribe(code, text);
+            }
+        }
+
+        void notifyLeave(boolean unsub, int code, String text) {
+            for (L l : snapshot()) {
+                l.onLeave(unsub, code, text);
+            }
+        }
+
+        void notifyData(MsgServerData data) {
+            for (L l : snapshot()) {
+                l.onData(data);
+            }
+        }
+
+        void notifyAllMessagesReceived(Integer count) {
+            for (L l : snapshot()) {
+                l.onAllMessagesReceived(count);
+            }
+        }
+
+        void notifyInfo(MsgServerInfo info) {
+            for (L l : snapshot()) {
+                l.onInfo(info);
+            }
+        }
+
+        void notifyMeta(MsgServerMeta<DP, DR, SP, SR> meta) {
+            for (L l : snapshot()) {
+                l.onMeta(meta);
+            }
+        }
+
+        void notifyMetaSub(Subscription<SP, SR> sub) {
+            for (L l : snapshot()) {
+                l.onMetaSub(sub);
+            }
+        }
+
+        void notifyMetaDesc(Description<DP, DR> desc) {
+            for (L l : snapshot()) {
+                l.onMetaDesc(desc);
+            }
+        }
+
+        void notifyMetaTags(String[] tags) {
+            for (L l : snapshot()) {
+                l.onMetaTags(tags);
+            }
+        }
+
+        void notifyMetaAux(Map<String,Object> aux) {
+            for (L l : snapshot()) {
+                l.onMetaAux(aux);
+            }
+        }
+
+        void notifySubsUpdated() {
+            for (L l : snapshot()) {
+                l.onSubsUpdated();
+            }
+        }
+
+        void notifyPres(MsgServerPres pres) {
+            for (L l : snapshot()) {
+                l.onPres(pres);
+            }
+        }
+
+        void notifyOnline(boolean online) {
+            for (L l : snapshot()) {
+                l.onOnline(online);
+            }
+        }
+
+        void notifyContUpdated(String contact) {
+            for (L l : snapshot()) {
+                l.onContUpdated(contact);
+            }
         }
     }
 

@@ -82,7 +82,7 @@ public class CallActivity extends AppCompatActivity  {
         mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);
         if (mTopic == null) {
             Log.e(TAG, "Invalid topic '" + mTopicName + "'");
-            finish();
+            declineCall();
             return;
         }
 
@@ -155,6 +155,8 @@ public class CallActivity extends AppCompatActivity  {
         if (mTinode != null) {
             mTinode.removeListener(mLoginListener);
         }
+        mLoginListener = null;
+
         Cache.endCallInProgress();
 
         LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(this);
@@ -169,6 +171,10 @@ public class CallActivity extends AppCompatActivity  {
         if (mTurnScreenOffWhenDone) {
             setShowWhenLocked(false);
             setTurnScreenOn(false);
+        }
+
+        if (mTopic != null) {
+            mTopic.leave();
         }
 
         super.onDestroy();
@@ -258,11 +264,6 @@ public class CallActivity extends AppCompatActivity  {
     }
 
     private void topicAttach() {
-        if (mTopic.isAttached()) {
-            mTopic.videoCallRinging(mSeq);
-            return;
-        }
-
         if (!mTinode.isAuthenticated()) {
             // If connection is not ready, wait for completion. This method will be called again
             // from the onLogin callback;

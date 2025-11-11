@@ -150,6 +150,13 @@ public class CallFragment extends Fragment {
     private boolean mAudioOnly = false;
     private boolean mArrangementVideoOn = false;
 
+    private final ComTopic.CTListener<VxCard> mTopicListener = new ComTopic.CTListener<>() {
+        @Override
+        public void onSubscribe(int code, String text) {
+            handleCallStart();
+        }
+    };
+
     // Check if we have camera and mic permissions.
     private final ActivityResultLauncher<String[]> mMediaPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestMultiplePermissions(), result -> {
@@ -238,12 +245,7 @@ public class CallFragment extends Fragment {
         mToggleSpeakerphoneBtn.setImageResource(speakerphoneOn ? R.drawable.ic_volume_up : R.drawable.ic_volume_off);
 
         if (!mTopic.isAttached()) {
-            mTopic.setListener(new Topic.Listener<>() {
-                @Override
-                public void onSubscribe(int code, String text) {
-                    handleCallStart();
-                }
-            });
+            mTopic.addListener(mTopicListener);
         }
 
         mTinodeListener = new InfoListener();
@@ -279,7 +281,7 @@ public class CallFragment extends Fragment {
     public void onDestroyView() {
         stopMediaAndSignal();
         Cache.getTinode().removeListener(mTinodeListener);
-        mTopic.setListener(null);
+        mTopic.remListener(mTopicListener);
 
         TindroidApp.setAudioMode(mAudioSettings.audioMode);
         TindroidApp.setMicrophoneMute(mAudioSettings.microphone);

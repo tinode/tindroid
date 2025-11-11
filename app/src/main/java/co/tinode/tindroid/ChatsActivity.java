@@ -129,7 +129,7 @@ public class ChatsActivity extends AppCompatActivity
     public void onStop() {
         super.onStop();
         if (mMeTopic != null) {
-            mMeTopic.setListener(null);
+            mMeTopic.remListener(mMeTopicListener);
         }
     }
 
