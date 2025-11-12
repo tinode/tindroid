@@ -17,14 +17,13 @@ import java.util.Locale;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import co.tinode.tindroid.widgets.HorizontalListDivider;
 import co.tinode.tinodesdk.Topic;
 
-public class SendToActivity extends AppCompatActivity {
+public class SendToActivity extends BaseActivity {
     private static final String TAG = "SendToActivity";
 
     // Delay in milliseconds between the last keystroke and time when the query is sent to the server.
@@ -53,6 +52,7 @@ public class SendToActivity extends AppCompatActivity {
         }
 
         setContentView(R.layout.activity_send_to);
+        applyEdgeToEdgeInsets(findViewById(android.R.id.content));
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

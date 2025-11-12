@@ -13,7 +13,6 @@ import android.view.WindowManager;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
@@ -26,7 +25,7 @@ import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.ServerMessage;
 
-public class CallActivity extends AppCompatActivity  {
+public class CallActivity extends BaseActivity  {
     private static final String TAG = "CallActivity";
 
     static final String FRAGMENT_ACTIVE = "active_call";
@@ -114,6 +113,7 @@ public class CallActivity extends AppCompatActivity  {
                 return;
         }
         setContentView(R.layout.activity_call);
+        applyEdgeToEdgeInsets(findViewById(android.R.id.content));
 
         // Add back press handler
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {

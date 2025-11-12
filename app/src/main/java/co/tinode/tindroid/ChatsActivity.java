@@ -11,7 +11,6 @@ import android.view.Menu;
 
 import java.util.List;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -32,7 +31,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * This activity owns 'me' topic.
  */
-public class ChatsActivity extends AppCompatActivity
+public class ChatsActivity extends BaseActivity
         implements UiUtils.ProgressIndicator, UtilsMedia.MediaPreviewer,
         ImageViewFragment.AvatarCompletionHandler {
     static final String TAG_FRAGMENT_NAME = "fragment";
@@ -62,6 +61,7 @@ public class ChatsActivity extends AppCompatActivity
         UiUtils.setupSystemToolbar(this);
 
         setContentView(R.layout.activity_contacts);
+        applyEdgeToEdgeInsets(findViewById(android.R.id.content));
 
         setSupportActionBar(findViewById(R.id.toolbar));
 

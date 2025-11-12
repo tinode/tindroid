@@ -50,7 +50,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
@@ -82,7 +81,7 @@ import co.tinode.tinodesdk.model.Subscription;
 /**
  * View to display a single conversation
  */
-public class MessageActivity extends AppCompatActivity
+public class MessageActivity extends BaseActivity
         implements ImageViewFragment.AvatarCompletionHandler {
     private static final String TAG = "MessageActivity";
 
@@ -203,6 +202,7 @@ public class MessageActivity extends AppCompatActivity
         UiUtils.setupSystemToolbar(this);
 
         setContentView(R.layout.activity_messages);
+        applyEdgeToEdgeInsets(findViewById(android.R.id.content));
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

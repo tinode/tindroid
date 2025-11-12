@@ -2523,8 +2523,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
             }
         }
 
-        boolean remListener(L l) {
-            return listeners.remove(l);
+        void remListener(L l) {
+            listeners.remove(l);
         }
 
         boolean isListening(L l) {

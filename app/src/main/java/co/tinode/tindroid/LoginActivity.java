@@ -10,7 +10,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.Toolbar;
 import androidx.fragment.app.DialogFragment;
@@ -43,7 +42,8 @@ import co.tinode.tindroid.db.BaseDb;
  * 4. If account not found, show login form
  */
 
-public class LoginActivity extends AppCompatActivity implements ImageViewFragment.AvatarCompletionHandler {
+public class LoginActivity extends BaseActivity
+        implements ImageViewFragment.AvatarCompletionHandler {
     private static final String TAG = "LoginActivity";
 
     public static final String EXTRA_CONFIRM_CREDENTIALS = "confirmCredentials";
@@ -72,6 +72,7 @@ public class LoginActivity extends AppCompatActivity implements ImageViewFragmen
         UiUtils.setupSystemToolbar(this);
 
         setContentView(R.layout.activity_login);
+        applyEdgeToEdgeInsets(findViewById(android.R.id.content));
 
         PreferenceManager.setDefaultValues(this, R.xml.login_preferences, false);
 
