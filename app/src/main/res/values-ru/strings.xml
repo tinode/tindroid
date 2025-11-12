@@ -206,7 +206,6 @@
     <string name="security">Безопасность</string>
     <string name="blocked_contacts">Заблокированные контакты</string>
     <string name="notifications">Уведомления</string>
-    <string name="user_tags_description">Поисковые тэги, по которым вас смогут найти</string>
     <string name="help_explained">Поддержка, про приложение</string>
     <string name="account_security_explained">Пароль, настройки доступа, удаление аккаунта</string>
     <string name="topic_tags_description">Поисковые тэги, по которым можно найти группу</string>
@@ -345,5 +344,13 @@
     <string name="camera_not_accessible">Камера недоступна</string>
     <string name="unable_to_open_gallery">Не удалось открыть галерею</string>
     <string name="incognito_mode_explainer">Скрывать онлайн-статус</string>
-    <string name="theme">Тема</string>
+    <string name="keyboard">Клавиатура</string>
+    <string name="select_theme">Выбрать тему</string>
+    <string name="send_on_enter">Отправить по Enter</string>
+    <string name="follow_system">Следовать системе</string>
+    <string name="light_theme">Светлая тема</string>
+    <string name="dark_theme">Тёмная тема</string>
+    <string name="subscribers">Подписчики: %1$d</string>
+    <string name="subscribers_label">Подписчики:</string>
+    <string name="fullscreen_button">Выйти из полноэкранного режима</string>
 </resources>

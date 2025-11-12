@@ -229,7 +229,6 @@
     <string name="help">Ajutor</string>
     <string name="security">Securitate</string>
     <string name="notifications">Notificări</string>
-    <string name="user_tags_description">Ceilalţi te pot găsi după tagurile</string>
     <string name="help_explained">Suport, legal, despre</string>
     <string name="account_security_explained">Parolă, permisii, ştergere cont</string>
     <string name="topic_tags_description">Ceilalţi pot găsi grupul după tagurile</string>
@@ -366,5 +365,13 @@
     <string name="camera_not_accessible">Camera nu este accesibilă</string>
     <string name="unable_to_open_gallery">Imposibil de deschis galeria</string>
     <string name="incognito_mode_explainer">Ascunde starea online</string>
-    <string name="theme">Temă</string>
+    <string name="keyboard">Tastatură</string>
+    <string name="select_theme">Selectați tema</string>
+    <string name="send_on_enter">Trimite cu Enter</string>
+    <string name="follow_system">Urmează sistemul</string>
+    <string name="light_theme">Temă deschisă</string>
+    <string name="dark_theme">Temă întunecată</string>
+    <string name="subscribers">Abonați: %1$d</string>
+    <string name="subscribers_label">Abonați:</string>
+    <string name="fullscreen_button">Ieșire din modul ecran complet</string>
 </resources>

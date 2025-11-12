@@ -206,7 +206,6 @@
     <string name="security">Безпека</string>
     <string name="blocked_contacts">Заблоковані контакти</string>
     <string name="notifications">Повідомлення</string>
-    <string name="user_tags_description">Пошукові теги, за якими вас можуть знайти</string>
     <string name="help_explained">Підтримка, про додаток</string>
     <string name="account_security_explained">Пароль, налаштування доступу, видалення акаунта</string>
     <string name="topic_tags_description">Пошукові теги, за якими можна знайти групу</string>
@@ -345,5 +344,13 @@
     <string name="camera_not_accessible">Камера недоступна</string>
     <string name="unable_to_open_gallery">Не вдалося відкрити галерею</string>
     <string name="incognito_mode_explainer">Приховувати статус онлайн</string>
-    <string name="theme">Тема</string>
+    <string name="keyboard">Клавіатура</string>
+    <string name="select_theme">Вибрати тему</string>
+    <string name="send_on_enter">Надіслати через Enter</string>
+    <string name="follow_system">Слідувати системі</string>
+    <string name="light_theme">Світла тема</string>
+    <string name="dark_theme">Темна тема</string>
+    <string name="subscribers">Підписники: %1$d</string>
+    <string name="subscribers_label">Підписники:</string>
+    <string name="fullscreen_button">Вийти з повноекранного режиму</string>
 </resources>

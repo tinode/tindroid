@@ -229,7 +229,6 @@
     <string name="help">Aiuto</string>
     <string name="security">Sicurezza</string>
     <string name="notifications">Notifiche</string>
-    <string name="user_tags_description">Gli altri possono trovarti usando queste etichette</string>
     <string name="help_explained">Supporto, legale, circa</string>
     <string name="account_security_explained">Password, permessi, eliminazione account</string>
     <string name="topic_tags_description">Gli altri posso trovare il gruppo attraverso queste etichette</string>
@@ -366,5 +365,13 @@
     <string name="camera_not_accessible">Fotocamera non accessibile</string>
     <string name="unable_to_open_gallery">Impossibile aprire la galleria</string>
     <string name="incognito_mode_explainer">Nascondi il tuo stato online</string>
-    <string name="theme">Tema</string>
+    <string name="keyboard">Tastiera</string>
+    <string name="select_theme">Seleziona tema</string>
+    <string name="send_on_enter">Invia con Invio</string>
+    <string name="follow_system">Segui sistema</string>
+    <string name="light_theme">Tema chiaro</string>
+    <string name="dark_theme">Tema scuro</string>
+    <string name="subscribers">Iscritti: %1$d</string>
+    <string name="subscribers_label">Iscritti:</string>
+    <string name="fullscreen_button">Esci dalla modalità a schermo intero</string>
 </resources>

@@ -224,7 +224,6 @@
     <string name="help">Ajuda</string>
     <string name="security">Segurança</string>
     <string name="notifications">Notificações</string>
-    <string name="user_tags_description">Outras pessoas podem encontrar você utilizando tags</string>
     <string name="help_explained">Suporte, legal, Sobre</string>
     <string name="account_security_explained">Senha, Permissão, deletar conta</string>
     <string name="topic_tags_description">Outras pessoas podem encontrar grupo utilizando tags</string>
@@ -366,5 +365,13 @@
     <string name="camera_not_accessible">Câmera não acessível</string>
     <string name="unable_to_open_gallery">Não foi possível abrir a galeria</string>
     <string name="incognito_mode_explainer">Ocultar seu status online</string>
-    <string name="theme">Tema</string>
+    <string name="keyboard">Teclado</string>
+    <string name="select_theme">Selecionar tema</string>
+    <string name="send_on_enter">Enviar com Enter</string>
+    <string name="follow_system">Seguir sistema</string>
+    <string name="light_theme">Tema claro</string>
+    <string name="dark_theme">Tema escuro</string>
+    <string name="subscribers">Inscritos: %1$d</string>
+    <string name="subscribers_label">Inscritos:</string>
+    <string name="fullscreen_button">Sair do modo de tela cheia</string>
 </resources>

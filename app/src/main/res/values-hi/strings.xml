@@ -204,7 +204,6 @@
     <string name="help">मदद</string>
     <string name="security">सुरक्षा</string>
     <string name="notifications">सूचनाएं</string>
-    <string name="user_tags_description">अन्य लोग आपको इन टैग्स द्वारा ढूंढ सकते हैं</string>
     <string name="help_explained">समर्थन, कानूनी, के बारे में</string>
     <string name="account_security_explained">पासवर्ड, अनुमतियाँ, खाता हटाना</string>
     <string name="topic_tags_description">अन्य लोग इन टैग्स द्वारा समूह ढूंढ सकते हैं</string>
@@ -337,5 +336,13 @@
     <string name="camera_not_accessible">कैमरा उपलब्ध नहीं है</string>
     <string name="unable_to_open_gallery">गैलरी खोलने में असमर्थ</string>
     <string name="incognito_mode_explainer">अपनी ऑनलाइन स्थिति छिपाएं</string>
-    <string name="theme">थीम</string>
+    <string name="keyboard">कीबोर्ड</string>
+    <string name="select_theme">थीम चुनें</string>
+    <string name="send_on_enter">Enter से भेजें</string>
+    <string name="follow_system">सिस्टम का अनुसरण करें</string>
+    <string name="light_theme">लाइट थीम</string>
+    <string name="dark_theme">डार्क थीम</string>
+    <string name="subscribers">सब्सक्राइबर: %1$d</string>
+    <string name="subscribers_label">सब्सक्राइबर:</string>
+    <string name="fullscreen_button">फ़ुल स्क्रीन मोड से बाहर निकलें</string>
 </resources>

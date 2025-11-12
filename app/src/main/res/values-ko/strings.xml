@@ -223,7 +223,6 @@
     <string name="help">도움</string>
     <string name="security">보안</string>
     <string name="notifications">알림</string>
-    <string name="user_tags_description">다른사람들이 이 태그로 당신을 찾을 수 있습니다.</string>
     <string name="help_explained">지원, 법률, 정보</string>
     <string name="account_security_explained">비밀번호, 권한, 계정삭제</string>
     <string name="topic_tags_description">다른 사람들이 이 태그로 그룹을 찾을 수 있습니다.</string>
@@ -364,5 +363,13 @@
     <string name="camera_not_accessible">카메라에 액세스할 수 없습니다</string>
     <string name="unable_to_open_gallery">갤러리를 열 수 없습니다</string>
     <string name="incognito_mode_explainer">온라인 상태 숨기기</string>
-    <string name="theme">테마</string>
+    <string name="keyboard">키보드</string>
+    <string name="select_theme">테마 선택</string>
+    <string name="send_on_enter">Enter로 전송</string>
+    <string name="follow_system">시스템 설정 따르기</string>
+    <string name="light_theme">밝은 테마</string>
+    <string name="dark_theme">어두운 테마</string>
+    <string name="subscribers">구독자: %1$d명</string>
+    <string name="subscribers_label">구독자:</string>
+    <string name="fullscreen_button">전체 화면 모드 종료</string>
 </resources>
