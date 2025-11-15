@@ -181,6 +181,8 @@ public class MessageActivity extends BaseActivity
     // Notification settings.
     private boolean mSendTypingNotifications = false;
     private boolean mSendReadReceipts = false;
+    private String mWallpaper = "";
+    private int mWallpaperSize = 0;
 
     // Only for grp topics:
     // Keeps track of the known subscriptions for the given topic.
@@ -300,6 +302,8 @@ public class MessageActivity extends BaseActivity
 
         mSendReadReceipts = pref.getBoolean(Const.PREF_READ_RCPT, true);
         mSendTypingNotifications = pref.getBoolean(Const.PREF_TYPING_NOTIF, true);
+        mWallpaper = pref.getString(Utils.PREFS_WALLPAPER, "");
+        mWallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
 
         if (mTopic != null) {
             BaseDb.getInstance().getStore().msgPruneFailed(mTopic);

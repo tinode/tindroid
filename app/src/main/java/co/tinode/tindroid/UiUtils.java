@@ -344,10 +344,17 @@ public class UiUtils {
         }
     }
 
+    public static boolean isNightMode(Context context) {
+        if (context == null) {
+            return false;
+        }
+        return (context.getResources().getConfiguration().uiMode &
+                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+    }
+
     public static void setupSystemToolbar(Activity activity) {
         Window window = activity.getWindow();
-        boolean darkMode = (activity.getResources().getConfiguration().uiMode &
-                Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        boolean darkMode = isNightMode(activity);
         window.setStatusBarColor(Color.TRANSPARENT);
         WindowCompat.getInsetsController(window, window.getDecorView()).setAppearanceLightStatusBars(!darkMode);
     }

@@ -47,6 +47,7 @@ public class ChatsActivity extends BaseActivity
     static final String FRAGMENT_ACC_ABOUT = "acc_about";
     static final String FRAGMENT_ARCHIVE = "archive";
     static final String FRAGMENT_BANNED = "banned";
+    static final String FRAGMENT_WALLPAPERS = "wallpapers";
 
     private ContactsEventListener mTinodeListener = null;
     private MeListener mMeTopicListener = null;
@@ -194,6 +195,9 @@ public class ChatsActivity extends BaseActivity
                     break;
                 case FRAGMENT_CHATLIST:
                     fragment = new ChatsFragment();
+                    break;
+                case FRAGMENT_WALLPAPERS:
+                    fragment = new WallpaperFragment();
                     break;
                 default:
                     throw new IllegalArgumentException("Failed to create fragment: unknown tag " + tag);

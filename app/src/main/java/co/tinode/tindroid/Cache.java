@@ -46,6 +46,9 @@ public class Cache {
     // Current video call.
     private CallInProgress mCallInProgress = null;
 
+    private String mWallpaper;
+    private int mWallpaperSize;
+
     @SuppressLint("UnsafeOptInUsageError")
     public static synchronized Tinode getTinode() {
         if (sInstance.mTinode == null) {

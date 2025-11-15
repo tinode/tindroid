@@ -391,4 +391,10 @@
     <string name="subscribers">Subscribers: %1$d</string>
     <string name="subscribers_label">Subscribers:</string>
     <string name="fullscreen_button">Exit full screen mode</string>
+    <string name="change_wallpapers">Change Wallpaper</string>
+    <string name="wallpapers_unavailable">Wallpapers unavailable\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Restore default</string>
+    <string name="blur">Blur</string>
+    <string name="wp_pattern">Pattern</string>
+    <string name="wp_image">Wallpaper</string>
 </resources>

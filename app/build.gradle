@@ -128,7 +128,7 @@ dependencies {
     implementation 'com.dafruits:webrtc:123.0.0'
 
     // Unicode support ICU4J (replacement for android.icu.*).
-    implementation 'com.ibm.icu:icu4j:77.1'
+    implementation 'com.ibm.icu:icu4j:78.1'
 
     // Image loading and caching.
     implementation 'io.coil-kt:coil:2.7.0'

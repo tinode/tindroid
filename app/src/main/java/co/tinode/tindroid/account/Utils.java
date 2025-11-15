@@ -34,6 +34,8 @@ public class Utils {
     public static final String PREFS_KEY_DARK_THEME = "dark_theme";
     public static final String PREFS_KEY_AUTO_THEME = "auto_theme";
     public static final String PREFS_SEND_ON_ENTER = "pref_sendOnEnter";
+    public static final String PREFS_WALLPAPER = "pref_wallpaper";
+    public static final String PREFS_WALLPAPER_SIZE = "pref_wallpaper_size";
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */

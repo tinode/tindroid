@@ -41,8 +41,13 @@ public class AccGeneralFragment extends Fragment {
         RadioGroup radioGroup = view.findViewById(R.id.radio_group_theme);
         setRadioButtonFromTheme(radioGroup, savedTheme);
 
-        // Set listener
+        // Set listeners
         radioGroup.setOnCheckedChangeListener(this::onCheckedChanged);
+
+        view.findViewById(R.id.buttonWallpapers)
+                .setOnClickListener(v ->
+                        ((ChatsActivity) requireActivity())
+                                .showFragment(ChatsActivity.FRAGMENT_WALLPAPERS, null));
 
         SwitchCompat sendOnEnter = view.findViewById(R.id.send_on_enter);
         boolean sendOnEnterEnabled = preferences.getBoolean(Utils.PREFS_SEND_ON_ENTER, false);
