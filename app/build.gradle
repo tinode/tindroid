@@ -122,7 +122,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:25.0.1'
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.17'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.18'
 
     // WebRTC.
     implementation 'com.dafruits:webrtc:123.0.0'

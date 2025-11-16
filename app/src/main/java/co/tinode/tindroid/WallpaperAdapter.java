@@ -130,8 +130,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
             ImageRequest.Builder builder = new ImageRequest.Builder(itemView.getContext())
                     .data(baseUrl + "/" + (TextUtils.isEmpty(wp.preview) ? wp.name : wp.preview));
             if (wp.size > 0) {
-                int size = dpToPx(itemView.getContext(), wp.size);
-                builder = builder.size(size, size);
+                builder = builder.size(UiUtils.dpToPx(itemView.getContext(), wp.size));
             }
             ImageRequest request = builder
                     .target(new Target() {
@@ -179,10 +178,6 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
     // Revert to light theme.
     private static void clearInvert(ImageView imageView) {
         imageView.setColorFilter(null);
-    }
-
-    private static int dpToPx(Context ctx, int dp) {
-        return Math.round(dp * ctx.getResources().getDisplayMetrics().density);
     }
 }
 

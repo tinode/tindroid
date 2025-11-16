@@ -21,6 +21,8 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Rect;
+import android.graphics.RenderEffect;
+import android.graphics.Shader;
 import android.graphics.drawable.AnimationDrawable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -28,6 +30,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -35,6 +38,10 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.renderscript.Allocation;
+import android.renderscript.Element;
+import android.renderscript.RenderScript;
+import android.renderscript.ScriptIntrinsicBlur;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -595,6 +602,41 @@ public class UiUtils {
             Log.e(TAG, "Out of memory while rotating bitmap");
             return bmp;
         }
+    }
+
+    public static Bitmap blurBitmap(Context context, Bitmap bitmap, float radius) {
+        Bitmap.Config config = bitmap.getConfig();
+        if (config == null) {
+            config = Bitmap.Config.ARGB_8888;
+        }
+
+        Bitmap output = Bitmap.createBitmap(
+                bitmap.getWidth(),
+                bitmap.getHeight(),
+                config
+        );
+
+        RenderScript rs = RenderScript.create(context);
+        ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
+        Allocation inAlloc = Allocation.createFromBitmap(rs, bitmap);
+        Allocation outAlloc = Allocation.createFromBitmap(rs, output);
+
+        script.setRadius(Math.min(radius, 25f)); // 0 < radius <= 25
+        script.setInput(inAlloc);
+        script.forEach(outAlloc);
+        outAlloc.copyTo(output);
+
+        script.destroy();
+        inAlloc.destroy();
+        outAlloc.destroy();
+        rs.destroy();
+
+        return output;
+    }
+
+    // Convert DP units to pixels.
+    public static int dpToPx(Context ctx, int dp) {
+        return Math.round(dp * ctx.getResources().getDisplayMetrics().density);
     }
 
     static void acceptAvatar(final Activity activity, final ImageView avatarContainer, final Bitmap avatar) {

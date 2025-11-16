@@ -36,6 +36,7 @@ public class Utils {
     public static final String PREFS_SEND_ON_ENTER = "pref_sendOnEnter";
     public static final String PREFS_WALLPAPER = "pref_wallpaper";
     public static final String PREFS_WALLPAPER_SIZE = "pref_wallpaper_size";
+    public static final String PREFS_WALLPAPER_BLUR = "pref_wallpaper_blur";
     /**
      * MIME-type used when storing a profile {@link ContactsContract.Data} entry.
      */
