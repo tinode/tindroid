@@ -1,11 +1,11 @@
 package co.tinode.tindroid;
 
-import android.content.Context;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -89,8 +89,6 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
     // Set selected item by name.
     // If name is null, select nothing, if it's empty, select the first item.
     public void setSelectedItem(@Nullable String name) {
-        Log.i(TAG, "setSelectedItem: " + name);
-
         if (name == null) {
             setSelectedPosition(RecyclerView.NO_POSITION);
         } else if (name.isEmpty()) {
@@ -143,9 +141,16 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
                         public void onSuccess(@NonNull Drawable result) {
                             imageView.setImageDrawable(result);
                             if (UiUtils.isNightMode(imageView.getContext())) {
-                                applyInvert(imageView, inverter);
+                                if (wp.size > 0) {
+                                    // Invert pattern.
+                                    applyInvert(imageView, inverter);
+                                } else {
+                                    // Darken the image view.
+                                    imageView.setColorFilter(Color.rgb(192, 192, 192),
+                                            PorterDuff.Mode.MULTIPLY);
+                                }
                             } else {
-                                clearInvert(imageView);
+                                imageView.setColorFilter(null);
                             }
                             progressBar.setVisibility(View.GONE);
                         }
@@ -173,11 +178,6 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
     // Invert image for night theme.
     private static void applyInvert(ImageView imageView, ColorMatrixColorFilter inverter) {
         imageView.setColorFilter(inverter);
-    }
-
-    // Revert to light theme.
-    private static void clearInvert(ImageView imageView) {
-        imageView.setColorFilter(null);
     }
 }
 

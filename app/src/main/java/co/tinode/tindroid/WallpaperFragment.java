@@ -4,6 +4,11 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
+import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.PorterDuff;
 import android.graphics.Shader;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -69,11 +74,21 @@ public class WallpaperFragment extends Fragment {
     private Button mRestoreDefault;
     private ImageView mPreview;
     private int mBlur;
+    private ColorMatrixColorFilter mInverter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBaseUrl = Cache.getTinode().getHttpOrigin() + PATH;
+
+        ColorMatrix cm = new ColorMatrix();
+        cm.set(new float[] {
+                -1,  0,  0, 0, 255,  // R
+                0, -1,  0, 0, 255,  // G
+                0,  0, -1, 0, 255,  // B
+                0,  0,  0, 1,   0   // A
+        });
+        mInverter = new ColorMatrixColorFilter(cm);
     }
 
     @Nullable
@@ -126,6 +141,7 @@ public class WallpaperFragment extends Fragment {
             mViewPager.post(() -> {
                 ImagePagerAdapter adapter = (ImagePagerAdapter) mViewPager.getAdapter();
                 if (adapter != null) {
+                    adapter.setBlur(0);
                     adapter.setSelectedItem(TAB_PATTERN, "");
                 }
             });
@@ -266,17 +282,31 @@ public class WallpaperFragment extends Fragment {
             float[] radius = new float[]{0, 1, 2, 4, 8, 16};
             builder.transformations(new BlurTransformation(context, radius[blur]));
         }
+
+        final boolean nightMode = UiUtils.isNightMode(context);
         ImageRequest request = builder.target(new Target() {
                     @Override
                     public void onSuccess(@NonNull Drawable result) {
                         if (result instanceof BitmapDrawable) {
                             if (size > 0) {
+                                // Pattern.
                                 ((BitmapDrawable) result).setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
                             } else {
-                                // TODO: Apply blur.
+                                // Wallpaper.
                                 ((BitmapDrawable) result).setGravity(Gravity.CENTER);
                             }
                         }
+                        if (nightMode) {
+                            if (size > 0) {
+                                mPreview.setColorFilter(mInverter);
+                            } else {
+                                mPreview.setColorFilter(Color.rgb(192, 192, 192),
+                                        PorterDuff.Mode.MULTIPLY);
+                            }
+                        } else {
+                            mPreview.clearColorFilter();
+                        }
+
                         mPreview.setImageDrawable(result);
                     }
 
@@ -360,8 +390,6 @@ public class WallpaperFragment extends Fragment {
     }
 
     public static class ImageGridTabFragment extends Fragment {
-        private static final String TAG = "ImageGridTabFragment";
-
         private static final String ARG_URLS = "urls";
         private static final String ARG_INDEX = "index";
         private static final String ARG_BASE_URL = "baseUrl";
