@@ -18,6 +18,7 @@ import android.text.TextUtils;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.UtilsBitmap;
 import co.tinode.tinodesdk.Tinode;
 
 import coil.Coil;
@@ -229,7 +230,7 @@ class ContactOperations {
                     .scale(Scale.FILL)
                     .build();
             Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(mContext), req).getDrawable();
-            avatar = UiUtils.bitmapToBytes(UiUtils.bitmapFromDrawable(drw), mimeType);
+            avatar = UtilsBitmap.bitmapToBytes(UtilsBitmap.bitmapFromDrawable(drw), mimeType);
         }
 
         if (avatar != null) {

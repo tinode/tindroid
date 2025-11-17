@@ -280,7 +280,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
                     int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION,
                             ExifInterface.ORIENTATION_UNDEFINED);
                     if (bmp != null) {
-                        bmp = UiUtils.rotateBitmap(bmp, orientation);
+                        bmp = UtilsBitmap.rotateBitmap(bmp, orientation);
                     }
                     is.close();
                 }
@@ -346,7 +346,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         if (bmp != null) {
             // Must ensure the bitmap is not too big (some cameras can produce
             // bigger bitmaps that the phone can render)
-            bmp = UiUtils.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM, false);
+            bmp = UtilsBitmap.scaleBitmap(bmp, MAX_BITMAP_DIM, MAX_BITMAP_DIM, false);
 
             mImageView.enableOverlay(mAvatarUpload);
 

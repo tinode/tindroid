@@ -15,22 +15,16 @@ import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Matrix;
 import android.graphics.Rect;
-import android.graphics.RenderEffect;
-import android.graphics.Shader;
 import android.graphics.drawable.AnimationDrawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -38,10 +32,6 @@ import android.os.Looper;
 import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-import android.renderscript.Allocation;
-import android.renderscript.Element;
-import android.renderscript.RenderScript;
-import android.renderscript.ScriptIntrinsicBlur;
 import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
@@ -58,14 +48,9 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.jetbrains.annotations.NotNull;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
@@ -86,7 +71,6 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.res.ResourcesCompat;
 import androidx.core.view.WindowCompat;
-import androidx.exifinterface.media.ExifInterface;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.preference.PreferenceManager;
@@ -495,150 +479,6 @@ public class UiUtils {
         return one.getTime() / oneDay == two.getTime() / oneDay;
     }
 
-    /**
-     * Ensure that the bitmap is square and no larger than the given max size.
-     * @param bmp       bitmap to scale
-     * @param size   maximum linear size of the bitmap.
-     * @return scaled bitmap or original, it it does not need ot be cropped or scaled.
-     */
-    @NonNull
-    public static Bitmap scaleSquareBitmap(@NonNull Bitmap bmp, int size) {
-        // Sanity check
-        size = Math.min(size, Const.MAX_BITMAP_SIZE);
-
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-
-        // Does it need to be scaled down?
-        if (width > size && height > size) {
-            // Scale down.
-            if (width > height) /* landscape */ {
-                width = width * size / height;
-                height = size;
-            } else /* portrait or square */ {
-                height = height * size / width;
-                width = size;
-            }
-            // Scale down.
-            bmp = Bitmap.createScaledBitmap(bmp, width, height, true);
-        }
-        size = Math.min(width, height);
-
-        if (width != height) {
-            // Bitmap is not square. Chop the square from the middle.
-            bmp = Bitmap.createBitmap(bmp, (width - size) / 2, (height - size) / 2,
-                    size, size);
-        }
-
-        return bmp;
-    }
-
-    /**
-     * Scale bitmap down to be under certain liner dimensions.
-     *
-     * @param bmp       bitmap to scale.
-     * @param maxWidth  maximum allowed bitmap width.
-     * @param maxHeight maximum allowed bitmap height.
-     * @param upscale enable increasing size of the image (up to 10x).
-     * @return scaled bitmap or original, it it does not need to be scaled.
-     */
-    @NonNull
-    public static Bitmap scaleBitmap(@NonNull Bitmap bmp, final int maxWidth, final int maxHeight,
-                                     final boolean upscale) {
-        int width = bmp.getWidth();
-        int height = bmp.getHeight();
-
-        // Calculate scaling factor.
-        float factor = Math.max((float) width / maxWidth, upscale ? 0.1f : 1.0f);
-        factor = Math.max((float) height / maxHeight, factor);
-
-        // Scale down.
-        if (upscale || factor > 1.0) {
-            height = (int) (height / factor);
-            width = (int) (width / factor);
-            return Bitmap.createScaledBitmap(bmp, width, height, true);
-        }
-        return bmp;
-    }
-
-    @NonNull
-    static Bitmap rotateBitmap(@NonNull Bitmap bmp, int orientation) {
-        Matrix matrix = new Matrix();
-        switch (orientation) {
-            case ExifInterface.ORIENTATION_FLIP_HORIZONTAL:
-                matrix.setScale(-1, 1);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_180:
-                matrix.setRotate(180);
-                break;
-            case ExifInterface.ORIENTATION_FLIP_VERTICAL:
-                matrix.setRotate(180);
-                matrix.postScale(-1, 1);
-                break;
-            case ExifInterface.ORIENTATION_TRANSPOSE:
-                matrix.setRotate(90);
-                matrix.postScale(-1, 1);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_90:
-                matrix.setRotate(90);
-                break;
-            case ExifInterface.ORIENTATION_TRANSVERSE:
-                matrix.setRotate(-90);
-                matrix.postScale(-1, 1);
-                break;
-            case ExifInterface.ORIENTATION_ROTATE_270:
-                matrix.setRotate(-90);
-                break;
-            case ExifInterface.ORIENTATION_NORMAL:
-            default:
-                return bmp;
-        }
-
-        try {
-            Bitmap rotated = Bitmap.createBitmap(bmp, 0, 0, bmp.getWidth(), bmp.getHeight(), matrix, true);
-            bmp.recycle();
-            return rotated;
-        } catch (OutOfMemoryError ex) {
-            Log.e(TAG, "Out of memory while rotating bitmap");
-            return bmp;
-        }
-    }
-
-    public static Bitmap blurBitmap(Context context, Bitmap bitmap, float radius) {
-        Bitmap.Config config = bitmap.getConfig();
-        if (config == null) {
-            config = Bitmap.Config.ARGB_8888;
-        }
-
-        Bitmap output = Bitmap.createBitmap(
-                bitmap.getWidth(),
-                bitmap.getHeight(),
-                config
-        );
-
-        RenderScript rs = RenderScript.create(context);
-        ScriptIntrinsicBlur script = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs));
-        Allocation inAlloc = Allocation.createFromBitmap(rs, bitmap);
-        Allocation outAlloc = Allocation.createFromBitmap(rs, output);
-
-        script.setRadius(Math.min(radius, 25f)); // 0 < radius <= 25
-        script.setInput(inAlloc);
-        script.forEach(outAlloc);
-        outAlloc.copyTo(output);
-
-        script.destroy();
-        inAlloc.destroy();
-        outAlloc.destroy();
-        rs.destroy();
-
-        return output;
-    }
-
-    // Convert DP units to pixels.
-    public static int dpToPx(Context ctx, int dp) {
-        return Math.round(dp * ctx.getResources().getDisplayMetrics().density);
-    }
-
     static void acceptAvatar(final Activity activity, final ImageView avatarContainer, final Bitmap avatar) {
         if (activity == null || avatarContainer == null) {
             return;
@@ -650,7 +490,7 @@ public class UiUtils {
         }
 
         avatarContainer.setImageDrawable(new RoundImageDrawable(avatarContainer.getResources(),
-                scaleSquareBitmap(avatar, Const.MAX_AVATAR_SIZE)));
+                UtilsBitmap.scaleSquareBitmap(avatar, Const.MAX_AVATAR_SIZE)));
     }
 
     // Construct avatar from VxCard and set it to the provided ImageView.
@@ -714,54 +554,6 @@ public class UiUtils {
         }
     }
 
-    @NonNull
-    static ByteArrayInputStream bitmapToStream(@NonNull Bitmap bmp, String mimeType) {
-        return new ByteArrayInputStream(bitmapToBytes(bmp, mimeType));
-    }
-
-    @NonNull
-    public static byte[] bitmapToBytes(@NonNull Bitmap bmp, String mimeType) {
-        Bitmap.CompressFormat fmt;
-        if ("image/jpeg".equals(mimeType)) {
-            fmt = Bitmap.CompressFormat.JPEG;
-        } else {
-            fmt = Bitmap.CompressFormat.PNG;
-        }
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bmp.compress(fmt, 70, bos);
-        byte[] bits = bos.toByteArray();
-        try {
-            bos.close();
-        } catch (IOException ignored) {
-        }
-
-        return bits;
-    }
-
-    /**
-     * Convert drawable to bitmap.
-     *
-     * @param drawable vector drawable to convert to bitmap
-     * @return bitmap extracted from the drawable.
-     */
-    public static Bitmap bitmapFromDrawable(Drawable drawable) {
-        if (drawable == null) {
-            return Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
-        }
-
-        if (drawable instanceof BitmapDrawable) {
-            return ((BitmapDrawable) drawable).getBitmap();
-        }
-
-        Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
-                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
-        drawable.draw(canvas);
-
-        return bitmap;
-    }
-
     // Create avatar bitmap: try to use ref first, then in-band bits, the letter tile, then placeholder.
     // Do NOT run on UI thread: it will throw.
     public static Bitmap avatarBitmap(Context context, VxCard pub, Topic.TopicType tp, String id, int size) {
@@ -776,7 +568,7 @@ public class UiUtils {
                         .size(size, size)
                         .build();
                 Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(context), req).getDrawable();
-                bitmap = bitmapFromDrawable(drw);
+                bitmap = UtilsBitmap.bitmapFromDrawable(drw);
             } else {
                 bitmap = pub.getBitmap();
             }
@@ -1307,7 +1099,7 @@ public class UiUtils {
         return bits;
     }
 
-    static public @Nullable byte[] getByteArray(String name, @NotNull Map<String, Object> data) {
+    static public @Nullable byte[] getByteArray(String name, @NonNull Map<String, Object> data) {
         return decodeByteArray(data.get(name));
     }
 

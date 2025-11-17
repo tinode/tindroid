@@ -26,6 +26,7 @@ import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.UtilsBitmap;
 
 // Display quoted content.
 public class QuoteFormatter extends PreviewFormatter {
@@ -99,11 +100,11 @@ public class QuoteFormatter extends PreviewFormatter {
                 if (bmp != null) {
                     if (dim.square) {
                         thumbnail = new BitmapDrawable(res,
-                                UiUtils.scaleSquareBitmap(bmp, (int) (dim.squareSize * density)));
+                                UtilsBitmap.scaleSquareBitmap(bmp, (int) (dim.squareSize * density)));
                         thumbnail.setBounds(0, 0,
                                 (int) (dim.squareSize * density), (int) (dim.squareSize * density));
                     } else {
-                        thumbnail = new BitmapDrawable(res, UiUtils.scaleBitmap(bmp,
+                        thumbnail = new BitmapDrawable(res, UtilsBitmap.scaleBitmap(bmp,
                                         (int) (dim.width * density), (int) (dim.height * density), true));
                         thumbnail.setBounds(0, 0, thumbnail.getBitmap().getWidth(),
                                 thumbnail.getBitmap().getHeight());

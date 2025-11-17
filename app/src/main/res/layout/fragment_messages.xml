@@ -5,8 +5,19 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/message_view_bkg"
     tools:context=".MessagesFragment">
+
+    <ImageView
+        android:id="@+id/background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/message_view_bkg"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
 
     <include layout="@layout/fragment_pinned"
         android:id="@+id/pinned_messages"
@@ -16,6 +27,8 @@
         android:id="@+id/swipe_refresher"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:paddingStart="4dp"
+        tools:ignore="RtlSymmetry"
         app:layout_constraintBottom_toTopOf="@id/sendMessageFragment"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"

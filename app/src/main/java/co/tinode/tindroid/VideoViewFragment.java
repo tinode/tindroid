@@ -434,9 +434,9 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
         videoFrameCapture(bmp -> {
             if (bmp != null) {
                 if (mVideoWidth > Const.MAX_POSTER_SIZE || mVideoHeight > Const.MAX_POSTER_SIZE) {
-                    bmp = UiUtils.scaleBitmap(bmp, Const.MAX_POSTER_SIZE, Const.MAX_POSTER_SIZE, false);
+                    bmp = UtilsBitmap.scaleBitmap(bmp, Const.MAX_POSTER_SIZE, Const.MAX_POSTER_SIZE, false);
                 }
-                byte[] bitmapBits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                byte[] bitmapBits = UtilsBitmap.bitmapToBytes(bmp, "image/jpeg");
                 if (bitmapBits.length > MAX_POSTER_BYTES) {
                     Uri fileUri = writeToTempFile(activity, bitmapBits, "PST_", ".jpeg");
                     if (fileUri != null) {
@@ -444,7 +444,7 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
                     }
                 } else {
                     outputArgs.putByteArray(AttachmentHandler.ARG_PREVIEW,
-                            UiUtils.bitmapToBytes(bmp, "image/jpeg"));
+                            UtilsBitmap.bitmapToBytes(bmp, "image/jpeg"));
                 }
                 outputArgs.putString(AttachmentHandler.ARG_PRE_MIME_TYPE, "image/jpeg");
             }

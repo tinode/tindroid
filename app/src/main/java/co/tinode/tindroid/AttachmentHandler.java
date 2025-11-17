@@ -526,12 +526,12 @@ public class AttachmentHandler extends Worker {
             if (operation == UploadType.IMAGE) {
                 // Make sure the image is not too large in byte-size and in linear dimensions.
                 bmp = prepareImage(resolver, uri, uploadDetails);
-                is = UiUtils.bitmapToStream(bmp, uploadDetails.mimeType);
+                is = UtilsBitmap.bitmapToStream(bmp, uploadDetails.mimeType);
                 uploadDetails.fileSize = is.available();
 
                 // Create a tiny preview bitmap.
                 if (bmp.getWidth() > Const.IMAGE_PREVIEW_DIM || bmp.getHeight() > Const.IMAGE_PREVIEW_DIM) {
-                    uploadDetails.previewBits = UiUtils.bitmapToBytes(UiUtils.scaleBitmap(bmp,
+                    uploadDetails.previewBits = UtilsBitmap.bitmapToBytes(UtilsBitmap.scaleBitmap(bmp,
                                     Const.IMAGE_PREVIEW_DIM, Const.IMAGE_PREVIEW_DIM, false),
                             "image/jpeg");
                 }
@@ -754,7 +754,7 @@ public class AttachmentHandler extends Worker {
         }
 
         if (width != height || width > Const.MAX_AVATAR_SIZE) {
-            bmp = UiUtils.scaleSquareBitmap(bmp, Const.MAX_AVATAR_SIZE);
+            bmp = UtilsBitmap.scaleSquareBitmap(bmp, Const.MAX_AVATAR_SIZE);
             width = bmp.getWidth();
             height = bmp.getHeight();
         }
@@ -766,13 +766,13 @@ public class AttachmentHandler extends Worker {
         pub.photo.height = height;
 
         PromisedReply<ServerMessage> result;
-        try (InputStream is = UiUtils.bitmapToStream(bmp, mimeType)) {
+        try (InputStream is = UtilsBitmap.bitmapToStream(bmp, mimeType)) {
             long fileSize = is.available();
             if (fileSize > Const.MAX_INBAND_AVATAR_SIZE) {
                 // Sending avatar out of band.
 
                 // Generate small avatar preview.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UtilsBitmap.bitmapToBytes(UtilsBitmap.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 // Upload then return result with a link. This is a long-running blocking call.
                 LargeFileHelper uploader = Cache.getTinode().getLargeFileHelper();
                 result = uploader.uploadAsync(is, System.currentTimeMillis() + ".png", mimeType, fileSize,
@@ -787,7 +787,7 @@ public class AttachmentHandler extends Worker {
                         });
             } else {
                 // Can send a small avatar in-band.
-                pub.photo.data = UiUtils.bitmapToBytes(UiUtils.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
+                pub.photo.data = UtilsBitmap.bitmapToBytes(UtilsBitmap.scaleSquareBitmap(bmp, Const.AVATAR_THUMBNAIL_DIM), mimeType);
                 result = new PromisedReply<>((ServerMessage) null);
             }
         } catch (IOException | IllegalArgumentException ex) {
@@ -865,9 +865,9 @@ public class AttachmentHandler extends Worker {
 
         // Make sure the image dimensions are not too large.
         if (bmp.getWidth() > Const.MAX_BITMAP_SIZE || bmp.getHeight() > Const.MAX_BITMAP_SIZE) {
-            bmp = UiUtils.scaleBitmap(bmp, Const.MAX_BITMAP_SIZE, Const.MAX_BITMAP_SIZE, false);
+            bmp = UtilsBitmap.scaleBitmap(bmp, Const.MAX_BITMAP_SIZE, Const.MAX_BITMAP_SIZE, false);
 
-            byte[] bits = UiUtils.bitmapToBytes(bmp, uploadDetails.mimeType);
+            byte[] bits = UtilsBitmap.bitmapToBytes(bmp, uploadDetails.mimeType);
             uploadDetails.fileSize = bits.length;
         }
 
@@ -908,7 +908,7 @@ public class AttachmentHandler extends Worker {
                     Log.d(TAG, "Unable to obtain image orientation");
                 default:
                     // Rotate image to ensure correct orientation.
-                    bmp = UiUtils.rotateBitmap(bmp, orientation);
+                    bmp = UtilsBitmap.rotateBitmap(bmp, orientation);
                     break;
             }
         } catch (IOException ex) {

@@ -14,6 +14,7 @@ import androidx.annotation.NonNull;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.TindroidApp;
 import co.tinode.tindroid.UiUtils;
+import co.tinode.tindroid.UtilsBitmap;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;
 
@@ -51,8 +52,8 @@ public class ThumbnailTransformer implements Drafty.Transformer {
             try {
                 byte[] bits = Base64.decode((String) val, Base64.DEFAULT);
                 Bitmap bmp = BitmapFactory.decodeByteArray(bits, 0, bits.length);
-                bmp = UiUtils.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
-                bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                bmp = UtilsBitmap.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
+                bits = UtilsBitmap.bitmapToBytes(bmp, "image/jpeg");
                 node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                 node.putData("size", bits.length);
                 node.putData("mime", "image/jpeg");
@@ -75,9 +76,9 @@ public class ThumbnailTransformer implements Drafty.Transformer {
                             .target(new Target() {
                                 @Override
                                 public void onSuccess(@NonNull Drawable drawable) {
-                                    Bitmap bmp = UiUtils.bitmapFromDrawable(drawable);
-                                    bmp = UiUtils.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
-                                    byte[] bits = UiUtils.bitmapToBytes(bmp, "image/jpeg");
+                                    Bitmap bmp = UtilsBitmap.bitmapFromDrawable(drawable);
+                                    bmp = UtilsBitmap.scaleSquareBitmap(bmp, Const.REPLY_THUMBNAIL_DIM);
+                                    byte[] bits = UtilsBitmap.bitmapToBytes(bmp, "image/jpeg");
                                     node.putData("val", Base64.encodeToString(bits, Base64.NO_WRAP));
                                     node.putData("size", bits.length);
                                     node.putData("mime", "image/jpeg");

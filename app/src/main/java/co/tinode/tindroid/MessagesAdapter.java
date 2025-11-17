@@ -249,7 +249,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         span.setSpan(new ForegroundColorSpan(Color.rgb(0x75, 0x75, 0x75)),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         Drawable icon = AppCompatResources.getDrawable(ctx, iconId);
-        span.setSpan(new IconMarginSpan(UiUtils.bitmapFromDrawable(icon), 24),
+        span.setSpan(new IconMarginSpan(UtilsBitmap.bitmapFromDrawable(icon), 24),
                 0, span.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return span;
     }

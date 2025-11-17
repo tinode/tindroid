@@ -74,7 +74,7 @@ public class CallManager {
                     int size = avatar.getByteCount();
                     if (size > 32_768) {
                         // If the avatar is too large, scale it down, otherwise PhoneAccount.builder throws.
-                        avatar = UiUtils.scaleSquareBitmap(avatar, 128);
+                        avatar = UtilsBitmap.scaleSquareBitmap(avatar, 128);
                     }
                     icon = Icon.createWithAdaptiveBitmap(avatar);
                 }

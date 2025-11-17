@@ -18,6 +18,7 @@ import androidx.annotation.NonNull;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.UiUtils;
 
+import co.tinode.tindroid.UtilsBitmap;
 import coil.Coil;
 import coil.request.ImageRequest;
 import coil.size.Scale;
@@ -67,7 +68,7 @@ public class UrlLayerDrawable extends LayerDrawable {
             @Override
             public void onSuccess(@NonNull Drawable result) {
                 setDrawableByLayerId(mLayerId,
-                        new RoundImageDrawable(mRes, UiUtils.bitmapFromDrawable(result)));
+                        new RoundImageDrawable(mRes, UtilsBitmap.bitmapFromDrawable(result)));
             }
 
             @Override

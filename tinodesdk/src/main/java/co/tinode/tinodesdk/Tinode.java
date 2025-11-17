@@ -160,7 +160,7 @@ public class Tinode {
         // Silently ignore unknown properties
         sJsonMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         // Skip null fields from serialization
-        sJsonMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
+        sJsonMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_EMPTY);
         // Add handler for various deserialization problems
         sJsonMapper.addHandler(new NullingDeserializationProblemHandler());
 
@@ -799,6 +799,22 @@ public class Tinode {
         } catch (MalformedURLException ignored) {
             return null;
         }
+    }
+
+    /**
+     * Get URL pointing to the location of wallpapers
+     */
+    public @Nullable String getWallpaperBase() {
+        String serverBase = getHttpOrigin();
+        return serverBase != null ? serverBase + "/img/bkg" : null;
+    }
+
+    /**
+     * Get URL pointing to the location of wallpaper index file.
+     */
+    public @Nullable String getWallpaperIndex() {
+        String base = getWallpaperBase();
+        return base != null ? base + "/index.json" : null;
     }
 
     private static URI createWebsocketURI(@NotNull String hostName, boolean tls) throws URISyntaxException {

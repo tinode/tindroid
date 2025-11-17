@@ -4,19 +4,10 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.PorterDuff;
-import android.graphics.Shader;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -46,12 +37,7 @@ import java.util.List;
 import co.tinode.tindroid.account.Utils;
 import co.tinode.tindroid.media.Wallpapers;
 
-import co.tinode.tindroid.widgets.BlurTransformation;
 import co.tinode.tinodesdk.Tinode;
-
-import coil.Coil;
-import coil.request.ImageRequest;
-import coil.target.Target;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -62,33 +48,23 @@ import okhttp3.Response;
 public class WallpaperFragment extends Fragment {
     private final static String TAG = "WallpaperFragment";
 
-    private static final String PATH = "/img/bkg";
-    private static final String META_INDEX = "/index.json";
-
     private static final int TAB_PATTERN = 0;
     private static final int TAB_IMAGE = 1;
 
     private String mBaseUrl;
+    private String mIndexUrl;
+
     private ViewPager2 mViewPager;
     private TabLayout mTabLayout;
     private Button mRestoreDefault;
     private ImageView mPreview;
     private int mBlur;
-    private ColorMatrixColorFilter mInverter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mBaseUrl = Cache.getTinode().getHttpOrigin() + PATH;
-
-        ColorMatrix cm = new ColorMatrix();
-        cm.set(new float[] {
-                -1,  0,  0, 0, 255,  // R
-                0, -1,  0, 0, 255,  // G
-                0,  0, -1, 0, 255,  // B
-                0,  0,  0, 1,   0   // A
-        });
-        mInverter = new ColorMatrixColorFilter(cm);
+        mBaseUrl = Cache.getTinode().getWallpaperBase();
+        mIndexUrl = Cache.getTinode().getWallpaperIndex();
     }
 
     @Nullable
@@ -169,7 +145,7 @@ public class WallpaperFragment extends Fragment {
     private void fetchImageData() {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url(mBaseUrl + META_INDEX)
+                .url(mIndexUrl)
                 .build();
 
         client.newCall(request).enqueue(new Callback() {
@@ -271,52 +247,7 @@ public class WallpaperFragment extends Fragment {
     }
 
     private void assignBackgroundPreview(final String name, final int size, final int blur) {
-        Log.i(TAG, "Assigning background preview: " + name + ", size: " + size + ", blur: " + blur);
-        Context context = requireContext();
-        ImageRequest.Builder builder = new ImageRequest.Builder(context)
-                .data(mBaseUrl + "/" + name);
-        if (size > 0) {
-            builder.size(UiUtils.dpToPx(context, size));
-        } else if (blur > 0 && blur <= 5) {
-            Log.i(TAG, "Applying blur: " + blur);
-            float[] radius = new float[]{0, 1, 2, 4, 8, 16};
-            builder.transformations(new BlurTransformation(context, radius[blur]));
-        }
-
-        final boolean nightMode = UiUtils.isNightMode(context);
-        ImageRequest request = builder.target(new Target() {
-                    @Override
-                    public void onSuccess(@NonNull Drawable result) {
-                        if (result instanceof BitmapDrawable) {
-                            if (size > 0) {
-                                // Pattern.
-                                ((BitmapDrawable) result).setTileModeXY(Shader.TileMode.REPEAT, Shader.TileMode.REPEAT);
-                            } else {
-                                // Wallpaper.
-                                ((BitmapDrawable) result).setGravity(Gravity.CENTER);
-                            }
-                        }
-                        if (nightMode) {
-                            if (size > 0) {
-                                mPreview.setColorFilter(mInverter);
-                            } else {
-                                mPreview.setColorFilter(Color.rgb(192, 192, 192),
-                                        PorterDuff.Mode.MULTIPLY);
-                            }
-                        } else {
-                            mPreview.clearColorFilter();
-                        }
-
-                        mPreview.setImageDrawable(result);
-                    }
-
-                    @Override
-                    public void onError(@Nullable Drawable error) {
-                        mPreview.setImageDrawable(null);
-                    }
-                })
-                .build();
-        Coil.imageLoader(requireContext()).enqueue(request);
+        UtilsBitmap.assignBackgroundImage(requireContext(), mPreview, mBaseUrl + "/" + name, size, blur);
     }
 
     private static void saveWallpaper(Context context, String name, int size, int blur) {
@@ -325,7 +256,6 @@ public class WallpaperFragment extends Fragment {
         pref.putInt(Utils.PREFS_WALLPAPER_SIZE, size);
         pref.putInt(Utils.PREFS_WALLPAPER_BLUR, blur);
         pref.apply();
-        Log.i(TAG, "Saved wallpaper: " + name + ", size: " + size + ", blur: " + blur);
     }
 
     private static class ImagePagerAdapter extends FragmentStateAdapter {

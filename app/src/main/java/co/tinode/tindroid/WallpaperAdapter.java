@@ -128,7 +128,7 @@ public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> 
             ImageRequest.Builder builder = new ImageRequest.Builder(itemView.getContext())
                     .data(baseUrl + "/" + (TextUtils.isEmpty(wp.preview) ? wp.name : wp.preview));
             if (wp.size > 0) {
-                builder = builder.size(UiUtils.dpToPx(itemView.getContext(), wp.size));
+                builder = builder.size(UtilsBitmap.dpToPx(itemView.getContext(), wp.size));
             }
             ImageRequest request = builder
                     .target(new Target() {
