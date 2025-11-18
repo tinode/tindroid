@@ -373,4 +373,11 @@
     <string name="subscribers">訂閱者：%1$d</string>
     <string name="subscribers_label">訂閱者：</string>
     <string name="fullscreen_button">退出全螢幕模式</string>
+
+    <string name="change_wallpapers">更換桌布</string>
+    <string name="wallpapers_unavailable">桌布無法使用\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">恢復預設</string>
+    <string name="blur">模糊</string>
+    <string name="wp_pattern">圖案</string>
+    <string name="wp_image">桌布</string>
 </resources>

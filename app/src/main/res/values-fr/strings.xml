@@ -373,4 +373,11 @@
     <string name="subscribers">Abonnés : %1$d</string>
     <string name="subscribers_label">Abonnés :</string>
     <string name="fullscreen_button">Quitter le mode plein écran</string>
+
+    <string name="change_wallpapers">Changer le fond d\'écran</string>
+    <string name="wallpapers_unavailable">Fonds d\'écran indisponibles\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Restaurer par défaut</string>
+    <string name="blur">Flou</string>
+    <string name="wp_pattern">Motif</string>
+    <string name="wp_image">Fond d\'écran</string>
 </resources>

@@ -374,4 +374,11 @@
     <string name="subscribers">Abonați: %1$d</string>
     <string name="subscribers_label">Abonați:</string>
     <string name="fullscreen_button">Ieșire din modul ecran complet</string>
+
+    <string name="change_wallpapers">Schimbă imaginea de fundal</string>
+    <string name="wallpapers_unavailable">Imagini de fundal indisponibile\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Restabilește implicit</string>
+    <string name="blur">Estompare</string>
+    <string name="wp_pattern">Model</string>
+    <string name="wp_image">Imagine de fundal</string>
 </resources>

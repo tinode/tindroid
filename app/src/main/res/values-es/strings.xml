@@ -372,4 +372,11 @@
     <string name="subscribers">Suscriptores: %1$d</string>
     <string name="subscribers_label">Suscriptores:</string>
     <string name="fullscreen_button">Salir de pantalla completa</string>
+
+    <string name="change_wallpapers">Cambiar fondo de pantalla</string>
+    <string name="wallpapers_unavailable">Fondos de pantalla no disponibles\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Restaurar predeterminado</string>
+    <string name="blur">Desenfoque</string>
+    <string name="wp_pattern">Patrón</string>
+    <string name="wp_image">Fondo de pantalla</string>
 </resources>

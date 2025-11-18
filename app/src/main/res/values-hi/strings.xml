@@ -48,9 +48,9 @@
     <string name="login_required">लॉगिन आवश्यक</string>
     <string name="password_required">पासवर्ड आवश्यक</string>
     <string name="error_new_account_failed">खाता पंजीकरण विफल:</string>
-    <string name="no_chats">आपके पास कोई चैट नहीं है</string>
+    <string name="no_chats">आपके पास कोई चैट नहीं है\n¯\\_(ツ)_/¯</string>
     <string name="alphabet">ABCDEFGHIJKLMNOPQRSTUVWXYZ</string>
-    <string name="tinode_invite_subject">¯\\_(ツ)_/¯</string>
+    <string name="tinode_invite_subject">Tinode Messenger देखें</string>
     <string name="tinode_invite_body">टिनोड मैसेंजर देखें। इसे https://tinode.co से डाउनलोड करें</string>
     <string name="profile_action">टिनोड प्रोफाइल</string>
     <string name="view_profile">प्रोफ़ाइल देखें</string>
@@ -345,4 +345,11 @@
     <string name="subscribers">सब्सक्राइबर: %1$d</string>
     <string name="subscribers_label">सब्सक्राइबर:</string>
     <string name="fullscreen_button">फ़ुल स्क्रीन मोड से बाहर निकलें</string>
+
+    <string name="change_wallpapers">वॉलपेपर बदलें</string>
+    <string name="wallpapers_unavailable">वॉलपेपर उपलब्ध नहीं हैं\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">डिफ़ॉल्ट पुनर्स्थापित करें</string>
+    <string name="blur">धुंधला</string>
+    <string name="wp_pattern">पैटर्न</string>
+    <string name="wp_image">वॉलपेपर</string>
 </resources>

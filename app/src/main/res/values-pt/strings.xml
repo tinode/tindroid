@@ -374,4 +374,11 @@
     <string name="subscribers">Inscritos: %1$d</string>
     <string name="subscribers_label">Inscritos:</string>
     <string name="fullscreen_button">Sair do modo de tela cheia</string>
+
+    <string name="change_wallpapers">Alterar papel de parede</string>
+    <string name="wallpapers_unavailable">Papéis de parede indisponíveis\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Restaurar padrão</string>
+    <string name="blur">Desfoque</string>
+    <string name="wp_pattern">Padrão</string>
+    <string name="wp_image">Papel de parede</string>
 </resources>

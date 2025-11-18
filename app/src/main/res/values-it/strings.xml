@@ -374,4 +374,11 @@
     <string name="subscribers">Iscritti: %1$d</string>
     <string name="subscribers_label">Iscritti:</string>
     <string name="fullscreen_button">Esci dalla modalità a schermo intero</string>
+
+    <string name="change_wallpapers">Cambia sfondo</string>
+    <string name="wallpapers_unavailable">Sfondi non disponibili\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">Ripristina predefinito</string>
+    <string name="blur">Sfocatura</string>
+    <string name="wp_pattern">Motivo</string>
+    <string name="wp_image">Sfondo</string>
 </resources>

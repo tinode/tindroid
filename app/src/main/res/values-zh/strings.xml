@@ -374,4 +374,11 @@
     <string name="subscribers">订阅者：%1$d</string>
     <string name="subscribers_label">订阅者：</string>
     <string name="fullscreen_button">退出全屏模式</string>
+
+    <string name="change_wallpapers">更换壁纸</string>
+    <string name="wallpapers_unavailable">壁纸不可用\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">恢复默认</string>
+    <string name="blur">模糊</string>
+    <string name="wp_pattern">图案</string>
+    <string name="wp_image">壁纸</string>
 </resources>

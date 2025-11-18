@@ -372,4 +372,11 @@
     <string name="subscribers">구독자: %1$d명</string>
     <string name="subscribers_label">구독자:</string>
     <string name="fullscreen_button">전체 화면 모드 종료</string>
+
+    <string name="change_wallpapers">배경화면 변경</string>
+    <string name="wallpapers_unavailable">배경화면을 사용할 수 없습니다\n\n¯\\_(ツ)_/¯</string>
+    <string name="restore_default">기본값 복원</string>
+    <string name="blur">흐림</string>
+    <string name="wp_pattern">패턴</string>
+    <string name="wp_image">배경화면</string>
 </resources>
