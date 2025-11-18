@@ -89,7 +89,6 @@ import co.tinode.tindroid.format.SendReplyFormatter;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tindroid.widgets.DotSelectorDrawable;
 import co.tinode.tindroid.widgets.AttachmentPickerDialog;
-
 import co.tinode.tindroid.widgets.MovableActionButton;
 import co.tinode.tindroid.widgets.WaveDrawable;
 import co.tinode.tinodesdk.ComTopic;
@@ -137,7 +136,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     private RecyclerView mRecyclerView;
     private MessagesAdapter mMessagesAdapter;
     private SwipeRefreshLayout mRefresher;
-    private ImageView mBackgroundImage;
 
     private int mSelectedPin = -1;
     private PinnedAdapter mPinnedAdapter = null;
@@ -148,10 +146,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     private String mTopicName = null;
     private String mMessageToSend = null;
     private boolean mChatInvitationShown = false;
-
-    private String mWallpaper = null;
-    private int mWallpaperSize = 0;
-    private int mWallpaperBlur = 0;
 
     private boolean mSendOnEnter = false;
 
@@ -320,15 +314,13 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         mGoToLatest = activity.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
 
-        mBackgroundImage = view.findViewById(R.id.background);
-
-        mWallpaper = pref.getString(Utils.PREFS_WALLPAPER, "");
-        mWallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
-        mWallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
-
-        UtilsBitmap.assignBackgroundImage(activity, mBackgroundImage,
-                Cache.getTinode().getWallpaperBase() + "/" + mWallpaper,
-                mWallpaperSize, mWallpaperBlur);
+        final ImageView backgroundImage = view.findViewById(R.id.background);
+        final String wallpaper = pref.getString(Utils.PREFS_WALLPAPER, "");
+        final int wallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
+        final int wallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
+        UtilsBitmap.assignBackgroundImage(activity, backgroundImage,
+                Cache.getTinode().getWallpaperBase() + "/" + wallpaper,
+                wallpaperSize, wallpaperBlur);
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override

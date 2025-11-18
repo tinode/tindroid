@@ -12,8 +12,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-import org.jetbrains.annotations.Nullable;
-
+import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,8 +25,6 @@ import coil.request.ImageRequest;
 import coil.target.Target;
 
 public class WallpaperAdapter extends RecyclerView.Adapter<WallpaperAdapter.VH> {
-    private static final String TAG = "WallpaperAdapter";
-
     private final List<Wallpapers.WPaper> mWallpapers;
     private final OnImageClickListener mListener;
     private final String mBaseUrl;

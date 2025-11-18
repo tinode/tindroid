@@ -119,6 +119,10 @@ public class WallpaperFragment extends Fragment {
                 if (adapter != null) {
                     adapter.setBlur(0);
                     adapter.setSelectedItem(TAB_PATTERN, "");
+                    List<Wallpapers.WPaper> patterns = adapter.getWPaperPatterns();
+                    if (!patterns.isEmpty()) {
+                        assignBackgroundPreview(patterns.get(0).name, patterns.get(0).size, 0);
+                    }
                 }
             });
         });
@@ -211,7 +215,7 @@ public class WallpaperFragment extends Fragment {
     private void syncSelectionFromPrefs() {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(requireContext());
         final String name = pref.getString(Utils.PREFS_WALLPAPER, "");
-        final int size = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
+        int size = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
         int tab = TextUtils.isEmpty(name) ? TAB_PATTERN : size > 0 ? TAB_PATTERN : TAB_IMAGE;
         mBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
 
@@ -229,16 +233,18 @@ public class WallpaperFragment extends Fragment {
             adapter.setBlur(mBlur);
 
             String previewName = name;
+            int previewSize = size;
             if (TextUtils.isEmpty(name)) {
                 List<Wallpapers.WPaper> patterns = adapter.getWPaperPatterns();
                 if (!patterns.isEmpty()) {
                     previewName = patterns.get(0).name;
+                    previewSize = patterns.get(0).size;
                 }
             }
 
             // Load and set background image using Coil
             if (!TextUtils.isEmpty(previewName)) {
-                assignBackgroundPreview(previewName, size, mBlur);
+                assignBackgroundPreview(previewName, previewSize, mBlur);
             } else {
                 // Clear background if no wallpaper is selected.
                 mPreview.setBackground(null);

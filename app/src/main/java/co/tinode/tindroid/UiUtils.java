@@ -568,7 +568,11 @@ public class UiUtils {
                         .size(size, size)
                         .build();
                 Drawable drw = ImageLoaders.executeBlocking(Coil.imageLoader(context), req).getDrawable();
-                bitmap = UtilsBitmap.bitmapFromDrawable(drw);
+                if (drw != null) {
+                    bitmap = UtilsBitmap.bitmapFromDrawable(drw);
+                } else {
+                    bitmap = pub.getBitmap();
+                }
             } else {
                 bitmap = pub.getBitmap();
             }
