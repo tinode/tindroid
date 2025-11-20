@@ -161,25 +161,33 @@ public class SignUpFragment extends Fragment
                 return;
             }
 
+            final View view = getView();
+            if (view == null) {
+                return;
+            }
+
             for (final String method : mCredMethods) {
                 if (TextUtils.isEmpty(method)) {
                     continue;
                 }
 
-                View field = null;
+                View field;
                 if (method.equals("tel")) {
-                    field = activity.findViewById(R.id.phone);
+                    field = view.findViewById(R.id.phone);
                 } else if (method.equals("email")) {
-                    field = activity.findViewById(R.id.emailWrapper);
+                    field = view.findViewById(R.id.emailWrapper);
                 } else {
                     // TODO: show generic text prompt for unknown method.
                     Log.w(TAG, "Show generic validation field for " + method);
+                    continue;
                 }
 
-                if (field != null) {
-                    field.setVisibility(View.VISIBLE);
-                    activity.findViewById(R.id.newLogin).requestFocus();
-                }
+                field.setVisibility(View.VISIBLE);
+            }
+
+            View field = view.findViewById(R.id.newLogin);
+            if (field != null) {
+                field.requestFocus();
             }
         });
     }
