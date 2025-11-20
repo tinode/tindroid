@@ -315,11 +315,10 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
     }
 
     /**
-     * Get the rank of the pinned topic.
+     * Check of the given topic is pinned (pinnedRank > 0).
      * @param topicName - Name of the topic to check.
      *
-     * @return numeric rank of the pinned topic in the range 1..N (N being the top,
-     *      N - the number of pinned topics) or 0 if not pinned.
+     * @return true if pinned, false otherwise.
      */
     public boolean isPinned(final @NotNull String topicName) {
         PrivateType priv = getPriv();
@@ -402,11 +401,13 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
             Log.w(TAG, "Request to delete an unknown topic: " + sub.topic);
         }
 
-        if (mStore != null && topic != null) {
+        if (topic != null) {
             int pinnedRank = pinnedTopicRank(sub.topic);
             if (topic.getPinnedRank() != pinnedRank) {
                 topic.setPinnedRank(pinnedRank);
-                mStore.topicUpdate(topic);
+                if (mStore != null) {
+                    mStore.topicUpdate(topic);
+                }
             }
             // Use p2p topic to update user's record.
             if (topic.getTopicType() == TopicType.P2P) {
@@ -419,7 +420,7 @@ public class MeTopic<DP> extends Topic<DP,PrivateType,DP,PrivateType> {
                 } else {
                     changed = user.merge(topic.mDesc);
                 }
-                if (changed) {
+                if (changed && mStore != null) {
                     mStore.userUpdate(user);
                 }
             }
