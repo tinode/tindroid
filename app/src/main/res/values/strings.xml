@@ -397,4 +397,5 @@
     <string name="blur">Blur</string>
     <string name="wp_pattern">Pattern</string>
     <string name="wp_image">Wallpaper</string>
+    <string name="note">Note</string>
 </resources>

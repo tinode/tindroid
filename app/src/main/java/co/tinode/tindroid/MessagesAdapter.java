@@ -359,12 +359,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             int pos = positions[i];
             StoredMessage msg = getMessage(pos);
             if (msg != null) {
-                if (msg.from != null) {
+                sb.append("\n[");
+                if (topic.isSlfType()) {
+                    sb.append(mActivity.getString(R.string.note));
+                } else if (msg.from != null) {
                     Subscription<VxCard, ?> sub = (Subscription<VxCard, ?>) topic.getSubscription(msg.from);
-                    sb.append("\n[");
                     sb.append((sub != null && sub.pub != null) ? sub.pub.fn : msg.from);
-                    sb.append("]: ");
+                } else {
+                    sb.append(mActivity.getString(R.string.unknown));
                 }
+                sb.append("]: ");
                 if (msg.content != null) {
                     sb.append(msg.content.format(new CopyFormatter(mActivity)));
                 }

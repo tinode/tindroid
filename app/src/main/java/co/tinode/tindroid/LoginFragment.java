@@ -66,8 +66,7 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
 
     @Override
     public void onResume() {
-        Activity activity = requireActivity();
-        initBranding(activity);
+        initBranding(requireActivity());
         super.onResume();
     }
 
@@ -75,13 +74,18 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
         final SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
         String login = pref.getString(LoginActivity.PREFS_LAST_LOGIN, null);
 
+        View view = getView();
+        if (view == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
         if (!TextUtils.isEmpty(login)) {
-            TextView loginView = activity.findViewById(R.id.editLogin);
+            TextView loginView = view.findViewById(R.id.editLogin);
             if (loginView != null) {
                 loginView.setText(login);
             }
         } else if (UiUtils.isAppFirstRun(activity)) {
-            View branding = activity.findViewById(R.id.brandingSetup);
+            View branding = view.findViewById(R.id.brandingSetup);
             branding.setVisibility(View.VISIBLE);
             branding.setOnClickListener(v ->
                     ((LoginActivity) activity).showFragment(LoginActivity.FRAGMENT_BRANDING, null));
@@ -90,10 +94,10 @@ public class LoginFragment extends Fragment implements MenuProvider, View.OnClic
             if ((config = BrandingConfig.getConfig(activity)) != null) {
                 Bitmap logo = BrandingConfig.getLargeIcon(activity);
                 if (logo != null) {
-                    ((AppCompatImageView) activity.findViewById(R.id.imageLogo)).setImageBitmap(logo);
-                    ((TextView) activity.findViewById(R.id.appTitle)).setText(config.service_name);
+                    ((AppCompatImageView) view.findViewById(R.id.imageLogo)).setImageBitmap(logo);
+                    ((TextView) view.findViewById(R.id.appTitle)).setText(config.service_name);
 
-                    View byTinode = activity.findViewById(R.id.byTinode);
+                    View byTinode = view.findViewById(R.id.byTinode);
                     byTinode.setVisibility(View.VISIBLE);
                     UiUtils.clickToBrowseTinodeURL(byTinode);
                 }

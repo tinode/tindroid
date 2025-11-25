@@ -355,7 +355,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
         }
 
         // Check if the alias is already taken.
-        FndTopic<?> fnd = Cache.getTinode().getFndTopic();
+        FndTopic<?> fnd = Cache.getTinode().getOrCreateFndTopic();
         fnd.checkTagUniqueness(alias, mTopic.getName()).thenApply(new PromisedReply.SuccessListener<>() {
             @Override
             public PromisedReply<Boolean> onSuccess(Boolean result) {

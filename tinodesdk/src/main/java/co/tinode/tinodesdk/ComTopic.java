@@ -216,6 +216,25 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
         return null;
     }
 
+    // Handle special cases.
+    @SuppressWarnings("unchecked")
+    public Subscription<DP, PrivateType> getSubscription(String key) {
+        if (isSlfType()) {
+            Subscription<DP, PrivateType> sub = new Subscription<>();
+            sub.pub = getPub();
+            return sub;
+        }
+        Subscription<DP, PrivateType> sub = super.getSubscription(key);
+        if (sub == null) {
+            return null;
+        }
+        if (isP2PType() && sub.pub == null) {
+            sub.pub = getName().equals(key) ?
+                    getPub() : (DP) mTinode.getMeTopic().getPub();
+        }
+        return sub;
+    }
+
     /**
      * Archive topic by issuing {@link Topic#setMeta} with priv set to {arch: true/false}.
      *
@@ -255,3 +274,4 @@ public class ComTopic<DP extends TheCard> extends Topic<DP,PrivateType,DP,Privat
     public static class CTListener<DP extends TheCard> implements Listener<DP,PrivateType,DP,PrivateType> {
     }
 }
+
