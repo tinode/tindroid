@@ -97,7 +97,7 @@
     <string name="permission_join">Alăturare</string>
     <string name="permission_read">Citire</string>
     <string name="permission_write">Scrie</string>
-    <string name="permission_approve">Aprobare noi membrii</string>
+    <string name="permission_approve">Aprobată noi membrii</string>
     <string name="permission_share">Invită noi memberii</string>
     <string name="permission_notifications">Primire notificări</string>
     <string name="permission_delete">Ştergere mesaje</string>
@@ -381,4 +381,5 @@
     <string name="blur">Estompare</string>
     <string name="wp_pattern">Model</string>
     <string name="wp_image">Imagine de fundal</string>
+    <string name="note">Notă</string>
 </resources>
