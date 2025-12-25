@@ -81,22 +81,22 @@ dependencies {
     implementation project(path: ':tinodesdk')
 
     // Camera libraries must use the the same version.
-    def camerax_version = '1.5.1'
+    def camerax_version = '1.5.2'
     implementation "androidx.camera:camera-camera2:${camerax_version}"
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}"
     implementation "androidx.camera:camera-lifecycle:${camerax_version}"
 
-    implementation 'androidx.activity:activity:1.11.0'
+    implementation 'androidx.activity:activity:1.12.2'
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
     implementation 'androidx.coordinatorlayout:coordinatorlayout:1.3.0'
-    implementation 'androidx.core:core-splashscreen:1.0.1'
+    implementation 'androidx.core:core-splashscreen:1.2.0'
 
     // noinspection GradleDependency: 1.4 requires API 34
     implementation 'androidx.emoji2:emoji2:1.3.0'
-    implementation 'androidx.exifinterface:exifinterface:1.4.1'
+    implementation 'androidx.exifinterface:exifinterface:1.4.2'
     implementation 'androidx.fragment:fragment:1.8.9'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.legacy:legacy-support-v13:1.0.0'
@@ -122,7 +122,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:25.0.1'
     implementation 'com.google.mlkit:barcode-scanning:17.3.0'
 
-    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.18'
+    implementation 'com.googlecode.libphonenumber:libphonenumber:9.0.21'
 
     // WebRTC.
     implementation 'com.dafruits:webrtc:123.0.0'
@@ -135,7 +135,7 @@ dependencies {
     // QR Code generator.
     implementation 'io.nayuki:qrcodegen:1.8.0'
 
-    annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.9.4'
+    annotationProcessor 'androidx.lifecycle:lifecycle-common-java8:2.10.0'
 
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
 
