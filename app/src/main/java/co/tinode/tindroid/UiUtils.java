@@ -346,7 +346,7 @@ public class UiUtils {
     public static void setupSystemToolbar(Activity activity) {
         Window window = activity.getWindow();
         boolean darkMode = isNightMode(activity);
-        window.setStatusBarColor(Color.TRANSPARENT);
+        // window.setStatusBarColor(Color.TRANSPARENT);
         WindowCompat.getInsetsController(window, window.getDecorView()).setAppearanceLightStatusBars(!darkMode);
     }
 
