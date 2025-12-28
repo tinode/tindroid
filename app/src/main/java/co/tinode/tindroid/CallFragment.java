@@ -73,7 +73,6 @@ import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.ComTopic;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
-import co.tinode.tinodesdk.Topic;
 import co.tinode.tinodesdk.model.Drafty;
 import co.tinode.tinodesdk.model.MsgServerInfo;
 import co.tinode.tinodesdk.model.ServerMessage;
@@ -329,11 +328,21 @@ public class CallFragment extends Fragment {
             return;
         }
 
+        // Aspect ratio must be between 0.418410 and 2.390000 (Android requirement).
         View view = getView();
         int width = view != null ? view.getWidth() : 1;
         int height = view != null ? view.getHeight() : 1;
+
+        // Ensure dimensions are valid
+        if (width <= 0) width = 1;
+        if (height <= 0) height = 1;
+
+        // Clamp aspect ratio to Android requirements
+        float aspectRatio = (float) width / height;
+        aspectRatio = Math.max(0.42f, Math.min(aspectRatio, 2.35f));
+
         PictureInPictureParams params = new PictureInPictureParams.Builder()
-                .setAspectRatio(new Rational(width, height))
+                .setAspectRatio(new Rational(Math.round(aspectRatio * 100), 100))
                 .build();
         if (!activity.enterPictureInPictureMode(params)) {
             Log.w(TAG, "Failed to enter PiP mode");
@@ -898,9 +907,8 @@ public class CallFragment extends Fragment {
                     case CLOSED:
                     case FAILED:
                         playSoundEffect(R.raw.call_ended);
-                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                            handleCallClose(getActivity());
-                        }, 700);
+                        new Handler(Looper.getMainLooper()).postDelayed(() ->
+                                handleCallClose(getActivity()), 700);
                         break;
                 }
             }
