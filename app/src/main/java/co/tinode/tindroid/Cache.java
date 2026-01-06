@@ -169,16 +169,25 @@ public class Cache {
         if (sInstance.mCallInProgress == null) {
             sInstance.mCallInProgress = new CallInProgress(topic, seq, conn);
         } else if (!sInstance.mCallInProgress.equals(topic, seq)) {
-            Log.e(TAG, "Inconsistent prepareNewCall\n\tExisting: " +
-                    sInstance.mCallInProgress + "\n\tNew: " + topic + ":" + seq);
+            // Include stacktrace to identify the caller which attempted to start a conflicting call.
+            throw new IllegalStateException("prepareNewCall called while another call is in progress"  +
+                    "\n\tNew: " + topic + ":" + seq);
         }
     }
 
     public static void setCallActive(String topic, int seqId) {
-        if (sInstance.mCallInProgress!= null) {
-            sInstance.mCallInProgress.setCallActive(topic, seqId);
+        if (sInstance.mCallInProgress != null) {
+            try {
+                sInstance.mCallInProgress.setCallActive(topic, seqId);
+            } catch (IllegalArgumentException iae) {
+                // Preserve fatal behavior but add context about the cache state.
+                throw new IllegalArgumentException("setCallActive failed. Existing=" +
+                        sInstance.mCallInProgress +
+                        " New=" + topic + ":" + seqId + "; err=" + iae.getMessage());
+            }
         } else {
-            Log.e(TAG, "Attempt to mark call active with no configured call");
+            throw new IllegalStateException("setCallActive without prepareNewCall, New="
+                    + topic + ":" + seqId);
         }
     }
 

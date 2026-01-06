@@ -303,7 +303,7 @@ public class UtilsBitmap {
 
                     @Override
                     public void onError(@Nullable Drawable error) {
-                        target.setImageDrawable(null);
+                        target.setImageResource(R.drawable.message_view_bkg);
                     }
                 })
                 .build();

@@ -35,14 +35,21 @@ public class CallInProgress {
         return mIsOutgoing;
     }
 
-    public void setCallActive(@NonNull String topic, int seqId) {
+    public synchronized void setCallActive(@NonNull String topic, int seqId) {
         if (mTopic.equals(topic) && (mSeq == 0 || mSeq == seqId)) {
             mSeq = seqId;
             if (mConnection != null) {
                 mConnection.setActive();
             }
         } else {
-            throw new IllegalArgumentException("Call seq is already assigned");
+            // Keep this fatal as an invariant violation, but include actionable context.
+            final int connState = mConnection != null ? mConnection.getState() : -1;
+            throw new IllegalArgumentException("Call seq is already assigned (inconsistent activate)" +
+                    " existing={topic='" + mTopic + "', seq=" + mSeq +
+                    ", outgoing=" + mIsOutgoing + ", connected=" + mConnected +
+                    ", connState=" + connState + "}" +
+                    " new={topic='" + topic + "', seq=" + seqId + "}" +
+                    " thread='" + Thread.currentThread().getName() + "'");
         }
     }
 

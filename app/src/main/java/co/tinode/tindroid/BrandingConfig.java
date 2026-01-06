@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.account.Utils;
@@ -41,6 +42,7 @@ public class BrandingConfig {
     private static final String TAG = "ClientConfig";
     private static final String HOSTS = "https://hosts.tinode.co/id/";
     private static final int CHUNK_SIZE = 2048;
+    private static final int NETWORK_TIMEOUT = 5; // seconds
 
     private static final String CONFIG_FILE_NAME = "client_config.json";
     private static final String KEY_ID = "id";
@@ -109,8 +111,14 @@ public class BrandingConfig {
     }
 
     static void fetchConfigFromServer(final Context context, String short_code, ReadyListener listener) {
+        // Don't care if it fails, do not retry branding.
+        UiUtils.doneAppFirstRun(context);
 
-        OkHttpClient httpClient = new OkHttpClient();
+        OkHttpClient httpClient = new OkHttpClient.Builder()
+                .connectTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
+                .writeTimeout(NETWORK_TIMEOUT, TimeUnit.SECONDS)
+                .readTimeout(NETWORK_TIMEOUT * 3, TimeUnit.SECONDS)
+                .build();
         Request req = new Request.Builder().url(HOSTS + short_code).build();
 
         try (Response resp = httpClient.newCall(req).execute()) {
@@ -167,8 +175,6 @@ public class BrandingConfig {
                                 scheme != null && "https".equals(scheme.toLowerCase(Locale.ROOT)))
                         .apply();
             }
-
-            UiUtils.doneAppFirstRun(context);
         } catch (IOException ex) {
             Log.w(TAG, "Failed to fetch client config", ex);
         }
