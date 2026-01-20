@@ -1117,7 +1117,7 @@ public class MessageActivity extends BaseActivity
         public void onMetaDesc(final Description<VxCard, PrivateType> desc) {
             runOnUiThread(() -> {
                 Fragment fragment = UiUtils.getVisibleFragment(getSupportFragmentManager());
-                if (fragment != null) {
+                if (fragment != null && mTopic != null) {
                     if (fragment instanceof DataSetChangeListener) {
                         ((DataSetChangeListener) fragment).notifyDataSetChanged();
                     } else if (fragment instanceof MessagesFragment) {
@@ -1160,8 +1160,12 @@ public class MessageActivity extends BaseActivity
 
         @Override
         public void onOnline(final boolean online) {
-            runOnUiThread(() -> UiUtils.toolbarSetOnline(MessageActivity.this,
-                    mTopic.getOnline(), mTopic.getLastSeen()));
+            runOnUiThread(() -> {
+                if (mTopic != null) {
+                    UiUtils.toolbarSetOnline(MessageActivity.this,
+                        mTopic.getOnline(), mTopic.getLastSeen());
+                }
+            });
 
         }
     }
