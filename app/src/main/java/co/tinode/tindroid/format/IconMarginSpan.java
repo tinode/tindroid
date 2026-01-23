@@ -2,6 +2,7 @@ package co.tinode.tindroid.format;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.Layout;
 import android.text.Spanned;
@@ -19,7 +20,7 @@ public class IconMarginSpan implements LeadingMarginSpan.LeadingMarginSpan2 {
     private final int mLines;
 
     /**
-     * @param icon    The drawable to place in the margin.
+     * @param icon    The drawable to place in the margin. Must have bounds set before use.
      * @param padding Extra padding between the icon and text.
      * @param lines   Number of lines the icon should span.
      */
@@ -36,7 +37,8 @@ public class IconMarginSpan implements LeadingMarginSpan.LeadingMarginSpan2 {
 
     @Override
     public int getLeadingMargin(boolean first) {
-        return mIcon.getIntrinsicWidth() + mPadding;
+        // Use bounds width instead of intrinsic width for consistent sizing
+        return mIcon.getBounds().width() + mPadding;
     }
 
     @Override
@@ -48,8 +50,10 @@ public class IconMarginSpan implements LeadingMarginSpan.LeadingMarginSpan2 {
         if (text instanceof Spanned spanned) {
             int spanStart = spanned.getSpanStart(this);
             if (start == spanStart) {
-                int iconWidth = mIcon.getIntrinsicWidth();
-                int iconHeight = mIcon.getIntrinsicHeight();
+                // Use bounds for consistent sizing (bounds must be set before creating span)
+                Rect bounds = mIcon.getBounds();
+                int iconWidth = bounds.width();
+                int iconHeight = bounds.height();
 
                 // Position icon at top-left, aligned with text top
                 int left = x + (dir > 0 ? 0 : -iconWidth);

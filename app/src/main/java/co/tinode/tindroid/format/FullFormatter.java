@@ -583,13 +583,26 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         }
 
         Drawable avatar = null;
-        String photoUrl = null;
         Map<String, Object> photoData = getMapVal("photo", data);
         if (photoData != null) {
             String ref = getStringVal("ref", photoData, null);
             String photoDataStr = getStringVal("data", photoData, null);
             if (ref != null && !ref.equals(Tinode.NULL_VALUE)) {
-                photoUrl = ref;
+                // Load avatar from remote URL
+                URL url = Cache.getTinode().toAbsoluteURL(ref);
+                if (url != null) {
+                    // Create placeholder (letter tile) while loading
+                    LetterTileDrawable placeholder = new LetterTileDrawable(ctx);
+                    placeholder.setContactTypeAndColor(LetterTileDrawable.ContactType.PERSON, false)
+                            .setLetterAndColor(fullName, fullName, false)
+                            .setIsCircular(true);
+
+                    co.tinode.tindroid.widgets.RemoteRoundImageDrawable remoteAvatar =
+                        new co.tinode.tindroid.widgets.RemoteRoundImageDrawable(
+                            ctx, mContainer, avatarSize, placeholder);
+                    remoteAvatar.load(url);
+                    avatar = remoteAvatar;
+                }
             } else if (photoDataStr != null && !photoDataStr.equals(Tinode.NULL_VALUE)) {
                 byte[] bits = UiUtils.decodeByteArray(photoDataStr);
                 Bitmap bmp = bits != null ? BitmapFactory.decodeByteArray(bits, 0, bits.length) : null;
@@ -664,31 +677,18 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         if (mClicker != null) {
             // Mark the start of the button line for centering
             int buttonLineStart = result.length();
-
-            final String contactsList = !contacts.isEmpty() ? TextUtils.join(",", contacts) : "";
-
-            // Determine if we have one or two buttons
-            boolean hasTwoButtons = tinodeId != null || !contacts.isEmpty();
-
-            if (hasTwoButtons) {
+            if (tinodeId != null || !contacts.isEmpty()) {
                 if (tinodeId != null) {
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("uid", tinodeId);
-                    result.append(createTheCardButton("Chat", data, params));
+                    result.append(createTheCardButton("Chat", data, tinodeId));
                 } else {
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("find", contactsList);
-                    result.append(createTheCardButton("Find", data, params));
+                    result.append(createTheCardButton("Find", data, TextUtils.join(",", contacts)));
                 }
-
                 // Add spacing between buttons (about 1/3 of viewport worth of spaces)
                 result.append("        ");
             }
 
             // Save button
-            Map<String, Object> params = new HashMap<>();
-            params.put("action", "save");
-            result.append(createTheCardButton("Save", data, params));
+            result.append(createTheCardButton("Save", data, "save"));
 
             // Center the entire button line
             result.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
@@ -699,7 +699,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     private SpannableStringBuilder createTheCardButton(
-            String text, Map<String,Object> data, Map<String, Object> params) {
+            String text, Map<String,Object> data, Object params) {
         SpannableStringBuilder result = new SpannableStringBuilder();
         result.append(text.toUpperCase(Locale.ROOT));
         result.setSpan(new ClickableSpan() {

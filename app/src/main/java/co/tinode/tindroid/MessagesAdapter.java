@@ -1300,6 +1300,9 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                 case "BN" ->
                     // Button
                         clickButton(data);
+                case "TC" ->
+                    // TheCard
+                        clickTheCard(data, params);
                 case "VD" ->
                     // Pay video.
                         clickVideo(data);
@@ -1476,6 +1479,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
             return args;
         }
+
         private boolean clickImage(Map<String, Object> data) {
             Bundle args = mediaClick(data);
 
@@ -1485,6 +1489,16 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             }
 
             mActivity.showFragment(MessageActivity.FRAGMENT_VIEW_IMAGE, args, true);
+            return true;
+        }
+
+        private boolean clickTheCard(Map<String, Object> data, Object params) {
+            if (data == null || !(params instanceof String)) {
+                return false;
+            }
+
+            Log.i(TAG, "clickTheCard " + params);
+            Toast.makeText(mActivity, "clickTheCard", Toast.LENGTH_SHORT).show();
             return true;
         }
 
