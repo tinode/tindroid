@@ -13,9 +13,15 @@ public class Const {
 
     public static final String INTENT_EXTRA_TOPIC = "co.tinode.tindroid.TOPIC";
     public static final String INTENT_EXTRA_SEQ = "co.tinode.tindroid.SEQ";
+    public static final String INTENT_EXTRA_SEARCH_QUERY = "co.tinode.tindroid.SEARCH_QUERY";
+    public static final String INTENT_EXTRA_START_CHAT_TAB = "co.tinode.tindroid.START_CHAT_TAB";
     public static final String INTENT_EXTRA_CALL_DIRECTION = "co.tinode.tindroid.CALL_DIRECTION";
     public static final String INTENT_EXTRA_CALL_ACCEPTED = "co.tinode.tindroid.CALL_ACCEPTED";
     public static final String INTENT_EXTRA_CALL_AUDIO_ONLY = "co.tinode.tindroid.CALL_AUDIO_ONLY";
+
+    public static final String CLICK_ACTION_FIND = "find";
+    public static final String CLICK_ACTION_CHAT = "chat";
+    public static final String CLICK_ACTION_SAVE = "save";
 
     // Maximum length of user name or topic title.
     public static final int MAX_TITLE_LENGTH = 60;
