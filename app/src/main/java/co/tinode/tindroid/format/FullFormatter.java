@@ -50,6 +50,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.content.res.AppCompatResources;
 import co.tinode.tindroid.Cache;
+import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.UtilsString;
@@ -679,16 +680,16 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             int buttonLineStart = result.length();
             if (tinodeId != null || !contacts.isEmpty()) {
                 if (tinodeId != null) {
-                    result.append(createTheCardButton("Chat", data, tinodeId));
+                    result.append(createTheCardButton("Chat", data, Const.CLICK_ACTION_CHAT));
                 } else {
-                    result.append(createTheCardButton("Find", data, TextUtils.join(",", contacts)));
+                    result.append(createTheCardButton("Find", data, Const.CLICK_ACTION_FIND));
                 }
                 // Add spacing between buttons (about 1/3 of viewport worth of spaces)
                 result.append("        ");
             }
 
             // Save button
-            result.append(createTheCardButton("Save", data, "save"));
+            result.append(createTheCardButton("Save", data, Const.CLICK_ACTION_SAVE));
 
             // Center the entire button line
             result.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
