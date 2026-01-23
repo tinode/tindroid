@@ -2,4 +2,5 @@
 <paths>
     <external-files-path name="camera_pics" path="Pictures" />
     <external-path name="downloads" path="Download" />
+    <cache-path name="cache" path="." />
 </paths>
