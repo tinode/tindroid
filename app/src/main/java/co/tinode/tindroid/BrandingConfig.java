@@ -39,7 +39,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 public class BrandingConfig {
-    private static final String TAG = "ClientConfig";
+    private static final String TAG = "BrandingConfig";
     private static final String HOSTS = "https://hosts.tinode.co/id/";
     private static final int CHUNK_SIZE = 2048;
     private static final int NETWORK_TIMEOUT = 5; // seconds
@@ -260,7 +260,6 @@ public class BrandingConfig {
             @Override
             public void onInstallReferrerSetupFinished(int responseCode) {
                 switch (responseCode) {
-
                     case InstallReferrerClient.InstallReferrerResponse.OK:
                         ReferrerDetails response;
                         try {
