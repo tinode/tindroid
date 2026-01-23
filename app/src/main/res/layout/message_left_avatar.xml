@@ -34,10 +34,10 @@
                 android:layout_height="wrap_content"
                 android:clickable="false"
                 android:focusable="false"
-                android:maxWidth="270dp"
+                android:maxWidth="290dp"
                 android:minWidth="102dp"
-                android:paddingStart="16.5dp"
-                android:paddingEnd="4dp"
+                android:paddingStart="20.5dp"
+                android:paddingEnd="6dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />

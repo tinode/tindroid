@@ -33,10 +33,10 @@
                 android:id="@+id/messageText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:maxWidth="280dp"
+                android:maxWidth="300dp"
                 android:minWidth="112dp"
-                android:paddingStart="4dp"
-                android:paddingEnd="4dp"
+                android:paddingStart="8dp"
+                android:paddingEnd="6dp"
                 android:textColor="?android:textColorPrimary"
                 tools:ignore="RtlSymmetry"
                 tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua." />
