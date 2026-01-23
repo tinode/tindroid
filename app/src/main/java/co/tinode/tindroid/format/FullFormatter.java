@@ -18,6 +18,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.style.AlignmentSpan;
 import android.text.style.CharacterStyle;
 import android.text.style.ClickableSpan;
 import android.text.style.ForegroundColorSpan;
@@ -38,7 +39,9 @@ import android.widget.TextView;
 
 import java.net.URL;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Stack;
 
@@ -50,8 +53,11 @@ import co.tinode.tindroid.Cache;
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.UtilsString;
+import co.tinode.tindroid.widgets.LetterTileDrawable;
+import co.tinode.tindroid.widgets.RoundImageDrawable;
 import co.tinode.tindroid.widgets.TextDrawable;
 import co.tinode.tindroid.widgets.WaveDrawable;
+import co.tinode.tinodesdk.Tinode;
 
 /**
  * Convert Drafty object into a Spanned object with full support for all features.
@@ -515,6 +521,200 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
             result = assignStyle(span, content);
         }
 
+        return result;
+    }
+
+    @Override
+    protected SpannableStringBuilder handleTheCard(Context ctx, List<SpannableStringBuilder> content,
+                                                   Map<String, Object> data) {
+        if (data == null) {
+            return null;
+        }
+
+        Resources res = ctx.getResources();
+        SpannableStringBuilder result = new SpannableStringBuilder();
+
+        // Extract name and organization.
+        String fullName = getStringVal("fn", data, null);
+        String displayName = !TextUtils.isEmpty(fullName) ? fullName : res.getString(R.string.unknown);
+
+        // Create avatar - a colored circle with an initial or a photo.
+        int avatarSize = (int) (mFontSize * 2.5f); // About 2.5 times the font size
+
+        // Add organization if present.
+        Map<String, Object> orgData = getMapVal("org", data);
+        String orgName = (orgData != null) ? getStringVal("fn", orgData, null) : null; //"Lorem ipsum dolor sit amet 123456 test and another test LLC";
+        boolean hasOrg = !TextUtils.isEmpty(orgName);
+
+        // Build name + org text block
+
+        // Calculate available width for text (viewport - avatar - padding)
+        int textAvailableWidth = mViewport - avatarSize - (int)(mFontSize * 0.5f);
+
+        // Create TextPaint for measuring text width
+        TextPaint paint = new TextPaint();
+
+        // Ellipsize name if too long
+        paint.setTextSize(mFontSize * 1.15f);  // Name uses RelativeSizeSpan(1.15f)
+        CharSequence ellipsizedName = TextUtils.ellipsize(displayName, paint,
+            textAvailableWidth, TextUtils.TruncateAt.END);
+
+        // Ellipsize org name if too long
+        CharSequence ellipsizedOrg = null;
+        if (hasOrg) {
+            paint.setTextSize(mFontSize * 0.85f);  // Org uses RelativeSizeSpan(0.85f)
+            ellipsizedOrg = TextUtils.ellipsize(orgName, paint,
+                textAvailableWidth, TextUtils.TruncateAt.END);
+        }
+
+        // Create the text content that will appear next to the avatar
+        int nameStart = result.length();
+
+        result.append(ellipsizedName, new RelativeSizeSpan(1.15f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        if (hasOrg) {
+            result.append("\n");
+            int orgStart = result.length();
+            result.append(ellipsizedOrg);
+            result.setSpan(new RelativeSizeSpan(0.85f),
+                orgStart, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.setSpan(new ForegroundColorSpan(0xFF808080),
+                orgStart, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        Drawable avatar = null;
+        String photoUrl = null;
+        Map<String, Object> photoData = getMapVal("photo", data);
+        if (photoData != null) {
+            String ref = getStringVal("ref", photoData, null);
+            String photoDataStr = getStringVal("data", photoData, null);
+            if (ref != null && !ref.equals(Tinode.NULL_VALUE)) {
+                photoUrl = ref;
+            } else if (photoDataStr != null && !photoDataStr.equals(Tinode.NULL_VALUE)) {
+                byte[] bits = UiUtils.decodeByteArray(photoDataStr);
+                Bitmap bmp = bits != null ? BitmapFactory.decodeByteArray(bits, 0, bits.length) : null;
+                if (bmp != null) {
+                    Bitmap scaled = Bitmap.createScaledBitmap(bmp, avatarSize, avatarSize, true);
+                    bmp.recycle();
+                    avatar = new RoundImageDrawable(res, scaled);
+                }
+            }
+        }
+
+        if (avatar == null) {
+            // Create a letter tile with colored background
+            LetterTileDrawable drawable = new LetterTileDrawable(ctx);
+            drawable.setContactTypeAndColor(LetterTileDrawable.ContactType.PERSON, false)
+                    .setLetterAndColor(fullName, fullName, false)
+                    .setIsCircular(true);
+            avatar = drawable;
+        }
+
+        avatar.setBounds(0, 0, avatarSize, avatarSize);
+
+        // Apply IconMarginSpan to create the avatar margin for all lines
+        // Use 2 lines in both cases to ensure avatar has enough vertical space
+        result.setSpan(new IconMarginSpan(avatar, (int)(mFontSize * 0.5f), 2),
+            nameStart, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        // Add separator line
+        if (hasOrg) {
+            result.append("\n");
+        } else {
+            // No org: more space.
+            result.append("\n", new RelativeSizeSpan(1.6f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        result.append(" ", new HorizontalLineSpan(0xFF808080, 1.5f),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        result.append("\n");
+
+        // Extract Tinode ID and contacts for action buttons
+        String tinodeId = null;
+        List<String> contacts = new java.util.ArrayList<>();
+
+        Object commData = data.get("comm");
+        Object[] commArray = null;
+        if (commData instanceof List) {
+            commArray = ((List<?>) commData).toArray();
+        } else if (commData instanceof Object[]) {
+            commArray = (Object[]) commData;
+        }
+
+        if (commArray != null) {
+            for (Object commObj : commArray) {
+                Map<String, Object> comm = null;
+                if (commObj instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> tmp = (Map<String, Object>) commObj;
+                    comm = tmp;
+                }
+                if (comm != null) {
+                    String proto = getStringVal("proto", comm, "");
+                    String value = getStringVal("value", comm, "");
+                    if ("tinode".equals(proto) && tinodeId == null) {
+                        tinodeId = value;
+                    } else if (("email".equals(proto) || "tel".equals(proto)) && !value.isEmpty()) {
+                        contacts.add(value);
+                    }
+                }
+            }
+        }
+
+        // Create action buttons
+        if (mClicker != null) {
+            // Mark the start of the button line for centering
+            int buttonLineStart = result.length();
+
+            final String contactsList = !contacts.isEmpty() ? TextUtils.join(",", contacts) : "";
+
+            // Determine if we have one or two buttons
+            boolean hasTwoButtons = tinodeId != null || !contacts.isEmpty();
+
+            if (hasTwoButtons) {
+                if (tinodeId != null) {
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("uid", tinodeId);
+                    result.append(createTheCardButton("Chat", data, params));
+                } else {
+                    Map<String, Object> params = new HashMap<>();
+                    params.put("find", contactsList);
+                    result.append(createTheCardButton("Find", data, params));
+                }
+
+                // Add spacing between buttons (about 1/3 of viewport worth of spaces)
+                result.append("        ");
+            }
+
+            // Save button
+            Map<String, Object> params = new HashMap<>();
+            params.put("action", "save");
+            result.append(createTheCardButton("Save", data, params));
+
+            // Center the entire button line
+            result.setSpan(new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
+                buttonLineStart, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+
+        return result;
+    }
+
+    private SpannableStringBuilder createTheCardButton(
+            String text, Map<String,Object> data, Map<String, Object> params) {
+        SpannableStringBuilder result = new SpannableStringBuilder();
+        result.append(text.toUpperCase(Locale.ROOT));
+        result.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(@NonNull View widget) {
+                mClicker.onClick("TC", data, params);
+            }
+            @Override
+            public void updateDrawState(@NonNull TextPaint ds) {
+                super.updateDrawState(ds);
+                ds.setUnderlineText(false);
+            }
+        }, 0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        result.setSpan(new ForegroundColorSpan(0xFF2196F3),
+                0, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         return result;
     }
 

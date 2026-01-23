@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -117,6 +118,7 @@ public class Tinode {
 
     // Value interpreted as 'content deleted', unicode 0x2421.
     public static final String NULL_VALUE = "␡";
+    public static final byte[] NULL_BYTES = NULL_VALUE.getBytes(StandardCharsets.UTF_8);
 
     // Notifications {note}.
     protected static final String NOTE_CALL = "call";

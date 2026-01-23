@@ -702,7 +702,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         }
 
         if (m.content != null && m.content.hasEntities(
-                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "VD"))) {
+                Arrays.asList("AU", "BN", "EX", "HT", "IM", "LN", "MN", "QQ", "TC", "VD"))) {
             // Some spans are clickable.
             holder.mText.setOnTouchListener((v, ev) -> {
                 holder.mGestureDetector.onTouchEvent(ev);
@@ -988,7 +988,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
                         }
                         if (msg.content != null && msg.isMine()) {
                             mutable = true;
-                            String[] types = new String[]{"AU", "EX", "FM", "IM", "VC", "VD"};
+                            String[] types = new String[]{"AU", "EX", "FM", "IM", "TC", "VC", "VD"};
                             Drafty.Entity[] ents = msg.content.getEntities();
                             if (ents != null) {
                                 for (Drafty.Entity ent : ents) {

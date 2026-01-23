@@ -1119,8 +1119,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
      * @param unsub true to disconnect and unsubscribe from topic, otherwise just disconnect
      */
     public PromisedReply<ServerMessage> leave(final boolean unsub) {
-        Log.i(TAG, "Leaving topic " + getName() + "; Attached=" + mAttached + "; unsub=" + unsub,
-                new Exception("Stack trace"));
         if (mAttached == 1 || unsub) {
             return mTinode.leave(getName(), unsub).thenApply(
                     new PromisedReply.SuccessListener<>() {

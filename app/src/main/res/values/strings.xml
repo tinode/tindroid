@@ -398,4 +398,5 @@
     <string name="wp_pattern">Pattern</string>
     <string name="wp_image">Wallpaper</string>
     <string name="note">Note</string>
+    <string name="contact_card">Contact card</string>
 </resources>

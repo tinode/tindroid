@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.BreakIterator;
 
 import org.jetbrains.annotations.NotNull;
@@ -860,6 +861,32 @@ public class Drafty implements Serializable {
 
         prepareForStyle(1);
         fmt[fmt.length - 1] = new Style("BR", gcLength(txt), 1);
+
+        txt += " ";
+
+        return this;
+    }
+
+    /**
+     * Append TheCard to a Drafty document.
+     *
+     * @param theCardData TheCard data object to append.
+     * @return 'this' Drafty document.
+     */
+    @SuppressWarnings("UnusedReturnValue")
+    public Drafty appendTheCard(@NotNull TheCard theCardData) {
+        if (txt == null) {
+            txt = "";
+        }
+
+        prepareForEntity(gcLength(txt), 1);
+
+        // Convert TheCard to Map using Jackson ObjectMapper
+        ObjectMapper mapper = new ObjectMapper();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> cardMap = mapper.convertValue(theCardData, Map.class);
+
+        ent[ent.length - 1] = new Entity("TC", cardMap);
 
         txt += " ";
 

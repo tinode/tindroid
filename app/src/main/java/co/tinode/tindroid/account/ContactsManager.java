@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import co.tinode.tindroid.R;
 import co.tinode.tindroid.media.VxCard;
@@ -191,18 +192,19 @@ public class ContactsManager {
         final ContactOperations contactOp =
                 ContactOperations.createNewContact(context, userId, account.name, batchOperation, isSyncContext);
 
-        contactOp.addName(pub.fn, pub.n != null ? pub.n.given : null,
-                pub.n != null ? pub.n.surname : null)
+        contactOp.addName(pub.fn, pub.getFirstName(), pub.getLastName())
                 .addAvatar(pub.getPhotoBits(), tinode, pub.getPhotoRef(), pub.getPhotoMimeType());
 
-        if (pub.email != null) {
-            for (TheCard.Contact email : pub.email) {
-                contactOp.addEmail(email.uri);
+        List<TheCard.CommEntry> emails = pub.getEmails();
+        if (emails != null) {
+            for (TheCard.CommEntry email : emails) {
+                contactOp.addEmail(email.value);
             }
         }
-        if (pub.tel != null) {
-            for (TheCard.Contact phone : pub.tel) {
-                contactOp.addPhone(phone.uri, vcardTypeToDbType(phone.getType()));
+        List<TheCard.CommEntry> tels = pub.getPhones();
+        if (tels != null) {
+            for (TheCard.CommEntry phone : tels) {
+                contactOp.addPhone(phone.value, vcardTypeToDbType(phone.des));
             }
         }
 
@@ -272,22 +274,25 @@ public class ContactsManager {
                         final int type = c.getInt(DataQuery.COLUMN_PHONE_TYPE);
                         if (type == Phone.TYPE_MOBILE) {
                             existingCellPhone = true;
+                            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.MOBILE);
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    pub.getPhoneByType(VxCard.TYPE_MOBILE), uri);
+                                    phone != null ? phone.value : null, uri);
                         } else if (type == Phone.TYPE_HOME) {
                             existingHomePhone = true;
+                            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.HOME);
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    pub.getPhoneByType(VxCard.TYPE_HOME), uri);
+                                    phone != null ? phone.value : null, uri);
                         } else if (type == Phone.TYPE_WORK) {
                             existingWorkPhone = true;
+                            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.BUSINESS);
                             contactOp.updatePhone(c.getString(DataQuery.COLUMN_PHONE_NUMBER),
-                                    pub.getPhoneByType(VxCard.TYPE_BUSINESS), uri);
+                                    phone != null ? phone.value : null, uri);
                         }
                         break;
                     case Email.CONTENT_ITEM_TYPE:
                         existingEmail = true;
-                        contactOp.updateEmail(pub.email != null && pub.email.length > 0 ?
-                                        pub.email[0].uri : null,
+                        List<TheCard.CommEntry> emails = pub.getEmails();
+                        contactOp.updateEmail(emails != null && !emails.isEmpty() ? emails.get(0).value : null,
                                 c.getString(DataQuery.COLUMN_EMAIL_ADDRESS), uri);
                         break;
                     case Photo.CONTENT_ITEM_TYPE:
@@ -302,19 +307,23 @@ public class ContactsManager {
 
         // Add the cell phone, if present and not updated above
         if (!existingCellPhone) {
-            contactOp.addPhone(pub.getPhoneByType(VxCard.TYPE_MOBILE), Phone.TYPE_MOBILE);
+            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.MOBILE);
+            contactOp.addPhone(phone != null ? phone.value : null, Phone.TYPE_MOBILE);
         }
         // Add the home phone, if present and not updated above
         if (!existingHomePhone) {
-            contactOp.addPhone(pub.getPhoneByType(VxCard.TYPE_HOME), Phone.TYPE_HOME);
+            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.HOME);
+            contactOp.addPhone(phone != null ? phone.value : null, Phone.TYPE_HOME);
         }
         // Add the work phone, if present and not updated above
         if (!existingWorkPhone) {
-            contactOp.addPhone(pub.getPhoneByType(VxCard.TYPE_WORK), Phone.TYPE_WORK);
+            TheCard.CommEntry phone = pub.getComm(TheCard.CommProto.TEL, TheCard.CommDes.WORK);
+            contactOp.addPhone(phone != null ? phone.value : null, Phone.TYPE_WORK);
         }
         // Add the email address, if present and not updated above
         if (!existingEmail) {
-            contactOp.addEmail(pub.email != null && pub.email.length > 0 ? pub.email[0].uri : null);
+            List<TheCard.CommEntry> emails = pub.getEmails();
+            contactOp.addEmail(emails != null && !emails.isEmpty() ? emails.get(0).value : null);
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
@@ -465,18 +474,21 @@ public class ContactsManager {
                 if (pub == null) {
                     pub = new VxCard();
                 }
-                pub.addEmail(value, TheCard.TYPE_OTHER);
+                pub.addEmail(value, TheCard.CommDes.OTHER);
             } else if ("tel".equals(parts[0])) {
                 if (pub == null) {
                     pub = new VxCard();
                 }
-                pub.addPhone(value, TheCard.TYPE_OTHER);
+                pub.addPhone(value, TheCard.CommDes.OTHER);
             }
         }
     }
 
-    private static int vcardTypeToDbType(VxCard.ContactType tp) {
-        return switch (tp) {
+    private static int vcardTypeToDbType(TheCard.CommDes[] des) {
+        if (des == null || des.length == 0) {
+            return Phone.TYPE_OTHER;
+        }
+        return switch (des[0]) {
             case MOBILE -> Phone.TYPE_MOBILE;
             case HOME, PERSONAL -> Phone.TYPE_HOME;
             case WORK, BUSINESS -> Phone.TYPE_WORK;

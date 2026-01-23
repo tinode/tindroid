@@ -676,4 +676,124 @@ public class DraftyTest {
         expected = "Missing entity [in](http://www.tinode.co) the middle";
         assertEquals("Invalid 3 has failed", expected, actual);
     }
+
+    @Test
+    public void testAppendTheCard() {
+        // Create a TheCard object
+        TheCard card = new TheCard();
+        card.fn = "Alice Johnson";
+        card.note = "Test note";
+
+        // Create a new Drafty document
+        Drafty doc = new Drafty();
+        doc.appendTheCard(card);
+
+        // Verify the text was added
+        assertEquals(" ", doc.txt);
+
+        // Verify the entity was created
+        assertNotNull(doc.ent);
+        assertEquals(1, doc.ent.length);
+        assertEquals("TC", doc.ent[0].tp);
+        assertNotNull(doc.ent[0].data);
+
+        // Verify the format was created
+        assertNotNull(doc.fmt);
+        assertEquals(1, doc.fmt.length);
+        assertEquals(0, doc.fmt[0].at);
+        assertEquals(1, doc.fmt[0].len);
+        assertEquals(Integer.valueOf(0), doc.fmt[0].key);
+
+        // Verify the card data is in the entity
+        assertEquals("Alice Johnson", doc.ent[0].data.get("fn"));
+        assertEquals("Test note", doc.ent[0].data.get("note"));
+    }
+
+    @Test
+    public void testAppendTheCardToExistingDocument() {
+        // Create a Drafty document with some text
+        Drafty doc = new Drafty("Hello world");
+
+        // Create a TheCard object
+        TheCard card = new TheCard();
+        card.fn = "Bob Smith";
+
+        // Append the card
+        doc.appendTheCard(card);
+
+        // Verify the text
+        assertEquals("Hello world ", doc.txt);
+
+        // Verify we have the entity
+        assertNotNull(doc.ent);
+        assertEquals(1, doc.ent.length);
+        assertEquals("TC", doc.ent[0].tp);
+
+        // Verify the format points to the right location
+        assertNotNull(doc.fmt);
+        assertEquals(1, doc.fmt.length);
+        assertEquals(11, doc.fmt[0].at); // Position after "Hello world"
+        assertEquals(1, doc.fmt[0].len);
+
+        // Verify the card data
+        assertEquals("Bob Smith", doc.ent[0].data.get("fn"));
+    }
+
+    @Test
+    public void testAppendTheCardWithComplexData() {
+        // Create a complex TheCard with all fields
+        TheCard card = new TheCard();
+        card.fn = "Charlie Brown";
+        card.note = "Software Engineer";
+
+        TheCard.Name name = new TheCard.Name();
+        name.given = "Charlie";
+        name.surname = "Brown";
+        card.n = name;
+
+        TheCard.Organization org = new TheCard.Organization();
+        org.fn = "Acme Corp";
+        org.title = "Senior Engineer";
+        card.org = org;
+
+        TheCard.Birthday bday = new TheCard.Birthday();
+        bday.y = 1990;
+        bday.m = 5;
+        bday.d = 15;
+        card.bday = bday;
+
+        // Append to Drafty
+        Drafty doc = new Drafty();
+        doc.appendTheCard(card);
+
+        // Verify entity contains all the data
+        assertNotNull(doc.ent);
+        assertEquals(1, doc.ent.length);
+        assertEquals("TC", doc.ent[0].tp);
+
+        // Verify complex nested data
+        assertEquals("Charlie Brown", doc.ent[0].data.get("fn"));
+        assertEquals("Software Engineer", doc.ent[0].data.get("note"));
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> nData = (java.util.Map<String, Object>) doc.ent[0].data.get("n");
+        assertNotNull(nData);
+        assertEquals("Charlie", nData.get("given"));
+        assertEquals("Brown", nData.get("surname"));
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> orgData = (java.util.Map<String, Object>) doc.ent[0].data.get("org");
+        assertNotNull(orgData);
+        assertEquals("Acme Corp", orgData.get("fn"));
+        assertEquals("Senior Engineer", orgData.get("title"));
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<String, Object> bdayData = (java.util.Map<String, Object>) doc.ent[0].data.get("bday");
+        assertNotNull(bdayData);
+        assertEquals(1990, bdayData.get("y"));
+        assertEquals(5, bdayData.get("m"));
+        assertEquals(15, bdayData.get("d"));
+    }
 }
+
+

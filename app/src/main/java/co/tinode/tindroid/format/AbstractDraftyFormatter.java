@@ -66,6 +66,9 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     // Quoted block.
     protected abstract T handleQuote(final Context ctx, List<T> content, final Map<String, Object> data);
 
+    // TheCard contact.
+    protected abstract T handleTheCard(final Context ctx, List<T> content, final Map<String, Object> data);
+
     // Video call.
     protected abstract T handleVideoCall(final Context ctx, List<T> content, final Map<String, Object> data);
 
@@ -113,6 +116,9 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                 case "QQ" ->
                     // Quoted block.
                         handleQuote(mContext, content, data);
+                case "TC" ->
+                    // TheCard contact card.
+                        handleTheCard(mContext, content, data);
                 case "VC" ->
                     // Video call.
                         handleVideoCall(mContext, content, data);
@@ -180,28 +186,54 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     }
 
     protected static int getIntVal(String name, Map<String, Object> data) {
-        Object tmp;
-        if ((tmp = data.get(name)) instanceof Number) {
-            return ((Number) tmp).intValue();
-        }
+        try {
+            Object tmp;
+            if ((tmp = data.get(name)) instanceof Number) {
+                return ((Number) tmp).intValue();
+            }
+        } catch (ClassCastException ignored) {}
         return 0;
     }
 
     protected static String getStringVal(String name, Map<String, Object> data, String def) {
-        Object tmp;
-        if ((tmp = data.get(name)) instanceof CharSequence) {
-            return tmp.toString();
-        }
+        try {
+            Object tmp;
+            if ((tmp = data.get(name)) instanceof CharSequence) {
+                return tmp.toString();
+            }
+        } catch (ClassCastException ignored) {}
         return def;
     }
 
     /** @noinspection SameParameterValue*/
     protected static boolean getBooleanVal(String name, Map<String, Object> data) {
-        Object tmp;
-        if ((tmp = data.get(name)) instanceof Boolean) {
-            return (boolean) tmp;
-        }
+        try {
+            Object tmp;
+            if ((tmp = data.get(name)) instanceof Boolean) {
+                return (boolean) tmp;
+            }
+        } catch (ClassCastException ignored) {}
         return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected static Map<String, Object> getMapVal(String name, Map<String, Object> data) {
+        try {
+            Object tmp;
+            if ((tmp = data.get(name)) instanceof Map) {
+                // Ensure the map has String keys
+                Map<?, ?> map = (Map<?, ?>) tmp;
+                if (!map.isEmpty()) {
+                    // Check if the first key is a String
+                    Object firstKey = map.keySet().iterator().next();
+                    if (!(firstKey instanceof String)) {
+                        return null;
+                    }
+                }
+                return (Map<String, Object>) tmp;
+            }
+        } catch (ClassCastException ignored) {}
+        return null;
     }
 
     protected static boolean isSkippableJson(Object mime) {
