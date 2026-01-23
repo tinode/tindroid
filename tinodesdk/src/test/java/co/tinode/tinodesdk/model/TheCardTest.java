@@ -7,7 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -1408,6 +1410,168 @@ public class TheCardTest {
         assertEquals(1, card.comm[0].des.length);
         // Unknown designator should default to OTHER
         assertEquals(TheCard.CommDes.OTHER, card.comm[0].des[0]);
+    }
+
+    // JSON String Roundtrip Tests - ensuring JSON string → TheCard → JSON string preserves structure
+
+    @Test
+    public void testJsonStringRoundtripComplexContactCard() throws Exception {
+        String originalJson = """
+                {
+                  "fn": "Dr. Sarah Johnson",
+                  "n": {
+                    "surname": "Johnson",
+                    "given": "Sarah",
+                    "prefix": "Dr."
+                  },
+                  "org": {
+                    "fn": "Research Institute",
+                    "title": "Senior Scientist"
+                  },
+                  "photo": {
+                    "type": "jpeg",
+                    "ref": "https://example.com/photo.jpg",
+                    "width": 256,
+                    "height": 256
+                  },
+                  "bday": {
+                    "y": 1985,
+                    "m": 11,
+                    "d": 23
+                  },
+                  "note": "Lead researcher",
+                  "comm": [
+                    {
+                      "proto": "tel",
+                      "des": ["work", "voice"],
+                      "value": "+1-555-123-4567"
+                    },
+                    {
+                      "proto": "tel",
+                      "des": ["work", "fax"],
+                      "value": "+1-555-123-7654"
+                    },
+                    {
+                      "proto": "email",
+                      "des": ["work"],
+                      "value": "sarah@research.org"
+                    },
+                    {
+                      "proto": "email",
+                      "des": ["home"],
+                      "value": "sarah@example.com"
+                    },
+                    {
+                      "proto": "tinode",
+                      "des": ["work"],
+                      "value": "tinode:topic/usr_sarah"
+                    }
+                  ]
+                }
+                """;
+
+        ObjectMapper mapper = Tinode.getJsonMapper();
+
+        // Parse original JSON to normalized format (removes whitespace)
+        Object originalParsed = mapper.readValue(originalJson, Object.class);
+        String normalizedOriginal = mapper.writeValueAsString(originalParsed);
+
+        // Convert JSON string → TheCard → JSON string
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonMap = mapper.readValue(originalJson, Map.class);
+        TheCard card = new TheCard(jsonMap);
+        String reconstructedJson = mapper.writeValueAsString(card);
+
+        // Compare the JSON strings (both should be normalized)
+        assertEquals("JSON roundtrip failed - strings don't match", normalizedOriginal, reconstructedJson);
+    }
+
+    @Test
+    public void testJsonStringRoundtripWithBase64Photo() throws Exception {
+        String originalJson = """
+                {
+                  "fn": "Photo User",
+                  "photo": {
+                    "type": "png",
+                    "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAWA8jMAAAAABJRU5ErkJggg=="
+                  },
+                  "comm": [
+                    {
+                      "proto": "email",
+                      "des": ["home"],
+                      "value": "photo@test.com"
+                    }
+                  ]
+                }
+                """;
+
+        ObjectMapper mapper = Tinode.getJsonMapper();
+
+        // Parse original JSON to normalized format
+        Object originalParsed = mapper.readValue(originalJson, Object.class);
+        String normalizedOriginal = mapper.writeValueAsString(originalParsed);
+
+        // Convert JSON string → TheCard → JSON string
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonMap = mapper.readValue(originalJson, Map.class);
+        TheCard card = new TheCard(jsonMap);
+        String reconstructedJson = mapper.writeValueAsString(card);
+
+        // Compare the JSON strings
+        assertEquals("Base64 photo JSON roundtrip failed", normalizedOriginal, reconstructedJson);
+    }
+
+    @Test
+    public void testJsonStringRoundtripPartialBirthday() throws Exception {
+        String originalJson = """
+                {
+                  "fn": "Birthday Test",
+                  "bday": {
+                    "m": 12,
+                    "d": 25
+                  },
+                  "note": "Christmas birthday"
+                }
+                """;
+
+        ObjectMapper mapper = Tinode.getJsonMapper();
+
+        // Parse original JSON to normalized format
+        Object originalParsed = mapper.readValue(originalJson, Object.class);
+        String normalizedOriginal = mapper.writeValueAsString(originalParsed);
+
+        // Convert JSON string → TheCard → JSON string
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonMap = mapper.readValue(originalJson, Map.class);
+        TheCard card = new TheCard(jsonMap);
+        String reconstructedJson = mapper.writeValueAsString(card);
+
+        // Compare the JSON strings
+        assertEquals("Partial birthday JSON roundtrip failed", normalizedOriginal, reconstructedJson);
+    }
+
+    @Test
+    public void testJsonStringRoundtripMinimal() throws Exception {
+        String originalJson = """
+                {
+                  "fn": "Minimal User"
+                }
+                """;
+
+        ObjectMapper mapper = Tinode.getJsonMapper();
+
+        // Parse original JSON to normalized format
+        Object originalParsed = mapper.readValue(originalJson, Object.class);
+        String normalizedOriginal = mapper.writeValueAsString(originalParsed);
+
+        // Convert JSON string → TheCard → JSON string
+        @SuppressWarnings("unchecked")
+        Map<String, Object> jsonMap = mapper.readValue(originalJson, Map.class);
+        TheCard card = new TheCard(jsonMap);
+        String reconstructedJson = mapper.writeValueAsString(card);
+
+        // Compare the JSON strings
+        assertEquals("Minimal JSON roundtrip failed", normalizedOriginal, reconstructedJson);
     }
 }
 

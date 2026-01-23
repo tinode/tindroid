@@ -1,5 +1,7 @@
 package co.tinode.tinodesdk.model;
 
+import android.util.Log;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -7,9 +9,14 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -110,6 +117,261 @@ public class TheCard implements Serializable, Mergeable {
         this.fn = fullName;
         if (avatarRef != null) {
             this.photo = new Photo(avatarRef, avatarImageType);
+        }
+    }
+
+    public TheCard(Map<String, Object> json) {
+        if (json == null) {
+            return;
+        }
+
+        // Full name
+        Object fnObj = json.get("fn");
+        if (fnObj instanceof String str) {
+            this.fn = str;
+        }
+
+        // Name components
+        Object nObj = json.get("n");
+        if (nObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> nMap = (Map<String, Object>) nObj;
+            Name name = new Name();
+            if (nMap.get("surname") instanceof String surname) {
+                name.surname = surname;
+            }
+            if (nMap.get("given") instanceof String given) {
+                name.given = given;
+            }
+            if (nMap.get("additional") instanceof String additional) {
+                name.additional = additional;
+            }
+            if (nMap.get("prefix") instanceof String prefix) {
+                name.prefix = prefix;
+            }
+            if (nMap.get("suffix") instanceof String suffix) {
+                name.suffix = suffix;
+            }
+            this.n = name;
+        }
+
+        // Organization
+        Object orgObj = json.get("org");
+        if (orgObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> orgMap = (Map<String, Object>) orgObj;
+            Organization org = new Organization();
+            if (orgMap.get("fn") instanceof String orgName) {
+                org.fn = orgName;
+            }
+            if (orgMap.get("title") instanceof String title) {
+                org.title = title;
+            }
+            this.org = org;
+        }
+
+        // Photo
+        if (json.get("photo") instanceof Map map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> photoMap = (Map<String, Object>) map;
+            Photo photo = new Photo();
+
+            // Handle binary data (may be base64 string or byte array)
+            Object dataObj = photoMap.get("data");
+            if (photoMap.get("data") instanceof String) {
+                try {
+                    photo.data = Base64.getDecoder().decode((String) dataObj);
+                } catch (IllegalArgumentException e) {
+                    // Invalid base64, skip
+                    photo.data = null;
+                }
+            } else if (dataObj instanceof byte[]) {
+                photo.data = (byte[]) dataObj;
+            }
+
+            // Type (e.g., 'png', 'jpeg')
+            if (photoMap.get("type") instanceof String typeStr) {
+                if (typeStr.startsWith("image/")) {
+                    photo.type = typeStr.substring(6);
+                } else {
+                    photo.type = typeStr;
+                }
+            }
+
+            // Reference URL
+            if (photoMap.get("ref") instanceof String ref) {
+                photo.ref = ref;
+            }
+
+            // Width
+            Object widthObj = photoMap.get("width");
+            if (widthObj instanceof Integer) {
+                photo.width = (Integer) widthObj;
+            } else if (widthObj instanceof Number) {
+                photo.width = ((Number) widthObj).intValue();
+            }
+
+            // Height
+            Object heightObj = photoMap.get("height");
+            if (heightObj instanceof Integer) {
+                photo.height = (Integer) heightObj;
+            } else if (heightObj instanceof Number) {
+                photo.height = ((Number) heightObj).intValue();
+            }
+
+            // Size
+            Object sizeObj = photoMap.get("size");
+            if (sizeObj instanceof Integer) {
+                photo.size = (Integer) sizeObj;
+            } else if (sizeObj instanceof Number) {
+                photo.size = ((Number) sizeObj).intValue();
+            }
+
+            this.photo = photo;
+        }
+
+        // Birthday
+        if (json.get("bday") instanceof Map map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> bdayMap = (Map<String, Object>) map;
+            Birthday bday = new Birthday();
+
+            Object yObj = bdayMap.get("y");
+            if (yObj instanceof Integer) {
+                bday.y = (Integer) yObj;
+            } else if (yObj instanceof Number) {
+                bday.y = ((Number) yObj).intValue();
+            }
+
+            Object mObj = bdayMap.get("m");
+            if (mObj instanceof Integer) {
+                bday.m = (Integer) mObj;
+            } else if (mObj instanceof Number) {
+                bday.m = ((Number) mObj).intValue();
+            }
+
+            Object dObj = bdayMap.get("d");
+            if (dObj instanceof Integer) {
+                bday.d = (Integer) dObj;
+            } else if (dObj instanceof Number) {
+                bday.d = ((Number) dObj).intValue();
+            }
+
+            this.bday = bday;
+        }
+
+        // Note
+        if (json.get("note") instanceof String note) {
+            this.note = note;
+        }
+
+        // Communication entries
+        Object commObj = json.get("comm");
+        if (commObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Object> commList = (List<Object>) commObj;
+            List<CommEntry> commEntries = new ArrayList<>();
+
+            for (Object entry : commList) {
+                if (entry instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> commMap = (Map<String, Object>) entry;
+                    CommEntry commEntry = new CommEntry();
+
+                    // Protocol
+                    if (commMap.get("proto") instanceof String protoStr) {
+                        commEntry.proto = CommProto.fromValue(protoStr);
+                    }
+
+                    // Value
+                    if (commMap.get("value") instanceof String valueStr) {
+                        commEntry.value = valueStr;
+                    }
+
+                    // Descriptors (can be array or single value)
+                    Object desObj = commMap.get("des");
+                    if (desObj instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<Object> desList = (List<Object>) desObj;
+                        List<CommDes> desValues = new ArrayList<>();
+                        for (Object des : desList) {
+                            if (des instanceof String) {
+                                CommDes desVal = CommDes.fromValue((String) des);
+                                if (desVal != null) {
+                                    desValues.add(desVal);
+                                }
+                            }
+                        }
+                        if (!desValues.isEmpty()) {
+                            commEntry.des = desValues.toArray(new CommDes[0]);
+                        }
+                    } else if (desObj instanceof String) {
+                        CommDes desVal = CommDes.fromValue((String) desObj);
+                        if (desVal != null) {
+                            commEntry.des = new CommDes[]{desVal};
+                        }
+                    }
+
+                    if (commEntry.proto != null && commEntry.value != null) {
+                        commEntries.add(commEntry);
+                    }
+                }
+            }
+
+            if (!commEntries.isEmpty()) {
+                this.comm = commEntries.toArray(new CommEntry[0]);
+            }
+        } else if (commObj instanceof Object[] commArray) {
+            // Handle array format as well
+            List<CommEntry> commEntries = new ArrayList<>();
+            for (Object entry : commArray) {
+                if (entry instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> commMap = (Map<String, Object>) entry;
+                    CommEntry commEntry = new CommEntry();
+
+                    Object protoObj = commMap.get("proto");
+                    if (protoObj instanceof String) {
+                        commEntry.proto = CommProto.fromValue((String) protoObj);
+                    }
+
+                    Object valueObj = commMap.get("value");
+                    if (valueObj instanceof String) {
+                        commEntry.value = (String) valueObj;
+                    }
+
+                    Object desObj = commMap.get("des");
+                    if (desObj instanceof List) {
+                        @SuppressWarnings("unchecked")
+                        List<Object> desList = (List<Object>) desObj;
+                        List<CommDes> desValues = new ArrayList<>();
+                        for (Object des : desList) {
+                            if (des instanceof String) {
+                                CommDes desVal = CommDes.fromValue((String) des);
+                                if (desVal != null) {
+                                    desValues.add(desVal);
+                                }
+                            }
+                        }
+                        if (!desValues.isEmpty()) {
+                            commEntry.des = desValues.toArray(new CommDes[0]);
+                        }
+                    } else if (desObj instanceof String) {
+                        CommDes desVal = CommDes.fromValue((String) desObj);
+                        if (desVal != null) {
+                            commEntry.des = new CommDes[]{desVal};
+                        }
+                    }
+
+                    if (commEntry.proto != null && commEntry.value != null) {
+                        commEntries.add(commEntry);
+                    }
+                }
+            }
+
+            if (!commEntries.isEmpty()) {
+                this.comm = commEntries.toArray(new CommEntry[0]);
+            }
         }
     }
 
@@ -318,19 +580,6 @@ public class TheCard implements Serializable, Mergeable {
     }
 
     /**
-     * Get organization name from a card.
-     * @return Organization name or null if not set.
-     */
-    @Nullable
-    @JsonIgnore
-    public String getOrgName() {
-        if (org != null) {
-            return org.fn;
-        }
-        return null;
-    }
-
-    /**
      * Set a phone number on a card, replacing any existing phone with the same type.
      * @param phone Phone number.
      * @param type Type of phone number (e.g., 'voice', 'mobile', 'work').
@@ -443,6 +692,7 @@ public class TheCard implements Serializable, Mergeable {
      * @return List of communication entries matching the protocol.
      */
     @JsonIgnore
+    @NotNull
     public List<CommEntry> getComm(CommProto proto) {
         List<CommEntry> result = new ArrayList<>();
         if (comm != null) {
@@ -485,6 +735,21 @@ public class TheCard implements Serializable, Mergeable {
         return new ArrayList<>(getComm(CommProto.TEL));
     }
 
+    // Extract 'value' from each member of array
+    public static String[] getCommValues(List<CommEntry> comms) {
+        String[] values = new String[comms.size()];
+        for (int i=0; i<comms.size(); i++) {
+            String val = comms.get(i).value;
+            if (val == null) {
+                continue;
+            }
+            val = val.replaceAll("\\s", "");
+            if (!val.isEmpty()) {
+                values[i] = val;
+            }
+        }
+        return values;
+    }
     /**
      * Get the first Tinode ID from a card.
      * @return The first Tinode ID or null if none.
@@ -495,6 +760,24 @@ public class TheCard implements Serializable, Mergeable {
         List<CommEntry> comms = getComm(CommProto.TINODE);
         if (!comms.isEmpty()) {
             return comms.get(0).value;
+        }
+        return null;
+    }
+
+    public static String parseTinodeID(String tinodeID) {
+        if (tinodeID == null) {
+            return null;
+        }
+        if (tinodeID.startsWith("tinode:")) {
+            String[] path = tinodeID.substring(7).trim()
+                    .split("/");
+            if (path.length == 0) {
+                return null;
+            }
+            if (path.length == 1) {
+                return path[0];
+            }
+            return path[path.length - 1];
         }
         return null;
     }
@@ -554,7 +837,7 @@ public class TheCard implements Serializable, Mergeable {
      * @return True if the file is a vCard format.
      */
     public static boolean isFileSupported(String type, String name) {
-        return "text/vcard".equals(type) ||
+        return "text/vcard".equals(type) || "text/x-vcard".equals(type) ||
                (name != null && (name.endsWith(".vcf") || name.endsWith(".vcard")));
     }
 
