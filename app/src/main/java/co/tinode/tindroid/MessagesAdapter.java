@@ -4,6 +4,7 @@ import android.Manifest;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.SearchManager;
 import android.content.ActivityNotFoundException;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -45,6 +46,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -63,6 +66,7 @@ import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.ActionMode;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -92,6 +96,7 @@ import co.tinode.tinodesdk.model.MsgGetMeta;
 import co.tinode.tinodesdk.model.MsgRange;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Handle display of a conversation
@@ -1143,7 +1148,7 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
         WorkInfo.State state = null;
         try {
             List<WorkInfo> lwi = wm.getWorkInfosForUniqueWork(uniqueID).get();
-            if (!lwi.isEmpty()) {
+            if (lwi != null && !lwi.isEmpty()) {
                 WorkInfo wi = lwi.get(0);
                 state = wi.getState();
             }
@@ -1496,10 +1501,79 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             if (data == null || !(params instanceof String)) {
                 return false;
             }
-
-            Log.i(TAG, "clickTheCard " + params);
-            Toast.makeText(mActivity, "clickTheCard", Toast.LENGTH_SHORT).show();
+            TheCard card = new TheCard(data);
+            if (Const.CLICK_ACTION_SAVE.equals(params)) {
+                String vCard = TheCard.exportVCard(card);
+                if (vCard != null) {
+                    shareVCard(vCard);
+                }
+            } else if (Const.CLICK_ACTION_CHAT.equals(params)) {
+                String uid = TheCard.parseTinodeID(card.getFirstTinodeID());
+                if (uid == null) {
+                    Log.w(TAG, "Failed to parse tinode id " + card.getFirstTinodeID());
+                    Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    return false;
+                }
+                Bundle args = new Bundle();
+                args.putString(Const.INTENT_EXTRA_TOPIC, uid);
+                mActivity.showFragment(MessageActivity.FRAGMENT_MESSAGES, args, true);
+            } else if (Const.CLICK_ACTION_FIND.equals(params)) {
+                List<TheCard.CommEntry> contacts = card.getEmails();
+                contacts.addAll(card.getPhones());
+                String[] query = TheCard.getCommValues(contacts);
+                if (query.length == 0) {
+                    return false;
+                }
+                final Intent intent = new Intent(mActivity, StartChatActivity.class);
+                intent.setAction(Intent.ACTION_SEARCH);
+                intent.putExtra(SearchManager.QUERY, query);
+                mActivity.startActivity(intent);
+            } else {
+                Log.i(TAG, "Unknown click action in TheCard " + params);
+                return false;
+            }
             return true;
+        }
+
+        private void shareVCard(String vCardContent) {
+            try {
+                // Write vCard to cache file
+                File cacheDir = mActivity.getCacheDir();
+                String fileName = "contact_" + System.currentTimeMillis() + ".vcf";
+                File vCardFile = new File(cacheDir, fileName);
+
+                // Write vCard content to file
+                try (FileWriter writer = new FileWriter(vCardFile)) {
+                    writer.write(vCardContent);
+                }
+
+                // Get FileProvider URI
+                Uri fileUri = FileProvider.getUriForFile(mActivity,
+                        "co.tinode.tindroid.provider", vCardFile);
+
+                // Create share intent
+                Intent shareIntent = new Intent();
+                shareIntent.setAction(Intent.ACTION_VIEW);
+                shareIntent.setDataAndType(fileUri, "text/vcard");
+                shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                // Try to launch with Contacts app, fallback to chooser
+                try {
+                    Intent contactsIntent = new Intent(Intent.ACTION_VIEW);
+                    contactsIntent.setDataAndType(fileUri, "text/vcard");
+                    contactsIntent.setPackage("com.android.contacts");
+                    contactsIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    mActivity.startActivity(contactsIntent);
+                } catch (ActivityNotFoundException e) {
+                    // Fallback to chooser if Contacts app not available
+                    Intent chooser = Intent.createChooser(shareIntent,
+                        mActivity.getString(R.string.share_contact));
+                    mActivity.startActivity(chooser);
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to share vCard", e);
+                Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+            }
         }
 
         private boolean clickVideo(Map<String, Object> data) {
