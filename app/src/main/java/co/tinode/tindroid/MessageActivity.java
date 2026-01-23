@@ -77,6 +77,7 @@ import co.tinode.tinodesdk.model.MsgServerPres;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * View to display a single conversation
@@ -94,6 +95,7 @@ public class MessageActivity extends BaseActivity
     static final String FRAGMENT_VIEW_IMAGE = "view_image";
     static final String FRAGMENT_VIEW_VIDEO = "view_video";
     static final String FRAGMENT_FILE_PREVIEW = "file_preview";
+    static final String FRAGMENT_V_CARD_PREVIEW = "v_card_preview";
     static final String FRAGMENT_AVATAR_PREVIEW = "avatar_preview";
     static final String FRAGMENT_FORWARD_TO = "forward_to";
 
@@ -290,6 +292,8 @@ public class MessageActivity extends BaseActivity
             } else if (type.startsWith("video/")) {
                 args.putString(AttachmentHandler.ARG_IMAGE_CAPTION, mMessageText);
                 showFragment(FRAGMENT_VIEW_VIDEO, args, true);
+            } else if (TheCard.isFileSupported(type, attachment.toString())) {
+                showFragment(FRAGMENT_V_CARD_PREVIEW, args, true);
             } else {
                 showFragment(FRAGMENT_FILE_PREVIEW, args, true);
             }
@@ -327,51 +331,39 @@ public class MessageActivity extends BaseActivity
             nm.cancel(topicName, 0);
         }
 
-        boolean changed = !topicName.equals(mTopicName);
-        if (!changed) {
-            if (forceReset) {
-                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
-                if (fragmsg != null) {
-                    fragmsg.topicChanged(topicName, true);
-                }
-            }
-            return false;
-        }
-
-        // Detach old topic.
-        topicDetach(mTopic);
-        // Update to new topic.
-        mTopicName = topicName;
-        Cache.setSelectedTopicName(mTopicName);
-
         final Tinode tinode = Cache.getTinode();
+        ComTopic<VxCard> topic;
         try {
             //noinspection unchecked
-            mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
+            topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
         } catch (ClassCastException ex) {
             Log.w(TAG, "Failed to switch topics: non-comm topic");
             return false;
         }
 
-        mPinHash = -1;
-        mKnownSubs = new HashSet<>();
-        mNewSubsAvailable = false;
+        mTopic = topic;
+        boolean changed = false;
 
-        if (mTopic == null) {
-            UiUtils.setupToolbar(this, null,
-                    mTopicName, false, null, false, 0);
-            try {
-                //noinspection unchecked
-                mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-            } catch (ClassCastException ex) {
-                Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
-                return false;
-            }
-            showFragment(FRAGMENT_INVALID, null, false);
+        if (mTopicName == null || !mTopicName.equals(topicName)) {
+            Cache.setSelectedTopicName(topicName);
+            mTopicName = topicName;
 
-            // Check if another fragment is already visible. If so, don't change it.
-        } else {
-            if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+            mPinHash = -1;
+            changed = true;
+            if (mTopic == null) {
+                UiUtils.setupToolbar(this, null,
+                        mTopicName, false, null, false, 0);
+                try {
+                    // noinspection unchecked
+                    mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+                } catch (ClassCastException ex) {
+                    Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
+                    return false;
+                }
+                showFragment(FRAGMENT_INVALID, null, false);
+
+                // Check if another fragment is already visible. If so, don't change it.
+            } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
                         mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
@@ -379,30 +371,38 @@ public class MessageActivity extends BaseActivity
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             }
+        }
 
-            if (mTopic.isGrpType()) {
-                Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
-                if (subs != null) {
-                    for (Subscription<VxCard, PrivateType> sub : subs) {
-                        if (sub.user != null) {
-                            mKnownSubs.add(sub.user);
-                        }
+        mNewSubsAvailable = false;
+        mKnownSubs = new HashSet<>();
+        if (mTopic.isGrpType()) {
+            Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+            if (subs != null) {
+                for (Subscription<VxCard, PrivateType> sub : subs) {
+                    if (sub.user != null) {
+                        mKnownSubs.add(sub.user);
                     }
                 }
             }
+        }
 
-            if (mTopicEventListener == null) {
-                mTopicEventListener = new TListener();
-            }
-            mTopic.addListener(mTopicEventListener);
+        if (mTopic == null) {
+            return true;
+        }
 
-            // Try immediate reconnect (increment attachment counter).
+        if (mTopicEventListener == null) {
+            mTopicEventListener = new TListener();
+        }
+        mTopic.addListener(mTopicEventListener);
+
+        // Try immediate reconnect (increment attachment counter).
+        if (!mTopic.isAttached()) {
             topicAttach();
         }
 
         MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
         if (fragmsg != null) {
-            fragmsg.topicChanged(topicName, true);
+            fragmsg.topicChanged(topicName, forceReset || changed);
         }
 
         return true;
@@ -657,7 +657,6 @@ public class MessageActivity extends BaseActivity
         if (isFinishing() || isDestroyed()) {
             return;
         }
-
         FragmentManager fm = getSupportFragmentManager();
 
         Fragment fragment = fm.findFragmentByTag(tag);
@@ -687,6 +686,9 @@ public class MessageActivity extends BaseActivity
                 case FRAGMENT_FILE_PREVIEW:
                     fragment = new FilePreviewFragment();
                     break;
+                case FRAGMENT_V_CARD_PREVIEW:
+                    fragment = new VCardPreviewFragment();
+                    break;
                 case FRAGMENT_INVALID:
                     fragment = new InvalidTopicFragment();
                     break;
@@ -707,21 +709,17 @@ public class MessageActivity extends BaseActivity
             // Retain old arguments.
             args = fragment.getArguments();
         }
-
         args = args != null ? args : new Bundle();
         args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
-
         if (tag.equals(FRAGMENT_MESSAGES)) {
             args.putString(MessagesFragment.MESSAGE_TO_SEND, mMessageText);
             mMessageText = null;
         }
-
         if (fragment.getArguments() != null) {
             fragment.getArguments().putAll(args);
         } else {
             fragment.setArguments(args);
         }
-
         FragmentTransaction trx = fm.beginTransaction();
         if (!fragment.isAdded()) {
             trx = trx.replace(R.id.contentFragment, fragment, tag)
@@ -731,11 +729,9 @@ public class MessageActivity extends BaseActivity
         } else {
             addToBackstack = false;
         }
-
         if (FRAGMENT_MESSAGES.equals(tag)) {
             trx.setPrimaryNavigationFragment(fragment);
         }
-
         if (addToBackstack) {
             trx.addToBackStack(tag);
         }
