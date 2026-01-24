@@ -1,7 +1,5 @@
 package co.tinode.tinodesdk.model;
 
-import android.util.Log;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -13,10 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -261,8 +255,8 @@ public class TheCard implements Serializable, Mergeable {
         }
 
         // Note
-        if (json.get("note") instanceof String note) {
-            this.note = note;
+        if (json.get("note") instanceof String newNote) {
+            this.note = newNote;
         }
 
         // Communication entries
@@ -428,15 +422,6 @@ public class TheCard implements Serializable, Mergeable {
 
     public TheCard copy() {
         return copy(new TheCard(), this);
-    }
-
-    /**
-     * Get the MIME type of the card.
-     * @return The MIME type.
-     */
-    @JsonIgnore
-    public String getContentType() {
-        return CONTENT_TYPE;
     }
 
     /**

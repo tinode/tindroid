@@ -3,7 +3,6 @@ package co.tinode.tindroid;
 import android.app.SearchManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
