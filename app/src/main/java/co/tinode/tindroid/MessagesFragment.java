@@ -106,6 +106,7 @@ import co.tinode.tinodesdk.model.MsgSetMeta;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
 import co.tinode.tinodesdk.model.Subscription;
+import co.tinode.tinodesdk.model.TheCard;
 
 /**
  * Fragment handling message display and message sending.
@@ -214,7 +215,12 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                 args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
                 // Show attachment preview.
-                activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
+                AttachmentHandler.UploadDetails details = AttachmentHandler.getFileDetails(activity, uri, null);
+                if (TheCard.isFileSupported(details.mimeType, details.fileName)) {
+                    activity.showFragment(MessageActivity.FRAGMENT_V_CARD_PREVIEW, args, true);
+                } else {
+                    activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
+                }
             });
 
     private final ActivityResultLauncher<String> mNotificationsPermissionLauncher =
