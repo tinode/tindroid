@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/message_view_bkg"
+    android:orientation="vertical">
+
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardDetails"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="?android:colorBackground"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardCornerRadius="@dimen/cardview_corner_radius"
+        card_view:cardUseCompatPadding="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Avatar and Name Section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:id="@+id/avatar"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
+                    android:contentDescription="@string/avatar"
+                    android:scaleType="centerCrop"
+                    tools:src="@drawable/ic_person_circle" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="16dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/fullName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:textAppearanceLarge"
+                        android:textStyle="bold"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        tools:text="John Doe" />
+
+                    <TextView
+                        android:id="@+id/organization"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?android:textAppearanceMedium"
+                        android:textColor="?android:textColorSecondary"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:visibility="gone"
+                        tools:text="Acme Corporation"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Note/Description Section -->
+            <LinearLayout
+                android:id="@+id/noteSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/description"
+                    android:textAppearance="?android:textAppearanceSmall"
+                    android:textColor="?android:textColorSecondary" />
+
+                <TextView
+                    android:id="@+id/note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:padding="8dp"
+                    android:background="?android:colorButtonNormal"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    tools:text="Some notes about this contact" />
+
+            </LinearLayout>
+
+            <!-- Contacts Section -->
+            <LinearLayout
+                android:id="@+id/contactsSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/contacts"
+                    android:textAppearance="?android:textAppearanceSmall"
+                    android:textColor="?android:textColorSecondary" />
+
+                <LinearLayout
+                    android:id="@+id/contactsList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- Bottom Send Panel -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/metaPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginTop="4dp"
+        card_view:cardBackgroundColor="?android:colorBackground"
+        card_view:cardElevation="@dimen/cardview_elevation"
+        card_view:cardUseCompatPadding="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="6sp"
+            tools:ignore="RtlSymmetry">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0.75dp"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                android:background="@color/colorGray" />
+
+            <androidx.appcompat.widget.AppCompatImageButton
+                android:id="@+id/chatSendButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.1"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/send_message_button_hint"
+                android:paddingStart="4sp"
+                android:paddingEnd="8sp"
+                app:tint="?attr/colorAccent"
+                app:srcCompat="@drawable/ic_send" />
+        </LinearLayout>
+
+    </androidx.cardview.widget.CardView>
+
+</RelativeLayout>
+
