@@ -331,29 +331,29 @@ public class MessageActivity extends BaseActivity
             nm.cancel(topicName, 0);
         }
 
-        final Tinode tinode = Cache.getTinode();
-        ComTopic<VxCard> topic;
-        try {
-            //noinspection unchecked
-            topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
-        } catch (ClassCastException ex) {
-            Log.w(TAG, "Failed to switch topics: non-comm topic");
-            return false;
-        }
-
-        if (mTopic != null) {
-            topicDetach(mTopic);
-        }
-
-        mTopic = topic;
         boolean changed = false;
+        if (mTopicName == null || !mTopicName.equals(topicName) || forceReset) {
+            final Tinode tinode = Cache.getTinode();
+            ComTopic<VxCard> topic;
+            try {
+                //noinspection unchecked
+                topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
+            } catch (ClassCastException ex) {
+                Log.w(TAG, "Failed to switch topics: non-comm topic");
+                return false;
+            }
 
-        if (mTopicName == null || !mTopicName.equals(topicName)) {
+            changed = true;
+            if (mTopic != null) {
+                topicDetach(mTopic);
+            }
+
+            mTopic = topic;
+
             Cache.setSelectedTopicName(topicName);
             mTopicName = topicName;
 
             mPinHash = -1;
-            changed = true;
             if (mTopic == null) {
                 UiUtils.setupToolbar(this, null,
                         mTopicName, false, null, false, 0);
