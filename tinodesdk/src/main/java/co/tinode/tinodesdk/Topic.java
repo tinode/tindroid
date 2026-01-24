@@ -2398,9 +2398,8 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
         }
     }
 
-    public synchronized void remListener(@NotNull Listener<DP, DR, SP, SR> l) {
+    public synchronized void remListener(@Nullable Listener<DP, DR, SP, SR> l) {
         if (l == null) {
-            // It does happen to be null sometimes.
             return;
         }
         mNotifier.remListener(l);

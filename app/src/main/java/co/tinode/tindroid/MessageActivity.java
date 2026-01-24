@@ -341,6 +341,10 @@ public class MessageActivity extends BaseActivity
             return false;
         }
 
+        if (mTopic != null) {
+            topicDetach(mTopic);
+        }
+
         mTopic = topic;
         boolean changed = false;
 
