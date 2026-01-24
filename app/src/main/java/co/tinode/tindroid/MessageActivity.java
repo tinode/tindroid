@@ -327,51 +327,43 @@ public class MessageActivity extends BaseActivity
             nm.cancel(topicName, 0);
         }
 
-        boolean changed = !topicName.equals(mTopicName);
-        if (!changed) {
-            if (forceReset) {
-                MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
-                if (fragmsg != null) {
-                    fragmsg.topicChanged(topicName, true);
-                }
-            }
-            return false;
-        }
-
-        // Detach old topic.
-        topicDetach(mTopic);
-        // Update to new topic.
-        mTopicName = topicName;
-        Cache.setSelectedTopicName(mTopicName);
-
         final Tinode tinode = Cache.getTinode();
+        ComTopic<VxCard> topic;
         try {
             //noinspection unchecked
-            mTopic = (ComTopic<VxCard>) tinode.getTopic(mTopicName);
+            topic = (ComTopic<VxCard>) tinode.getTopic(topicName);
         } catch (ClassCastException ex) {
             Log.w(TAG, "Failed to switch topics: non-comm topic");
             return false;
         }
 
-        mPinHash = -1;
-        mKnownSubs = new HashSet<>();
-        mNewSubsAvailable = false;
+        if (mTopic != null) {
+            topicDetach(mTopic);
+        }
 
-        if (mTopic == null) {
-            UiUtils.setupToolbar(this, null,
-                    mTopicName, false, null, false, 0);
-            try {
-                //noinspection unchecked
-                mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
-            } catch (ClassCastException ex) {
-                Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
-                return false;
-            }
-            showFragment(FRAGMENT_INVALID, null, false);
+        mTopic = topic;
+        boolean changed = false;
 
-            // Check if another fragment is already visible. If so, don't change it.
-        } else {
-            if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
+        if (mTopicName == null || !mTopicName.equals(topicName)) {
+            Cache.setSelectedTopicName(topicName);
+            mTopicName = topicName;
+
+            mPinHash = -1;
+            changed = true;
+            if (mTopic == null) {
+                UiUtils.setupToolbar(this, null,
+                        mTopicName, false, null, false, 0);
+                try {
+                    // noinspection unchecked
+                    mTopic = (ComTopic<VxCard>) tinode.newTopic(mTopicName, null);
+                } catch (ClassCastException ex) {
+                    Log.w(TAG, "New topic is a non-comm topic: " + mTopicName);
+                    return false;
+                }
+                showFragment(FRAGMENT_INVALID, null, false);
+
+                // Check if another fragment is already visible. If so, don't change it.
+            } else if (forceReset || UiUtils.getVisibleFragment(getSupportFragmentManager()) == null) {
                 UiUtils.setupToolbar(this, mTopic.getPub(), mTopicName,
                         mTopic.getOnline(), mTopic.getLastSeen(), mTopic.isDeleted(), mTopic.getSubCnt());
 
@@ -379,30 +371,38 @@ public class MessageActivity extends BaseActivity
                 getSupportFragmentManager().popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
                 showFragment(FRAGMENT_MESSAGES, null, false);
             }
+        }
 
-            if (mTopic.isGrpType()) {
-                Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
-                if (subs != null) {
-                    for (Subscription<VxCard, PrivateType> sub : subs) {
-                        if (sub.user != null) {
-                            mKnownSubs.add(sub.user);
-                        }
+        mNewSubsAvailable = false;
+        mKnownSubs = new HashSet<>();
+        if (mTopic.isGrpType()) {
+            Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
+            if (subs != null) {
+                for (Subscription<VxCard, PrivateType> sub : subs) {
+                    if (sub.user != null) {
+                        mKnownSubs.add(sub.user);
                     }
                 }
             }
+        }
 
-            if (mTopicEventListener == null) {
-                mTopicEventListener = new TListener();
-            }
-            mTopic.addListener(mTopicEventListener);
+        if (mTopic == null) {
+            return true;
+        }
 
-            // Try immediate reconnect (increment attachment counter).
+        if (mTopicEventListener == null) {
+            mTopicEventListener = new TListener();
+        }
+        mTopic.addListener(mTopicEventListener);
+
+        // Try immediate reconnect (increment attachment counter).
+        if (!mTopic.isAttached()) {
             topicAttach();
         }
 
         MessagesFragment fragmsg = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
         if (fragmsg != null) {
-            fragmsg.topicChanged(topicName, true);
+            fragmsg.topicChanged(topicName, forceReset || changed);
         }
 
         return true;
