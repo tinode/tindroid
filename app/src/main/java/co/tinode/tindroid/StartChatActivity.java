@@ -1,7 +1,9 @@
 package co.tinode.tindroid;
 
+import android.app.SearchManager;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -52,8 +54,20 @@ public class StartChatActivity extends BaseActivity
             });
         }
 
+        // Get intent, action and MIME type
+        final Intent intent = getIntent();
+        final String action = intent.getAction();
+        final String queryString = Intent.ACTION_SEARCH.equals(action) ?
+                intent.getStringExtra(SearchManager.QUERY)  : null;
+
         // Add the default fragment.
-        showFragment(FRAGMENT_TABS, null, false);
+        Bundle args = null;
+        if (queryString != null && !queryString.isEmpty()) {
+            args = new Bundle();
+            args.putString(Const.INTENT_EXTRA_SEARCH_QUERY, queryString);
+            args.putInt(Const.INTENT_EXTRA_START_CHAT_TAB, StartChatFragment.TAB_SEARCH);
+        }
+        showFragment(FRAGMENT_TABS, args, false);
 
         // Initialize View Model to store avatar bitmap before it's sent to the server.
         mAvatarVM = new ViewModelProvider(this).get(AvatarViewModel.class);

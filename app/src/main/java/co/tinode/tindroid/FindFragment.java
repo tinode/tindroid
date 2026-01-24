@@ -142,6 +142,11 @@ public class FindFragment extends Fragment implements UiUtils.ProgressIndicator,
             return;
         }
 
+        Bundle args = getArguments();
+        if (args != null) {
+            mSearchTerm = args.getString(Const.INTENT_EXTRA_SEARCH_QUERY);
+        }
+
         final Tinode tinode = Cache.getTinode();
         mLoginListener = new LoginEventListener(tinode.isConnected());
         tinode.addListener(mLoginListener);

@@ -16,9 +16,9 @@ import androidx.viewpager2.widget.ViewPager2;
 
 public class StartChatFragment extends Fragment {
     private static final int COUNT_OF_TABS = 3;
-    private static final int TAB_SEARCH = 0;
-    private static final int TAB_NEW_GROUP = 1;
-    private static final int TAB_BY_ID = 2;
+    public static final int TAB_SEARCH = 0;
+    public static final int TAB_NEW_GROUP = 1;
+    public static final int TAB_BY_ID = 2;
 
     private static final int[] TAB_NAMES = new int[] {R.string.find, R.string.group, R.string.by_id};
 
@@ -32,9 +32,16 @@ public class StartChatFragment extends Fragment {
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
         final FragmentActivity activity = requireActivity();
 
-        int initialTab = 0;
-        if (savedInstance != null) {
+        int initialTab = -1;
+        Bundle args = getArguments();
+        if (args != null) {
+            initialTab = args.getInt(Const.INTENT_EXTRA_START_CHAT_TAB, -1);
+        }
+        if (initialTab == -1 && savedInstance != null) {
             initialTab = savedInstance.getInt("activeTab");
+        }
+        if (initialTab == -1) {
+            initialTab = TAB_SEARCH;
         }
 
         final TabLayout tabLayout = view.findViewById(R.id.tabsCreationOptions);
