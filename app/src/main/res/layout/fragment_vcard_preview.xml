@@ -133,46 +133,13 @@
     </androidx.cardview.widget.CardView>
 
     <!-- Bottom Send Panel -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/metaPanel"
+    <include layout="@layout/fragment_send_preview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentStart="true"
         android:layout_alignParentEnd="true"
         android:layout_alignParentBottom="true"
-        android:layout_marginTop="4dp"
-        card_view:cardBackgroundColor="?android:colorBackground"
-        card_view:cardElevation="@dimen/cardview_elevation"
-        card_view:cardUseCompatPadding="true">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="6sp"
-            tools:ignore="RtlSymmetry">
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0.75dp"
-                android:layout_gravity="center"
-                android:layout_weight="1"
-                android:background="@color/colorGray" />
-
-            <androidx.appcompat.widget.AppCompatImageButton
-                android:id="@+id/chatSendButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.1"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:contentDescription="@string/send_message_button_hint"
-                android:paddingStart="4sp"
-                android:paddingEnd="8sp"
-                app:tint="?attr/colorAccent"
-                app:srcCompat="@drawable/ic_send" />
-        </LinearLayout>
-
-    </androidx.cardview.widget.CardView>
+        android:layout_marginTop="4dp" />
 
 </RelativeLayout>
 
