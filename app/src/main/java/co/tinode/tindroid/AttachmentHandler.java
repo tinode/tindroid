@@ -31,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -48,6 +49,7 @@ import androidx.work.ListenableWorker;
 import androidx.work.NetworkType;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.Operation;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -68,6 +70,7 @@ public class AttachmentHandler extends Worker {
     final static String ARG_OPERATION_FILE = "file";
     final static String ARG_OPERATION_AUDIO = "audio";
     final static String ARG_OPERATION_VIDEO = "video";
+    final static String ARG_OPERATION_THE_CARD = "the_card";
 
     // Bundle argument names.
     final static String ARG_TOPIC_NAME = Const.INTENT_EXTRA_TOPIC;
@@ -104,7 +107,7 @@ public class AttachmentHandler extends Worker {
     }
 
     private enum UploadType {
-        UNKNOWN, AUDIO, FILE, IMAGE, VIDEO;
+        UNKNOWN, AUDIO, FILE, IMAGE, VIDEO, THE_CARD;
 
         static UploadType parse(String type) {
             if (ARG_OPERATION_AUDIO.equals(type)) {
@@ -115,6 +118,8 @@ public class AttachmentHandler extends Worker {
                 return IMAGE;
             } else if (ARG_OPERATION_VIDEO.equals(type)) {
                 return VIDEO;
+            } else if (ARG_OPERATION_THE_CARD.equals(type)) {
+                return THE_CARD;
             }
             return UNKNOWN;
         }
@@ -221,11 +226,11 @@ public class AttachmentHandler extends Worker {
             Log.w(TAG, "Missing local attachment URI");
             return null;
         }
-
+        final long msgId = msg.getDbId();
         Data.Builder data = new Data.Builder()
                 .putString(ARG_OPERATION, operation)
                 .putString(ARG_LOCAL_URI, uri.toString())
-                .putLong(ARG_MSG_ID, msg.getDbId())
+                .putLong(ARG_MSG_ID, msgId)
                 .putString(ARG_TOPIC_NAME, topicName)
                 .putString(ARG_FILE_NAME, args.getString(ARG_FILE_NAME))
                 .putLong(ARG_FILE_SIZE, args.getLong(ARG_FILE_SIZE))
@@ -259,7 +264,24 @@ public class AttachmentHandler extends Worker {
                 .addTag(TAG_UPLOAD_WORK)
                 .build();
 
-        return WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msg.getDbId()),
+        // Observe work status to handle cancellation/failure.
+        WorkManager.getInstance(activity)
+                .getWorkInfoByIdLiveData(upload.getId())
+                .observe(activity, workInfo -> {
+                    if (workInfo != null) {
+                        WorkInfo.State state = workInfo.getState();
+                        if (state == WorkInfo.State.CANCELLED || state == WorkInfo.State.FAILED) {
+                            // Mark the message as failed so user can retry.
+                            Topic topic = Cache.getTinode().getTopic(topicName);
+                            if (topic != null) {
+                                BaseDb.getInstance().getStore().msgFailed(topic, msgId);
+                            }
+                            Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+        return WorkManager.getInstance(activity).enqueueUniqueWork(Long.toString(msgId),
                 ExistingWorkPolicy.REPLACE, upload);
     }
 
@@ -428,6 +450,18 @@ public class AttachmentHandler extends Worker {
         Drafty content = new Drafty();
         content.attachFile(mimeType, bits, fname);
         return content;
+    }
+
+    private static Drafty draftyTheCard(String fname, byte[] bits) {
+        String vCard = new String(bits, StandardCharsets.UTF_8);
+        TheCard card = TheCard.importVCard(vCard);
+        if (card != null) {
+            Drafty content = new Drafty();
+            content.appendTheCard(card);
+            return content;
+        }
+        // Not a valid vCard, send as an ordinary attachment.
+        return draftyFile(TheCard.CONTENT_TYPE, fname, bits);
     }
 
     // Send file as a link.
@@ -662,6 +696,9 @@ public class AttachmentHandler extends Worker {
                                         uploadDetails.fileSize);
                                 break;
 
+                            case THE_CARD:
+                                // Something is wrong. The card should not be this big, so send it
+                                // as an ordinary attachment.
                             case FILE:
                                 content = draftyAttachment(uploadDetails.mimeType, uploadDetails.fileName,
                                         url, uploadDetails.fileSize);
@@ -820,6 +857,13 @@ public class AttachmentHandler extends Worker {
                 } else {
                     msgDraft = draftyFile(uploadDetails.mimeType, uploadDetails.fileName, uploadDetails.valueBits);
                 }
+                break;
+
+            case THE_CARD:
+                if (TextUtils.isEmpty(uploadDetails.mimeType)) {
+                    uploadDetails.mimeType = TheCard.CONTENT_TYPE;
+                }
+                msgDraft = draftyTheCard(uploadDetails.fileName, uploadDetails.valueBits);
                 break;
 
             case IMAGE:
