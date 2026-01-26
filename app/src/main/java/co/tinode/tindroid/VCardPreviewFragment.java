@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -14,6 +15,7 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
@@ -71,7 +73,6 @@ public class VCardPreviewFragment extends Fragment {
     public void onResume() {
         super.onResume();
 
-        Log.i(TAG, "onResume");
         Activity activity = requireActivity();
         Bundle args = getArguments();
         if (args == null) {
@@ -112,11 +113,17 @@ public class VCardPreviewFragment extends Fragment {
             }
             inputStream.close();
 
-            String vCardContent = buffer.toString(StandardCharsets.UTF_8);
+            String vCardContent;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                vCardContent = buffer.toString(StandardCharsets.UTF_8);
+            } else {
+                vCardContent = buffer.toString();
+            }
             mCard = TheCard.importVCard(vCardContent);
 
             if (mCard == null) {
-                Log.e(TAG, "Failed to parse vCard");
+                Log.w(TAG, "Failed to parse vCard");
+                Toast.makeText(activity, R.string.invalid_format, Toast.LENGTH_SHORT).show();
                 mSendButton.setEnabled(false);
                 return;
             }
@@ -235,7 +242,7 @@ public class VCardPreviewFragment extends Fragment {
         // Add emails
         for (TheCard.CommEntry email : emails) {
             if (!TextUtils.isEmpty(email.value)) {
-                addContactEntry(inflater, email.value, email.des, "✉");
+                addContactEntry(activity, email.value, email.des);
                 hasContacts = true;
             }
         }
@@ -243,7 +250,7 @@ public class VCardPreviewFragment extends Fragment {
         // Add phones
         for (TheCard.CommEntry phone : phones) {
             if (!TextUtils.isEmpty(phone.value)) {
-                addContactEntry(inflater, phone.value, phone.des, "☎");
+                addContactEntry(activity, phone.value, phone.des);
                 hasContacts = true;
             }
         }
@@ -251,7 +258,7 @@ public class VCardPreviewFragment extends Fragment {
         // Add Tinode IDs
         for (TheCard.CommEntry tinode : tinodeIds) {
             if (!TextUtils.isEmpty(tinode.value)) {
-                addContactEntry(inflater, tinode.value, tinode.des, "💬");
+                addContactEntry(activity, tinode.value, tinode.des);
                 hasContacts = true;
             }
         }
@@ -259,7 +266,7 @@ public class VCardPreviewFragment extends Fragment {
         // Add URLs
         for (TheCard.CommEntry url : urls) {
             if (!TextUtils.isEmpty(url.value)) {
-                addContactEntry(inflater, url.value, url.des, "🔗");
+                addContactEntry(activity, url.value, url.des);
                 hasContacts = true;
             }
         }
@@ -267,23 +274,17 @@ public class VCardPreviewFragment extends Fragment {
         mContactsSection.setVisibility(hasContacts ? View.VISIBLE : View.GONE);
     }
 
-    private void addContactEntry(LayoutInflater inflater, String value, TheCard.CommDes[] des, String icon) {
+    private void addContactEntry(Activity activity, String value, TheCard.CommDes[] des) {
         // Create a simple layout for each contact entry
-        LinearLayout entryLayout = new LinearLayout(requireContext());
+        LinearLayout entryLayout = new LinearLayout(activity);
         entryLayout.setOrientation(LinearLayout.HORIZONTAL);
         entryLayout.setPadding(0, 8, 0, 8);
 
-        // Icon
-        TextView iconView = new TextView(requireContext());
-        iconView.setText(icon);
-        iconView.setPadding(0, 0, 16, 0);
-        entryLayout.addView(iconView);
-
         // Value and types
-        LinearLayout textLayout = new LinearLayout(requireContext());
+        LinearLayout textLayout = new LinearLayout(activity);
         textLayout.setOrientation(LinearLayout.VERTICAL);
 
-        TextView valueView = new TextView(requireContext());
+        TextView valueView = new TextView(activity);
         valueView.setText(value);
         valueView.setTextAppearance(android.R.style.TextAppearance_Medium);
         textLayout.addView(valueView);
@@ -295,10 +296,10 @@ public class VCardPreviewFragment extends Fragment {
                 if (i > 0) types.append(", ");
                 types.append(des[i].toValue());
             }
-            TextView typesView = new TextView(requireContext());
+            TextView typesView = new TextView(activity);
             typesView.setText(types.toString());
             typesView.setTextAppearance(android.R.style.TextAppearance_Small);
-            typesView.setTextColor(requireContext().getResources().getColor(R.color.colorGray, null));
+            typesView.setTextColor(activity.getResources().getColor(R.color.colorGray, null));
             textLayout.addView(typesView);
         }
 
@@ -318,7 +319,7 @@ public class VCardPreviewFragment extends Fragment {
         }
 
         // Send as vCard attachment
-        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_FILE, args);
+        AttachmentHandler.enqueueMsgAttachmentUploadRequest(activity, AttachmentHandler.ARG_OPERATION_THE_CARD, args);
 
         activity.getSupportFragmentManager().popBackStack();
     }

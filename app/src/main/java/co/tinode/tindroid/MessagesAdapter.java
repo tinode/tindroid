@@ -1510,13 +1510,14 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
             } else if (Const.CLICK_ACTION_CHAT.equals(params)) {
                 String uid = TheCard.parseTinodeID(card.getFirstTinodeID());
                 if (uid == null) {
-                    Log.w(TAG, "Failed to parse tinode id " + card.getFirstTinodeID());
                     Toast.makeText(mActivity, R.string.action_failed, Toast.LENGTH_SHORT).show();
                     return false;
                 }
-                Bundle args = new Bundle();
-                args.putString(Const.INTENT_EXTRA_TOPIC, uid);
-                mActivity.showFragment(MessageActivity.FRAGMENT_MESSAGES, args, true);
+                MessagesFragment fragment = (MessagesFragment) mActivity.getSupportFragmentManager()
+                        .findFragmentByTag(MessageActivity.FRAGMENT_MESSAGES);
+                if (fragment != null) {
+                    fragment.topicChanged(uid, true);
+                }
             } else if (Const.CLICK_ACTION_FIND.equals(params)) {
                 List<TheCard.CommEntry> contacts = card.getEmails();
                 contacts.addAll(card.getPhones());

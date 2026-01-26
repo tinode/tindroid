@@ -210,15 +210,16 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     return;
                 }
 
+                // Show attachment preview.
                 final Bundle args = new Bundle();
                 args.putParcelable(AttachmentHandler.ARG_LOCAL_URI, uri);
-                args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                 args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
-                // Show attachment preview.
                 AttachmentHandler.UploadDetails details = AttachmentHandler.getFileDetails(activity, uri, null);
                 if (TheCard.isFileSupported(details.mimeType, details.fileName)) {
+                    args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_THE_CARD);
                     activity.showFragment(MessageActivity.FRAGMENT_V_CARD_PREVIEW, args, true);
                 } else {
+                    args.putString(AttachmentHandler.ARG_OPERATION, AttachmentHandler.ARG_OPERATION_FILE);
                     activity.showFragment(MessageActivity.FRAGMENT_FILE_PREVIEW, args, true);
                 }
             });
@@ -308,7 +309,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     @Override
     public void onViewCreated(@NonNull View view, Bundle savedInstance) {
-
         final MessageActivity activity = (MessageActivity) requireActivity();
 
         activity.addMenuProvider(this, getViewLifecycleOwner(),
@@ -322,11 +322,15 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         final ImageView backgroundImage = view.findViewById(R.id.background);
         final String wallpaper = pref.getString(Utils.PREFS_WALLPAPER, "");
-        final int wallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
-        final int wallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
-        UtilsBitmap.assignBackgroundImage(activity, backgroundImage,
-                Cache.getTinode().getWallpaperBase() + "/" + wallpaper,
-                wallpaperSize, wallpaperBlur);
+        if (TextUtils.isEmpty(wallpaper)) {
+            backgroundImage.setImageResource(R.drawable.message_view_bkg);
+        } else {
+            final int wallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
+            final int wallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
+            UtilsBitmap.assignBackgroundImage(activity, backgroundImage,
+                    Cache.getTinode().getWallpaperBase() + "/" + wallpaper,
+                    wallpaperSize, wallpaperBlur);
+        }
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override
@@ -584,7 +588,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
     @SuppressWarnings("unchecked")
     public void onResume() {
         super.onResume();
-
         final MessageActivity activity = (MessageActivity) requireActivity();
 
         Bundle args = getArguments();

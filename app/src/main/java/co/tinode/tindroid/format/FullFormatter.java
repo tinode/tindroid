@@ -535,6 +535,9 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
         Resources res = ctx.getResources();
         SpannableStringBuilder result = new SpannableStringBuilder();
 
+        // Add top margin.
+        result.append("\n", new RelativeSizeSpan(0.35f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
         // Extract name and organization.
         String fullName = getStringVal("fn", data, null);
         String displayName = !TextUtils.isEmpty(fullName) ? fullName : res.getString(R.string.unknown);
@@ -628,15 +631,15 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
 
         // Apply IconMarginSpan to create the avatar margin for all lines
         // Use 2 lines in both cases to ensure avatar has enough vertical space
-        result.setSpan(new IconMarginSpan(avatar, (int)(mFontSize * 0.5f), 2),
+        result.setSpan(new IconMarginSpan(avatar, (int)(mFontSize * 0.6f), 2),
             nameStart, result.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         // Add separator line
         if (hasOrg) {
-            result.append("\n");
+            result.append("\n", new RelativeSizeSpan(0.5f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         } else {
             // No org: more space.
-            result.append("\n", new RelativeSizeSpan(1.6f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            result.append("\n", new RelativeSizeSpan(1.9f), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         result.append(" ", new HorizontalLineSpan(0xFF808080, 1.5f),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

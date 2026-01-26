@@ -1104,29 +1104,34 @@ public class TheCard implements Serializable, Mergeable {
 
         if (card.comm != null) {
             for (CommEntry comm : card.comm) {
-                StringBuilder types = new StringBuilder();
-                for (int i = 0; i < comm.des.length; i++) {
-                    if (i > 0) types.append(",");
-                    types.append(comm.des[i]);
+                if (comm.value == null) {
+                    continue;
                 }
-                String typeStr = types.toString();
-
+                String val = comm.value;
                 switch (comm.proto) {
                     case TEL:
-                        vcard.append("TEL;TYPE=").append(typeStr).append(":").append(comm.value).append("\r\n");
+                        vcard.append("TEL");
                         break;
                     case EMAIL:
-                        vcard.append("EMAIL;TYPE=").append(typeStr).append(":").append(comm.value).append("\r\n");
+                        vcard.append("EMAIL");
                         break;
                     case TINODE:
+                        vcard.append("IMPP");
                         // Prepend "tinode:" prefix if not already present
-                        String tinodeValue = comm.value.startsWith("tinode:") ? comm.value : "tinode:" + comm.value;
-                        vcard.append("IMPP;TYPE=").append(typeStr).append(":").append(tinodeValue).append("\r\n");
+                        val = val.startsWith("tinode:") ? val : "tinode:" + comm.value;
                         break;
                     case HTTP:
-                        vcard.append("URL;TYPE=").append(typeStr).append(":").append(comm.value).append("\r\n");
+                        vcard.append("URL");
                         break;
                 }
+                if (comm.des != null) {
+                    vcard.append(";TYPE=");
+                    for (int i = 0; i < comm.des.length; i++) {
+                        if (i > 0) vcard.append(",");
+                        vcard.append(comm.des[i]);
+                    }
+                }
+                vcard.append(":").append(val).append("\r\n");
             }
         }
 

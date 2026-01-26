@@ -272,15 +272,20 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     Tinode tinode = Cache.getTinode();
                     Request request = chain.request();
                     Map<String, String> headers;
-                    if (tinode.isTrustedURL(request.url().url())) {
-                        headers = tinode.getRequestHeaders();
-                        Request.Builder rb = request.newBuilder();
-                        for (Map.Entry<String, String> el : headers.entrySet()) {
-                            rb = rb.addHeader(el.getKey(), el.getValue());
+                    try {
+                        if (tinode.isTrustedURL(request.url().url())) {
+                            headers = tinode.getRequestHeaders();
+                            Request.Builder rb = request.newBuilder();
+                            for (Map.Entry<String, String> el : headers.entrySet()) {
+                                rb = rb.addHeader(el.getKey(), el.getValue());
+                            }
+                            return chain.proceed(rb.build());
+                        } else {
+                            return chain.proceed(request);
                         }
-                        return chain.proceed(rb.build());
-                    } else {
-                        return chain.proceed(request);
+                    } catch (IOException ex) {
+                        Log.e(TAG, "Network request '" + request.url() + "' failed: " + ex.getMessage());
+                        throw ex;
                     }
                 })
                 .build();
