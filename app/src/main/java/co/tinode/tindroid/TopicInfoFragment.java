@@ -32,6 +32,8 @@ import android.widget.Toast;
 
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.Collection;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -41,6 +43,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.content.FileProvider;
 import androidx.core.view.MenuProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -58,6 +61,7 @@ import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.model.PrivateType;
 import co.tinode.tinodesdk.model.ServerMessage;
+import co.tinode.tinodesdk.model.TheCard;
 import co.tinode.tinodesdk.model.Subscription;
 
 /**
@@ -145,6 +149,22 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
             if (clipboard != null && mTopic != null) {
                 clipboard.setPrimaryClip(ClipData.newPlainText("contact ID", mTopic.getName()));
                 Toast.makeText(activity, R.string.copied_to_clipboard, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        view.findViewById(R.id.buttonShareContact).setOnClickListener(v -> {
+            if (mTopic != null) {
+                VxCard pub = mTopic.getPub();
+                if (pub != null) {
+                    String vCard = TheCard.exportVCard(pub);
+                    if (vCard != null) {
+                        shareVCard(activity, vCard);
+                    } else {
+                        Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(activity, R.string.action_failed, Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -634,6 +654,47 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
                 holder.more.setVisibility(View.VISIBLE);
                 holder.more.setOnClickListener(action);
             }
+        }
+    }
+
+    private void shareVCard(Context context, String vCardContent) {
+        try {
+            // Write vCard to cache file
+            File cacheDir = context.getCacheDir();
+            String fileName = "contact_" + System.currentTimeMillis() + ".vcf";
+            File vCardFile = new File(cacheDir, fileName);
+
+            // Write vCard content to file
+            try (FileWriter writer = new FileWriter(vCardFile)) {
+                writer.write(vCardContent);
+            }
+
+            // Get FileProvider URI
+            Uri fileUri = FileProvider.getUriForFile(context,
+                    "co.tinode.tindroid.provider", vCardFile);
+
+            // Create share intent
+            Intent shareIntent = new Intent();
+            shareIntent.setAction(Intent.ACTION_VIEW);
+            shareIntent.setDataAndType(fileUri, "text/vcard");
+            shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            // Try to launch with Contacts app, fallback to chooser
+            try {
+                Intent contactsIntent = new Intent(Intent.ACTION_VIEW);
+                contactsIntent.setDataAndType(fileUri, "text/vcard");
+                contactsIntent.setPackage("com.android.contacts");
+                contactsIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                context.startActivity(contactsIntent);
+            } catch (ActivityNotFoundException e) {
+                // Fallback to chooser if Contacts app not available
+                Intent chooser = Intent.createChooser(shareIntent,
+                        context.getString(R.string.share_contact));
+                context.startActivity(chooser);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to share vCard", e);
+            Toast.makeText(context, R.string.action_failed, Toast.LENGTH_SHORT).show();
         }
     }
 }

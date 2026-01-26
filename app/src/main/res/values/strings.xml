@@ -57,6 +57,7 @@
     <string name="action_send_now">Send now</string>
     <string name="action_view_details">View details</string>
     <string name="action_copy">Copy</string>
+    <string name="action_share">Share</string>
     <string name="action_offline">Working offline</string>
     <string name="action_delete_group">Delete conversation…</string>
     <string name="action_leave_topic">Leave conversation…</string>
