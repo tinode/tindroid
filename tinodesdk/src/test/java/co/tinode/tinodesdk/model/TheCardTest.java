@@ -244,7 +244,7 @@ public class TheCardTest {
         TheCard card = new TheCard();
         card.comm = new TheCard.CommEntry[]{
                 new TheCard.CommEntry(TheCard.CommProto.TINODE,
-                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:topic/usr111")
+                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:id/usr111")
         };
         card.setTinodeID("usr222", TheCard.CommDes.HOME);
         assertEquals(1, card.comm.length);
@@ -272,13 +272,13 @@ public class TheCardTest {
         TheCard card = new TheCard();
         card.comm = new TheCard.CommEntry[]{
                 new TheCard.CommEntry(TheCard.CommProto.TINODE,
-                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:topic/usr1"),
+                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:id/usr1"),
                 new TheCard.CommEntry(TheCard.CommProto.TINODE,
-                        new TheCard.CommDes[]{TheCard.CommDes.WORK}, "tinode:topic/usr2")
+                        new TheCard.CommDes[]{TheCard.CommDes.WORK}, "tinode:id/usr2")
         };
-        card.clearTinodeID("tinode:topic/usr1", TheCard.CommDes.HOME);
+        card.clearTinodeID("tinode:id/usr1", TheCard.CommDes.HOME);
         assertEquals(1, card.comm.length);
-        assertEquals("tinode:topic/usr2", card.comm[0].value);
+        assertEquals("tinode:id/usr2", card.comm[0].value);
     }
 
     @Test
@@ -313,7 +313,7 @@ public class TheCardTest {
                 new TheCard.CommEntry(TheCard.CommProto.EMAIL,
                         new TheCard.CommDes[]{TheCard.CommDes.HOME}, "alice@example.com"),
                 new TheCard.CommEntry(TheCard.CommProto.TINODE,
-                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:topic/usr123"),
+                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:id/usr123"),
                 new TheCard.CommEntry(TheCard.CommProto.HTTP,
                         new TheCard.CommDes[]{TheCard.CommDes.WORK}, "https://example.com")
         };
@@ -325,7 +325,7 @@ public class TheCardTest {
         assertTrue(vcard.contains("PHOTO;TYPE=JPEG;ENCODING=b:YmFzZTY0ZGF0YQ=="));
         assertTrue(vcard.contains("TEL;TYPE=MOBILE:123456"));
         assertTrue(vcard.contains("EMAIL;TYPE=HOME:alice@example.com"));
-        assertTrue(vcard.contains("IMPP;TYPE=HOME:tinode:topic/usr123"));
+        assertTrue(vcard.contains("IMPP;TYPE=HOME:tinode:id/usr123"));
         assertTrue(vcard.contains("URL;TYPE=WORK:https://example.com"));
     }
 
@@ -396,7 +396,7 @@ public class TheCardTest {
                 PHOTO;TYPE=JPEG;ENCODING=b:base64data\r
                 TEL;TYPE=CELL:123456\r
                 EMAIL;TYPE=HOME:alice@example.com\r
-                IMPP;TYPE=HOME:tinode:topic/usr123\r
+                IMPP;TYPE=HOME:tinode:id/usr123\r
                 END:VCARD""";
         TheCard card = TheCard.importVCard(vcard);
         assertNotNull(card);
@@ -412,7 +412,7 @@ public class TheCardTest {
         for (TheCard.CommEntry entry : card.comm) {
             if (entry.proto == TheCard.CommProto.TEL && entry.value.equals("123456")) hasTel = true;
             if (entry.proto == TheCard.CommProto.EMAIL && entry.value.equals("alice@example.com")) hasEmail = true;
-            if (entry.proto == TheCard.CommProto.TINODE && entry.value.equals("tinode:topic/usr123")) hasTinode = true;
+            if (entry.proto == TheCard.CommProto.TINODE && entry.value.equals("tinode:id/usr123")) hasTinode = true;
         }
         assertTrue(hasTel);
         assertTrue(hasEmail);
@@ -724,7 +724,7 @@ public class TheCardTest {
         card.addPhone("+15559876543", TheCard.CommDes.WORK);
         card.addEmail("alice@example.com", TheCard.CommDes.HOME);
         card.addEmail("alice.johnson@work.com", TheCard.CommDes.WORK);
-        card.addTinodeID("tinode:topic/usrAlice123", TheCard.CommDes.HOME);
+        card.addTinodeID("tinode:id/usrAlice123", TheCard.CommDes.HOME);
 
         assertEquals(5, card.comm.length);
         assertEquals(2, card.getComm(TheCard.CommProto.TEL).size());
@@ -750,7 +750,7 @@ public class TheCardTest {
         assertTrue(phones.stream().anyMatch(p -> p.value.equals("+15559876543")));
         assertTrue(emails.stream().anyMatch(e -> e.value.equals("alice@example.com")));
         assertTrue(emails.stream().anyMatch(e -> e.value.equals("alice.johnson@work.com")));
-        assertEquals("tinode:topic/usrAlice123", tinodeIds.get(0).value);
+        assertEquals("tinode:id/usrAlice123", tinodeIds.get(0).value);
     }
 
     @Test
@@ -784,8 +784,8 @@ public class TheCardTest {
     @Test
     public void testExportImportTinodeEntries() {
         TheCard card = new TheCard();
-        card.addTinodeID("tinode:topic/usrTest123", TheCard.CommDes.HOME);
-        card.addTinodeID("tinode:topic/usrTest456", TheCard.CommDes.WORK);
+        card.addTinodeID("tinode:id/usrTest123", TheCard.CommDes.HOME);
+        card.addTinodeID("tinode:id/usrTest456", TheCard.CommDes.WORK);
 
         String vcardStr = TheCard.exportVCard(card);
         assertNotNull(vcardStr);
@@ -797,8 +797,8 @@ public class TheCardTest {
         assertNotNull(imported);
         List<TheCard.CommEntry> tinodeIds = imported.getComm(TheCard.CommProto.TINODE);
         assertEquals(2, tinodeIds.size());
-        assertTrue(tinodeIds.stream().anyMatch(t -> t.value.equals("tinode:topic/usrTest123")));
-        assertTrue(tinodeIds.stream().anyMatch(t -> t.value.equals("tinode:topic/usrTest456")));
+        assertTrue(tinodeIds.stream().anyMatch(t -> t.value.equals("tinode:id/usrTest123")));
+        assertTrue(tinodeIds.stream().anyMatch(t -> t.value.equals("tinode:id/usrTest456")));
     }
 
     @Test
@@ -834,7 +834,7 @@ public class TheCardTest {
                 FN:Test User
                 TEL:(555) 123-4567
                 EMAIL:test@example.com
-                IMPP:tinode:topic/usrNoType
+                IMPP:tinode:id/usrNoType
                 END:VCARD""";
         TheCard card = TheCard.importVCard(vcard);
         assertNotNull(card);
@@ -859,7 +859,7 @@ public class TheCardTest {
         assertEquals(0, email.des.length);
 
         assertNotNull(tinode);
-        assertEquals("tinode:topic/usrNoType", tinode.value);
+        assertEquals("tinode:id/usrNoType", tinode.value);
         assertEquals(0, tinode.des.length);
     }
 
@@ -1023,7 +1023,7 @@ public class TheCardTest {
         original.note = "Important contact";
         original.addPhone("+15551234567", TheCard.CommDes.MOBILE);
         original.addEmail("test@example.com", TheCard.CommDes.WORK);
-        original.addTinodeID("tinode:topic/usr123", TheCard.CommDes.HOME);
+        original.addTinodeID("tinode:id/usr123", TheCard.CommDes.HOME);
 
         original.bday = new TheCard.Birthday();
         original.bday.m = 12;
@@ -1053,7 +1053,7 @@ public class TheCardTest {
         assertTrue(Arrays.stream(deserialized.comm)
                 .anyMatch(e -> e.proto == TheCard.CommProto.EMAIL && e.value.equals("test@example.com")));
         assertTrue(Arrays.stream(deserialized.comm)
-                .anyMatch(e -> e.proto == TheCard.CommProto.TINODE && e.value.equals("tinode:topic/usr123")));
+                .anyMatch(e -> e.proto == TheCard.CommProto.TINODE && e.value.equals("tinode:id/usr123")));
     }
 
     @Test
@@ -1232,7 +1232,7 @@ public class TheCardTest {
                 new TheCard.CommEntry(TheCard.CommProto.EMAIL,
                         new TheCard.CommDes[]{TheCard.CommDes.WORK}, "work@test.com"),
                 new TheCard.CommEntry(TheCard.CommProto.TINODE,
-                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:topic/usr1"),
+                        new TheCard.CommDes[]{TheCard.CommDes.HOME}, "tinode:id/usr1"),
                 new TheCard.CommEntry(TheCard.CommProto.IMPP,
                         new TheCard.CommDes[]{TheCard.CommDes.PERSONAL}, "xmpp:user@server.com"),
                 new TheCard.CommEntry(TheCard.CommProto.HTTP,
@@ -1258,7 +1258,7 @@ public class TheCardTest {
                   "comm": [
                     {"proto": "tel", "des": ["mobile"], "value": "555-1111"},
                     {"proto": "email", "des": ["work"], "value": "work@test.com"},
-                    {"proto": "tinode", "des": ["home"], "value": "tinode:topic/usr1"},
+                    {"proto": "tinode", "des": ["home"], "value": "tinode:id/usr1"},
                     {"proto": "impp", "des": ["personal"], "value": "xmpp:user@server.com"},
                     {"proto": "http", "des": ["work"], "value": "https://website.com"}
                   ]
@@ -1464,7 +1464,7 @@ public class TheCardTest {
                     {
                       "proto": "tinode",
                       "des": ["work"],
-                      "value": "tinode:topic/usr_sarah"
+                      "value": "tinode:id/usr_sarah"
                     }
                   ]
                 }
