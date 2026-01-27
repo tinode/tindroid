@@ -863,8 +863,6 @@ public class TheCardTest {
         assertEquals(0, tinode.des.length);
     }
 
-    // JSON Serialization/Deserialization Tests
-
     @Test
     public void testJsonSerializeMinimal() throws Exception {
         TheCard card = new TheCard();

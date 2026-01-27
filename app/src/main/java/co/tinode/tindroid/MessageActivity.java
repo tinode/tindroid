@@ -379,6 +379,11 @@ public class MessageActivity extends BaseActivity
 
         mNewSubsAvailable = false;
         mKnownSubs = new HashSet<>();
+
+        if (mTopic == null) {
+            return true;
+        }
+
         if (mTopic.isGrpType()) {
             Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
             if (subs != null) {
@@ -388,10 +393,6 @@ public class MessageActivity extends BaseActivity
                     }
                 }
             }
-        }
-
-        if (mTopic == null) {
-            return true;
         }
 
         if (mTopicEventListener == null) {
@@ -418,6 +419,8 @@ public class MessageActivity extends BaseActivity
         String name = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
         if (!TextUtils.isEmpty(name)) {
             return name;
+        } else {
+            name = Tinode.parseTinodeUrl(name);
         }
 
         // Check if activity was launched from a background push notification.

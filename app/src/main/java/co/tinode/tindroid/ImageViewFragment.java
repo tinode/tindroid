@@ -45,6 +45,7 @@ import androidx.lifecycle.Lifecycle;
 
 import co.tinode.tindroid.widgets.OverlaidImageView;
 
+import co.tinode.tinodesdk.Tinode;
 import coil.Coil;
 import coil.request.ImageRequest;
 import coil.target.Target;
@@ -522,6 +523,7 @@ public class ImageViewFragment extends Fragment implements MenuProvider {
         }
 
         String topicName = args.getString(Const.INTENT_EXTRA_TOPIC);
+        topicName = Tinode.parseTinodeUrl(topicName);
         ((AvatarCompletionHandler) activity).onAcceptAvatar(topicName, bmp);
 
         activity.getSupportFragmentManager().popBackStack();

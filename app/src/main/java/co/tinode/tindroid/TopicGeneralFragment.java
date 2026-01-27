@@ -118,6 +118,7 @@ public class TopicGeneralFragment extends Fragment implements MenuProvider, Util
         }
 
         String name = args.getString(Const.INTENT_EXTRA_TOPIC);
+        name = Tinode.parseTinodeUrl(name);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicPermissions resumed with null topic.");
