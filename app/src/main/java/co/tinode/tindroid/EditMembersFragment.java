@@ -123,7 +123,7 @@ public class EditMembersFragment extends Fragment {
         final Tinode tinode = Cache.getTinode();
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) tinode.getTopic(args == null ? null :
-                args.getString(Const.INTENT_EXTRA_TOPIC));
+                Tinode.parseTinodeUrl(args.getString(Const.INTENT_EXTRA_TOPIC)));
         final ArrayList<MembersAdapter.Member> members = new ArrayList<>();
         boolean cancelable = false;
         if (mTopic != null) {

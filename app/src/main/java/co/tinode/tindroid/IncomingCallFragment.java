@@ -104,6 +104,7 @@ public class IncomingCallFragment extends Fragment
         tinode.addListener(mListener);
 
         mTopicName = args.getString(Const.INTENT_EXTRA_TOPIC);
+        mTopicName = Tinode.parseTinodeUrl(mTopicName);
         mSeq = args.getInt(Const.INTENT_EXTRA_SEQ);
         mAudioOnly = args.getBoolean(Const.INTENT_EXTRA_CALL_AUDIO_ONLY);
 

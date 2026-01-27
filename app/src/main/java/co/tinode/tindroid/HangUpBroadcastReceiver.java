@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import co.tinode.tinodesdk.Tinode;
 import co.tinode.tinodesdk.Topic;
 
 /**
@@ -19,6 +20,7 @@ public class HangUpBroadcastReceiver extends BroadcastReceiver {
 
         if (Const.INTENT_ACTION_CALL_CLOSE.equals(intent.getAction())) {
             String topicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
+            topicName = Tinode.parseTinodeUrl(topicName);
             int seq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
             Topic topic = Cache.getTinode().getTopic(topicName);
             if (topic != null && seq > 0) {

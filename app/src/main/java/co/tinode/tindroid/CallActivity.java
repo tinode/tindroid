@@ -76,6 +76,7 @@ public class CallActivity extends BaseActivity  {
         mTinode = Cache.getTinode();
 
         mTopicName = intent.getStringExtra(Const.INTENT_EXTRA_TOPIC);
+        mTopicName = Tinode.parseTinodeUrl(mTopicName);
         mSeq = intent.getIntExtra(Const.INTENT_EXTRA_SEQ, -1);
         // noinspection unchecked
         mTopic = (ComTopic<VxCard>) mTinode.getTopic(mTopicName);

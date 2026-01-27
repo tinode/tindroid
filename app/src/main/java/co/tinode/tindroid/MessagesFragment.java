@@ -587,6 +587,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
 
         if (mTopicName != null) {
+            mTopicName = Tinode.parseTinodeUrl(mTopicName);
             mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(mTopicName);
             runMessagesLoader(mTopicName);
         } else {

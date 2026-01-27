@@ -27,6 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -117,6 +118,7 @@ public class Tinode {
 
     // Value interpreted as 'content deleted', unicode 0x2421.
     public static final String NULL_VALUE = "␡";
+    public static final byte[] NULL_BYTES = NULL_VALUE.getBytes(StandardCharsets.UTF_8);
 
     // Notifications {note}.
     protected static final String NOTE_CALL = "call";
@@ -154,6 +156,9 @@ public class Tinode {
     private static final int DEFAULT_MAX_TAG_COUNT = 16;
     private static final int DEFAULT_MAX_TAG_LENGTH = 96;
     private static final int DEFAULT_MIN_TAG_LENGTH = 2;
+
+    private static final Pattern URL_SCHEMA_REGEX = Pattern.compile("^\\s*([a-z][a-z0-9+.-]*:|//)",
+            Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
     static {
         sJsonMapper = new ObjectMapper();
@@ -2447,12 +2452,10 @@ public class Tinode {
      * example.html - ok
      * https:example.com - not ok.
      * http:/example.com - not ok.
-     * ↲ https://example.com' - not ok. (↲ means carriage return)
+     * '↲ https://example.com' - not ok. (↲ means carriage return)
      */
     public static boolean isUrlRelative(@NotNull String url) {
-        Pattern re = Pattern.compile("^\\s*([a-z][a-z0-9+.-]*:|//)",
-                Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-        return !re.matcher(url).matches();
+        return !URL_SCHEMA_REGEX.matcher(url).find();
     }
 
     /**
@@ -2480,6 +2483,27 @@ public class Tinode {
     public boolean isTrustedURL(@NotNull URL url) {
         return mServerURI != null && ((url.getProtocol().equals("http") || url.getProtocol().equals("https"))
                 && url.getAuthority().equals(mServerURI.getAuthority()));
+    }
+
+    /**
+     * Parse url like 'tinode:[//host/]id/usrABC12345' and return user ID.
+     * If it's not a tinode URL, return input string unchanged.
+     *
+     * @return user ID if present, otherwise the original string unchanged.
+     */
+    @Nullable
+    public static String parseTinodeUrl(@Nullable String url) {
+        if (url == null) {
+            return null;
+        }
+        if (!url.startsWith("tinode:")) {
+            return url;
+        }
+        String[] parts = url.substring(7).split("/");
+        if (parts.length < 2 || !"id".equals(parts[parts.length - 2])) {
+            return url;
+        }
+        return parts[parts.length-1];
     }
 
     /**

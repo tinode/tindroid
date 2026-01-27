@@ -196,6 +196,7 @@ public class TopicInfoFragment extends Fragment implements MenuProvider, Message
         }
 
         String name = args.getString(Const.INTENT_EXTRA_TOPIC);
+        name = Tinode.parseTinodeUrl(name);
         mTopic = (ComTopic<VxCard>) Cache.getTinode().getTopic(name);
         if (mTopic == null) {
             Log.d(TAG, "TopicInfo resumed with null topic.");
