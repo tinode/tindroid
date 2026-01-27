@@ -44,6 +44,7 @@
     <string name="action_send_now">Enviar ahora</string>
     <string name="action_view_details">Ver detalles</string>
     <string name="action_copy">Copiar</string>
+    <string name="action_share">Compartir</string>
     <string name="action_offline">Sin conexión</string>
     <string name="action_delete_group">Eliminar conversación…</string>
     <string name="action_leave_topic">Dejar conversación…</string>
@@ -380,4 +381,7 @@
     <string name="wp_pattern">Patrón</string>
     <string name="wp_image">Fondo de pantalla</string>
     <string name="note">Nota</string>
+    <string name="contact_card">Tarjeta de contacto</string>
+    <string name="share_contact">Compartir contacto</string>
+    <string name="invalid_format">Formato no válido o irreconocible</string>
 </resources>

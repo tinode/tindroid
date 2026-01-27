@@ -44,6 +44,7 @@
     <string name="action_send_now">Trimite acum</string>
     <string name="action_view_details">Vezi detalii</string>
     <string name="action_copy">Copiază</string>
+    <string name="action_share">Distribuie</string>
     <string name="action_offline">Lucrează offline</string>
     <string name="action_delete_group">Şterge conversaţia…</string>
     <string name="action_leave_topic">Părăseşte conversaţia…</string>
@@ -382,4 +383,7 @@
     <string name="wp_pattern">Model</string>
     <string name="wp_image">Imagine de fundal</string>
     <string name="note">Notă</string>
+    <string name="contact_card">Card de contact</string>
+    <string name="share_contact">Distribuie contact</string>
+    <string name="invalid_format">Format invalid sau nerecunoscibil</string>
 </resources>

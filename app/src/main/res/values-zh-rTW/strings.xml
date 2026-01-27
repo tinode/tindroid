@@ -44,6 +44,7 @@
     <string name="action_send_now">立刻傳送</string>
     <string name="action_view_details">查看詳細資訊</string>
     <string name="action_copy">複製</string>
+    <string name="action_share">分享</string>
     <string name="action_offline">離線狀態下運作</string>
     <string name="action_delete_group">刪除對話…</string>
     <string name="action_leave_topic">離開對話…</string>
@@ -381,4 +382,7 @@
     <string name="wp_pattern">圖案</string>
     <string name="wp_image">桌布</string>
     <string name="note">便條</string>
+    <string name="contact_card">聯絡人卡片</string>
+    <string name="share_contact">分享聯絡人</string>
+    <string name="invalid_format">無效或無法識別的格式</string>
 </resources>

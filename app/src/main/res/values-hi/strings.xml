@@ -38,6 +38,7 @@
     <string name="action_send_now">अब भेजें</string>
     <string name="action_view_details">विवरण देखें</string>
     <string name="action_copy">प्रतिलिपि</string>
+    <string name="action_share">साझा करें</string>
     <string name="action_offline">ऑफ़लाइन कार्य करना</string>
     <string name="action_delete_group">बातचीत मिटाएं…</string>
     <string name="action_leave_topic">बातचीत को छोड़ दो…</string>
@@ -353,4 +354,8 @@
     <string name="wp_pattern">पैटर्न</string>
     <string name="wp_image">वॉलपेपर</string>
     <string name="note">नोट</string>
+    <string name="contact_card">संपर्क कार्ड</string>
+    <string name="share_contact">संपर्क साझा करें</string>
+    <string name="invalid_format">अमान्य या अपरिचित प्रारूप</string>
 </resources>
+

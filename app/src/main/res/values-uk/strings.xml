@@ -27,6 +27,7 @@
     <string name="action_send_now">Надіслати зараз</string>
     <string name="action_view_details">Детальніше</string>
     <string name="action_copy">Копіювати</string>
+    <string name="action_share">Поділитися</string>
     <string name="action_offline">Ви офлайн…</string>
     <string name="action_leave_topic">Покинути чат…</string>
     <string name="action_delete_group">Видалити чат…</string>
@@ -361,4 +362,7 @@
     <string name="wp_pattern">Візерунок</string>
     <string name="wp_image">Шпалери</string>
     <string name="note">Нотатка</string>
+    <string name="contact_card">Візитна картка</string>
+    <string name="share_contact">Поділитися контактом</string>
+    <string name="invalid_format">Неправильний або нерозпізнаний формат</string>
 </resources>

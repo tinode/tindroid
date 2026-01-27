@@ -44,6 +44,7 @@
     <string name="action_send_now">Jetzt senden</string>
     <string name="action_view_details">Details anzeigen</string>
     <string name="action_copy">Kopieren</string>
+    <string name="action_share">Teilen</string>
     <string name="action_offline">Offline</string>
     <string name="action_delete_group">Gruppe löschen…</string>
     <string name="action_leave_topic">Thema verlassen…</string>
@@ -382,4 +383,7 @@
     <string name="wp_pattern">Muster</string>
     <string name="wp_image">Hintergrundbild</string>
     <string name="note">Notiz</string>
+    <string name="contact_card">Kontaktkarte</string>
+    <string name="share_contact">Kontakt teilen</string>
+    <string name="invalid_format">Ungültiges oder nicht erkennbares Format</string>
 </resources>

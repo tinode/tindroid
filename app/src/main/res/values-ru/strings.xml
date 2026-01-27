@@ -27,6 +27,7 @@
     <string name="action_send_now">Отправить сейчас</string>
     <string name="action_view_details">Детали</string>
     <string name="action_copy">Копировать</string>
+    <string name="action_share">Поделиться</string>
     <string name="action_offline">Вы оффлайн…</string>
     <string name="action_leave_topic">Покинуть чат…</string>
     <string name="action_delete_group">Удалить чат…</string>
@@ -361,4 +362,7 @@
     <string name="wp_pattern">Узор</string>
     <string name="note">Заметка</string>
     <string name="wp_image">Обои</string>
+    <string name="contact_card">Визитная карточка</string>
+    <string name="share_contact">Поделиться контактом</string>
+    <string name="invalid_format">Неверный или нераспознаваемый формат</string>
 </resources>
