@@ -316,11 +316,15 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         final ImageView backgroundImage = view.findViewById(R.id.background);
         final String wallpaper = pref.getString(Utils.PREFS_WALLPAPER, "");
-        final int wallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
-        final int wallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
-        UtilsBitmap.assignBackgroundImage(activity, backgroundImage,
-                Cache.getTinode().getWallpaperBase() + "/" + wallpaper,
-                wallpaperSize, wallpaperBlur);
+        if (TextUtils.isEmpty(wallpaper)) {
+            backgroundImage.setImageResource(R.drawable.message_view_bkg);
+        } else {
+            final int wallpaperSize = pref.getInt(Utils.PREFS_WALLPAPER_SIZE, 0);
+            final int wallpaperBlur = pref.getInt(Utils.PREFS_WALLPAPER_BLUR, 0);
+            UtilsBitmap.assignBackgroundImage(activity, backgroundImage,
+                    Cache.getTinode().getWallpaperBase() + "/" + wallpaper,
+                    wallpaperSize, wallpaperBlur);
+        }
 
         mMessageViewLayoutManager = new LinearLayoutManager(activity) {
             @Override

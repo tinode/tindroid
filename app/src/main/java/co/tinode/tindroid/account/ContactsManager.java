@@ -149,7 +149,7 @@ public class ContactsManager {
             if (rawContactId > 0) {
                 // Contact already exists
                 if (pub != null) {
-                    updateContact(context, resolver, tinode, pub, userId, rawContactId,
+                    updateContact(context, resolver, pub, userId, rawContactId,
                             batchOperation, isSyncContext);
                 }
             } else {
@@ -159,7 +159,7 @@ public class ContactsManager {
                     pub.fn = context.getString(R.string.default_contact_name, userId);
                 }
 
-                addContact(context, account, tinode, pub, userId, batchOperation, isSyncContext);
+                addContact(context, account, pub, userId, batchOperation, isSyncContext);
             }
         }
 
@@ -182,7 +182,7 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void addContact(Context context, Account account,
-                                   Tinode tinode, VxCard pub, String userId,
+                                   VxCard pub, String userId,
                                    BatchOperation batchOperation, boolean isSyncContext) {
 
         // Initiate adding data to contacts provider.
@@ -193,7 +193,7 @@ public class ContactsManager {
 
         contactOp.addName(pub.fn, pub.n != null ? pub.n.given : null,
                 pub.n != null ? pub.n.surname : null)
-                .addAvatar(pub.getPhotoBits(), tinode, pub.getPhotoRef(), pub.getPhotoMimeType());
+                .addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
 
         if (pub.email != null) {
             for (TheCard.Contact email : pub.email) {
@@ -233,7 +233,7 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void updateContact(Context context, ContentResolver resolver,
-                                      Tinode tinode, VxCard pub, String unique,
+                                      VxCard pub, String unique,
                                       long rawContactId, BatchOperation batchOperation, boolean isSyncContext) {
 
         boolean existingCellPhone = false;
@@ -318,7 +318,7 @@ public class ContactsManager {
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(pub.getPhotoBits(), tinode, pub.getPhotoRef(), pub.getPhotoMimeType());
+            contactOp.addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
         }
 
         // If we don't have a status profile, then create one.  This could

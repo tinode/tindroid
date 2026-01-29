@@ -17,9 +17,7 @@ import android.text.TextUtils;
 
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.R;
-import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.UtilsBitmap;
-import co.tinode.tinodesdk.Tinode;
 
 import coil.Coil;
 import coil.ImageLoaders;
@@ -206,7 +204,8 @@ class ContactOperations {
         mValues.clear();
         if (!TextUtils.isEmpty(tinode_id)) {
             mValues.put(Im.DATA, tinode_id);
-            mValues.put(Im.TYPE, Im.TYPE_OTHER);
+            mValues.put(Im.TYPE, Im.TYPE_CUSTOM);
+            mValues.put(Im.LABEL, Utils.TINODE_IM_PROTOCOL);
             mValues.put(Im.MIMETYPE, Im.CONTENT_ITEM_TYPE);
             mValues.put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM);
             mValues.put(Im.CUSTOM_PROTOCOL, Utils.TINODE_IM_PROTOCOL);
@@ -221,7 +220,7 @@ class ContactOperations {
      * @param avatar avatar image serialized into byte array
      * @return instance of ContactOperations
      */
-    ContactOperations addAvatar(byte[] avatar, final Tinode tinode, final String ref, final String mimeType) {
+    ContactOperations addAvatar(byte[] avatar, final String ref, final String mimeType) {
         mValues.clear();
         if (ref != null) {
             ImageRequest req = new ImageRequest.Builder(mContext)
