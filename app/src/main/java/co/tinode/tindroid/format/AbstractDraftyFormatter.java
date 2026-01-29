@@ -67,7 +67,7 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
     protected abstract T handleQuote(final Context ctx, List<T> content, final Map<String, Object> data);
 
     // TheCard contact.
-    protected abstract T handleTheCard(final Context ctx, List<T> content, final Map<String, Object> data);
+    protected abstract T handleTheCard(final Context ctx, final Map<String, Object> data);
 
     // Video call.
     protected abstract T handleVideoCall(final Context ctx, List<T> content, final Map<String, Object> data);
@@ -117,8 +117,8 @@ public abstract class AbstractDraftyFormatter<T extends Spanned> implements Draf
                     // Quoted block.
                         handleQuote(mContext, content, data);
                 case "TC" ->
-                    // TheCard contact card.
-                        handleTheCard(mContext, content, data);
+                    // TheCard contact card. It cannot have sub-elements.
+                        handleTheCard(mContext, data);
                 case "VC" ->
                     // Video call.
                         handleVideoCall(mContext, content, data);

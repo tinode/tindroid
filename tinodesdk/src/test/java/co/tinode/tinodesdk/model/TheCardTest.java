@@ -2,6 +2,7 @@ package co.tinode.tinodesdk.model;
 
 import static org.junit.Assert.*;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.Test;
@@ -1487,23 +1488,12 @@ public class TheCardTest {
     @Test
     public void testJsonStringRoundtripWithBase64Photo() throws Exception {
         String originalJson = """
-                {
-                  "fn": "Photo User",
-                  "photo": {
-                    "type": "png",
-                    "data": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAWA8jMAAAAABJRU5ErkJggg=="
-                  },
-                  "comm": [
-                    {
-                      "proto": "email",
-                      "des": ["home"],
-                      "value": "photo@test.com"
-                    }
-                  ]
-                }
-                """;
+    {"comm":[{"des":["home"],"proto":"email","value":"photo@test.com"}],"fn":"Photo User","photo":{"data":"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAGAWA8jMAAAAABJRU5ErkJggg==","type":"png"}}
+    """;
 
         ObjectMapper mapper = Tinode.getJsonMapper();
+        // Predictable serialization order. Not needed in production.
+        mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
 
         // Parse original JSON to normalized format
         Object originalParsed = mapper.readValue(originalJson, Object.class);

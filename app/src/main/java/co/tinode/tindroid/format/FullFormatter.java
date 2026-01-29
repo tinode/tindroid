@@ -526,8 +526,7 @@ public class FullFormatter extends AbstractDraftyFormatter<SpannableStringBuilde
     }
 
     @Override
-    protected SpannableStringBuilder handleTheCard(Context ctx, List<SpannableStringBuilder> content,
-                                                   Map<String, Object> data) {
+    protected SpannableStringBuilder handleTheCard(Context ctx, Map<String, Object> data) {
         if (data == null) {
             return null;
         }

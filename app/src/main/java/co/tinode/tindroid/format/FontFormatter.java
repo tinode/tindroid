@@ -13,10 +13,10 @@ import co.tinode.tindroid.R;
 // Push notifications don't support ImageSpan or TypefaceSpan, consequently, using Unicode chars instead of icons.
 public class FontFormatter extends PreviewFormatter {
     // Emoji characters from the stock font: Microphone 🎤 (audio), Camera 📷 (image), Paperclip 📎 (attachment),
-    // Memo 📝 (form), 📞 (video call), 📹 (video recording), Question-Mark ❓ (unknown).
+    // Memo 📝 (form), ID Card 🪪 (contact card), 📞 (video call), 📹 (video recording), Question-Mark ❓ (unknown).
     // These characters are present in Android 5 and up.
     private static final String[] UNICODE_STRINGS = new String[]{"\uD83C\uDFA4", "\uD83D\uDCF7",
-            "\uD83D\uDCCE", "\uD83D\uDCDD", "\uD83D\uDCDE", "\uD83D\uDCF9", "\u2753"};
+            "\uD83D\uDCCE", "\uD83D\uDCDD", "\uD83D\uDCDE", "\uD83D\uDCF9", "\uD83E\uDEAA", "\u2753"};
 
     // Index into character sets.
     private static final int AUDIO = 0;
@@ -25,7 +25,8 @@ public class FontFormatter extends PreviewFormatter {
     private static final int FORM = 3;
     private static final int CALL = 4;
     private static final int VIDEO = 5;
-    private static final int UNKNOWN = 6;
+    private static final int CONTACT = 6;
+    private static final int UNKNOWN = 7;
 
     public FontFormatter(final Context context, float fontSize) {
         super(context, fontSize);
@@ -65,6 +66,11 @@ public class FontFormatter extends PreviewFormatter {
                                                 Map<String, Object> data) {
         SpannableStringBuilder node = annotatedIcon(ctx, FORM, R.string.form);
         return node.append(": ").append(join(content));
+    }
+
+    @Override
+    protected SpannableStringBuilder handleTheCard(Context ctx, Map<String, Object> data) {
+        return annotatedIcon(ctx, CONTACT, R.string.contact_card);
     }
 
     @Override

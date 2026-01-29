@@ -13,7 +13,6 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import co.tinode.tindroid.Const;
 import co.tinode.tindroid.TindroidApp;
-import co.tinode.tindroid.UiUtils;
 import co.tinode.tindroid.UtilsBitmap;
 import co.tinode.tinodesdk.PromisedReply;
 import co.tinode.tinodesdk.model.Drafty;

@@ -181,7 +181,7 @@ public class PreviewFormatter extends AbstractDraftyFormatter<SpannableStringBui
     }
 
     @Override
-    protected SpannableStringBuilder handleTheCard(Context ctx, List<SpannableStringBuilder> content, Map<String, Object> data) {
+    protected SpannableStringBuilder handleTheCard(Context ctx, Map<String, Object> data) {
         return annotatedIcon(ctx, R.drawable.ic_id_card, R.string.contact_card);
     }
 
