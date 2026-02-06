@@ -421,7 +421,7 @@ public class UiUtils {
                 }
                 Tinode tinode = Cache.getTinode();
                 Collection<ComTopic<VxCard>> topics = tinode.getFilteredTopics(Topic::isP2PType);
-                ContactsManager.updateContacts(activity, acc, tinode, topics);
+                ContactsManager.updateContacts(activity, acc, topics);
                 TindroidApp.startWatchingContacts(activity, acc);
             });
         }

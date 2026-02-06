@@ -290,7 +290,7 @@ public class ChatsActivity extends BaseActivity
                 }
                 if (Topic.isP2PType(sub.topic)) {
                     ContactsManager.processContact(ChatsActivity.this,
-                            ChatsActivity.this.getContentResolver(), mAccount, tinode,
+                            ChatsActivity.this.getContentResolver(), mAccount,
                             sub.pub, null, sub.getUnique(), sub.deleted != null,
                             null, false);
                 }

@@ -1093,7 +1093,7 @@ public class MessageActivity extends BaseActivity
                 if (acc != null) {
                     Collection<Subscription<VxCard, PrivateType>> subs = mTopic.getSubscriptions();
                     if (subs != null) {
-                        ContactsManager.updateContacts(context, acc, Cache.getTinode(), subs, null, false);
+                        ContactsManager.updateContacts(context, acc, subs, null, false);
                     }
                 }
             }

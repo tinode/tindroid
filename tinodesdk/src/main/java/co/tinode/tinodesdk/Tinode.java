@@ -1703,7 +1703,7 @@ public class Tinode {
                         mLoginInProgress = false;
                         if (err instanceof ServerResponseException sre) {
                             final int code = sre.getCode();
-                            if (code == ServerMessage.STATUS_UNAUTHORIZED) {
+                            if (code == ServerMessage.STATUS_UNAUTHORIZED || code == ServerMessage.STATUS_NOT_FOUND) {
                                 mLoginCredentials = null;
                                 mAuthToken = null;
                                 mAuthTokenExpires = null;

@@ -50,7 +50,6 @@ public class ContactsManager {
      * sync request.
      */
     public static synchronized <K> Date updateContacts(Context context, Account account,
-                                                   Tinode tinode,
                                                    @NotNull Collection<Subscription<VxCard, K>> subscriptions,
                                                    Date lastSyncMarker,
                                                    // It's a false positive.
@@ -65,7 +64,7 @@ public class ContactsManager {
                 currentSyncMarker = sub.updated;
 
                 // Send updated contact to database.
-                processContact(context, resolver, account, tinode,
+                processContact(context, resolver, account,
                         sub.pub, sub.priv, sub.user, sub.deleted != null,
                         batchOperation, isSyncContext);
 
@@ -90,14 +89,14 @@ public class ContactsManager {
      * @param account The username for the account
      * @param topics  The list of contacts to update
      */
-    public static synchronized void updateContacts(Context context, Account account, Tinode tinode,
+    public static synchronized void updateContacts(Context context, Account account,
                                                    Collection<ComTopic<VxCard>> topics) {
         final ContentResolver resolver = context.getContentResolver();
         final BatchOperation batchOperation = new BatchOperation(resolver);
 
         for (ComTopic<VxCard> topic : topics) {
             // Save topic as contact to database.
-            processContact(context, resolver, account, tinode,
+            processContact(context, resolver, account,
                     topic.getPub(), null, topic.getName(), false,
                     batchOperation, false);
 
@@ -127,7 +126,7 @@ public class ContactsManager {
      */
     public static synchronized void processContact(Context context,
                                                    ContentResolver resolver,
-                                                   Account account, Tinode tinode,
+                                                   Account account,
                                                    VxCard pub, Object priv,
                                                    String userId, boolean deleted,
                                                    BatchOperation batchOperation,
@@ -150,7 +149,7 @@ public class ContactsManager {
             if (rawContactId > 0) {
                 // Contact already exists
                 if (pub != null) {
-                    updateContact(context, resolver, tinode, pub, userId, rawContactId,
+                    updateContact(context, resolver, pub, userId, rawContactId,
                             batchOperation, isSyncContext);
                 }
             } else {
@@ -160,7 +159,7 @@ public class ContactsManager {
                     pub.fn = context.getString(R.string.default_contact_name, userId);
                 }
 
-                addContact(context, account, tinode, pub, userId, batchOperation, isSyncContext);
+                addContact(context, account, pub, userId, batchOperation, isSyncContext);
             }
         }
 
@@ -183,7 +182,7 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void addContact(Context context, Account account,
-                                   Tinode tinode, VxCard pub, String userId,
+                                   VxCard pub, String userId,
                                    BatchOperation batchOperation, boolean isSyncContext) {
 
         // Initiate adding data to contacts provider.
@@ -193,7 +192,7 @@ public class ContactsManager {
                 ContactOperations.createNewContact(context, userId, account.name, batchOperation, isSyncContext);
 
         contactOp.addName(pub.fn, pub.getFirstName(), pub.getLastName())
-                .addAvatar(pub.getPhotoBits(), tinode, pub.getPhotoRef(), pub.getPhotoMimeType());
+                .addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
 
         List<TheCard.CommEntry> emails = pub.getEmails();
         if (emails != null) {
@@ -235,7 +234,7 @@ public class ContactsManager {
      *                       into a single provider call
      */
     private static void updateContact(Context context, ContentResolver resolver,
-                                      Tinode tinode, VxCard pub, String unique,
+                                      VxCard pub, String unique,
                                       long rawContactId, BatchOperation batchOperation, boolean isSyncContext) {
 
         boolean existingCellPhone = false;
@@ -327,7 +326,7 @@ public class ContactsManager {
         }
         // Add the avatar if we didn't update the existing avatar
         if (!existingAvatar) {
-            contactOp.addAvatar(pub.getPhotoBits(), tinode, pub.getPhotoRef(), pub.getPhotoMimeType());
+            contactOp.addAvatar(pub.getPhotoBits(), pub.getPhotoRef(), pub.getPhotoMimeType());
         }
 
         // If we don't have a status profile, then create one.  This could
