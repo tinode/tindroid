@@ -512,7 +512,7 @@ public class MessageActivity extends BaseActivity
                 .thenApply(new PromisedReply.SuccessListener<>() {
                     @Override
                     public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
-                        if (result.ctrl != null && result.ctrl.code == 303) {
+                        if (result.ctrl != null && result.ctrl.code == ServerMessage.STATUS_SEE_OTHER) {
                             // Redirect.
                             changeTopic(result.ctrl.getStringParam("topic", null), false);
                             return null;
@@ -538,7 +538,7 @@ public class MessageActivity extends BaseActivity
                             Log.w(TAG, "Subscribe failed", err);
                             if (err instanceof ServerResponseException) {
                                 int code = ((ServerResponseException) err).getCode();
-                                if (code == 404) {
+                                if (code == ServerMessage.STATUS_NOT_FOUND) {
                                     showFragment(FRAGMENT_INVALID, null, false);
                                 }
                             }

@@ -618,7 +618,7 @@ public class CallFragment extends Fragment {
         try {
             //noinspection unchecked
             List<Map<String, Object>> iceServersConfig =
-                    (List<Map<String, Object>>) Cache.getTinode().getServerParam("iceServers");
+                    (List<Map<String, Object>>) Cache.getTinode().getServerParam(Tinode.ICE_SERVERS);
             if (iceServersConfig == null) {
                 return false;
             }

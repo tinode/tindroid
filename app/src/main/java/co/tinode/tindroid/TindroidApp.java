@@ -72,6 +72,7 @@ import co.tinode.tindroid.db.BaseDb;
 import co.tinode.tinodesdk.ServerResponseException;
 import co.tinode.tinodesdk.Tinode;
 
+import co.tinode.tinodesdk.model.ServerMessage;
 import coil.Coil;
 import coil.ComponentRegistry;
 import coil.ImageLoader;
@@ -509,7 +510,7 @@ public class TindroidApp extends Application implements DefaultLifecycleObserver
                     int code = ex.getCode();
                     // 401: Token expired or invalid login.
                     // 404: 'me' topic is not found (user deleted, but token is still valid).
-                    if (code == 401 || code == 404) {
+                    if (code == ServerMessage.STATUS_UNAUTHORIZED || code == ServerMessage.STATUS_NOT_FOUND) {
                         // Another try-catch because some users revoke needed permission after granting it.
                         try {
                             // Login failed due to invalid (expired) token or missing/disabled account.
