@@ -192,11 +192,13 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 for (Map.Entry<String,Boolean> e : result.entrySet()) {
                     if (!e.getValue()) {
                         // Some permission is missing. Disable audio recording button.
-                        Activity activity = requireActivity();
-                        if (activity.isFinishing() || activity.isDestroyed()) {
-                            return;
+                        View view = getView();
+                        if (view != null) {
+                            View recorder = view.findViewById(R.id.audioRecorder);
+                            if (recorder != null) {
+                                recorder.setEnabled(false);
+                            }
                         }
-                        activity.findViewById(R.id.audioRecorder).setEnabled(false);
                         return;
                     }
                 }
@@ -315,7 +317,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(activity);
         mSendOnEnter = pref.getBoolean(Utils.PREFS_SEND_ON_ENTER, false);
 
-        mGoToLatest = activity.findViewById(R.id.goToLatest);
+        mGoToLatest = view.findViewById(R.id.goToLatest);
         mGoToLatest.setOnClickListener(v -> scrollToBottom(true));
 
         final ImageView backgroundImage = view.findViewById(R.id.background);
@@ -433,10 +435,15 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 mSelectedPin = position;
-                ImageView dots = activity.findViewById(R.id.dotSelector);
-                DotSelectorDrawable drawable = (DotSelectorDrawable) dots.getDrawable();
-                if (drawable != null) {
-                    drawable.setSelected(position);
+                View view = getView();
+                if (view != null) {
+                    ImageView dots = view.findViewById(R.id.dotSelector);
+                    if (dots != null) {
+                        DotSelectorDrawable drawable = (DotSelectorDrawable) dots.getDrawable();
+                        if (drawable != null) {
+                            drawable.setSelected(position);
+                        }
+                    }
                 }
             }
         });
@@ -625,6 +632,11 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
 
         requireActivity().runOnUiThread(() -> {
+            View view = getView();
+            if (view == null) {
+                return;
+            }
+
             setupPinnedMessages();
 
             mMessagesAdapter.updateSelectedOnPinnedChange(seq);
@@ -633,25 +645,38 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 mSelectedPin = 0;
             }
 
+            View pinnedMessages = view.findViewById(R.id.pinned_messages);
             if (count > 0) {
-                activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
-                ((ImageView) activity.findViewById(R.id.dotSelector))
-                        .setImageDrawable(new DotSelectorDrawable(getResources(), count, 0));
+                if (pinnedMessages != null) {
+                    pinnedMessages.setVisibility(View.VISIBLE);
+                }
+                ImageView dots = view.findViewById(R.id.dotSelector);
+                if (dots != null) {
+                    dots.setImageDrawable(new DotSelectorDrawable(getResources(), count, 0));
+                }
                 mPinnedAdapter.reloadItem(seq);
             } else {
-                activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
+                if (pinnedMessages != null) {
+                    pinnedMessages.setVisibility(View.GONE);
+                }
             }
             mPinnedAdapter.notifyDataSetChanged();
         });
     }
 
 
-    private void setSendPanelVisible(Activity activity, int id) {
-        if (mVisibleSendPanel == id) {
+    private void setSendPanelVisible(View view, int id) {
+        if (view == null || mVisibleSendPanel == id) {
             return;
         }
-        activity.findViewById(id).setVisibility(View.VISIBLE);
-        activity.findViewById(mVisibleSendPanel).setVisibility(View.GONE);
+        View v = view.findViewById(id);
+        if (v != null) {
+            v.setVisibility(View.VISIBLE);
+        }
+        View prev = view.findViewById(mVisibleSendPanel);
+        if (prev != null) {
+            prev.setVisibility(View.GONE);
+        }
         mVisibleSendPanel = id;
     }
 
@@ -736,7 +761,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 lockFab.setVisibility(View.GONE);
                 deleteFab.setVisibility(View.GONE);
                 audio.setVisibility(View.VISIBLE);
-                setSendPanelVisible(activity, R.id.sendMessagePanel);
+                setSendPanelVisible(view, R.id.sendMessagePanel);
                 return true;
             }
 
@@ -754,12 +779,12 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     if (mAudioRecorder != null) {
                         releaseAudio(false);
                     }
-                    setSendPanelVisible(activity, R.id.sendMessagePanel);
+                    setSendPanelVisible(view, R.id.sendMessagePanel);
                     releaseAudio(false);
                 } else {
                     playButton.setVisibility(View.GONE);
                     stopButton.setVisibility(View.VISIBLE);
-                    setSendPanelVisible(activity, R.id.recordAudioPanel);
+                    setSendPanelVisible(view, R.id.recordAudioPanel);
                 }
                 return true;
             }
@@ -791,7 +816,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 deleteFab.setVisibility(View.VISIBLE);
                 audio.setVisibility(View.INVISIBLE);
                 mab.requestFocus();
-                setSendPanelVisible(activity, R.id.recordAudioShortPanel);
+                setSendPanelVisible(view, R.id.recordAudioShortPanel);
                 // Cancel zone on the left.
                 int x = mab.getLeft();
                 int y = mab.getTop();
@@ -828,7 +853,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             WaveDrawable wd = (WaveDrawable) wave.getBackground();
             wd.release();
             releaseAudio(false);
-            setSendPanelVisible(activity, R.id.sendMessagePanel);
+            setSendPanelVisible(view, R.id.sendMessagePanel);
         });
         playButton.setOnClickListener(v -> {
             pauseButton.setVisibility(View.VISIBLE);
@@ -858,7 +883,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         view.findViewById(R.id.chatSendAudio).setOnClickListener(v -> {
             releaseAudio(true);
             sendAudio(activity);
-            setSendPanelVisible(activity, R.id.sendMessagePanel);
+            setSendPanelVisible(view, R.id.sendMessagePanel);
         });
 
         return audio;
@@ -881,11 +906,22 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             return;
         }
 
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+
         if (mTopic == null) {
             // Default view when the topic is not available.
-            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.notReadableNote).setVisibility(View.VISIBLE);
-            setSendPanelVisible(activity, R.id.sendMessageDisabled);
+            View notReadable = view.findViewById(R.id.notReadable);
+            if (notReadable != null) {
+                notReadable.setVisibility(View.VISIBLE);
+            }
+            View notReadableNote = view.findViewById(R.id.notReadableNote);
+            if (notReadableNote != null) {
+                notReadableNote.setVisibility(View.VISIBLE);
+            }
+            setSendPanelVisible(view, R.id.sendMessageDisabled);
             UiUtils.setupToolbar(activity, null, mTopicName, false, null, false, 0);
             return;
         }
@@ -899,47 +935,70 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         }
 
         int[] pinned = mTopic.getPinned();
+        View pinnedMessages = view.findViewById(R.id.pinned_messages);
         if (pinned == null) {
-            activity.findViewById(R.id.pinned_messages).setVisibility(View.GONE);
+            if (pinnedMessages != null) {
+                pinnedMessages.setVisibility(View.GONE);
+            }
         } else {
             setupPinnedMessages();
 
-            ((ImageView) activity.findViewById(R.id.dotSelector))
-                    .setImageDrawable(new DotSelectorDrawable(getResources(), pinned.length, 0));
-            activity.findViewById(R.id.unpinMessage).setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
-            activity.findViewById(R.id.staticPin).setVisibility(mTopic.isManager() ? View.GONE : View.VISIBLE);
-            activity.findViewById(R.id.pinned_messages).setVisibility(View.VISIBLE);
+            ImageView dots = view.findViewById(R.id.dotSelector);
+            if (dots != null) {
+                dots.setImageDrawable(new DotSelectorDrawable(getResources(), pinned.length, 0));
+            }
+            View unpin = view.findViewById(R.id.unpinMessage);
+            if (unpin != null) {
+                unpin.setVisibility(mTopic.isManager() ? View.VISIBLE : View.GONE);
+            }
+            View staticPin = view.findViewById(R.id.staticPin);
+            if (staticPin != null) {
+                staticPin.setVisibility(mTopic.isManager() ? View.GONE : View.VISIBLE);
+            }
+            if (pinnedMessages != null) {
+                pinnedMessages.setVisibility(View.VISIBLE);
+            }
         }
 
-        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
+        View replyPreviewWrapper = view.findViewById(R.id.replyPreviewWrapper);
+        if (replyPreviewWrapper != null) {
+            replyPreviewWrapper.setVisibility(View.GONE);
+        }
+        View notReadable = view.findViewById(R.id.notReadable);
         if (mTopic.isReader()) {
-            activity.findViewById(R.id.notReadable).setVisibility(View.GONE);
+            if (notReadable != null) {
+                notReadable.setVisibility(View.GONE);
+            }
         } else {
-            activity.findViewById(R.id.notReadable).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.notReadableNote).setVisibility(
-                    acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
+            if (notReadable != null) {
+                notReadable.setVisibility(View.VISIBLE);
+            }
+            View notReadableNote = view.findViewById(R.id.notReadableNote);
+            if (notReadableNote != null) {
+                notReadableNote.setVisibility(acs.isReader(Acs.Side.GIVEN) ? View.GONE : View.VISIBLE);
+            }
         }
 
         if (!mTopic.isWriter() || mTopic.isBlocked() || mTopic.isDeleted()) {
-            setSendPanelVisible(activity, R.id.sendMessageDisabled);
+            setSendPanelVisible(view, R.id.sendMessageDisabled);
         } else if (mContentToForward != null) {
-            showContentToForward(activity, mForwardSender, mContentToForward);
+            showContentToForward(mForwardSender, mContentToForward);
         } else {
             Subscription peer = mTopic.getPeer();
             boolean isJoiner = peer != null && peer.acs != null && peer.acs.isJoiner(Acs.Side.WANT);
             AcsHelper missing = peer != null && peer.acs != null ? peer.acs.getMissing() : new AcsHelper();
             if (isJoiner && (missing.isReader() || missing.isWriter())) {
-                setSendPanelVisible(activity, R.id.peersMessagingDisabled);
+                setSendPanelVisible(view, R.id.peersMessagingDisabled);
             } else {
                 if (!TextUtils.isEmpty(mMessageToSend)) {
-                    EditText input = activity.findViewById(R.id.editMessage);
-                    if (input.getText().length() == 0) {
+                    EditText input = view.findViewById(R.id.editMessage);
+                    if (input != null && input.getText().length() == 0) {
                         input.append(mMessageToSend);
                     }
 
                     mMessageToSend = null;
                 }
-                setSendPanelVisible(activity, R.id.sendMessagePanel);
+                setSendPanelVisible(view, R.id.sendMessagePanel);
             }
         }
 
@@ -963,8 +1022,6 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
         releaseAudio(false);
 
-        final MessageActivity activity = (MessageActivity) requireActivity();
-
         TindroidApp.setAudioMode(AudioManager.MODE_NORMAL);
         TindroidApp.setSpeakerphoneOn(false);
         TindroidApp.abandonAudioFocus();
@@ -973,7 +1030,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         if (args != null) {
             args.putString(Const.INTENT_EXTRA_TOPIC, mTopicName);
             // Save the text in the send field.
-            EditText editMessage = activity.findViewById(R.id.editMessage);
+            View view = getView();
+            EditText editMessage = view != null ? view.findViewById(R.id.editMessage) : null;
             if (editMessage != null) {
                 String draft = editMessage.getText().toString().trim();
                 args.putString(MESSAGE_TO_SEND, draft);
@@ -1358,7 +1416,8 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         if (activity.isFinishing() || activity.isDestroyed()) {
             return;
         }
-        final EditText inputField = activity.findViewById(R.id.editMessage);
+        View view = getView();
+        final EditText inputField = view != null ? view.findViewById(R.id.editMessage) : null;
         if (inputField == null) {
             return;
         }
@@ -1368,8 +1427,14 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                 mForwardSender = null;
                 mContentToForward = null;
             }
-            activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
-            activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+            View forwardPanel = view.findViewById(R.id.forwardMessagePanel);
+            if (forwardPanel != null) {
+                forwardPanel.setVisibility(View.GONE);
+            }
+            View sendPanel = view.findViewById(R.id.sendMessagePanel);
+            if (sendPanel != null) {
+                sendPanel.setVisibility(View.VISIBLE);
+            }
             return;
         }
 
@@ -1389,7 +1454,10 @@ public class MessagesFragment extends Fragment implements MenuProvider {
                     mTextAction = UiUtils.MsgAction.NONE;
                     mQuotedSeqID = -1;
                     mQuote = null;
-                    activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
+                    View previewWrapper = view.findViewById(R.id.replyPreviewWrapper);
+                    if (previewWrapper != null) {
+                        previewWrapper.setVisibility(View.GONE);
+                    }
                 }
             }
         }
@@ -1429,69 +1497,141 @@ public class MessagesFragment extends Fragment implements MenuProvider {
         mContentToForward = null;
         mForwardSender = null;
 
-        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.GONE);
-        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
-        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+
+        View replyPreviewWrapper = view.findViewById(R.id.replyPreviewWrapper);
+        if (replyPreviewWrapper != null) {
+            replyPreviewWrapper.setVisibility(View.GONE);
+        }
+        View forwardMessagePanel = view.findViewById(R.id.forwardMessagePanel);
+        if (forwardMessagePanel != null) {
+            forwardMessagePanel.setVisibility(View.GONE);
+        }
+        View sendMessagePanel = view.findViewById(R.id.sendMessagePanel);
+        if (sendMessagePanel != null) {
+            sendMessagePanel.setVisibility(View.VISIBLE);
+        }
         if (mTextAction == UiUtils.MsgAction.EDIT) {
-            EditText editor = activity.findViewById(R.id.editMessage);
-            editor.setText(null);
-            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
-            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
+            EditText editor = view.findViewById(R.id.editMessage);
+            if (editor != null) {
+                editor.setText(null);
+            }
+            View doneButton = view.findViewById(R.id.chatEditDoneButton);
+            if (doneButton != null) {
+                doneButton.setVisibility(View.INVISIBLE);
+            }
+            View audioButton = view.findViewById(R.id.chatAudioButton);
+            if (audioButton != null) {
+                audioButton.setVisibility(View.VISIBLE);
+            }
         }
 
         mTextAction = UiUtils.MsgAction.NONE;
     }
 
-    void startEditing(Activity activity, String original, Drafty quote, int seq) {
-        handleQuotedText(activity, UiUtils.MsgAction.EDIT, original, quote, seq);
+    void startEditing(String original, Drafty quote, int seq) {
+        handleQuotedText(UiUtils.MsgAction.EDIT, original, quote, seq);
     }
 
-    void showReply(Activity activity, Drafty quote, int seq) {
-        handleQuotedText(activity, UiUtils.MsgAction.REPLY, null, quote, seq);
+    void showReply(Drafty quote, int seq) {
+        handleQuotedText(UiUtils.MsgAction.REPLY, null, quote, seq);
     }
 
-    private void handleQuotedText(Activity activity, UiUtils.MsgAction action,
+    private void handleQuotedText(UiUtils.MsgAction action,
                                   String original, Drafty quote, int seq) {
         mQuotedSeqID = seq;
         mQuote = quote;
         mContentToForward = null;
         mForwardSender = null;
 
-        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.GONE);
-        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.VISIBLE);
-        activity.findViewById(R.id.replyPreviewWrapper).setVisibility(View.VISIBLE);
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+
+        View forwardPanel = view.findViewById(R.id.forwardMessagePanel);
+        if (forwardPanel != null) {
+            forwardPanel.setVisibility(View.GONE);
+        }
+        View sendPanel = view.findViewById(R.id.sendMessagePanel);
+        if (sendPanel != null) {
+            sendPanel.setVisibility(View.VISIBLE);
+        }
+        View previewWrapper = view.findViewById(R.id.replyPreviewWrapper);
+        if (previewWrapper != null) {
+            previewWrapper.setVisibility(View.VISIBLE);
+        }
+
+        View audioButton = view.findViewById(R.id.chatAudioButton);
+        View sendButton = view.findViewById(R.id.chatSendButton);
+        View doneButton = view.findViewById(R.id.chatEditDoneButton);
+
         if (!TextUtils.isEmpty(original)) {
-            EditText editText = activity.findViewById(R.id.editMessage);
-            editText.setText(original);
-            editText.setSelection(editText.getText().length());
-            editText.requestFocus();
-            activity.findViewById(R.id.chatAudioButton).setVisibility(View.INVISIBLE);
-            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
-            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.VISIBLE);
+            EditText editText = view.findViewById(R.id.editMessage);
+            if (editText != null) {
+                editText.setText(original);
+                editText.setSelection(editText.getText().length());
+                editText.requestFocus();
+            }
+            if (audioButton != null) {
+                audioButton.setVisibility(View.INVISIBLE);
+            }
+            if (sendButton != null) {
+                sendButton.setVisibility(View.INVISIBLE);
+            }
+            if (doneButton != null) {
+                doneButton.setVisibility(View.VISIBLE);
+            }
         } else {
-            activity.findViewById(R.id.chatAudioButton).setVisibility(View.VISIBLE);
-            activity.findViewById(R.id.chatSendButton).setVisibility(View.INVISIBLE);
-            activity.findViewById(R.id.chatEditDoneButton).setVisibility(View.INVISIBLE);
+            if (audioButton != null) {
+                audioButton.setVisibility(View.VISIBLE);
+            }
+            if (sendButton != null) {
+                sendButton.setVisibility(View.INVISIBLE);
+            }
+            if (doneButton != null) {
+                doneButton.setVisibility(View.INVISIBLE);
+            }
             if (mTextAction == UiUtils.MsgAction.EDIT) {
-                EditText editor = activity.findViewById(R.id.editMessage);
-                editor.setText(null);
+                EditText editor = view.findViewById(R.id.editMessage);
+                if (editor != null) {
+                    editor.setText(null);
+                }
             }
         }
-        TextView previewHolder = activity.findViewById(R.id.contentPreview);
-        previewHolder.setText(quote.format(new SendReplyFormatter(previewHolder)));
+        TextView previewHolder = view.findViewById(R.id.contentPreview);
+        if (previewHolder != null) {
+            previewHolder.setText(quote.format(new SendReplyFormatter(previewHolder)));
+        }
         mTextAction = action;
     }
 
-    private void showContentToForward(Activity activity, Drafty sender, Drafty content) {
+    private void showContentToForward(Drafty sender, Drafty content) {
         mTextAction = UiUtils.MsgAction.FORWARD;
         mQuotedSeqID = -1;
         mQuote = null;
 
-        activity.findViewById(R.id.sendMessagePanel).setVisibility(View.GONE);
-        TextView previewHolder = activity.findViewById(R.id.forwardedContentPreview);
+        View view = getView();
+        if (view == null) {
+            return;
+        }
+
+        View sendPanel = view.findViewById(R.id.sendMessagePanel);
+        if (sendPanel != null) {
+            sendPanel.setVisibility(View.GONE);
+        }
+        TextView previewHolder = view.findViewById(R.id.forwardedContentPreview);
         content = new Drafty().append(sender).appendLineBreak().append(content.preview(Const.QUOTED_REPLY_LENGTH));
-        previewHolder.setText(content.format(new SendForwardedFormatter(previewHolder)));
-        activity.findViewById(R.id.forwardMessagePanel).setVisibility(View.VISIBLE);
+        if (previewHolder != null) {
+            previewHolder.setText(content.format(new SendForwardedFormatter(previewHolder)));
+        }
+        View forwardPanel = view.findViewById(R.id.forwardMessagePanel);
+        if (forwardPanel != null) {
+            forwardPanel.setVisibility(View.VISIBLE);
+        }
     }
 
     void topicChanged(String topicName, boolean reset) {

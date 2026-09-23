@@ -790,7 +790,7 @@ public class MessageActivity extends BaseActivity
         if (isFragmentVisible(FRAGMENT_MESSAGES)) {
             MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
             if (mf != null) {
-                mf.showReply(this, reply, seq);
+                mf.showReply(reply, seq);
             }
         }
     }
@@ -799,7 +799,7 @@ public class MessageActivity extends BaseActivity
         if (isFragmentVisible(FRAGMENT_MESSAGES)) {
             MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
             if (mf != null) {
-                mf.startEditing(this, original, quote, seq);
+                mf.startEditing(original, quote, seq);
             }
         }
     }

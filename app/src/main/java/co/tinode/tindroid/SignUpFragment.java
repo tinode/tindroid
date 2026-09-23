@@ -139,7 +139,11 @@ public class SignUpFragment extends Fragment
                     if (parent.isFinishing() || parent.isDestroyed() || !isVisible()) {
                         return;
                     }
-                    parent.findViewById(R.id.signUp).setEnabled(false);
+                    View view = getView();
+                    Button signUp = view != null ? view.findViewById(R.id.signUp) : null;
+                    if (signUp != null) {
+                        signUp.setEnabled(false);
+                    }
                     Toast.makeText(parent, R.string.unable_to_use_service, Toast.LENGTH_LONG).show();
                 });
                 return null;
@@ -198,23 +202,26 @@ public class SignUpFragment extends Fragment
     @Override
     public void onClick(View v) {
         final LoginActivity parent = (LoginActivity) requireActivity();
-        if (parent.isFinishing() || parent.isDestroyed()) {
+        final View fragmentView = getView();
+        if (fragmentView == null || parent.isFinishing() || parent.isDestroyed()) {
             return;
         }
 
-        final String login = ((EditText) parent.findViewById(R.id.newLogin)).getText().toString().trim();
+        final EditText newLogin = fragmentView.findViewById(R.id.newLogin);
+        final String login = newLogin.getText().toString().trim();
         if (login.isEmpty()) {
-            ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.login_required));
+            newLogin.setError(getText(R.string.login_required));
             return;
         }
         if (login.contains(":")) {
-            ((EditText) parent.findViewById(R.id.newLogin)).setError(getText(R.string.invalid_login));
+            newLogin.setError(getText(R.string.invalid_login));
             return;
         }
 
-        final String password = ((EditText) parent.findViewById(R.id.newPassword)).getText().toString().trim();
+        final EditText newPassword = fragmentView.findViewById(R.id.newPassword);
+        final String password = newPassword.getText().toString().trim();
         if (password.isEmpty()) {
-            ((EditText) parent.findViewById(R.id.newPassword)).setError(getText(R.string.password_required));
+            newPassword.setError(getText(R.string.password_required));
             return;
         }
 
@@ -223,10 +230,11 @@ public class SignUpFragment extends Fragment
         }
 
         final ArrayList<Credential> credentials = new ArrayList<>();
+        final EditText editEmail = fragmentView.findViewById(R.id.email);
         if (Arrays.asList(mCredMethods).contains("email")) {
-            final String email = ((EditText) parent.findViewById(R.id.email)).getText().toString().trim();
+            final String email = editEmail.getText().toString().trim();
             if (email.isEmpty()) {
-                ((EditText) parent.findViewById(R.id.email)).setError(getText(R.string.email_required));
+                editEmail.setError(getText(R.string.email_required));
                 return;
             } else {
                 credentials.add(new Credential("email", email));
@@ -234,7 +242,7 @@ public class SignUpFragment extends Fragment
         }
 
         if (Arrays.asList(mCredMethods).contains("tel")) {
-            final PhoneEdit phone = parent.findViewById(R.id.phone);
+            final PhoneEdit phone = fragmentView.findViewById(R.id.phone);
             if (!phone.isNumberValid()) {
                 phone.setError(getText(R.string.phone_number_required));
                 return;
@@ -243,9 +251,10 @@ public class SignUpFragment extends Fragment
             }
         }
 
-        String fn = ((EditText) parent.findViewById(R.id.fullName)).getText().toString().trim();
+        final EditText editFullName = fragmentView.findViewById(R.id.fullName);
+        String fn = editFullName.getText().toString().trim();
         if (fn.isEmpty()) {
-            ((EditText) parent.findViewById(R.id.fullName)).setError(getText(R.string.full_name_required));
+            editFullName.setError(getText(R.string.full_name_required));
             return;
         }
         // Make sure username is not too long.
@@ -256,7 +265,8 @@ public class SignUpFragment extends Fragment
             fullName = fn;
         }
 
-        String description = ((EditText) parent.findViewById(R.id.userDescription)).getText().toString().trim();
+        final EditText editDescription = fragmentView.findViewById(R.id.userDescription);
+        String description = editDescription.getText().toString().trim();
         if (!TextUtils.isEmpty(description)) {
             if (description.length() > Const.MAX_DESCRIPTION_LENGTH) {
                 description = description.substring(0, Const.MAX_DESCRIPTION_LENGTH);
@@ -265,7 +275,7 @@ public class SignUpFragment extends Fragment
             description = null;
         }
 
-        final Button signUp = parent.findViewById(R.id.signUp);
+        final Button signUp = (Button) v;
         signUp.setEnabled(false);
 
         final SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(parent);
@@ -274,7 +284,7 @@ public class SignUpFragment extends Fragment
         @SuppressLint("UnsafeOptInUsageError")
         boolean tls = sharedPref.getBoolean(Utils.PREFS_USE_TLS, TindroidApp.getDefaultTLS());
 
-        final ImageView avatar = parent.findViewById(R.id.imageAvatar);
+        final ImageView avatar = fragmentView.findViewById(R.id.imageAvatar);
         final Tinode tinode = Cache.getTinode();
         final VxCard theCard = new VxCard(fullName, description);
         Drawable dr = avatar.getDrawable();
@@ -342,13 +352,11 @@ public class SignUpFragment extends Fragment
                                             switch (cause) {
                                                 case "auth":
                                                     // Invalid login
-                                                    ((EditText) parent.findViewById(R.id.newLogin))
-                                                            .setError(getText(R.string.login_rejected));
+                                                    newLogin.setError(getText(R.string.login_rejected));
                                                     break;
                                                 case "email":
                                                     // Duplicate email:
-                                                    ((EditText) parent.findViewById(R.id.email))
-                                                            .setError(getText(R.string.email_rejected));
+                                                    editEmail.setError(getText(R.string.email_rejected));
                                                     break;
                                             }
                                         }
