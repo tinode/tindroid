@@ -35,6 +35,21 @@ public class CallInProgress {
         return mIsOutgoing;
     }
 
+    /**
+     * Associates the Telecom connection with this call when it was initially created without one.
+     * A second connection must not replace the connection already owned by the call.
+     */
+    public synchronized boolean attachConnection(@Nullable CallConnection connection) {
+        if (connection == null || mConnection == connection) {
+            return true;
+        }
+        if (mConnection == null) {
+            mConnection = connection;
+            return true;
+        }
+        return false;
+    }
+
     public synchronized void setCallActive(@NonNull String topic, int seqId) {
         if (mTopic.equals(topic) && (mSeq == 0 || mSeq == seqId)) {
             mSeq = seqId;

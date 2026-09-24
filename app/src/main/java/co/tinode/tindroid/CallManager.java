@@ -203,7 +203,10 @@ public class CallManager {
 
         if (shouldBypassTelecom(context, telecomManager, false)) {
             // Bypass Telecom when self-managed calls are not supported.
-            Cache.prepareNewCall(caller, seq, null);
+            if (!Cache.prepareNewCall(caller, seq, null)) {
+                topic.videoCallHangUp(seq);
+                return;
+            }
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
             return;
@@ -223,7 +226,10 @@ public class CallManager {
             telecomManager.addNewIncomingCall(shared.mPhoneAccountHandle, callParams);
             topic.videoCallRinging(seq);
         } catch (SecurityException ex) {
-            Cache.prepareNewCall(caller, seq, null);
+            if (!Cache.prepareNewCall(caller, seq, null)) {
+                topic.videoCallHangUp(seq);
+                return;
+            }
             showIncomingCallUi(context, caller, extras);
             topic.videoCallRinging(seq);
         } catch (Exception ex) {
@@ -249,7 +255,15 @@ public class CallManager {
             Log.w(TAG, "Ending stale call before starting new outgoing call: " + existingCall);
             Cache.endCallInProgress();
         }
-        Cache.prepareNewCall(topicName, 0, conn);
+        if (!Cache.prepareNewCall(topicName, 0, conn)) {
+            Log.w(TAG, "Cannot start outgoing call: another call won the call claim");
+            if (conn != null) {
+                conn.setDisconnected(new android.telecom.DisconnectCause(
+                        android.telecom.DisconnectCause.BUSY));
+                conn.destroy();
+            }
+            return;
+        }
 
         Intent intent = new Intent(context, CallActivity.class);
         intent.setAction(CallActivity.INTENT_ACTION_CALL_START);
