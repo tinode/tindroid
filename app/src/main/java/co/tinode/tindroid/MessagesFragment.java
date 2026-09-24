@@ -626,12 +626,22 @@ public class MessagesFragment extends Fragment implements MenuProvider {
 
     @SuppressLint("NotifyDataSetChanged")
     void pinnedStateChanged(int seq) {
-        final MessageActivity activity = (MessageActivity) requireActivity();
-        if (activity.isFinishing() || activity.isDestroyed()) {
+        if (!isAdded()) {
             return;
         }
 
-        requireActivity().runOnUiThread(() -> {
+        final MessageActivity activity = (MessageActivity) getActivity();
+        final ComTopic<VxCard> topic = mTopic;
+        if (activity == null || topic == null || activity.isFinishing() || activity.isDestroyed()) {
+            return;
+        }
+
+        activity.runOnUiThread(() -> {
+            // The callback may have been queued before the view was destroyed or the topic changed.
+            if (!isAdded() || mTopic != topic || mMessagesAdapter == null || mPinnedViewPager == null) {
+                return;
+            }
+
             View view = getView();
             if (view == null) {
                 return;
@@ -640,7 +650,7 @@ public class MessagesFragment extends Fragment implements MenuProvider {
             setupPinnedMessages();
 
             mMessagesAdapter.updateSelectedOnPinnedChange(seq);
-            int count = mTopic.pinnedCount();
+            int count = topic.pinnedCount();
             if (mSelectedPin >= count) {
                 mSelectedPin = 0;
             }
