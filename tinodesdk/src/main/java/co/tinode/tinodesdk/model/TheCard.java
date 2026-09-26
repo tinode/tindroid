@@ -170,7 +170,7 @@ public class TheCard implements Serializable, Mergeable {
             Map<String, Object> photoMap = (Map<String, Object>) map;
             Photo photo = new Photo();
 
-            // Handle binary data (may be base64 string or byte array)
+            // Handle binary data (maybe base64 string or byte array)
             Object dataObj = photoMap.get("data");
             if (photoMap.get("data") instanceof String) {
                 try {
@@ -282,7 +282,7 @@ public class TheCard implements Serializable, Mergeable {
                         commEntry.value = valueStr;
                     }
 
-                    // Descriptors (can be array or single value)
+                    // Descriptors (can be an array or a single value)
                     Object desObj = commMap.get("des");
                     if (desObj instanceof List) {
                         @SuppressWarnings("unchecked")
