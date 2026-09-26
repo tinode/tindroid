@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Locale;
 
 import co.tinode.tinodesdk.Tinode;
 
@@ -365,7 +366,7 @@ public class TheCard implements Serializable, Mergeable {
          */
         public Photo(byte[] bits, String type) {
             this.data = bits;
-            this.type = type;
+            this.type = normalizeImageType(type);
         }
 
         /**
@@ -375,8 +376,16 @@ public class TheCard implements Serializable, Mergeable {
          * @param type the specific part of image/ mime type, i.e. 'jpeg' or 'png'.
          */
         public Photo(String ref, String type) {
+            this.data = Tinode.NULL_BYTES;
             this.ref = ref;
-            this.type = type;
+            this.type = normalizeImageType(type);
+        }
+
+        private static String normalizeImageType(String type) {
+            if (type != null && type.regionMatches(true, 0, "image/", 0, "image/".length())) {
+                return type.substring("image/".length()).toLowerCase(Locale.ROOT);
+            }
+            return type;
         }
 
         /**

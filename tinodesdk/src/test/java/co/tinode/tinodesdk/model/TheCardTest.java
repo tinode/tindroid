@@ -37,6 +37,18 @@ public class TheCardTest {
         assertEquals("jpeg", card.photo.type);
         assertArrayEquals(Tinode.NULL_BYTES, card.photo.data);
     }
+
+    @Test
+    public void testPhotoConstructorsNormalizeImageMimeTypeAndPreserveSubtype() {
+        TheCard mimeCard = new TheCard("Alice", new byte[] {1}, "IMAGE/PNG");
+        assertEquals("png", mimeCard.photo.type);
+        assertEquals("image/png", mimeCard.getPhotoMimeType());
+
+        TheCard subtypeCard = new TheCard("Bob", "http://example.com/img.webp", "webp");
+        assertEquals("webp", subtypeCard.photo.type);
+        assertEquals("image/webp", subtypeCard.getPhotoMimeType());
+        assertArrayEquals(Tinode.NULL_BYTES, subtypeCard.photo.data);
+    }
 /*
     @Test
     public void testSetFn() {
