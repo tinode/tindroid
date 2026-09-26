@@ -1,6 +1,7 @@
 package co.tinode.tindroid;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -24,6 +25,9 @@ import androidx.preference.PreferenceManager;
 import co.tinode.tindroid.media.VxCard;
 import co.tinode.tinodesdk.MeTopic;
 import co.tinode.tinodesdk.NotConnectedException;
+import co.tinode.tinodesdk.PromisedReply;
+import co.tinode.tinodesdk.model.AuthScheme;
+import co.tinode.tinodesdk.model.ServerMessage;
 
 /**
  * Fragment for editing current user details.
@@ -149,10 +153,20 @@ public class AccSecurityFragment extends Fragment implements ChatsActivity.FormU
 
     private void changePassword(String login, String password) {
         final Activity activity = requireActivity();
+        final Context context = activity.getApplicationContext();
+        final String uid = Cache.getTinode().getMyId();
         try {
-            // TODO: update stored record on success
+            final String secret = AuthScheme.basicInstance(login, password).toString();
             Cache.getTinode().updateAccountBasic((String) null, login, password).thenApply(
-                    null, new UiUtils.ToastFailureListener(activity)
+                    new PromisedReply.SuccessListener<>() {
+                        @Override
+                        public PromisedReply<ServerMessage> onSuccess(ServerMessage result) {
+                            if (!TextUtils.isEmpty(uid)) {
+                                UiUtils.updateAndroidAccount(context, uid, secret, null, null);
+                            }
+                            return null;
+                        }
+                    }, new UiUtils.ToastFailureListener(activity)
             );
         } catch (NotConnectedException ignored) {
             Toast.makeText(activity, R.string.no_connection, Toast.LENGTH_SHORT).show();

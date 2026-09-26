@@ -429,12 +429,18 @@ public class UiUtils {
                                      final String token, final Date tokenExpires) {
         final AccountManager am = AccountManager.get(context);
         final Account acc = Utils.createAccount(uid);
-        // It's OK to call even if the account already exists.
-        am.addAccountExplicitly(acc, secret, null);
-        am.notifyAccountAuthenticated(acc);
+        Account savedAccount = acc;
+        if (!am.addAccountExplicitly(acc, secret, null)) {
+            savedAccount = Utils.getSavedAccount(am, uid);
+            if (savedAccount == null) {
+                return;
+            }
+            am.setPassword(savedAccount, secret);
+        }
+        am.notifyAccountAuthenticated(savedAccount);
         if (!TextUtils.isEmpty(token)) {
-            am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
-            am.setUserData(acc, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));
+            am.setAuthToken(savedAccount, Utils.TOKEN_TYPE, token);
+            am.setUserData(savedAccount, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));
         }
     }
 
