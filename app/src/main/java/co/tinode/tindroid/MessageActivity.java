@@ -864,6 +864,11 @@ public class MessageActivity extends BaseActivity
     // Schedule a delayed {note what="read"} notification.
     void sendNoteRead(int seq) {
         if (mSendReadReceipts) {
+            // Preserve a pending remote-message acknowledgement if a concurrent publish
+            // acknowledgement advances the topic's read sequence before this handler runs.
+            if (seq <= 0 && mTopic != null && mTopic.getUnreadCount() > 0) {
+                seq = mTopic.getSeq();
+            }
             Message msg = mNoteReadHandler.obtainMessage(NOTE_READ_ID, seq, 0, mTopicName);
             mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
         }
