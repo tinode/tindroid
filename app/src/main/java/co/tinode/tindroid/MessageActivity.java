@@ -124,37 +124,37 @@ public class MessageActivity extends BaseActivity
 
             DownloadManager.Query query = new DownloadManager.Query();
             query.setFilterById(downloadId);
-            Cursor c = dm.query(query);
-            if (c.moveToFirst()) {
-                int idx = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
-                int status = idx >=0 ? c.getInt(idx) : -1;
-                if (DownloadManager.STATUS_SUCCESSFUL == status) {
-                    idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
-                    URI fileUri = idx >= 0 ? URI.create(c.getString(idx)) : null;
-                    idx = c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE);
-                    String mimeType = idx >= 0 ? c.getString(idx) : null;
-                    if (fileUri != null) {
-                        Intent intent2 = new Intent();
-                        intent2.setAction(android.content.Intent.ACTION_VIEW);
-                        intent2.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
-                                "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
-                        intent2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                        try {
-                            startActivity(intent2);
-                        } catch (ActivityNotFoundException ignored) {
-                            Log.w(TAG, "No application can view downloaded file");
-                            startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+            try (Cursor c = dm.query(query)) {
+                if (c != null && c.moveToFirst()) {
+                    int idx = c.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                    int status = idx >=0 ? c.getInt(idx) : -1;
+                    if (DownloadManager.STATUS_SUCCESSFUL == status) {
+                        idx = c.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI);
+                        URI fileUri = idx >= 0 ? URI.create(c.getString(idx)) : null;
+                        idx = c.getColumnIndex(DownloadManager.COLUMN_MEDIA_TYPE);
+                        String mimeType = idx >= 0 ? c.getString(idx) : null;
+                        if (fileUri != null) {
+                            Intent intent2 = new Intent();
+                            intent2.setAction(android.content.Intent.ACTION_VIEW);
+                            intent2.setDataAndType(FileProvider.getUriForFile(MessageActivity.this,
+                                    "co.tinode.tindroid.provider", new File(fileUri)), mimeType);
+                            intent2.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            try {
+                                startActivity(intent2);
+                            } catch (ActivityNotFoundException ignored) {
+                                Log.w(TAG, "No application can view downloaded file");
+                                startActivity(new Intent(DownloadManager.ACTION_VIEW_DOWNLOADS));
+                            }
                         }
+                    } else if (DownloadManager.STATUS_FAILED == status) {
+                        idx = c.getColumnIndex(DownloadManager.COLUMN_REASON);
+                        int reason = idx >= 0 ? c.getInt(idx) : -1;
+                        Log.w(TAG, "Download failed. Reason: " + reason);
+                        Toast.makeText(MessageActivity.this,
+                                R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                     }
-                } else if (DownloadManager.STATUS_FAILED == status) {
-                    idx = c.getColumnIndex(DownloadManager.COLUMN_REASON);
-                    int reason = idx >= 0 ? c.getInt(idx) : -1;
-                    Log.w(TAG, "Download failed. Reason: " + reason);
-                    Toast.makeText(MessageActivity.this,
-                            R.string.failed_to_download, Toast.LENGTH_SHORT).show();
                 }
             }
-            c.close();
         }
     };
 
@@ -790,7 +790,7 @@ public class MessageActivity extends BaseActivity
         if (isFragmentVisible(FRAGMENT_MESSAGES)) {
             MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
             if (mf != null) {
-                mf.showReply(this, reply, seq);
+                mf.showReply(reply, seq);
             }
         }
     }
@@ -799,7 +799,7 @@ public class MessageActivity extends BaseActivity
         if (isFragmentVisible(FRAGMENT_MESSAGES)) {
             MessagesFragment mf = (MessagesFragment) getSupportFragmentManager().findFragmentByTag(FRAGMENT_MESSAGES);
             if (mf != null) {
-                mf.startEditing(this, original, quote, seq);
+                mf.startEditing(original, quote, seq);
             }
         }
     }
@@ -864,6 +864,11 @@ public class MessageActivity extends BaseActivity
     // Schedule a delayed {note what="read"} notification.
     void sendNoteRead(int seq) {
         if (mSendReadReceipts) {
+            // Preserve a pending remote-message acknowledgement if a concurrent publish
+            // acknowledgement advances the topic's read sequence before this handler runs.
+            if (seq <= 0 && mTopic != null && mTopic.getUnreadCount() > 0) {
+                seq = mTopic.getSeq();
+            }
             Message msg = mNoteReadHandler.obtainMessage(NOTE_READ_ID, seq, 0, mTopicName);
             mNoteReadHandler.sendMessageDelayed(msg, READ_DELAY);
         }

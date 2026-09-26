@@ -73,9 +73,15 @@ public class CallConnectionService extends ConnectionService {
 
         conn.setConnectionProperties(Connection.PROPERTY_SELF_MANAGED);
 
-        // This throws but shouldn't. We are not catching here to be able to find
-        // the root cause of the problem (data race).
-        Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, conn);
+        if (!Cache.prepareNewCall(callerUri.getSchemeSpecificPart(), seq, conn)) {
+            // Another call, or another Telecom connection for this call, won the atomic claim.
+            // Do not let ConnectionService turn this expected race into a process crash.
+            Log.w(TAG, "Rejected competing incoming connection for " + callerUri + ":" + seq);
+            conn.setDisconnected(new android.telecom.DisconnectCause(
+                    android.telecom.DisconnectCause.BUSY));
+            conn.destroy();
+            return conn;
+        }
 
         conn.setConnectionCapabilities(Connection.CAPABILITY_MUTE);
         conn.setAudioModeIsVoip(true);

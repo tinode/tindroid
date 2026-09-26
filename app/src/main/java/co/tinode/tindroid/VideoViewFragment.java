@@ -358,9 +358,26 @@ public class VideoViewFragment extends Fragment implements MenuProvider {
 
     @Override
     public void onPause() {
+        if (mExoPlayer != null) {
+            mExoPlayer.pause();
+        }
         super.onPause();
-        mExoPlayer.stop();
-        mExoPlayer.release();
+    }
+
+    @Override
+    public void onDestroyView() {
+        if (mVideoView != null) {
+            mVideoView.setPlayer(null);
+        }
+        if (mExoPlayer != null) {
+            mExoPlayer.release();
+            mExoPlayer = null;
+        }
+        mVideoView = null;
+        mPosterView = null;
+        mProgressView = null;
+        mTinodeHttpMediaSourceFactory = null;
+        super.onDestroyView();
     }
 
     private Uri writeToTempFile(Context ctx, byte[] bits, String prefix, String suffix) {

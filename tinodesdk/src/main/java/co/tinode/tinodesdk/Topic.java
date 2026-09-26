@@ -1312,7 +1312,6 @@ public class Topic<DP, DR, SP, SR> implements LocalData, Comparable<Topic> {
                     setRecv(seq);
                 }
 
-                // FIXME: this causes READ notification not to be sent.
                 setRead(seq);
                 if (mStore != null) {
                     mStore.setRead(this, seq);

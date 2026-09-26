@@ -186,16 +186,27 @@ public class Cache {
         }
     }
 
-    public static void prepareNewCall(@NonNull String topic, int seq, @Nullable CallConnection conn) {
+    /**
+     * Atomically claims the single call slot. Repeated setup for the same call is allowed so a
+     * fallback notification path can be reconciled with a later Telecom connection.
+     *
+     * @return {@code true} if the call was claimed or is the same existing call; {@code false}
+     * if another call owns the slot or a second Telecom connection was supplied.
+     */
+    public static boolean prepareNewCall(@NonNull String topic, int seq, @Nullable CallConnection conn) {
         synchronized (sInstance) {
             if (sInstance.mCallInProgress == null) {
                 sInstance.mCallInProgress = new CallInProgress(topic, seq, conn);
-            } else if (!sInstance.mCallInProgress.equals(topic, seq)) {
-                // Include stacktrace to identify the caller which attempted to start a conflicting call.
-                throw new IllegalStateException("prepareNewCall called while another call is in progress"  +
-                        "\n\tNew: " + topic + ":" + seq +
-                        "\n\tOld: " + sInstance.mCallInProgress.toString());
+                return true;
             }
+
+            if (sInstance.mCallInProgress.equals(topic, seq)) {
+                return sInstance.mCallInProgress.attachConnection(conn);
+            }
+
+            Log.w(TAG, "Ignoring new call while another call is in progress. Existing=" +
+                    sInstance.mCallInProgress + " New=" + topic + ":" + seq);
+            return false;
         }
     }
 

@@ -11,13 +11,66 @@ This is NOT a standalone app, this is just a frontend, a client. It requires a [
 
 ### Building from source
 
-* Install [Android Studio](https://developer.android.com/studio).
-* Clone this repository: `git clone && cd tindroid`
-* Open the project in Android Studio.
-* Build and run the app on an emulator or a physical device.
+Tindroid is an Android client, not a standalone service. Before using it, deploy or connect to a [Tinode backend](https://github.com/tinode/chat/); see the backend [installation instructions](https://github.com/tinode/chat/blob/master/INSTALL.md).
+
+#### Requirements
+
+* [Android Studio](https://developer.android.com/studio) with Android SDK Platform 36 installed. The app is built with API 36 and supports devices running Android 8.1 (API 27) or newer.
+* JDK 17. Android Studio's bundled JDK can be used; command-line builds require `JAVA_HOME` to point to a JDK 17 installation.
+* A Firebase `google-services.json` for the Android application ID `co.tinode.tindroidx`, placed at `app/google-services.json`. The file is intentionally ignored by Git. See [Push notifications](#push-notifications) for setup.
+* A local `keystore.properties` file in the repository root. The current build script loads this file for every build, including debug builds. Do not commit it. For example:
+
+  ```properties
+  storeFile=/absolute/path/to/release.keystore
+  storePassword=your-store-password
+  keyAlias=your-key-alias
+  keyPassword=your-key-password
+  ```
+
+Clone and build a debug APK:
+
+```sh
+git clone https://github.com/tinode/tindroid.git
+cd tindroid
+./gradlew assembleDebug
+```
+
+The APK is written to `app/build/outputs/apk/debug/app-debug.apk`. To install it on a connected emulator or device, run:
+
+```sh
+./gradlew installDebug
+```
+
+You can also open the repository root in Android Studio, let Gradle sync, then select the `app` debug configuration and run it.
+
+#### Testing
+
+Run local unit tests with:
+
+```sh
+./gradlew test
+```
+
+With an emulator or device connected through `adb`, run instrumentation tests with:
+
+```sh
+./gradlew connectedDebugAndroidTest
+```
+
+#### Release builds
+
+`assembleRelease` produces a minified, signed release APK using the credentials in `keystore.properties`:
+
+```sh
+./gradlew assembleRelease
+```
+
+The release APK is written to `app/build/outputs/apk/release/app-release.apk`.
+
+Debug builds use `sandbox.tinode.co` as their default server; release builds use `api.tinode.co`. These defaults are defined as `default_host_name` in `app/build.gradle` and can be changed when maintaining a custom build.
 
 If you are not cloning but building from a downloaded archive, open the `build.gradle` file in the root of the extracted archive, 
-find the definitions for `gitVersionCode()` and `gitVersionName()` functions and replace them with static values, for example:
+find the definitions for `gitVersionCode()` and `gitVersionName()` functions and replace their Git-based values with static values, for example:
 ```gradle
 static def gitVersionCode() {
    return 1234
@@ -27,6 +80,8 @@ static def gitVersionName() {
    return '1.23.4'
 }
 ```
+
+You still need the local `keystore.properties` and `app/google-services.json` files described above.
 
 ## Getting support
 
@@ -133,6 +188,7 @@ The app is currently available in the following languages:
 * French
 * German
 * Hindi
+* Indonesian
 * Italian
 * Korean
 * Portuguese

@@ -25,11 +25,14 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.storage.StorageManager;
+import android.os.storage.StorageVolume;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
@@ -51,6 +54,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.File;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.util.ArrayList;
@@ -429,12 +433,18 @@ public class UiUtils {
                                      final String token, final Date tokenExpires) {
         final AccountManager am = AccountManager.get(context);
         final Account acc = Utils.createAccount(uid);
-        // It's OK to call even if the account already exists.
-        am.addAccountExplicitly(acc, secret, null);
-        am.notifyAccountAuthenticated(acc);
+        Account savedAccount = acc;
+        if (!am.addAccountExplicitly(acc, secret, null)) {
+            savedAccount = Utils.getSavedAccount(am, uid);
+            if (savedAccount == null) {
+                return;
+            }
+            am.setPassword(savedAccount, secret);
+        }
+        am.notifyAccountAuthenticated(savedAccount);
         if (!TextUtils.isEmpty(token)) {
-            am.setAuthToken(acc, Utils.TOKEN_TYPE, token);
-            am.setUserData(acc, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));
+            am.setAuthToken(savedAccount, Utils.TOKEN_TYPE, token);
+            am.setUserData(savedAccount, Utils.TOKEN_EXPIRATION_TIME, String.valueOf(tokenExpires.getTime()));
         }
     }
 
@@ -913,13 +923,23 @@ public class UiUtils {
                 switch (authority) {
                     case "com.android.externalstorage.documents": {
                         // ExternalStorageProvider
-                        final String[] split = docId.split(":");
+                        final String[] split = docId.split(":", 2);
+                        if (split.length != 2 || TextUtils.isEmpty(split[0])) {
+                            Log.w(TAG, "Malformed external storage document ID: " + docId);
+                            return null;
+                        }
                         final String type = split[0];
+                        final String relativePath = split[1];
 
                         if ("primary".equalsIgnoreCase(type)) {
-                            return Environment.getExternalStorageDirectory() + "/" + split[1];
+                            return new File(Environment.getExternalStorageDirectory(), relativePath).getPath();
                         }
-                        // TODO: handle non-primary volumes
+
+                        File volumeRoot = getExternalVolumeRoot(context, type);
+                        if (volumeRoot != null) {
+                            return new File(volumeRoot, relativePath).getPath();
+                        }
+                        Log.w(TAG, "External storage volume is unavailable: " + type);
                         break;
                     }
                     case "com.android.providers.downloads.documents": {
@@ -990,6 +1010,33 @@ public class UiUtils {
         } else if ("file".equalsIgnoreCase(uri.getScheme())) {
             // File
             return uri.getPath();
+        }
+        return null;
+    }
+
+    @Nullable
+    private static File getExternalVolumeRoot(@NonNull Context context, @NonNull String volumeId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            StorageManager storageManager = context.getSystemService(StorageManager.class);
+            if (storageManager != null) {
+                for (StorageVolume volume : storageManager.getStorageVolumes()) {
+                    if (volumeId.equalsIgnoreCase(volume.getUuid()) &&
+                            (Environment.MEDIA_MOUNTED.equals(volume.getState()) ||
+                                    Environment.MEDIA_MOUNTED_READ_ONLY.equals(volume.getState()))) {
+                        return volume.getDirectory();
+                    }
+                }
+            }
+        }
+
+        for (File externalFilesDir : context.getExternalFilesDirs(null)) {
+            File volumeRoot = externalFilesDir;
+            for (int i = 0; i < 4 && volumeRoot != null; i++) {
+                volumeRoot = volumeRoot.getParentFile();
+            }
+            if (volumeRoot != null && volumeId.equalsIgnoreCase(volumeRoot.getName())) {
+                return volumeRoot;
+            }
         }
         return null;
     }

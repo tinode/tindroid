@@ -966,13 +966,7 @@ public class TheCard implements Serializable, Mergeable {
          */
         public Photo(byte[] bits, String type) {
             this.data = bits;
-            if (type != null) {
-                if (type.startsWith("image/")) {
-                    type = type.substring(6);
-                }
-                this.type = type;
-            }
-            this.ref = Tinode.NULL_VALUE;
+            this.type = normalizeImageType(type);
         }
 
         /**
@@ -982,14 +976,16 @@ public class TheCard implements Serializable, Mergeable {
          * @param type the specific part of image/ mime type, i.e. 'jpeg' or 'png'.
          */
         public Photo(String ref, String type) {
-            this.ref = ref;
-            if (type != null) {
-                if (type.startsWith("image/")) {
-                    type = type.substring(6);
-                }
-                this.type = type;
-            }
             this.data = Tinode.NULL_BYTES;
+            this.ref = ref;
+            this.type = normalizeImageType(type);
+        }
+
+        private static String normalizeImageType(String type) {
+            if (type != null && type.regionMatches(true, 0, "image/", 0, "image/".length())) {
+                return type.substring("image/".length()).toLowerCase(Locale.ROOT);
+            }
+            return type;
         }
 
         public Photo copy() {
@@ -1429,15 +1425,14 @@ public class TheCard implements Serializable, Mergeable {
         Pattern pattern = Pattern.compile("\\\\([,;\\\\n])");
         Matcher matcher = pattern.matcher(val);
         StringBuilder result = new StringBuilder();
+        int previousEnd = 0;
         while (matcher.find()) {
-            String char_ = matcher.group(1);
-            if (char_ != null && char_.equals("n")) {
-                matcher.appendReplacement(result, "\n");
-            } else if (char_ != null) {
-                matcher.appendReplacement(result, char_);
-            }
+            result.append(val, previousEnd, matcher.start());
+            String escaped = matcher.group(1);
+            result.append("n".equals(escaped) ? '\n' : escaped);
+            previousEnd = matcher.end();
         }
-        matcher.appendTail(result);
+        result.append(val, previousEnd, val.length());
         return result.toString();
     }
 

@@ -155,8 +155,10 @@ public class FBaseMessagingService extends FirebaseMessagingService {
             }
 
             if (Boolean.parseBoolean(data.get("silent"))) {
-                // TODO: cancel some notifications.
-                // Silent notification: nothing to show.
+                NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+                if (nm != null) {
+                    nm.cancel(topicName, 0);
+                }
                 return;
             }
 
