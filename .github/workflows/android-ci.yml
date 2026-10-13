@@ -1,0 +1,135 @@
+name: Android CI and Releases
+
+on:
+  workflow_dispatch:
+  release:
+    types: [ published ]
+  pull_request:
+    branches: [ master, devel ]
+  push:
+    branches: [ '**' ]
+    tags: [ '*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - name: Make Gradle wrapper executable
+        run: chmod +x gradlew
+      - name: Create CI-only Firebase configuration
+        run: |
+          cat > app/google-services.json <<'JSON'
+          {
+            "project_info": { "project_number": "000000000000", "project_id": "ci-placeholder", "storage_bucket": "ci-placeholder.appspot.com" },
+            "client": [{
+              "client_info": {
+                "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
+                "android_client_info": { "package_name": "co.tinode.tindroidx" }
+              },
+              "api_key": [{ "current_key": "CI_ONLY_NOT_A_REAL_KEY" }]
+            }],
+            "configuration_version": "1"
+          }
+          JSON
+      - name: Build and test
+        run: |
+          set -euo pipefail
+          ./gradlew assembleDebug assembleRelease testDebugUnitTest
+      - name: Sign release APK
+        if: github.event_name != 'pull_request'
+        env:
+          RELEASE_KEYSTORE_B64: ${{ secrets.ANDROID_RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${RELEASE_KEYSTORE_B64:-}" ]]; then
+            : "${RELEASE_STORE_PASSWORD:?Missing ANDROID_RELEASE_KEYSTORE_PASSWORD}"
+            : "${RELEASE_KEY_ALIAS:?Missing ANDROID_RELEASE_KEY_ALIAS}"
+            : "${RELEASE_KEY_PASSWORD:?Missing ANDROID_RELEASE_KEY_PASSWORD}"
+            keystore="${RUNNER_TEMP}/release.keystore"
+            printf '%s' "$RELEASE_KEYSTORE_B64" | base64 --decode > "$keystore"
+            ks_pass="$RELEASE_STORE_PASSWORD"; key_alias="$RELEASE_KEY_ALIAS"; key_pass="$RELEASE_KEY_PASSWORD"
+          else
+            keystore="$HOME/.android/debug.keystore"
+            mkdir -p "$(dirname "$keystore")"
+            if [[ ! -f "$keystore" ]]; then
+              keytool -genkeypair -keystore "$keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" >/dev/null
+            fi
+            ks_pass=android; key_alias=androiddebugkey; key_pass=android
+          fi
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          mapfile -t apks < <(find app/build/outputs/apk/release -name '*.apk' -type f | sort)
+          test "${#apks[@]}" -gt 0
+          for apk in "${apks[@]}"; do
+            "$build_tools/apksigner" sign --ks "$keystore" --ks-pass "pass:$ks_pass" --ks-key-alias "$key_alias" --key-pass "pass:$key_pass" "$apk"
+            "$build_tools/apksigner" verify "$apk"
+            signed_apk="${apk/-unsigned/}"
+            if [[ "$signed_apk" != "$apk" ]]; then mv "$apk" "$signed_apk"; fi
+          done
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
+
+  release:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref_type == 'tag'))
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '*-apk'
+          path: release
+          merge-multiple: true
+      - name: Publish APK to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          mapfile -t apks < <(find release -type f -name '*.apk' -print | sort)
+          test "${#apks[@]}" -gt 0
+          if [[ -n "$RELEASE_TAG" || "$GITHUB_REF_TYPE" == "tag" ]]; then
+            tag="${RELEASE_TAG:-$GITHUB_REF_NAME}"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "${apks[@]}" --clobber
+            else
+              gh release create "$tag" "${apks[@]}" --verify-tag --generate-notes
+            fi
+          else
+            short_sha="${GITHUB_SHA:0:12}"
+            tag="ci-${short_sha}"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              gh release upload "$tag" "${apks[@]}" --clobber
+            else
+              gh release create "$tag" "${apks[@]}" --target "$GITHUB_SHA" --prerelease --title "CI build ${short_sha}" --notes "Automated Android APKs for commit ${GITHUB_SHA}. See ANDROID_CI.md for signing and configuration details."
+            fi
+          fi

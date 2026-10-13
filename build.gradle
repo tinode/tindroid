@@ -58,7 +58,8 @@ static def gitVersionCode() {
 static def gitVersionName() {
     // If you are not compiling in a git directory, you should manually assign version name:
     //  return "MyVersionName"
-    def process = "git describe --tags".execute()
+    def process = "git describe --tags --always".execute()
     // Remove trailing CR and remove leading 'v' as in 'v1.2.3'
-    return process.text.trim().substring(1)
+    def version = process.text.trim()
+    return version.startsWith('v') ? version.substring(1) : version
 }
