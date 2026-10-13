@@ -1,6 +1,6 @@
 # APK builds and downloads
 
-The workflow builds APKs and attaches them to [GitHub Releases](https://github.com/tinode/tindroid/releases). Default-branch pushes create prereleases; tag pushes attach APKs to a release. Pull requests and manual runs provide Actions artifacts without publishing.
+The workflow builds APKs and attaches them to [GitHub Releases](https://github.com/tinode/tindroid/releases). Default-branch pushes create prereleases; tag pushes attach APKs to a release. Publishing a release in GitHub's UI attaches APKs to its tag. Manual runs also publish: branch runs create CI prereleases, and tag runs attach APKs to that tag. Pull requests provide Actions artifacts without publishing.
 
 ## Maintainer signing
 
