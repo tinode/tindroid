@@ -5,7 +5,7 @@ on:
   release:
     types: [ published ]
   pull_request:
-    branches: [ master ]
+    branches: [ master, devel ]
   push:
     branches: [ '**' ]
     tags: [ '*' ]
